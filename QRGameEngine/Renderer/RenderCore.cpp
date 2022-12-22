@@ -48,7 +48,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	DX12BufferHandle quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
 	m_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
-	TextureInfo texture_info = m_dx12_core.GetTextureManager()->LoadTextureFromFile("Textures/Temp.png");
+	TextureInfo texture_info = m_dx12_core.GetTextureManager()->LoadTextureFromFile("../QRGameEngine/Textures/Temp.png");
 	DX12TextureHandle image_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
 	DX12TextureViewHandle texture_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, image_handle, ViewType::SHADER_RESOURCE_VIEW);
 
@@ -80,7 +80,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 
 
-	m_pipeline.InitPipeline(&m_dx12_core, &m_root_signature, L"Shaders/VertexShader.hlsl", L"Shaders/PixelShader.hlsl");
+	m_pipeline.InitPipeline(&m_dx12_core, &m_root_signature, L"../QRGameEngine/Shaders/VertexShader.hlsl", L"../QRGameEngine/Shaders/PixelShader.hlsl");
 
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
