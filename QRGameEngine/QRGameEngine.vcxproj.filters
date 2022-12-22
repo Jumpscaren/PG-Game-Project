@@ -78,6 +78,9 @@
     <ClCompile Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QREntryPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -162,6 +165,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QREntryPoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

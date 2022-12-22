@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QRGameEngine", "QRGameEngine.vcxproj", "{8C105064-60FA-413A-8A00-FCA54973A148}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PG-Game-Project", "..\PG-Game-Project\PG-Game-Project.vcxproj", "{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8C105064-60FA-413A-8A00-FCA54973A148} = {8C105064-60FA-413A-8A00-FCA54973A148}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

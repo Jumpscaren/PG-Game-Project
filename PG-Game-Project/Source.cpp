@@ -1,16 +1,14 @@
-#include "Renderer/RenderCore.h"
+#include "QREntryPoint.h"
+
+QREntryPoint* entry_point;
 
 int main()
 {
-	RenderCore render_core(1920, 1080, L"2DRENDERER");
+	entry_point = new QREntryPoint();
 
-	bool window_exist = true;
-	while (window_exist)
-	{
-		window_exist = render_core.UpdateRender();
-		if (!window_exist)
-			break;
-	}
+	entry_point->EntryPoint();
+
+	entry_point->RunTime();
 
 	return 0;
 }

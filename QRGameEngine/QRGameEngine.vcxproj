@@ -178,6 +178,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="QREntryPoint.cpp" />
     <ClCompile Include="Renderer\RenderCore.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.cpp">
@@ -212,6 +213,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClInclude Include="DX12CORE\ViewTypes.h" />
     <ClInclude Include="Helpers\HandleManager.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="QREntryPoint.h" />
     <ClInclude Include="Renderer\RenderCore.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
     <ClInclude Include="Window.h" />
