@@ -24,52 +24,52 @@
     <ClCompile Include="Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12BufferManager.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12CommandList.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12CommandList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12CommandQueue.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12CommandQueue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12Core.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12Core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12DescriptorChunk.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12DescriptorChunk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12DescriptorHeap.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12DescriptorHeap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12DescriptorManager.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12DescriptorManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12Fence.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12Fence.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12Pipeline.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12Pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12ResourceDestroyer.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12ResourceDestroyer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12RootSignature.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12RootSignature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12ShaderCompiler.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12ShaderCompiler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12StackAllocator.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12StackAllocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12SwapChain.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12SwapChain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12CORE\DX12TextureManager.cpp">
+    <ClCompile Include="Renderer\DX12CORE\DX12TextureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Helpers\HandleManager.cpp">
+    <ClCompile Include="Renderer\Helpers\HandleManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\RenderCore.cpp">
@@ -81,6 +81,9 @@
     <ClCompile Include="QREntryPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ECS\EntityManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -89,76 +92,76 @@
     <ClInclude Include="Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\BufferTypes.h">
+    <ClInclude Include="Renderer\DX12CORE\BufferTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DescriptorTypes.h">
+    <ClInclude Include="Renderer\DX12CORE\DescriptorTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12BufferManager.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12BufferManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12CommandList.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12CommandList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12CommandQueue.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12CommandQueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12Core.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12Core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12DescriptorChunk.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12DescriptorChunk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12DescriptorHeap.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12DescriptorHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12DescriptorManager.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12DescriptorManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12Fence.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12Fence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12MemAllocInclude.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12MemAllocInclude.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12Pipeline.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12Pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12ResourceDestroyer.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12ResourceDestroyer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12RootSignature.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12RootSignature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12ShaderCompiler.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12ShaderCompiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12StackAllocator.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12StackAllocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12SwapChain.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12SwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\DX12TextureManager.h">
+    <ClInclude Include="Renderer\DX12CORE\DX12TextureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\HelpTypes.h">
+    <ClInclude Include="Renderer\DX12CORE\HelpTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\SamplerTypes.h">
+    <ClInclude Include="Renderer\DX12CORE\SamplerTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\stb_image.h">
+    <ClInclude Include="Renderer\DX12CORE\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\TextureTypes.h">
+    <ClInclude Include="Renderer\DX12CORE\TextureTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12CORE\ViewTypes.h">
+    <ClInclude Include="Renderer\DX12CORE\ViewTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Helpers\HandleManager.h">
+    <ClInclude Include="Renderer\Helpers\HandleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\RenderCore.h">
@@ -168,6 +171,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QREntryPoint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ECS\EntityManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_name.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_index.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_id.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

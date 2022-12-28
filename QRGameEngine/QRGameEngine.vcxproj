@@ -158,22 +158,23 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DX12CORE\DX12BufferManager.cpp" />
-    <ClCompile Include="DX12CORE\DX12CommandList.cpp" />
-    <ClCompile Include="DX12CORE\DX12CommandQueue.cpp" />
-    <ClCompile Include="DX12CORE\DX12Core.cpp" />
-    <ClCompile Include="DX12CORE\DX12DescriptorChunk.cpp" />
-    <ClCompile Include="DX12CORE\DX12DescriptorHeap.cpp" />
-    <ClCompile Include="DX12CORE\DX12DescriptorManager.cpp" />
-    <ClCompile Include="DX12CORE\DX12Fence.cpp" />
-    <ClCompile Include="DX12CORE\DX12Pipeline.cpp" />
-    <ClCompile Include="DX12CORE\DX12ResourceDestroyer.cpp" />
-    <ClCompile Include="DX12CORE\DX12RootSignature.cpp" />
-    <ClCompile Include="DX12CORE\DX12ShaderCompiler.cpp" />
-    <ClCompile Include="DX12CORE\DX12StackAllocator.cpp" />
-    <ClCompile Include="DX12CORE\DX12SwapChain.cpp" />
-    <ClCompile Include="DX12CORE\DX12TextureManager.cpp" />
-    <ClCompile Include="Helpers\HandleManager.cpp" />
+    <ClCompile Include="ECS\EntityManager.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12CommandList.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12CommandQueue.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12Core.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12DescriptorChunk.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12DescriptorHeap.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12DescriptorManager.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12Fence.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12Pipeline.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12ResourceDestroyer.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12RootSignature.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12ShaderCompiler.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12StackAllocator.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12SwapChain.cpp" />
+    <ClCompile Include="Renderer\DX12CORE\DX12TextureManager.cpp" />
+    <ClCompile Include="Renderer\Helpers\HandleManager.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -188,34 +189,40 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DX12CORE\BufferTypes.h" />
-    <ClInclude Include="DX12CORE\DescriptorTypes.h" />
-    <ClInclude Include="DX12CORE\DX12BufferManager.h" />
-    <ClInclude Include="DX12CORE\DX12CommandList.h" />
-    <ClInclude Include="DX12CORE\DX12CommandQueue.h" />
-    <ClInclude Include="DX12CORE\DX12Core.h" />
-    <ClInclude Include="DX12CORE\DX12DescriptorChunk.h" />
-    <ClInclude Include="DX12CORE\DX12DescriptorHeap.h" />
-    <ClInclude Include="DX12CORE\DX12DescriptorManager.h" />
-    <ClInclude Include="DX12CORE\DX12Fence.h" />
-    <ClInclude Include="DX12CORE\DX12MemAllocInclude.h" />
-    <ClInclude Include="DX12CORE\DX12Pipeline.h" />
-    <ClInclude Include="DX12CORE\DX12ResourceDestroyer.h" />
-    <ClInclude Include="DX12CORE\DX12RootSignature.h" />
-    <ClInclude Include="DX12CORE\DX12ShaderCompiler.h" />
-    <ClInclude Include="DX12CORE\DX12StackAllocator.h" />
-    <ClInclude Include="DX12CORE\DX12SwapChain.h" />
-    <ClInclude Include="DX12CORE\DX12TextureManager.h" />
-    <ClInclude Include="DX12CORE\HelpTypes.h" />
-    <ClInclude Include="DX12CORE\SamplerTypes.h" />
-    <ClInclude Include="DX12CORE\stb_image.h" />
-    <ClInclude Include="DX12CORE\TextureTypes.h" />
-    <ClInclude Include="DX12CORE\ViewTypes.h" />
-    <ClInclude Include="Helpers\HandleManager.h" />
+    <ClInclude Include="ECS\EntityManager.h" />
+    <ClInclude Include="Renderer\DX12CORE\BufferTypes.h" />
+    <ClInclude Include="Renderer\DX12CORE\DescriptorTypes.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12BufferManager.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12CommandList.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12CommandQueue.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12Core.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12DescriptorChunk.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12DescriptorHeap.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12DescriptorManager.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12Fence.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12MemAllocInclude.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12Pipeline.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12ResourceDestroyer.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12RootSignature.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12ShaderCompiler.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12StackAllocator.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12SwapChain.h" />
+    <ClInclude Include="Renderer\DX12CORE\DX12TextureManager.h" />
+    <ClInclude Include="Renderer\DX12CORE\HelpTypes.h" />
+    <ClInclude Include="Renderer\DX12CORE\SamplerTypes.h" />
+    <ClInclude Include="Renderer\DX12CORE\stb_image.h" />
+    <ClInclude Include="Renderer\DX12CORE\TextureTypes.h" />
+    <ClInclude Include="Renderer\DX12CORE\ViewTypes.h" />
+    <ClInclude Include="Renderer\Helpers\HandleManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="QREntryPoint.h" />
     <ClInclude Include="Renderer\RenderCore.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info.h" />
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\hash.h" />
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_id.h" />
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_index.h" />
+    <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_name.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
