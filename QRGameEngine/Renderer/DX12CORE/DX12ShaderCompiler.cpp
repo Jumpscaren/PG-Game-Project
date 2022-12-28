@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "DX12ShaderCompiler.h"
-#include "../Vendor/Include/D3D12ShaderCompiler/dxcapi.h"
+#include "../../Vendor/Include/D3D12ShaderCompiler/dxcapi.h"
 
 DX12ShaderCompiler::DX12ShaderCompiler()
 {

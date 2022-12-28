@@ -2,7 +2,7 @@
 #include "DX12Pipeline.h"
 #include "DX12RootSignature.h"
 #include "DX12Core.h"
-#include "../Vendor/Include/D3D12ShaderCompiler/dxcapi.h"
+#include "../../Vendor/Include/D3D12ShaderCompiler/dxcapi.h"
 
 ID3DBlob* DX12Pipeline::LoadCSO(const std::string& shader_name)
 {

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "DX12TextureManager.h"
-#include "DX12CORE/DX12Core.h"
+#include "DX12Core.h"
 #include "../Helpers/HandleManager.h"
 
 #pragma warning(push)

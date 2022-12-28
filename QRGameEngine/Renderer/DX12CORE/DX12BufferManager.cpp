@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "DX12BufferManager.h"
-#include "DX12CORE/DX12Core.h"
-#include "Helpers/HandleManager.h"
+#include "DX12Core.h"
+#include "../Helpers/HandleManager.h"
 
 DX12Buffer* DX12BufferManager::GetDX12Buffer(DX12BufferHandle handle)
 {
