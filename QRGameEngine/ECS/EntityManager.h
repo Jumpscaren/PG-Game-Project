@@ -3,6 +3,12 @@
 
 typedef uint32_t Entity;
 
+struct ComponentPool
+{
+	void* component_pool_data;
+	std::unordered_set<Entity> m_component_pool_entities;
+};
+
 class EntityManager
 {
 private:
@@ -11,7 +17,7 @@ private:
 
 	std::unordered_map<uint64_t, uint32_t> m_component_type_to_pool;
 
-	std::vector<void*> m_component_pools;
+	std::vector<ComponentPool> m_component_pools;
 
 	static constexpr Entity NULL_ENTITY = -1;
 
@@ -23,6 +29,9 @@ private:
 	template <typename Component>
 	uint32_t CreateComponentPool();
 
+	template <typename Component>
+	ComponentPool& GetComponentPool();
+
 public:
 	EntityManager(uint32_t max_entities);
 
@@ -31,6 +40,76 @@ public:
 
 	template <typename Component, typename ...Args>
 	Component& AddComponent(Entity entity, Args&& ...args);
+
+	template <typename Component>
+	bool HasComponent(Entity entity);
+
+	template <typename Component>
+	Component& GetComponent(Entity entity);
+
+	template <typename... Component>
+	void System(std::invocable<Component&...> auto&& func)
+	{
+		std::vector<ComponentPool*> pools;
+
+		(pools.push_back(&GetComponentPool<Component>()), ...);
+
+		assert(pools.size() != 0);
+
+		ComponentPool* smallest_component_pool = pools[0];
+		for (int i = 1; i < pools.size(); ++i)
+		{
+			if (pools[i]->m_component_pool_entities.size() < smallest_component_pool->m_component_pool_entities.size())
+			{
+				smallest_component_pool = pools[i];
+			}
+		}
+
+		auto& entities = smallest_component_pool->m_component_pool_entities;
+		for (auto it = entities.begin(); it != entities.end(); it++)
+		{
+			Entity entity = *it;
+
+			bool has_all_components = (HasComponent<Component>(entity) &&...);
+
+			if (has_all_components)
+			{
+				func(GetComponent<Component>(entity)...);
+			}
+		}
+	}
+
+	template <typename... Component>
+	void System(std::invocable<Entity ,Component&...> auto&& func)
+	{
+		std::vector<ComponentPool*> pools;
+
+		(pools.push_back(&GetComponentPool<Component>()), ...);
+
+		assert(pools.size() != 0);
+
+		ComponentPool* smallest_component_pool = pools[0];
+		for (int i = 1; i < pools.size(); ++i)
+		{
+			if (pools[i]->m_component_pool_entities.size() < smallest_component_pool->m_component_pool_entities.size())
+			{
+				smallest_component_pool = pools[i];
+			}
+		}
+
+		auto& entities = smallest_component_pool->m_component_pool_entities;
+		for (auto it = entities.begin(); it != entities.end(); it++)
+		{
+			Entity entity = *it;
+
+			bool has_all_components = (HasComponent<Component>(entity) &&...);
+
+			if (has_all_components)
+			{
+				func(entity, GetComponent<Component>(entity)...);
+			}
+		}
+	}
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -40,19 +119,20 @@ inline uint32_t EntityManager::CreateComponentPool()
 {
 	uint32_t component_pool_index = m_component_pools.size();
 
-	void* component_pool = malloc(sizeof(Component) * m_max_entities);
+	void* component_pool_data = malloc(sizeof(Component) * m_max_entities);
+
+	ComponentPool component_pool;
+	component_pool.component_pool_data = component_pool_data;
 
 	m_component_pools.push_back(component_pool);
 
 	return component_pool_index;
 }
 
-template<typename Component, typename ...Args>
-inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
+template<typename Component>
+inline ComponentPool& EntityManager::GetComponentPool()
 {
 	uint64_t component_index = (uint64_t)static_type_info::getTypeIndex<Component>();
-
-	assert(EntityExists(entity));
 
 	auto it = m_component_type_to_pool.find(component_index);
 
@@ -68,9 +148,44 @@ inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
 		m_component_type_to_pool.insert({ component_index, component_pool_index });
 	}
 
-	char* component_pool = (char*)m_component_pools[component_pool_index];
+	return m_component_pools[component_pool_index];
+}
 
-	Component* new_component = new(component_pool + entity * sizeof(Component)) Component(std::forward<Args>(args)...);
+template<typename Component, typename ...Args>
+inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
+{
+	assert(EntityExists(entity));
+
+	ComponentPool& component_pool = GetComponentPool<Component>();
+
+	component_pool.m_component_pool_entities.insert(entity);
+
+	char* component_pool_data = (char*)component_pool.component_pool_data;
+
+	Component* new_component = new(component_pool_data + entity * sizeof(Component)) Component(std::forward<Args>(args)...);
 
 	return *new_component;
+}
+
+template<typename Component>
+inline bool EntityManager::HasComponent(Entity entity)
+{
+	assert(EntityExists(entity));
+
+	ComponentPool& component_pool = GetComponentPool<Component>();
+
+	return component_pool.m_component_pool_entities.find(entity) != component_pool.m_component_pool_entities.end();
+}
+
+template<typename Component>
+inline Component& EntityManager::GetComponent(Entity entity)
+{
+	assert(EntityExists(entity));
+	assert(HasComponent<Component>(entity));
+
+	ComponentPool& component_pool = GetComponentPool<Component>();
+	char* component_pool_data = (char*)component_pool.component_pool_data;
+	Component* component = (Component*)(component_pool_data + entity * sizeof(Component));
+	
+	return *component;
 }
