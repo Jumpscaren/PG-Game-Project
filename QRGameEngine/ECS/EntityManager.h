@@ -32,8 +32,11 @@ private:
 	template <typename Component>
 	ComponentPool& GetComponentPool();
 
+	bool HasComponent(Entity entity, ComponentPool& component_pool);
+
 public:
 	EntityManager(uint32_t max_entities);
+	~EntityManager();
 
 	Entity NewEntity();
 	void RemoveEntity(Entity entity);
@@ -46,6 +49,9 @@ public:
 
 	template <typename Component>
 	Component& GetComponent(Entity entity);
+
+	template <typename Component>
+	void RemoveComponent(Entity entity);
 
 	template <typename... Component>
 	void System(std::invocable<Component&...> auto&& func)
@@ -158,6 +164,8 @@ inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
 
 	ComponentPool& component_pool = GetComponentPool<Component>();
 
+	assert(!HasComponent(entity, component_pool));
+
 	component_pool.m_component_pool_entities.insert(entity);
 
 	char* component_pool_data = (char*)component_pool.component_pool_data;
@@ -181,11 +189,25 @@ template<typename Component>
 inline Component& EntityManager::GetComponent(Entity entity)
 {
 	assert(EntityExists(entity));
-	assert(HasComponent<Component>(entity));
 
 	ComponentPool& component_pool = GetComponentPool<Component>();
+
+	assert(HasComponent(entity, component_pool));
+
 	char* component_pool_data = (char*)component_pool.component_pool_data;
 	Component* component = (Component*)(component_pool_data + entity * sizeof(Component));
 	
 	return *component;
+}
+
+template<typename Component>
+inline void EntityManager::RemoveComponent(Entity entity)
+{
+	assert(EntityExists(entity));
+
+	ComponentPool& component_pool = GetComponentPool<Component>();
+
+	assert(HasComponent(entity, component_pool));
+
+	component_pool.m_component_pool_entities.erase(entity);
 }

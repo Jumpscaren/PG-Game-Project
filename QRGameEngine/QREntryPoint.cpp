@@ -44,6 +44,12 @@ void QREntryPoint::EntryPoint()
 			std::cout << e << " GG " << mdata.mine << "\n";
 		});
 
+	ent.AddComponent<TempComp>(e);
+	ent.RemoveComponent<TempComp>(e);
+	ent.AddComponent<TempComp>(e);
+
+	ent.RemoveEntity(e);
+
 	std::cout << "h\n";
 
 	render_core = new RenderCore(1920, 1080, L"2DRENDERER");
