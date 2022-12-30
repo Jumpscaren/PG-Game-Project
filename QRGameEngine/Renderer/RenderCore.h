@@ -6,6 +6,8 @@
 
 class DX12StackAllocator;
 
+class Scene;
+
 struct RenderObject
 {
 	DX12TextureViewHandle texture_view_handle;
@@ -35,6 +37,6 @@ private:
 
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
-	bool UpdateRender();
+	bool UpdateRender(Scene* draw_scene);
 };
 

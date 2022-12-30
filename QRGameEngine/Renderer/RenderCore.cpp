@@ -89,7 +89,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	delete[] texture_info.texture_data;
 }
 
-bool RenderCore::UpdateRender()
+bool RenderCore::UpdateRender(Scene* draw_scene)
 {
 	m_dx12_core.GetCommandList()->Wait(&m_dx12_core);
 	

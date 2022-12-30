@@ -2,8 +2,11 @@
 #include "QREntryPoint.h"
 #include "Renderer/RenderCore.h"
 #include "ECS/EntityManager.h"
+#include "SceneSystem/SceneManager.h"
 
 RenderCore* render_core;
+SceneManager* scene_manager;
+SceneIndex main_scene;
 
 struct TempData
 {
@@ -53,6 +56,10 @@ void QREntryPoint::EntryPoint()
 	std::cout << "h\n";
 
 	render_core = new RenderCore(1920, 1080, L"2DRENDERER");
+
+	scene_manager = new SceneManager();
+	main_scene = scene_manager->CreateScene();
+	scene_manager->SetSceneAsActiveScene(main_scene);
 }
 
 void QREntryPoint::RunTime()
@@ -60,7 +67,7 @@ void QREntryPoint::RunTime()
 	bool window_exist = true;
 	while (window_exist)
 	{
-		window_exist = render_core->UpdateRender();
+		window_exist = render_core->UpdateRender(scene_manager->GetScene(main_scene));
 		if (!window_exist)
 			break;
 	}

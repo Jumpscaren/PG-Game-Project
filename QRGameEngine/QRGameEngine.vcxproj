@@ -181,6 +181,8 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     </ClCompile>
     <ClCompile Include="QREntryPoint.cpp" />
     <ClCompile Include="Renderer\RenderCore.cpp" />
+    <ClCompile Include="SceneSystem\Scene.cpp" />
+    <ClCompile Include="SceneSystem\SceneManager.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -217,6 +219,8 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClInclude Include="pch.h" />
     <ClInclude Include="QREntryPoint.h" />
     <ClInclude Include="Renderer\RenderCore.h" />
+    <ClInclude Include="SceneSystem\Scene.h" />
+    <ClInclude Include="SceneSystem\SceneManager.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\hash.h" />
