@@ -96,6 +96,12 @@
     <ClCompile Include="Renderer\RenderTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Time\Time.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Time\Timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -213,6 +219,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\RenderTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Time\Time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Time\Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

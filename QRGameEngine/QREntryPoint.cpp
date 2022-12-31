@@ -4,6 +4,7 @@
 #include "ECS/EntityManager.h"
 #include "SceneSystem/SceneManager.h"
 #include "EngineComponents.h"
+#include "Time/Time.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -76,11 +77,15 @@ void QREntryPoint::RunTime()
 	bool window_exist = true;
 	while (window_exist)
 	{
-		scene_manager->GetScene(main_scene)->GetEntityManager()->GetComponent<TransformComponent>(render_ent).world_matrix.r[3].m128_f32[0] += 0.001f;
+		Time::Start();
+
+		scene_manager->GetScene(main_scene)->GetEntityManager()->GetComponent<TransformComponent>(render_ent).world_matrix.r[3].m128_f32[0] += 1.f * (float)Time::GetDeltaTime();
 
 		window_exist = render_core->UpdateRender(scene_manager->GetScene(main_scene));
 		if (!window_exist)
 			break;
+
+		Time::Stop();
 	}
 
 	delete render_core;
