@@ -1,21 +1,30 @@
+struct Sprite
+{
+	uint index;
+	float2 uv;
+	float pad;
+};
+
 struct VS_OUT
 {
 	float4 position : SV_POSITION;
 	float2 uv : uv;
+	uint instance_id : instance_id;
 };
 
 struct Constants
 {
 	uint index;
 };
-ConstantBuffer<Constants> textureConstant : register(b0, space0);
+ConstantBuffer<Constants> sprite_buffer_index : register(b0, space0);
 
 SamplerState standardSampler : register(s0);
 
 float4 main(VS_OUT input) : SV_TARGET
 {
-	Texture2D colourTexture = ResourceDescriptorHeap[textureConstant.index];
+	StructuredBuffer<Sprite> sprite_data = ResourceDescriptorHeap[sprite_buffer_index.index];
 
-	//return float4(1.0f, 0.0f, 0.0f, 1.0f);
+	Texture2D colourTexture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
+
 	return colourTexture.Sample(standardSampler, input.uv);
 }

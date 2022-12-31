@@ -77,6 +77,11 @@ void DX12TextureManager::ResetUploadBuffer()
 	m_upload_current_offset = 0;
 }
 
+uint32_t DX12TextureManager::ConvertTextureViewHandleToGPUTextureViewHandle(DX12TextureViewHandle texture_view_handle)
+{
+	return GetTextureView(texture_view_handle)->texture_descriptor_handle.descriptor_offset;
+}
+
 DX12TextureHandle DX12TextureManager::AddTexture(Microsoft::WRL::ComPtr<ID3D12Resource> texture, Microsoft::WRL::ComPtr<D3D12MA::Allocation> texture_allocation, const ResourceState& state)
 {
 	uint64_t handle = 0;
@@ -160,6 +165,9 @@ void DX12TextureManager::UploadTextureData(DX12Core* dx12_core, DX12TextureHandl
 	source.PlacedFootprint.Footprint.Depth = footprint.Footprint.Depth;
 	source.PlacedFootprint.Footprint.RowPitch = footprint.Footprint.RowPitch;
 	source.PlacedFootprint.Footprint.Format = resource_desc.Format;
+
+	//Wait until the gpu is completed
+	dx12_core->GetCommandList()->Throttle(dx12_core);
 
 	dx12_core->GetCommandList()->TransitionResource(texture_resource, ResourceState::COPY_DEST, ResourceState::COMMON);
 	dx12_core->GetCommandList()->CopyTextureRegion(&destination, &source);

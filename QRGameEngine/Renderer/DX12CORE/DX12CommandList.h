@@ -34,6 +34,9 @@ public:
 	void SignalAndWait(DX12Core* dx12_core, DX12CommandQueue* command_queue);
 	void Signal(DX12Core* dx12_core, DX12CommandQueue* command_queue);
 	void Wait(DX12Core* dx12_core);
+	//Waits for the GPU and resets the command list
+	//Useful for when you want to wait for something
+	void Throttle(DX12Core* dx12_core);
 	void CopyBufferRegion(ID3D12Resource* destination_buffer, ID3D12Resource* source_buffer, uint64_t destination_offset, uint64_t source_offset, uint64_t size);
 	void TransitionResource(ID3D12Resource* transition_resource, const ResourceState& new_state, const ResourceState& old_state);
 	void TransitionTextureResource(DX12Core* dx12_core, DX12TextureHandle texture_handle, const ResourceState& new_state, const ResourceState& old_state);

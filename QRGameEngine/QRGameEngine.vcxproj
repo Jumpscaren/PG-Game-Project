@@ -159,6 +159,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ECS\EntityManager.cpp" />
+    <ClCompile Include="EngineComponents.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12CommandList.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12CommandQueue.cpp" />
@@ -181,6 +182,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     </ClCompile>
     <ClCompile Include="QREntryPoint.cpp" />
     <ClCompile Include="Renderer\RenderCore.cpp" />
+    <ClCompile Include="Renderer\RenderTypes.cpp" />
     <ClCompile Include="SceneSystem\Scene.cpp" />
     <ClCompile Include="SceneSystem\SceneManager.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -192,6 +194,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ECS\EntityManager.h" />
+    <ClInclude Include="EngineComponents.h" />
     <ClInclude Include="Renderer\DX12CORE\BufferTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\DescriptorTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\DX12BufferManager.h" />
@@ -218,6 +221,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClInclude Include="Renderer\Helpers\HandleManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="QREntryPoint.h" />
+    <ClInclude Include="Renderer\RenderTypes.h" />
     <ClInclude Include="Renderer\RenderCore.h" />
     <ClInclude Include="SceneSystem\Scene.h" />
     <ClInclude Include="SceneSystem\SceneManager.h" />

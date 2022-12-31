@@ -3,17 +3,9 @@
 #include "DX12CORE/DX12RootSignature.h"
 #include "DX12CORE/DX12Pipeline.h"
 #include "DX12CORE/DX12StackAllocator.h"
-
-void RenderCore::AddRenderObject(DX12TextureViewHandle texture_view_handle, const DirectX::XMMATRIX& world_matrix)
-{
-	m_world_matrices.push_back(world_matrix);
-
-	RenderObject render_object = {};
-	render_object.texture_view_handle = texture_view_handle;
-	render_object.world_matrix_index = m_world_matrices.size() - 1;
-
-	m_render_objects.push_back(render_object);
-}
+#include "SceneSystem/SceneManager.h"
+#include "ECS/EntityManager.h"
+#include "EngineComponents.h"
 
 DX12BufferViewHandle transform_constant_buffer_view;
 DX12BufferHandle transform_sub;
@@ -48,28 +40,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	DX12BufferHandle quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
 	m_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
-	TextureInfo texture_info = m_dx12_core.GetTextureManager()->LoadTextureFromFile("../QRGameEngine/Textures/Temp.png");
-	DX12TextureHandle image_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
-	DX12TextureViewHandle texture_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, image_handle, ViewType::SHADER_RESOURCE_VIEW);
-
 	m_stack_allocator = new DX12StackAllocator(&m_dx12_core, 1'000);
-
-	DirectX::XMMATRIX matrix = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f) * DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, DirectX::XM_PIDIV4 / 2.0f) * DirectX::XMMatrixTranslation(-0.5f, -0.5f, 0.0f);
-	DirectX::XMMATRIX scaled_matrix = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f) * DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, -DirectX::XM_PIDIV4 / 2.0f) * DirectX::XMMatrixTranslation(0.5f, 0.5f, 0.0f);
-	DirectX::XMMATRIX m_3= DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f) * DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, -DirectX::XM_PIDIV4 / 2.0f) * DirectX::XMMatrixTranslation(-0.1f, 0.0f, 0.0f);
-
-	AddRenderObject(texture_view_handle, matrix);
-	AddRenderObject(texture_view_handle, scaled_matrix);
-	AddRenderObject(texture_view_handle, m_3);
-
-	//for (int i = 0; i < 100'000; ++i)
-	//{
-	//	matrix = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f) * DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, i) * DirectX::XMMatrixTranslation(-0.5f + (float)i / 100'000.0f, -0.5f + (float)i / 100'000.0f, 0.0f);
-	//	AddRenderObject(texture_view_handle, matrix);
-	//}
-
-	transform_sub = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(DirectX::XMMATRIX), m_world_matrices.size(), BufferType::MODIFIABLE_BUFFER);
-	transform_constant_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, transform_sub, ViewType::SHADER_RESOURCE_VIEW);
 
 	m_root_signature
 		.AddStaticSampler(&m_dx12_core, SamplerTypes::LINEAR_WRAP, 0)
@@ -85,8 +56,6 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.ResetBuffers();
-
-	delete[] texture_info.texture_data;
 }
 
 bool RenderCore::UpdateRender(Scene* draw_scene)
@@ -115,29 +84,47 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetViewport((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 
-	for (auto& render_object : m_render_objects)
+	//TEMP
+	std::vector<TransformComponent> transform_data_vector;
+	std::vector<SpriteData> sprite_data_vector;
+	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](TransformComponent& transform, SpriteComponent& sprite)
+		{
+			SpriteData sprite_data;
+			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
+			sprite_data.uv.x = sprite.uv.x;
+			sprite_data.uv.y = sprite.uv.y;
+
+			transform_data_vector.push_back(transform);
+			sprite_data_vector.push_back(sprite_data);
+		});
+
+	DX12BufferHandle transform_data_buffer = 0;
+	DX12BufferHandle sprite_data_buffer = 0;
+
+	if (transform_data_vector.size())
 	{
-		m_world_matrices[render_object.world_matrix_index].r[3].m128_f32[0] += 0.0001f;
+		transform_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(TransformComponent), transform_data_vector.size(), BufferType::CONSTANT_BUFFER);
+		DX12BufferViewHandle transform_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, transform_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, transform_data_buffer_view, 2);
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, transform_data_buffer, transform_data_vector.data(), sizeof(TransformComponent), transform_data_vector.size());
+
+		sprite_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(SpriteData), transform_data_vector.size(), BufferType::CONSTANT_BUFFER);
+		DX12BufferViewHandle sprite_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, sprite_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, sprite_data_buffer_view, 1);
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, sprite_data_buffer, sprite_data_vector.data(), sizeof(SpriteData), sprite_data_vector.size());
 	}
 
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_quad_view_handle, 0);
 
-	DX12BufferHandle transforms = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(DirectX::XMMATRIX), m_world_matrices.size(), BufferType::CONSTANT_BUFFER);
-	DX12BufferViewHandle transforms_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, transforms, ViewType::SHADER_RESOURCE_VIEW);
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, transforms_view, 2);
-	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, transforms, m_world_matrices.data(), sizeof(DirectX::XMMATRIX), m_world_matrices.size());
-
-	//m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, transform_sub, m_world_matrices.data(), sizeof(DirectX::XMMATRIX), m_world_matrices.size());
-	//m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, transform_constant_buffer_view, 2);
-
-	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, m_render_objects[0].texture_view_handle, 1);
-	m_dx12_core.GetCommandList()->Draw(6, m_render_objects.size(), 0, 0);
-
-	//m_dx12_core.GetCommandList()->TransitionBufferResource(&m_dx12_core, transform_sub, ResourceState::COMMON, ResourceState::VERTEX_AND_CONSTANT_BUFFER);
+	m_dx12_core.GetCommandList()->Draw(6, transform_data_vector.size(), 0, 0);
 
 	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::PRESENT, ResourceState::RENDER_TARGET);
 
-	m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, transforms);
+	if (transform_data_vector.size())
+	{
+		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, transform_data_buffer);
+		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, sprite_data_buffer);
+	}
 
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetSwapChain()->Present();
@@ -146,4 +133,14 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.EndOfFrame();
 
 	return m_window->WinMsg();
+}
+
+TextureHandle RenderCore::CreateTexture(std::string texture_file_name)
+{
+	//Memory leak for now
+	TextureInfo texture_info = m_dx12_core.GetTextureManager()->LoadTextureFromFile(texture_file_name);
+	DX12TextureHandle texture_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
+	DX12TextureViewHandle texture_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, texture_handle, ViewType::SHADER_RESOURCE_VIEW);
+
+	return texture_view_handle;
 }

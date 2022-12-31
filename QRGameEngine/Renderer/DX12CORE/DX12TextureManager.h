@@ -61,5 +61,7 @@ public:
 	DX12TextureViewHandle AddView(DX12Core* dx12_core, DX12TextureHandle texture_handle, const ViewType& view_type);
 
 	TextureInfo LoadTextureFromFile(const std::string& file_name, uint32_t channels = 4);
+
+	uint32_t ConvertTextureViewHandleToGPUTextureViewHandle(DX12TextureViewHandle texture_view_handle);
 };
 
