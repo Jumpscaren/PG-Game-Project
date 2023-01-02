@@ -12,7 +12,7 @@ SceneIndex SceneManager::CreateScene()
 
 	if (!m_free_scene_indicies.size())
 	{
-		scene_index = m_scenes.size();
+		scene_index = (SceneIndex)m_scenes.size();
 		m_scenes.push_back(new Scene());
 	}
 	else

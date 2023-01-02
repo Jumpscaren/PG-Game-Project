@@ -123,7 +123,7 @@ public:
 template<typename Component>
 inline uint32_t EntityManager::CreateComponentPool()
 {
-	uint32_t component_pool_index = m_component_pools.size();
+	uint32_t component_pool_index = (uint32_t)m_component_pools.size();
 
 	void* component_pool_data = malloc(sizeof(Component) * m_max_entities);
 

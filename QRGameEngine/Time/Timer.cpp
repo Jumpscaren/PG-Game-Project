@@ -15,5 +15,5 @@ double Timer::StopTimer()
 {
 	m_endTime = std::chrono::steady_clock::now();
 
-	return std::chrono::duration_cast<std::chrono::nanoseconds>(m_endTime - m_startTime).count();
+	return (double)std::chrono::duration_cast<std::chrono::nanoseconds>(m_endTime - m_startTime).count();
 }
