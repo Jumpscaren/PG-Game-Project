@@ -158,6 +158,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Common\EngineTypes.cpp" />
     <ClCompile Include="ECS\EntityManager.cpp" />
     <ClCompile Include="EngineComponents.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp" />
@@ -195,6 +196,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common\EngineTypes.h" />
     <ClInclude Include="ECS\EntityManager.h" />
     <ClInclude Include="EngineComponents.h" />
     <ClInclude Include="Renderer\DX12CORE\BufferTypes.h" />

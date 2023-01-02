@@ -68,7 +68,7 @@ void QREntryPoint::EntryPoint()
 
 	EntityManager* em = scene_manager->GetScene(main_scene)->GetEntityManager();
 	render_ent = em->NewEntity();
-	em->AddComponent<TransformComponent>(render_ent).world_matrix = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f) * DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, DirectX::XM_PIDIV4 / 2.0f) * DirectX::XMMatrixTranslation(0.f, 0.f, 0.0f);
+	em->AddComponent<TransformComponent>(render_ent, Vector3(), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 2.0f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 }
 
@@ -79,7 +79,15 @@ void QREntryPoint::RunTime()
 	{
 		Time::Start();
 
-		scene_manager->GetScene(main_scene)->GetEntityManager()->GetComponent<TransformComponent>(render_ent).world_matrix.r[3].m128_f32[0] += 1.f * (float)Time::GetDeltaTime();
+		Scene* active_scene = scene_manager->GetScene(main_scene);
+		EntityManager* entman = active_scene->GetEntityManager();
+
+		TransformComponent& render_ent_trans = entman->GetComponent<TransformComponent>(render_ent);
+		
+		Vector3 pos = render_ent_trans.GetPosition();
+		pos.x += (float)Time::GetDeltaTime();
+		render_ent_trans.SetPosition(pos);
+
 
 		window_exist = render_core->UpdateRender(scene_manager->GetScene(main_scene));
 		if (!window_exist)
