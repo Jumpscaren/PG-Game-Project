@@ -5,7 +5,6 @@
 #include "DX12CORE/DX12StackAllocator.h"
 #include "SceneSystem/SceneManager.h"
 #include "ECS/EntityManager.h"
-#include "EngineComponents.h"
 
 DX12BufferViewHandle transform_constant_buffer_view;
 DX12BufferHandle transform_sub;
@@ -84,9 +83,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetViewport((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 
-	//TEMP
-	std::vector<TransformComponent> transform_data_vector;
-	std::vector<SpriteData> sprite_data_vector;
+	uint64_t render_object_amount = 0;
 	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](TransformComponent& transform, SpriteComponent& sprite)
 		{
 			SpriteData sprite_data;
@@ -94,33 +91,43 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			sprite_data.uv.x = sprite.uv.x;
 			sprite_data.uv.y = sprite.uv.y;
 
-			transform_data_vector.push_back(transform);
-			sprite_data_vector.push_back(sprite_data);
+			if (render_object_amount < m_transform_data_vector.size())
+			{
+				m_transform_data_vector[render_object_amount] = std::move(transform);
+				m_sprite_data_vector[render_object_amount] = sprite_data;
+			}
+			else
+			{
+				m_transform_data_vector.push_back(transform);
+				m_sprite_data_vector.push_back(sprite_data);
+			}
+
+			++render_object_amount;
 		});
 
 	DX12BufferHandle transform_data_buffer = 0;
 	DX12BufferHandle sprite_data_buffer = 0;
 
-	if (transform_data_vector.size())
+	if (m_transform_data_vector.size())
 	{
-		transform_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(TransformComponent), transform_data_vector.size(), BufferType::CONSTANT_BUFFER);
+		transform_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(TransformComponent), render_object_amount, BufferType::CONSTANT_BUFFER);
 		DX12BufferViewHandle transform_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, transform_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
 		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, transform_data_buffer_view, 2);
-		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, transform_data_buffer, transform_data_vector.data(), sizeof(TransformComponent), transform_data_vector.size());
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, transform_data_buffer, m_transform_data_vector.data(), sizeof(TransformComponent), render_object_amount);
 
-		sprite_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(SpriteData), transform_data_vector.size(), BufferType::CONSTANT_BUFFER);
+		sprite_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(SpriteData), render_object_amount, BufferType::CONSTANT_BUFFER);
 		DX12BufferViewHandle sprite_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, sprite_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
 		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, sprite_data_buffer_view, 1);
-		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, sprite_data_buffer, sprite_data_vector.data(), sizeof(SpriteData), sprite_data_vector.size());
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, sprite_data_buffer, m_sprite_data_vector.data(), sizeof(SpriteData), render_object_amount);
 	}
 
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_quad_view_handle, 0);
 
-	m_dx12_core.GetCommandList()->Draw(6, transform_data_vector.size(), 0, 0);
+	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
 
 	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::PRESENT, ResourceState::RENDER_TARGET);
 
-	if (transform_data_vector.size())
+	if (render_object_amount)
 	{
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, transform_data_buffer);
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, sprite_data_buffer);

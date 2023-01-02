@@ -4,6 +4,7 @@
 #include "DX12CORE/DX12Pipeline.h"
 #include "Window.h"
 #include "RenderTypes.h"
+#include "EngineComponents.h"
 
 class DX12StackAllocator;
 
@@ -31,6 +32,9 @@ private:
 	DX12Pipeline m_pipeline;
 	DX12BufferViewHandle m_quad_view_handle;
 	DX12StackAllocator* m_stack_allocator;
+
+	std::vector<TransformComponent> m_transform_data_vector;
+	std::vector<SpriteData> m_sprite_data_vector;
 
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
