@@ -228,6 +228,11 @@ uint32_t DX12Core::GetFramesInFlight()
 	return (uint32_t)c_frames_in_flight;
 }
 
+uint32_t DX12Core::GetCurrentFrameInFlight() const
+{
+	return m_commandlist_index;
+}
+
 uint32_t DX12Core::GetCurrentBackBufferIndex() const
 {
 	return m_swapchain.GetCurrentBackBufferIndex();

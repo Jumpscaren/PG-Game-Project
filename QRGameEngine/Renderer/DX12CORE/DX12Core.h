@@ -64,6 +64,7 @@ public:
 	void ResetBuffers();
 	void EndOfFrame();
 	static uint32_t GetFramesInFlight();
+	uint32_t GetCurrentFrameInFlight() const;
 	uint32_t GetCurrentBackBufferIndex() const;
 	DX12ShaderCompiler* GetShaderCompiler();
 	DX12ResourceDestroyer* GetResourceDestroyer();

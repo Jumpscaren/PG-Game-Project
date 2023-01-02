@@ -73,12 +73,12 @@ void DX12BufferManager::UploadBufferData(DX12Core* dx12_core, DX12BufferHandle h
 
 	uint64_t alignment = buffer_alignment;
 
-	uint64_t destination_offset = ((m_upload_current_offsets[dx12_core->GetCurrentBackBufferIndex()] + (alignment - 1)) & ~(alignment - 1));
+	uint64_t destination_offset = ((m_upload_current_offsets[dx12_core->GetCurrentFrameInFlight()] + (alignment - 1)) & ~(alignment - 1));
 
 	std::memcpy(mapped_ptr + destination_offset, (unsigned char*)data + source_offset, data_size);
 	destination_offset += data_size;
 
-	source_offset = ((m_upload_current_offsets[dx12_core->GetCurrentBackBufferIndex()] + (alignment - 1)) & ~(alignment - 1));
+	source_offset = ((m_upload_current_offsets[dx12_core->GetCurrentFrameInFlight()] + (alignment - 1)) & ~(alignment - 1));
 	dx12_core->GetCommandList()->CopyBufferRegion(buffer_resource, m_upload_buffer.Get(), buffer_offset, source_offset, data_size);
 
 	m_upload_buffer->Unmap(0, nullptr);
@@ -86,7 +86,7 @@ void DX12BufferManager::UploadBufferData(DX12Core* dx12_core, DX12BufferHandle h
 	//Transition the buffer to common state
 	dx12_core->GetCommandList()->TransitionResource(buffer_resource, ResourceState::COMMON, ResourceState::COPY_DEST);
 
-	m_upload_current_offsets[dx12_core->GetCurrentBackBufferIndex()] = destination_offset;
+	m_upload_current_offsets[dx12_core->GetCurrentFrameInFlight()] = destination_offset;
 }
 
 DX12BufferManager::DX12BufferManager(DX12Core* dx12_core)
