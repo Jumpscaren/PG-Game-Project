@@ -7,33 +7,58 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QRGameEngine", "QRGameEngin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PG-Game-Project", "..\PG-Game-Project\PG-Game-Project.vcxproj", "{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}"
 	ProjectSection(ProjectDependencies) = postProject
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB} = {2B21600C-6837-4F29-A1B3-F095839ADDEB}
 		{8C105064-60FA-413A-8A00-FCA54973A148} = {8C105064-60FA-413A-8A00-FCA54973A148}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptProject", "..\ScriptProject\ScriptProject.csproj", "{2B21600C-6837-4F29-A1B3-F095839ADDEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8C105064-60FA-413A-8A00-FCA54973A148}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{8C105064-60FA-413A-8A00-FCA54973A148}.Debug|Any CPU.Build.0 = Debug|x64
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Debug|x64.ActiveCfg = Debug|x64
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Debug|x64.Build.0 = Debug|x64
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Debug|x86.ActiveCfg = Debug|Win32
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Debug|x86.Build.0 = Debug|Win32
+		{8C105064-60FA-413A-8A00-FCA54973A148}.Release|Any CPU.ActiveCfg = Release|x64
+		{8C105064-60FA-413A-8A00-FCA54973A148}.Release|Any CPU.Build.0 = Release|x64
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Release|x64.ActiveCfg = Release|x64
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Release|x64.Build.0 = Release|x64
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Release|x86.ActiveCfg = Release|Win32
 		{8C105064-60FA-413A-8A00-FCA54973A148}.Release|x86.Build.0 = Release|Win32
+		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Debug|Any CPU.Build.0 = Debug|x64
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Debug|x64.ActiveCfg = Debug|x64
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Debug|x64.Build.0 = Debug|x64
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Debug|x86.ActiveCfg = Debug|Win32
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Debug|x86.Build.0 = Debug|Win32
+		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Release|Any CPU.ActiveCfg = Release|x64
+		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Release|Any CPU.Build.0 = Release|x64
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Release|x64.ActiveCfg = Release|x64
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Release|x64.Build.0 = Release|x64
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Release|x86.ActiveCfg = Release|Win32
 		{E54FE2D9-3925-4994-ADA1-8AF7DFBAA219}.Release|x86.Build.0 = Release|Win32
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Debug|x64.Build.0 = Debug|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Debug|x86.Build.0 = Debug|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Release|x64.ActiveCfg = Release|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Release|x64.Build.0 = Release|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Release|x86.ActiveCfg = Release|Any CPU
+		{2B21600C-6837-4F29-A1B3-F095839ADDEB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

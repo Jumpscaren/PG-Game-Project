@@ -79,9 +79,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)Vendor\Include\mono-2.0;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)Vendor\Include\mono-2.0;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -129,7 +133,8 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxcompiler.dll" "$(TargetDir)" /y
-xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y</Command>
+xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
+xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -154,13 +159,15 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxcompiler.dll" "$(TargetDir)" /y
-xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y</Command>
+xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
+xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common\EngineTypes.cpp" />
     <ClCompile Include="ECS\EntityManager.cpp" />
     <ClCompile Include="EngineComponents.cpp" />
+    <ClCompile Include="Scripting\MonoCore.cpp" />
     <ClCompile Include="Renderer\ImGUIMain.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12CommandList.cpp" />
@@ -224,6 +231,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClInclude Include="Common\EngineTypes.h" />
     <ClInclude Include="ECS\EntityManager.h" />
     <ClInclude Include="EngineComponents.h" />
+    <ClInclude Include="Scripting\MonoCore.h" />
     <ClInclude Include="Renderer\ImGUIMain.h" />
     <ClInclude Include="Renderer\DX12CORE\BufferTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\DescriptorTypes.h" />

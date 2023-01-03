@@ -6,6 +6,7 @@
 #include "EngineComponents.h"
 #include "Time/Time.h"
 #include "Renderer/ImGUIMain.h"
+#include "Scripting/MonoCore.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -29,6 +30,8 @@ struct TempComp
 
 void QREntryPoint::EntryPoint()
 {
+	MonoCore core;
+
 	EntityManager ent(100);
 	Entity e = ent.NewEntity();
 	TempData& data = ent.AddComponent<TempData>(e, 2);
