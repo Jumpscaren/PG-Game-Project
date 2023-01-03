@@ -161,6 +161,7 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClCompile Include="Common\EngineTypes.cpp" />
     <ClCompile Include="ECS\EntityManager.cpp" />
     <ClCompile Include="EngineComponents.cpp" />
+    <ClCompile Include="Renderer\ImGUIMain.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12CommandList.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12CommandQueue.cpp" />
@@ -193,12 +194,37 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Vendor\Include\ImGUI\backends\imgui_impl_dx12.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Vendor\Include\ImGUI\backends\imgui_impl_win32.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Vendor\Include\ImGUI\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Vendor\Include\ImGUI\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Vendor\Include\ImGUI\imgui_tables.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Vendor\Include\ImGUI\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\EngineTypes.h" />
     <ClInclude Include="ECS\EntityManager.h" />
     <ClInclude Include="EngineComponents.h" />
+    <ClInclude Include="Renderer\ImGUIMain.h" />
     <ClInclude Include="Renderer\DX12CORE\BufferTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\DescriptorTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\DX12BufferManager.h" />
@@ -232,6 +258,14 @@ xcopy "$(SolutionDir)Vendor\Libs\D3D12ShaderCompiler\dxil.dll" "$(TargetDir)" /y
     <ClInclude Include="Time\Time.h" />
     <ClInclude Include="Time\Timer.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_win32.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\imconfig.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\imgui.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\imgui_internal.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\imstb_rectpack.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\imstb_textedit.h" />
+    <ClInclude Include="Vendor\Include\ImGUI\imstb_truetype.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\hash.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_id.h" />

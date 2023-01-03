@@ -5,6 +5,7 @@
 #include "SceneSystem/SceneManager.h"
 #include "EngineComponents.h"
 #include "Time/Time.h"
+#include "Renderer/ImGUIMain.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -72,12 +73,23 @@ void QREntryPoint::EntryPoint()
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 }
 
+float average_frame_time = 0;
 void QREntryPoint::RunTime()
 {
 	bool window_exist = true;
 	while (window_exist)
 	{
 		Time::Start();
+
+		ImGUIMain::StartFrame();
+
+		average_frame_time = average_frame_time * 0.9f + 0.1f * (float)Time::GetDeltaTime(Timer::TimeTypes::Milliseconds);
+
+		ImGui::Begin("App Statistics");
+		{
+			ImGui::Text("Average Frame Time: %f ms", average_frame_time);
+		}
+		ImGui::End();
 
 		Scene* active_scene = scene_manager->GetScene(main_scene);
 		EntityManager* entman = active_scene->GetEntityManager();

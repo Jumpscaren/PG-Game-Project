@@ -21,7 +21,7 @@ void DX12DescriptorHeap::InitDescriptorHeap(DX12Core* dx12_core, DescriptorHeapT
 
 DX12DescriptorChunk DX12DescriptorHeap::GetDescriptorChunk(DX12Core* dx12_core, const DescriptorHeapTypes& descriptor_type, uint32_t descriptors)
 {
-	if (descriptors < m_decriptor_heap_current_offset)
+	if (descriptors + m_decriptor_heap_current_offset > m_max_descriptor_heap_offset)
 		assert(false);
 
 	auto cpu_handle = m_descriptor_heap->GetCPUDescriptorHandleForHeapStart();

@@ -5,6 +5,7 @@
 #include "DX12CORE/DX12StackAllocator.h"
 #include "SceneSystem/SceneManager.h"
 #include "ECS/EntityManager.h"
+#include "ImGUIMain.h"
 
 DX12BufferViewHandle transform_constant_buffer_view;
 DX12BufferHandle transform_sub;
@@ -12,6 +13,8 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 {
 	m_window = std::make_unique<Window>(window_width, window_height, window_name, window_name);
 	m_dx12_core.InitCore(m_window.get(), 2);
+
+	ImGUIMain::Init(&m_dx12_core);
 
 	//Depht stencil
 	m_depthstencil = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, window_width, window_height, TextureFlags::DEPTSTENCIL_DENYSHADER_FLAG);
@@ -55,6 +58,13 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.ResetBuffers();
+
+
+}
+
+RenderCore::~RenderCore()
+{
+	ImGUIMain::Destroy();
 }
 
 bool RenderCore::UpdateRender(Scene* draw_scene)
@@ -125,13 +135,15 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
 
-	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::PRESENT, ResourceState::RENDER_TARGET);
-
 	if (render_object_amount)
 	{
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, transform_data_buffer);
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, sprite_data_buffer);
 	}
+
+	ImGUIMain::EndFrame(&m_dx12_core);
+
+	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::PRESENT, ResourceState::RENDER_TARGET);
 
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetSwapChain()->Present();

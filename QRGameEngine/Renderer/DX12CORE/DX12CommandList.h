@@ -8,10 +8,12 @@ class DX12Fence;
 class DX12CommandQueue;
 class DX12RootSignature;
 class DX12Pipeline;
+class ImGUIMain;
 
 class DX12CommandList
 {
 	friend DX12CommandQueue;
+	friend ImGUIMain;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_command_allocator;

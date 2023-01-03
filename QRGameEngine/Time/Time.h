@@ -9,7 +9,7 @@ private:
 	static inline double s_elapsed_time;
 
 public:
-	static double GetDeltaTime();
+	static double GetDeltaTime(const Timer::TimeTypes& time_type = Timer::TimeTypes::Seconds);
 	static double GetElapsedTime();
 
 	static void Start();

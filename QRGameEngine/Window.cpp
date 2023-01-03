@@ -1,10 +1,18 @@
 #include "pch.h"
 #include "Window.h"
+#include "Vendor/Include/ImGUI/imgui.h"
+#include "Vendor/Include/ImGUI/backends/imgui_impl_win32.h"
+#include "Vendor/Include/ImGUI/backends/imgui_impl_dx12.h"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 WindowKeyInputs Window::s_window_key_inputs = {};
 
 LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+        return true;
+
     switch (message)
     {
     case WM_CLOSE:
@@ -19,13 +27,29 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
     }
     case WM_KEYDOWN:
     {
-        HandleInputs(wParam, true);;
+        HandleInputs(wParam, true);
     } break;
 
     case WM_KEYUP:
     {
         HandleInputs(wParam, false);
     } break;
+    case WM_WINDOWPOSCHANGING:
+    {
+        //if (IsMinimized(Window::GetHandle())) return 0;
+        //PublishEvent<WindowPosChangingEvent>();
+        break;
+    }
+    case WM_SIZE:
+    {
+        //if (IsMinimized(Window::GetHandle())) return 0;
+
+        //s_windowData.dimensions.x = LOWORD(lParam);
+        //s_windowData.dimensions.y = HIWORD(lParam);
+
+        //PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
+        return 0;
+    }
     }
 
     return DefWindowProc(hwnd, message, wParam, lParam);

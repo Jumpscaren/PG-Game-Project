@@ -38,6 +38,8 @@ private:
 
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
+	~RenderCore();
+
 	bool UpdateRender(Scene* draw_scene);
 
 	TextureHandle CreateTexture(std::string texture_file_name);

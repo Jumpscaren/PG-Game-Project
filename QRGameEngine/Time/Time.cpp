@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "Time.h"
 
-double Time::GetDeltaTime()
+double Time::GetDeltaTime(const Timer::TimeTypes& time_type)
 {
-	return s_delta_time / double(Timer::TimeTypes::Seconds);
+	return s_delta_time / double(time_type);
 }
 
 double Time::GetElapsedTime()
