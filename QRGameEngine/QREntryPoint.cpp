@@ -6,10 +6,11 @@
 #include "EngineComponents.h"
 #include "Time/Time.h"
 #include "Renderer/ImGUIMain.h"
-#include "Scripting/MonoCore.h"
+#include "Scripting/CSMonoCore.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
+CSMonoCore* mono_core;
 SceneIndex main_scene;
 Entity render_ent;
 
@@ -30,7 +31,11 @@ struct TempComp
 
 void QREntryPoint::EntryPoint()
 {
-	MonoCore core;
+	mono_core = new CSMonoCore();
+
+	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
+	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
+	mono_core->CallMethod(main_method_handle);
 
 	EntityManager ent(100);
 	Entity e = ent.NewEntity();
@@ -74,6 +79,18 @@ void QREntryPoint::EntryPoint()
 	render_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(render_ent, Vector3(), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 2.0f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
+
+	render_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.2f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 1.0f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
+
+	render_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.4f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 1.5f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
+
+	render_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.6f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 0.5f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 }
 
 float average_frame_time = 0;
@@ -111,6 +128,7 @@ void QREntryPoint::RunTime()
 		Time::Stop();
 	}
 
+	delete mono_core;
 	delete render_core;
 	delete scene_manager;
 }

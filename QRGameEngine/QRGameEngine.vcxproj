@@ -165,9 +165,11 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common\EngineTypes.cpp" />
+    <ClCompile Include="Scripting\CSMonoMethod.cpp" />
     <ClCompile Include="ECS\EntityManager.cpp" />
     <ClCompile Include="EngineComponents.cpp" />
-    <ClCompile Include="Scripting\MonoCore.cpp" />
+    <ClCompile Include="Scripting\CSMonoClass.cpp" />
+    <ClCompile Include="Scripting\CSMonoCore.cpp" />
     <ClCompile Include="Renderer\ImGUIMain.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12BufferManager.cpp" />
     <ClCompile Include="Renderer\DX12CORE\DX12CommandList.cpp" />
@@ -229,9 +231,11 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\EngineTypes.h" />
+    <ClInclude Include="Scripting\CSMonoMethod.h" />
     <ClInclude Include="ECS\EntityManager.h" />
     <ClInclude Include="EngineComponents.h" />
-    <ClInclude Include="Scripting\MonoCore.h" />
+    <ClInclude Include="Scripting\CSMonoClass.h" />
+    <ClInclude Include="Scripting\CSMonoCore.h" />
     <ClInclude Include="Renderer\ImGUIMain.h" />
     <ClInclude Include="Renderer\DX12CORE\BufferTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\DescriptorTypes.h" />
@@ -263,6 +267,10 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClInclude Include="Renderer\RenderCore.h" />
     <ClInclude Include="SceneSystem\Scene.h" />
     <ClInclude Include="SceneSystem\SceneManager.h" />
+    <ClInclude Include="Scripting\CSMonoHandles.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Time\Time.h" />
     <ClInclude Include="Time\Timer.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />

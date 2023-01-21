@@ -126,7 +126,13 @@
     <ClCompile Include="Renderer\ImGUIMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scripting\MonoCore.cpp">
+    <ClCompile Include="Scripting\CSMonoCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\CSMonoClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\CSMonoMethod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -284,7 +290,16 @@
     <ClInclude Include="Renderer\ImGUIMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scripting\MonoCore.h">
+    <ClInclude Include="Scripting\CSMonoCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\CSMonoClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\CSMonoMethod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\CSMonoHandles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
