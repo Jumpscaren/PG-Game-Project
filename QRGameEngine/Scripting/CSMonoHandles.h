@@ -10,3 +10,8 @@ struct MonoMethodHandle
 {
 	uint64_t handle;
 };
+
+struct MonoObjectHandle
+{
+	uint64_t handle;
+};

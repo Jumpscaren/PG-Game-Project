@@ -29,6 +29,11 @@ struct TempComp
 	int mine;
 };
 
+void PrintText()
+{
+	std::cout << "Text\n";
+}
+
 void QREntryPoint::EntryPoint()
 {
 	mono_core = new CSMonoCore();
@@ -36,6 +41,15 @@ void QREntryPoint::EntryPoint()
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
 	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
 	mono_core->CallMethod(main_method_handle);
+
+	auto print_method_handle = mono_core->HookAndRegisterMonoMethod(main_class_handle, "PrintText", &PrintText);
+	mono_core->CallMethod(print_method_handle);
+
+	auto testfunc_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "TestFunc");
+
+	CSMonoObject object(mono_core, main_class_handle);
+	mono_core->CallMethod(&object, testfunc_method_handle);
+	mono_core->CallMethod(testfunc_method_handle);
 
 	EntityManager ent(100);
 	Entity e = ent.NewEntity();

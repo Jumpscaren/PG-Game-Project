@@ -135,6 +135,9 @@
     <ClCompile Include="Scripting\CSMonoMethod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Scripting\CSMonoObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -300,6 +303,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scripting\CSMonoHandles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\CSMonoObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

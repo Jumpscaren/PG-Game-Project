@@ -165,6 +165,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common\EngineTypes.cpp" />
+    <ClCompile Include="Scripting\CSMonoObject.cpp" />
     <ClCompile Include="Scripting\CSMonoMethod.cpp" />
     <ClCompile Include="ECS\EntityManager.cpp" />
     <ClCompile Include="EngineComponents.cpp" />
@@ -231,6 +232,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\EngineTypes.h" />
+    <ClInclude Include="Scripting\CSMonoObject.h" />
     <ClInclude Include="Scripting\CSMonoMethod.h" />
     <ClInclude Include="ECS\EntityManager.h" />
     <ClInclude Include="EngineComponents.h" />

@@ -14,6 +14,11 @@ CSMonoMethod* CSMonoCore::GetMonoMethod(const MonoMethodHandle& method_handle)
 	return &m_mono_methods[method_handle.handle];
 }
 
+_MonoDomain* CSMonoCore::GetDomain() const
+{
+	return m_domain;
+}
+
 CSMonoCore::CSMonoCore()
 {
 	mono_set_dirs("../QRGameEngine/", "../QRGameEngine/");
@@ -34,6 +39,14 @@ CSMonoCore::CSMonoCore()
 MonoImage* CSMonoCore::GetImage() const
 {
 	return m_image;
+}
+
+void CSMonoCore::HandleException(_MonoObject* exception)
+{
+	if (!exception)
+		return;
+
+	mono_print_unhandled_exception(exception);
 }
 
 MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace, const std::string& class_name)
@@ -59,4 +72,28 @@ void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle)
 	MonoObject* exception = nullptr;
 
 	mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), nullptr, nullptr, &exception);
+
+	HandleException(exception);
+}
+
+void CSMonoCore::CallMethod(CSMonoObject* mono_object, const MonoMethodHandle& method_handle)
+{
+	MonoObject* exception = nullptr;
+
+	mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), mono_object->GetMonoObject(), nullptr, &exception);
+
+	HandleException(exception);
+}
+
+void CSMonoCore::HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method)
+{
+	CSMonoClass* mono_class = GetMonoClass(class_handle);
+	std::string full_name =  mono_class->GetMonoClassFullName() + "::" + method_name;
+	mono_add_internal_call(full_name.c_str(), method);
+}
+
+MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method)
+{
+	HookMethod(class_handle, method_name, method);
+	return RegisterMonoMethod(class_handle, method_name);
 }
