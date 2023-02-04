@@ -49,6 +49,50 @@ void CSMonoCore::HandleException(_MonoObject* exception)
 	mono_print_unhandled_exception(exception);
 }
 
+void* CSMonoCore::ToMethodParameter(int& number)
+{
+	return &number;
+}
+
+void* CSMonoCore::ToMethodParameter(float& number)
+{
+	return &number;
+}
+
+void* CSMonoCore::ToMethodParameter(double& number)
+{
+	return &number;
+}
+
+void* CSMonoCore::ToMethodParameter(bool& boolean)
+{
+	return &boolean;
+}
+
+void* CSMonoCore::ToMethodParameter(const char* string)
+{
+	return mono_string_new(m_domain, string);
+}
+
+void* CSMonoCore::ToMethodParameter(const std::string& string)
+{
+	return mono_string_new(m_domain, string.c_str());
+}
+
+void* CSMonoCore::ToMethodParameter(CSMonoObject* mono_object)
+{
+	return mono_object->GetMonoObject();
+}
+
+void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters)
+{
+	MonoObject* exception = nullptr;
+
+	mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), mono_object, parameters, &exception);
+
+	HandleException(exception);
+}
+
 MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace, const std::string& class_name)
 {
 	MonoClassHandle class_handle = { m_mono_classes.size() };

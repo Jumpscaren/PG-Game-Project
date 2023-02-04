@@ -12,11 +12,15 @@ private:
 	uint32_t m_gchandle;
 	MonoClassHandle m_class_handle;
 
+	CSMonoCore* m_mono_core_ref;
+
 private:
 	_MonoObject* GetMonoObject() const;
 
 public:
 	CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle);
 	~CSMonoObject();
+
+	void CallMethod(const MonoMethodHandle& method_handle);
 };
 

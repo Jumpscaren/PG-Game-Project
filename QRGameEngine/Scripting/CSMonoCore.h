@@ -28,6 +28,16 @@ private:
 
 	void HandleException(_MonoObject* exception);
 
+	void* ToMethodParameter(int& number);
+	void* ToMethodParameter(float& number);
+	void* ToMethodParameter(double& number);
+	void* ToMethodParameter(bool& boolean);
+	void* ToMethodParameter(const char* string);
+	void* ToMethodParameter(const std::string& string);
+	void* ToMethodParameter(CSMonoObject* mono_object);
+
+	void CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters);
+
 public:
 	CSMonoCore();
 
@@ -37,7 +47,23 @@ public:
 
 	void CallMethod(const MonoMethodHandle& method_handle);
 	void CallMethod(CSMonoObject* mono_object, const MonoMethodHandle& method_handle);
+	template<typename...Args>
+	void CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args&& ...args);
 
 	void HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
 	MonoMethodHandle HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
 };
+
+template<typename ...Args>
+inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args && ...args)
+{
+	const int argument_size = sizeof...(Args);
+
+	void* parameters[argument_size];
+	
+	int index = 0;
+
+	((parameters[index++] = ToMethodParameter(args)), ...);
+
+	CallMethod(method_handle, mono_object, parameters);
+}

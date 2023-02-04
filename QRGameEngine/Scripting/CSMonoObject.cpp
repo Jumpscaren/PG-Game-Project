@@ -10,7 +10,7 @@ _MonoObject* CSMonoObject::GetMonoObject() const
 	return m_mono_object;
 }
 
-CSMonoObject::CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle) : m_class_handle(class_handle)
+CSMonoObject::CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle) : m_class_handle(class_handle), m_mono_core_ref(mono_core)
 {
 	m_mono_object = mono_object_new(mono_core->GetDomain(), mono_core->GetMonoClass(class_handle)->GetMonoClass());
 	m_gchandle = mono_gchandle_new(m_mono_object, false);
@@ -20,4 +20,9 @@ CSMonoObject::CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_h
 CSMonoObject::~CSMonoObject()
 {
 	mono_gchandle_free(m_gchandle);
+}
+
+void CSMonoObject::CallMethod(const MonoMethodHandle& method_handle)
+{
+	m_mono_core_ref->CallMethod(this, method_handle);
 }

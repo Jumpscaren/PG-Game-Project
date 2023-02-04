@@ -22,5 +22,10 @@ namespace ScriptProject
         {
             PrintText();
         }
+
+        public void PrintArgs(int num, bool boolean, string text)
+        {
+            System.Console.WriteLine(text + " : " + num + " : " + boolean);
+        }
     }
 }
