@@ -84,13 +84,71 @@ void* CSMonoCore::ToMethodParameter(CSMonoObject* mono_object)
 	return mono_object->GetMonoObject();
 }
 
-void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters)
+int CSMonoCore::MonoObjectToValue(int* mono_object)
+{
+	return *(int*)(mono_object_unbox((MonoObject*)mono_object));
+}
+
+float CSMonoCore::MonoObjectToValue(float* mono_object)
+{
+	return *(float*)(mono_object_unbox((MonoObject*)mono_object));
+}
+
+double CSMonoCore::MonoObjectToValue(double* mono_object)
+{
+	return *(double*)(mono_object_unbox((MonoObject*)mono_object));
+}
+
+bool CSMonoCore::MonoObjectToValue(bool* mono_object)
+{
+	return *(bool*)(mono_object_unbox((MonoObject*)mono_object));
+}
+
+std::string CSMonoCore::MonoObjectToValue(std::string* mono_object)
+{
+	MonoString* mono_string = mono_object_to_string((MonoObject*)mono_object, nullptr);
+	std::string return_string = mono_string_to_utf8(mono_string);
+	return std::move(return_string);
+}
+
+CSMonoObject* CSMonoCore::MonoObjectToValue(CSMonoObject** mono_object)
+{
+	return new CSMonoObject(this, (MonoObject*)(*mono_object));
+}
+
+_MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters, uint32_t parameter_count)
 {
 	MonoObject* exception = nullptr;
 
-	mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), mono_object, parameters, &exception);
+	MonoMethod* method = GetMonoMethod(method_handle)->GetMonoMethod();
+	
+#ifdef _DEBUG
+	uint32_t param_amount = mono_signature_get_param_count(mono_method_signature(method));
+	assert(param_amount == parameter_count);
+#endif // _DEBUG
+
+
+	MonoObject* return_value = mono_runtime_invoke(method, mono_object, parameters, &exception);
 
 	HandleException(exception);
+
+	return return_value;
+}
+
+MonoClassHandle CSMonoCore::RegisterMonoClass(_MonoClass* mono_class)
+{
+	std::string class_name = mono_class_get_name(mono_class);
+	std::string class_namespace = mono_class_get_namespace(mono_class);
+	//Change this to an map instead or something, quite slow to go trough every class
+	for (uint64_t i = 0; i < m_mono_classes.size(); ++i)
+	{
+		if (class_name == m_mono_classes[i].GetMonoClassName() && class_namespace == m_mono_classes[i].GetMonoNamespace())
+		{
+			return MonoClassHandle(i);
+		}
+	}
+
+	return RegisterMonoClass(class_namespace, class_name);
 }
 
 MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace, const std::string& class_name)
@@ -120,7 +178,7 @@ void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle)
 	HandleException(exception);
 }
 
-void CSMonoCore::CallMethod(CSMonoObject* mono_object, const MonoMethodHandle& method_handle)
+void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object)
 {
 	MonoObject* exception = nullptr;
 

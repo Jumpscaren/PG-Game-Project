@@ -48,12 +48,16 @@ void QREntryPoint::EntryPoint()
 	auto testfunc_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "TestFunc");
 
 	CSMonoObject object(mono_core, main_class_handle);
-	mono_core->CallMethod(&object, testfunc_method_handle);
+	mono_core->CallMethod(testfunc_method_handle, &object);
 	object.CallMethod(testfunc_method_handle);
 	mono_core->CallMethod(testfunc_method_handle);
 
 	auto print_args_method = mono_core->RegisterMonoMethod(main_class_handle, "PrintArgs");
 	mono_core->CallMethod(print_args_method, &object, 10, false, "Text");
+
+	auto return_int_method = mono_core->RegisterMonoMethod(main_class_handle, "ReturnInt");
+	int return_int;
+	mono_core->CallMethod(return_int, return_int_method, &object, 2.31f, 3.14, "PenisMannen!", &object);
 
 	EntityManager ent(100);
 	Entity e = ent.NewEntity();

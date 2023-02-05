@@ -15,6 +15,11 @@ const std::string& CSMonoClass::GetMonoClassFullName() const
 	return m_mono_full_name;
 }
 
+const std::string& CSMonoClass::GetMonoNamespace() const
+{
+	return m_mono_namespace;
+}
+
 _MonoClass* CSMonoClass::GetMonoClass() const
 {
 	return m_mono_class;

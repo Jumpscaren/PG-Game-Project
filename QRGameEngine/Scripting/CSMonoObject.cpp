@@ -17,6 +17,13 @@ CSMonoObject::CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_h
 	mono_runtime_object_init(m_mono_object);
 }
 
+CSMonoObject::CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object) : m_mono_core_ref(mono_core), m_mono_object(mono_object)
+{
+	m_gchandle = mono_gchandle_new(m_mono_object, false);
+	MonoClass* mono_class = mono_object_get_class(m_mono_object);
+	m_class_handle = mono_core->RegisterMonoClass(mono_class);
+}
+
 CSMonoObject::~CSMonoObject()
 {
 	mono_gchandle_free(m_gchandle);
@@ -24,5 +31,5 @@ CSMonoObject::~CSMonoObject()
 
 void CSMonoObject::CallMethod(const MonoMethodHandle& method_handle)
 {
-	m_mono_core_ref->CallMethod(this, method_handle);
+	m_mono_core_ref->CallMethod(method_handle, this);
 }

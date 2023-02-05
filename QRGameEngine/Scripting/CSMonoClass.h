@@ -17,6 +17,7 @@ public:
 
 	const std::string& GetMonoClassName() const;
 	const std::string& GetMonoClassFullName() const;
+	const std::string& GetMonoNamespace() const;
 	_MonoClass* GetMonoClass() const;
 };
 
