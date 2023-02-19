@@ -127,7 +127,6 @@ _MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handl
 	assert(param_amount == parameter_count);
 #endif // _DEBUG
 
-
 	MonoObject* return_value = mono_runtime_invoke(method, mono_object, parameters, &exception);
 
 	HandleException(exception);
@@ -171,20 +170,24 @@ MonoMethodHandle CSMonoCore::RegisterMonoMethod(const MonoClassHandle& class_han
 
 void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle)
 {
-	MonoObject* exception = nullptr;
+	CallMethodInternal(method_handle, nullptr, nullptr, 0);
 
-	mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), nullptr, nullptr, &exception);
+	//MonoObject* exception = nullptr;
 
-	HandleException(exception);
+	//mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), nullptr, nullptr, nullptr);
+
+	//HandleException(exception);
 }
 
 void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object)
 {
-	MonoObject* exception = nullptr;
+	CallMethodInternal(method_handle, mono_object, nullptr, 0);
 
-	mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), mono_object->GetMonoObject(), nullptr, &exception);
+	//MonoObject* exception = nullptr;
 
-	HandleException(exception);
+	//mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), mono_object->GetMonoObject(), nullptr, &exception);
+
+	//HandleException(exception);
 }
 
 void CSMonoCore::HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method)

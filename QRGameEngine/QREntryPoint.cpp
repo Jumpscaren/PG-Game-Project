@@ -34,6 +34,30 @@ void PrintText()
 	std::cout << "Text\n";
 }
 
+
+MonoMethodHandle return_int_method;
+int CallReturnInt(float num1, double num2, void* text, void* me)
+{
+	//int int_num1 = *(int*)num1;
+	//uint32_t 
+	//float* numt = (float*)num1;
+	//float g = (float)numt;
+	//float float_num1 = (float)num1;
+
+	//mono_core->MonoObjectToValue((std::string*)text);
+	//mono_core->MonoObjectToValue((CSMonoObject**)&me);
+
+	int return_int = 0;
+	//return_int = 
+	/*mono_core->CallMethod(return_int, return_int_method, &me, 2.31f, 3.14, "PenisMannen!", &me);*/
+	return return_int;
+}
+
+int TESTING(int h)
+{
+	return h * 2;
+}
+
 void QREntryPoint::EntryPoint()
 {
 	mono_core = new CSMonoCore();
@@ -45,6 +69,9 @@ void QREntryPoint::EntryPoint()
 	auto print_method_handle = mono_core->HookAndRegisterMonoMethod(main_class_handle, "PrintText", &PrintText);
 	mono_core->CallMethod(print_method_handle);
 
+	auto testing_func = mono_core->HookAndRegisterMonoMethodType<(void*)TESTING>(main_class_handle, "Testing", &TESTING);
+	mono_core->CallMethod(testing_func, nullptr, 4);
+
 	auto testfunc_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "TestFunc");
 
 	CSMonoObject object(mono_core, main_class_handle);
@@ -55,7 +82,7 @@ void QREntryPoint::EntryPoint()
 	auto print_args_method = mono_core->RegisterMonoMethod(main_class_handle, "PrintArgs");
 	mono_core->CallMethod(print_args_method, &object, 10, false, "Text");
 
-	auto return_int_method = mono_core->RegisterMonoMethod(main_class_handle, "ReturnInt");
+	return_int_method = mono_core->RegisterMonoMethod(main_class_handle, "ReturnInt");
 	int return_int;
 	mono_core->CallMethod(return_int, return_int_method, &object, 2.31f, 3.14, "PenisMannen!", &object);
 

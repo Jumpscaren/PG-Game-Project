@@ -66,6 +66,12 @@ public:
 
 	void HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
 	MonoMethodHandle HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
+
+	template<void* t_method, typename Type, typename...Args>
+	MonoMethodHandle HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, Type(*)(Args...));
+
+	template<void* method, typename Type, typename...Args>
+	static Type HookedMethod(Args... args);
 };
 
 template<typename ...Args>
@@ -106,4 +112,16 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object, parameters, index);
 
 	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+}
+
+template<void* t_method, typename Type, typename ...Args>
+inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, Type(*)(Args...))
+{
+	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethod<t_method, Type, Args...>);
+}
+
+template<void* method, typename Type, typename ...Args>
+inline Type CSMonoCore::HookedMethod(Args ...args)
+{
+	return ((Type(*)(Args...))(method))(args...);
 }

@@ -38,5 +38,11 @@ namespace ScriptProject
             Console.WriteLine("Me.Num = " + me.num);
             return (int)num1 + (int)num2 + text.Length + me.num; 
         }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public static extern int CallReturnInt(float num1, double num2, string text, Main me);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public static extern int Testing(int h);
     }
 }
