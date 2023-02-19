@@ -23,6 +23,8 @@ namespace ScriptProject
         public void TestFunc()
         {
             PrintText();
+            ReturnInt(1.0f, 0.2, "Hello", this);
+            CallReturnInt(1.0f, 0.2, "Hello", this);
         }
 
         public void PrintArgs(int num, bool boolean, string text)
@@ -36,6 +38,7 @@ namespace ScriptProject
             Console.WriteLine("Num2 = " + num2);
             Console.WriteLine("Text = " + text);
             Console.WriteLine("Me.Num = " + me.num);
+
             return (int)num1 + (int)num2 + text.Length + me.num; 
         }
 

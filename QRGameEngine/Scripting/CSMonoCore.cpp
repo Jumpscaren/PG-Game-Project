@@ -4,6 +4,8 @@
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/debug-helpers.h>
 
+CSMonoCore* CSMonoCore::s_mono_core = nullptr;
+
 CSMonoClass* CSMonoCore::GetMonoClass(const MonoClassHandle& class_handle)
 {
 	return &m_mono_classes[class_handle.handle];
@@ -34,6 +36,8 @@ CSMonoCore::CSMonoCore()
 	m_image = mono_assembly_get_image(m_assembly);
 
 	assert(m_image);
+
+	s_mono_core = this;
 }
 
 MonoImage* CSMonoCore::GetImage() const
@@ -116,6 +120,36 @@ CSMonoObject* CSMonoCore::MonoObjectToValue(CSMonoObject** mono_object)
 	return new CSMonoObject(this, (MonoObject*)(*mono_object));
 }
 
+int CSMonoCore::MonoMethodParameter(int mono_parameter)
+{
+	return mono_parameter;
+}
+
+float CSMonoCore::MonoMethodParameter(float mono_parameter)
+{
+	return mono_parameter;
+}
+
+double CSMonoCore::MonoMethodParameter(double mono_parameter)
+{
+	return mono_parameter;
+}
+
+bool CSMonoCore::MonoMethodParameter(bool mono_parameter)
+{
+	return mono_parameter;
+}
+
+CSMonoString* CSMonoCore::MonoMethodParameter(CSMonoString* mono_parameter)
+{
+	return new CSMonoString((MonoString*)mono_parameter);
+}
+
+CSMonoObject* CSMonoCore::MonoMethodParameter(CSMonoObject* mono_parameter)
+{
+	return new CSMonoObject(s_mono_core, (MonoObject*)(mono_parameter));
+}
+
 _MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters, uint32_t parameter_count)
 {
 	MonoObject* exception = nullptr;
@@ -127,7 +161,11 @@ _MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handl
 	assert(param_amount == parameter_count);
 #endif // _DEBUG
 
-	MonoObject* return_value = mono_runtime_invoke(method, mono_object, parameters, &exception);
+	MonoObject* method_object = nullptr;
+	if (mono_object)
+		method_object = mono_object->GetMonoObject();
+
+	MonoObject* return_value = mono_runtime_invoke(method, method_object, parameters, &exception);
 
 	HandleException(exception);
 

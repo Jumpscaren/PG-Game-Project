@@ -36,7 +36,7 @@ void PrintText()
 
 
 MonoMethodHandle return_int_method;
-int CallReturnInt(float num1, double num2, void* text, void* me)
+int CallReturnInt(float num1, double num2, CSMonoString* text, CSMonoObject* me)
 {
 	//int int_num1 = *(int*)num1;
 	//uint32_t 
@@ -48,6 +48,7 @@ int CallReturnInt(float num1, double num2, void* text, void* me)
 	//mono_core->MonoObjectToValue((CSMonoObject**)&me);
 
 	int return_int = 0;
+	std::string string_text = *text;
 	//return_int = 
 	/*mono_core->CallMethod(return_int, return_int_method, &me, 2.31f, 3.14, "PenisMannen!", &me);*/
 	return return_int;
@@ -71,6 +72,9 @@ void QREntryPoint::EntryPoint()
 
 	auto testing_func = mono_core->HookAndRegisterMonoMethodType<(void*)TESTING>(main_class_handle, "Testing", &TESTING);
 	mono_core->CallMethod(testing_func, nullptr, 4);
+	/*mono_core->CallMethod(call_return_int_handle, nullptr, 4);*/
+
+	auto call_return_int_handle = mono_core->HookAndRegisterMonoMethodType<(void*)CallReturnInt>(main_class_handle, "CallReturnInt", &CallReturnInt);
 
 	auto testfunc_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "TestFunc");
 

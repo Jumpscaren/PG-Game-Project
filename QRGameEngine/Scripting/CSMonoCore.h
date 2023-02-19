@@ -2,6 +2,7 @@
 #include "CSMonoClass.h"
 #include "CSMonoMethod.h"
 #include "CSMonoObject.h"
+#include "CSMonoString.h"
 
 struct _MonoDomain;
 struct _MonoAssembly;
@@ -19,6 +20,8 @@ private:
 
 	std::vector<CSMonoClass> m_mono_classes;
 	std::vector<CSMonoMethod> m_mono_methods;
+
+	static CSMonoCore* s_mono_core;
 
 private:
 	CSMonoClass* GetMonoClass(const MonoClassHandle& class_handle);
@@ -41,7 +44,16 @@ private:
 	double MonoObjectToValue(double* mono_object);
 	bool MonoObjectToValue(bool* mono_object);
 	std::string MonoObjectToValue(std::string* mono_object);
+	//Leaks memory ;)
 	CSMonoObject* MonoObjectToValue(CSMonoObject** mono_object);
+
+	static int MonoMethodParameter(int mono_parameter);
+	static float MonoMethodParameter(float mono_parameter);
+	static double MonoMethodParameter(double mono_parameter);
+	static bool MonoMethodParameter(bool mono_parameter);
+	//These two leaks memory ;)
+	static CSMonoString* MonoMethodParameter(CSMonoString* mono_parameter);
+	static CSMonoObject* MonoMethodParameter(CSMonoObject* mono_parameter);
 
 	_MonoObject* CallMethodInternal(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters, uint32_t parameter_count);
 
@@ -123,5 +135,5 @@ inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClas
 template<void* method, typename Type, typename ...Args>
 inline Type CSMonoCore::HookedMethod(Args ...args)
 {
-	return ((Type(*)(Args...))(method))(args...);
+	return ((Type(*)(Args...))(method))(MonoMethodParameter(args)...);
 }

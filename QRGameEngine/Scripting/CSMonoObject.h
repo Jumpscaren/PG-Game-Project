@@ -20,6 +20,7 @@ private:
 public:
 	CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle);
 	CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object);
+	CSMonoObject(const CSMonoObject& obj);
 	~CSMonoObject();
 
 	void CallMethod(const MonoMethodHandle& method_handle);
