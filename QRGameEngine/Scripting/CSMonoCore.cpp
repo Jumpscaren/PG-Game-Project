@@ -140,14 +140,15 @@ bool CSMonoCore::MonoMethodParameter(bool mono_parameter)
 	return mono_parameter;
 }
 
-CSMonoString* CSMonoCore::MonoMethodParameter(CSMonoString* mono_parameter)
+std::string CSMonoCore::MonoMethodParameter(_MonoString* mono_parameter)
 {
-	return new CSMonoString((MonoString*)mono_parameter);
+	std::string string = mono_string_to_utf8(mono_parameter);
+	return std::move(string);
 }
 
-CSMonoObject* CSMonoCore::MonoMethodParameter(CSMonoObject* mono_parameter)
+CSMonoObject CSMonoCore::MonoMethodParameter(_MonoObject* mono_parameter)
 {
-	return new CSMonoObject(s_mono_core, (MonoObject*)(mono_parameter));
+	return std::move(CSMonoObject(s_mono_core, (MonoObject*)(mono_parameter)));
 }
 
 _MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters, uint32_t parameter_count)
