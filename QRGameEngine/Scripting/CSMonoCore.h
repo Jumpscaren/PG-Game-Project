@@ -106,7 +106,7 @@ private:
 	static std::string MonoMethodParameter(_MonoString* mono_parameter);
 	static CSMonoObject MonoMethodParameter(_MonoObject* mono_parameter);
 
-	_MonoObject* CallMethodInternal(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters, uint32_t parameter_count);
+	_MonoObject* CallMethodInternal(const MonoMethodHandle& method_handle, _MonoObject* mono_object, void** parameters, uint32_t parameter_count);
 
 	MonoClassHandle RegisterMonoClass(_MonoClass* mono_class);
 
@@ -132,15 +132,23 @@ public:
 	template<typename Type>
 	void SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 
-	void CallMethod(const MonoMethodHandle& method_handle);
-	void CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object);
+	void CallStaticMethod(const MonoMethodHandle& method_handle);
+	void CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object);
+
 	template<typename...Args>
-	void CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args&& ...args);
+	void CallStaticMethod(const MonoMethodHandle& method_handle, Args&& ...args);
+	template<typename...Args>
+	void CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object, Args&& ...args);
 
 	template<typename Type>
-	void CallMethod(Type& return_value, const MonoMethodHandle& method_handle, CSMonoObject* mono_object);
+	void CallStaticMethod(Type& return_value, const MonoMethodHandle& method_handle);
+	template<typename Type>
+	void CallMethod(Type& return_value, const MonoMethodHandle& method_handle, const CSMonoObject& mono_object);
+
 	template<typename Type, typename...Args>
-	void CallMethod(Type& return_value, const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args&& ...args);
+	void CallStaticMethod(Type& return_value, const MonoMethodHandle& method_handle, Args&& ...args);
+	template<typename Type, typename...Args>
+	void CallMethod(Type& return_value, const MonoMethodHandle& method_handle, const CSMonoObject& mono_object, Args&& ...args);
 
 	void HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
 	MonoMethodHandle HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
@@ -181,7 +189,21 @@ inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_ob
 }
 
 template<typename ...Args>
-inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args && ...args)
+inline void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle, Args && ...args)
+{
+	const int argument_size = sizeof...(Args);
+
+	void* parameters[argument_size];
+
+	int index = 0;
+
+	((parameters[index++] = ToMethodParameter(args)), ...);
+
+	CallMethodInternal(method_handle, nullptr, parameters, index);
+}
+
+template<typename ...Args>
+inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object, Args && ...args)
 {
 	const int argument_size = sizeof...(Args);
 
@@ -191,21 +213,31 @@ inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMono
 
 	((parameters[index++] = ToMethodParameter(args)), ...);
 
-	CallMethodInternal(method_handle, mono_object, parameters, index);
+	CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, index);
 }
 
 template<typename Type>
-inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& method_handle, CSMonoObject* mono_object)
+inline void CSMonoCore::CallStaticMethod(Type& return_value, const MonoMethodHandle& method_handle)
 {
 	void** parameters = nullptr;
 
-	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object, parameters, 0);
+	_MonoObject* method_return_value = CallMethodInternal(method_handle, nullptr, parameters, 0);
+
+	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+}
+
+template<typename Type>
+inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& method_handle, const CSMonoObject& mono_object)
+{
+	void** parameters = nullptr;
+
+	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, 0);
 
 	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
 }
 
 template<typename Type, typename ...Args>
-inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args && ...args)
+inline void CSMonoCore::CallStaticMethod(Type& return_value, const MonoMethodHandle& method_handle, Args && ...args)
 {
 	const int argument_size = sizeof...(Args);
 
@@ -215,7 +247,23 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 
 	((parameters[index++] = ToMethodParameter(args)), ...);
 
-	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object, parameters, index);
+	_MonoObject* method_return_value = CallMethodInternal(method_handle, nullptr, parameters, index);
+
+	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+}
+
+template<typename Type, typename ...Args>
+inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& method_handle, const CSMonoObject& mono_object, Args && ...args)
+{
+	const int argument_size = sizeof...(Args);
+
+	void* parameters[argument_size];
+
+	int index = 0;
+
+	((parameters[index++] = ToMethodParameter(args)), ...);
+
+	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, index);
 
 	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
 }

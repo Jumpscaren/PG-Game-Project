@@ -47,7 +47,7 @@ int CallReturnInt(float num1, double num2, std::string text, CSMonoObject me)
 	//mono_core->MonoObjectToValue((CSMonoObject**)&me);
 
 	int return_int = 0;
-	mono_core->CallMethod(return_int, return_int_method, &me, 2.31f, 3.14, "Mannen!", me);
+	mono_core->CallMethod(return_int, return_int_method, me, 2.31f, 3.14, "Mannen!", me);
 	return return_int;
 }
 
@@ -62,13 +62,13 @@ void QREntryPoint::EntryPoint()
 
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
 	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
-	mono_core->CallMethod(main_method_handle);
+	mono_core->CallStaticMethod(main_method_handle);
 
 	auto print_method_handle = mono_core->HookAndRegisterMonoMethod(main_class_handle, "PrintText", &PrintText);
-	mono_core->CallMethod(print_method_handle);
+	mono_core->CallStaticMethod(print_method_handle);
 
 	auto testing_func = mono_core->HookAndRegisterMonoMethodType<(void*)TESTING>(main_class_handle, "Testing", &TESTING);
-	mono_core->CallMethod(testing_func, nullptr, 4);
+	mono_core->CallStaticMethod(testing_func, 4);
 	/*mono_core->CallMethod(call_return_int_handle, nullptr, 4);*/
 
 	auto call_return_int_handle = mono_core->HookAndRegisterMonoMethodType<CallReturnInt>(main_class_handle, "CallReturnInt", &CallReturnInt);
@@ -78,15 +78,15 @@ void QREntryPoint::EntryPoint()
 	CSMonoObject object(mono_core, main_class_handle);
 
 	auto print_args_method = mono_core->RegisterMonoMethod(main_class_handle, "PrintArgs");
-	mono_core->CallMethod(print_args_method, &object, 10, false, "Text");
+	mono_core->CallMethod(print_args_method, object, 10, false, "Text");
 
 	return_int_method = mono_core->RegisterMonoMethod(main_class_handle, "ReturnInt");
 	int return_int;
-	mono_core->CallMethod(return_int, return_int_method, &object, 2.31f, 3.14, "Mannen!", object);
+	mono_core->CallMethod(return_int, return_int_method, object, 2.31f, 3.14, "Mannen!", object);
 
-	mono_core->CallMethod(testfunc_method_handle, &object);
+	mono_core->CallMethod(testfunc_method_handle, object);
 	object.CallMethod(testfunc_method_handle);
-	mono_core->CallMethod(testfunc_method_handle);
+	mono_core->CallStaticMethod(testfunc_method_handle);
 
 	CSMonoObject this_object;
 	mono_core->GetValue(this_object, object, "i");

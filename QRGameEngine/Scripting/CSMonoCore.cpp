@@ -151,7 +151,7 @@ CSMonoObject CSMonoCore::MonoMethodParameter(_MonoObject* mono_parameter)
 	return std::move(CSMonoObject(s_mono_core, (MonoObject*)(mono_parameter)));
 }
 
-_MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, void** parameters, uint32_t parameter_count)
+_MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handle, _MonoObject* mono_object, void** parameters, uint32_t parameter_count)
 {
 	MonoObject* exception = nullptr;
 
@@ -162,11 +162,7 @@ _MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handl
 	assert(param_amount == parameter_count);
 #endif // _DEBUG
 
-	MonoObject* method_object = nullptr;
-	if (mono_object)
-		method_object = mono_object->GetMonoObject();
-
-	MonoObject* return_value = mono_runtime_invoke(method, method_object, parameters, &exception);
+	MonoObject* return_value = mono_runtime_invoke(method, mono_object, parameters, &exception);
 
 	HandleException(exception);
 
@@ -246,7 +242,7 @@ MonoFieldHandle CSMonoCore::RegisterField(const MonoClassHandle& mono_class_hand
 	return GetMonoClass(mono_class_handle)->AddField(field_name);
 }
 
-void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle)
+void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle)
 {
 	CallMethodInternal(method_handle, nullptr, nullptr, 0);
 
@@ -257,9 +253,9 @@ void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle)
 	//HandleException(exception);
 }
 
-void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object)
+void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object)
 {
-	CallMethodInternal(method_handle, mono_object, nullptr, 0);
+	CallMethodInternal(method_handle, mono_object.GetMonoObject(), nullptr, 0);
 
 	//MonoObject* exception = nullptr;
 
