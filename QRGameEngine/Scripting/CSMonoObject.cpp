@@ -7,6 +7,7 @@
 
 _MonoObject* CSMonoObject::GetMonoObject() const
 {
+	assert(!m_not_initialized);
 	return m_mono_object;
 }
 
@@ -27,6 +28,16 @@ CSMonoObject::CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object) : m_
 CSMonoObject::CSMonoObject(const CSMonoObject& obj) : m_mono_object(obj.m_mono_object), m_class_handle(obj.m_class_handle), m_mono_core_ref(obj.m_mono_core_ref)
 {
 	m_gchandle = mono_gchandle_new(m_mono_object, false);
+	m_not_initialized = false;
+}
+
+CSMonoObject::CSMonoObject()
+{
+	m_mono_object = nullptr;
+	m_class_handle.handle = -1;
+	m_mono_core_ref = nullptr;
+	m_gchandle = 0;
+	m_not_initialized = true;
 }
 
 CSMonoObject::~CSMonoObject()

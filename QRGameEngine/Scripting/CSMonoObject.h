@@ -14,6 +14,8 @@ private:
 
 	CSMonoCore* m_mono_core_ref;
 
+	bool m_not_initialized = false;
+
 private:
 	_MonoObject* GetMonoObject() const;
 
@@ -21,8 +23,8 @@ public:
 	CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle);
 	CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object);
 	CSMonoObject(const CSMonoObject& obj);
+	CSMonoObject();
 	~CSMonoObject();
 
 	void CallMethod(const MonoMethodHandle& method_handle);
 };
-

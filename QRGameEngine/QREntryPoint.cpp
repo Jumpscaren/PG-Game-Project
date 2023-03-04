@@ -47,8 +47,7 @@ int CallReturnInt(float num1, double num2, std::string text, CSMonoObject me)
 	//mono_core->MonoObjectToValue((CSMonoObject**)&me);
 
 	int return_int = 0;
-	//return_int = 
-	/*mono_core->CallMethod(return_int, return_int_method, &me, 2.31f, 3.14, "PenisMannen!", &me);*/
+	mono_core->CallMethod(return_int, return_int_method, &me, 2.31f, 3.14, "Mannen!", me);
 	return return_int;
 }
 
@@ -77,16 +76,31 @@ void QREntryPoint::EntryPoint()
 	auto testfunc_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "TestFunc");
 
 	CSMonoObject object(mono_core, main_class_handle);
-	mono_core->CallMethod(testfunc_method_handle, &object);
-	object.CallMethod(testfunc_method_handle);
-	mono_core->CallMethod(testfunc_method_handle);
 
 	auto print_args_method = mono_core->RegisterMonoMethod(main_class_handle, "PrintArgs");
 	mono_core->CallMethod(print_args_method, &object, 10, false, "Text");
 
 	return_int_method = mono_core->RegisterMonoMethod(main_class_handle, "ReturnInt");
 	int return_int;
-	mono_core->CallMethod(return_int, return_int_method, &object, 2.31f, 3.14, "PenisMannen!", &object);
+	mono_core->CallMethod(return_int, return_int_method, &object, 2.31f, 3.14, "Mannen!", object);
+
+	mono_core->CallMethod(testfunc_method_handle, &object);
+	object.CallMethod(testfunc_method_handle);
+	mono_core->CallMethod(testfunc_method_handle);
+
+	CSMonoObject this_object;
+	mono_core->GetValue(this_object, object, "i");
+	mono_core->SetValue(this_object, object, "i");
+	mono_core->GetValue(return_int, object, "num");
+	mono_core->SetValue(return_int, object, "num");
+	auto mono_i_handle = mono_core->RegisterField(main_class_handle, "i");
+	auto mono_num_handle = mono_core->RegisterField(main_class_handle, "num");
+	mono_core->GetValue(this_object, object, mono_i_handle);
+	mono_core->SetValue(this_object, object, mono_i_handle);
+	mono_core->GetValue(return_int, object, mono_num_handle);
+	mono_core->SetValue(return_int, object, mono_num_handle);
+	double health;
+	mono_core->GetValue(health, object, "health");
 
 	EntityManager ent(100);
 	Entity e = ent.NewEntity();

@@ -10,6 +10,13 @@ namespace ScriptProject
     public class Main
     {
         public int num = 3;
+        Main i = null;
+        static double health = 0.3123f;
+
+        public Main()
+        {
+            i = this;
+        }
 
         public static int main()
         {

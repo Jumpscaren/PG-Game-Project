@@ -83,9 +83,9 @@ void* CSMonoCore::ToMethodParameter(const std::string& string)
 	return mono_string_new(m_domain, string.c_str());
 }
 
-void* CSMonoCore::ToMethodParameter(CSMonoObject* mono_object)
+void* CSMonoCore::ToMethodParameter(const CSMonoObject& mono_object)
 {
-	return mono_object->GetMonoObject();
+	return mono_object.GetMonoObject();
 }
 
 int CSMonoCore::MonoObjectToValue(int* mono_object)
@@ -115,9 +115,9 @@ std::string CSMonoCore::MonoObjectToValue(std::string* mono_object)
 	return std::move(return_string);
 }
 
-CSMonoObject* CSMonoCore::MonoObjectToValue(CSMonoObject** mono_object)
+CSMonoObject CSMonoCore::MonoObjectToValue(CSMonoObject* mono_object)
 {
-	return new CSMonoObject(this, (MonoObject*)(*mono_object));
+	return std::move(CSMonoObject(this, (MonoObject*)(mono_object)));
 }
 
 int CSMonoCore::MonoMethodParameter(int mono_parameter)
@@ -189,6 +189,40 @@ MonoClassHandle CSMonoCore::RegisterMonoClass(_MonoClass* mono_class)
 	return RegisterMonoClass(class_namespace, class_name);
 }
 
+void* CSMonoCore::GetValueInternal(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	MonoClassField* field = mono_class_get_field_from_name(GetMonoClass(mono_object.m_class_handle)->GetMonoClass(), field_name.c_str());
+	assert(field);
+
+	return (void*)mono_field_get_value_object(m_domain, field, mono_object.GetMonoObject());
+}
+
+void CSMonoCore::SetValueInternal(const CSMonoObject& mono_object, const std::string& field_name, void* value)
+{
+	MonoClassField* field = mono_class_get_field_from_name(GetMonoClass(mono_object.m_class_handle)->GetMonoClass(), field_name.c_str());
+	assert(field);
+
+	mono_field_set_value(mono_object.GetMonoObject(), field, value);
+}
+
+void* CSMonoCore::GetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
+{
+	CSMonoClass* mono_class = GetMonoClass(mono_object.m_class_handle);
+	MonoClassField* field = mono_class_get_field(mono_class->GetMonoClass(), mono_class->GetFieldToken(mono_field_handle));
+	assert(field);
+
+	return (void*)mono_field_get_value_object(m_domain, field, mono_object.GetMonoObject());
+}
+
+void CSMonoCore::SetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle, void* value)
+{
+	CSMonoClass* mono_class = GetMonoClass(mono_object.m_class_handle);
+	MonoClassField* field = mono_class_get_field(mono_class->GetMonoClass(), mono_class->GetFieldToken(mono_field_handle));
+	assert(field);
+
+	mono_field_set_value(mono_object.GetMonoObject(), field, value);
+}
+
 MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace, const std::string& class_name)
 {
 	MonoClassHandle class_handle = { m_mono_classes.size() };
@@ -205,6 +239,11 @@ MonoMethodHandle CSMonoCore::RegisterMonoMethod(const MonoClassHandle& class_han
 	m_mono_methods.push_back(CSMonoMethod(GetMonoClass(class_handle), class_handle, method_name));
 
 	return method_handle;
+}
+
+MonoFieldHandle CSMonoCore::RegisterField(const MonoClassHandle& mono_class_handle, const std::string& field_name)
+{
+	return GetMonoClass(mono_class_handle)->AddField(field_name);
 }
 
 void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle)

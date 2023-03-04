@@ -90,15 +90,14 @@ private:
 	void* ToMethodParameter(bool& boolean);
 	void* ToMethodParameter(const char* string);
 	void* ToMethodParameter(const std::string& string);
-	void* ToMethodParameter(CSMonoObject* mono_object);
+	void* ToMethodParameter(const CSMonoObject& mono_object);
 
 	int MonoObjectToValue(int* mono_object);
 	float MonoObjectToValue(float* mono_object);
 	double MonoObjectToValue(double* mono_object);
 	bool MonoObjectToValue(bool* mono_object);
 	std::string MonoObjectToValue(std::string* mono_object);
-	//Leaks memory ;)
-	CSMonoObject* MonoObjectToValue(CSMonoObject** mono_object);
+	CSMonoObject MonoObjectToValue(CSMonoObject* mono_object);
 
 	static int MonoMethodParameter(int mono_parameter);
 	static float MonoMethodParameter(float mono_parameter);
@@ -111,12 +110,27 @@ private:
 
 	MonoClassHandle RegisterMonoClass(_MonoClass* mono_class);
 
+	void* GetValueInternal(const CSMonoObject& mono_object, const std::string& field_name);
+	void SetValueInternal(const CSMonoObject& mono_object, const std::string& field_name, void* value);
+	void* GetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
+	void SetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle, void* value);
+
 public:
 	CSMonoCore();
 
 public:
 	MonoClassHandle RegisterMonoClass(const std::string& class_namespace, const std::string& class_name);
 	MonoMethodHandle RegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name);
+	MonoFieldHandle RegisterField(const MonoClassHandle& mono_class_handle, const std::string& field_name);
+
+	template<typename Type>
+	void GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name);
+	template<typename Type>
+	void SetValue(Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name);
+	template<typename Type>
+	void GetValue(Type& return_value, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
+	template<typename Type>
+	void SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 
 	void CallMethod(const MonoMethodHandle& method_handle);
 	void CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object);
@@ -137,6 +151,34 @@ public:
 	template<void* method, typename Type, typename...Args>
 	static Type HookedMethod(Args... args);
 };
+
+template<typename Type>
+inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name)
+{
+	void* value = GetValueInternal(mono_object, field_name);
+	return_value = MonoObjectToValue((Type*)value);
+}
+
+template<typename Type>
+inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name)
+{
+	void* value = ToMethodParameter(value_to_set);
+	SetValueInternal(mono_object, field_name, value);
+}
+
+template<typename Type>
+inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
+{
+	void* value = GetValueInternal(mono_object, mono_field_handle);
+	return_value = MonoObjectToValue((Type*)value);
+}
+
+template<typename Type>
+inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
+{
+	void* value = ToMethodParameter(value_to_set);
+	SetValueInternal(mono_object, mono_field_handle, value);
+}
 
 template<typename ...Args>
 inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, CSMonoObject* mono_object, Args && ...args)
