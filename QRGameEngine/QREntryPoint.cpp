@@ -61,8 +61,6 @@ void QREntryPoint::EntryPoint()
 	mono_core = new CSMonoCore();
 
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
-	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
-	mono_core->CallStaticMethod(main_method_handle);
 
 	auto print_method_handle = mono_core->HookAndRegisterMonoMethod(main_class_handle, "PrintText", &PrintText);
 	mono_core->CallStaticMethod(print_method_handle);
@@ -101,6 +99,12 @@ void QREntryPoint::EntryPoint()
 	mono_core->SetValue(return_int, object, mono_num_handle);
 	double health;
 	mono_core->GetValue(health, object, "health");
+
+	auto test_script_class = mono_core->RegisterMonoClass("ScriptProject", "TestScript");
+	auto start_method = mono_core->RegisterMonoMethod(test_script_class, "Start");
+	auto update_method = mono_core->TryRegisterMonoMethod(test_script_class, "Update");
+
+	//assert(mono_core->CheckIfMonoMethodExists(update_method));
 
 	EntityManager ent(100);
 	Entity e = ent.NewEntity();
@@ -156,6 +160,16 @@ void QREntryPoint::EntryPoint()
 	render_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(render_ent, Vector3(0.6f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 0.5f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
+
+
+	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
+
+	auto scene_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "SceneManager");
+	mono_core->HookAndRegisterMonoMethodType<SceneManager::GetActiveSceneIndex>(scene_manager_handle, "GetActiveSceneIndex", SceneManager::GetActiveSceneIndex);
+	auto entity_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "EntityManager");
+	mono_core->HookAndRegisterMonoMethodType<EntityManager::CreateEntity>(entity_manager_handle, "CreateEntity", EntityManager::CreateEntity);
+
+	mono_core->CallStaticMethod(main_method_handle);
 }
 
 float average_frame_time = 0;

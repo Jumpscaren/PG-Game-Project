@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.Engine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -21,6 +22,9 @@ namespace ScriptProject
         public static int main()
         {
             System.Console.WriteLine("Hello from C# world\n");
+
+            GameObject gameObject = GameObject.CreateGameObject();
+
             return 0;
         }
 

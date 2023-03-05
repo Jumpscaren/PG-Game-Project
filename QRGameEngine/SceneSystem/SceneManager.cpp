@@ -1,9 +1,12 @@
 #include "pch.h"
 #include "SceneManager.h"
 
+SceneManager* SceneManager::s_singleton;
+
 SceneManager::SceneManager()
 {
 	m_active_scene = -1;
+	s_singleton = this;
 }
 
 SceneIndex SceneManager::CreateScene()
@@ -44,4 +47,14 @@ void SceneManager::DestroyScene(SceneIndex scene_index)
 	m_scenes[scene_index] = nullptr;
 
 	m_free_scene_indicies.push_back(scene_index);
+}
+
+SceneIndex SceneManager::GetActiveSceneIndex()
+{
+	return s_singleton->m_active_scene;
+}
+
+SceneManager* SceneManager::GetSceneManager()
+{
+	return s_singleton;
 }

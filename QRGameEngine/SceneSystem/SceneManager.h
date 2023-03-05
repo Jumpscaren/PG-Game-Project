@@ -10,6 +10,8 @@ private:
 	SceneIndex m_active_scene;
 	std::vector<SceneIndex> m_free_scene_indicies;
 
+	static SceneManager* s_singleton;
+
 public:
 	SceneManager();
 
@@ -17,5 +19,8 @@ public:
 	Scene* GetScene(SceneIndex scene_index);
 	void SetSceneAsActiveScene(SceneIndex scene_index);
 	void DestroyScene(SceneIndex scene_index);
+	static SceneIndex GetActiveSceneIndex();
+
+	static SceneManager* GetSceneManager();
 };
 

@@ -58,6 +58,11 @@ void* CSMonoCore::ToMethodParameter(int& number)
 	return &number;
 }
 
+void* CSMonoCore::ToMethodParameter(uint32_t& number)
+{
+	return &number;
+}
+
 void* CSMonoCore::ToMethodParameter(float& number)
 {
 	return &number;
@@ -93,6 +98,11 @@ int CSMonoCore::MonoObjectToValue(int* mono_object)
 	return *(int*)(mono_object_unbox((MonoObject*)mono_object));
 }
 
+uint32_t CSMonoCore::MonoObjectToValue(uint32_t* mono_object)
+{
+	return *(uint32_t*)(mono_object_unbox((MonoObject*)mono_object));
+}
+
 float CSMonoCore::MonoObjectToValue(float* mono_object)
 {
 	return *(float*)(mono_object_unbox((MonoObject*)mono_object));
@@ -121,6 +131,11 @@ CSMonoObject CSMonoCore::MonoObjectToValue(CSMonoObject* mono_object)
 }
 
 int CSMonoCore::MonoMethodParameter(int mono_parameter)
+{
+	return mono_parameter;
+}
+
+uint32_t CSMonoCore::MonoMethodParameter(uint32_t mono_parameter)
 {
 	return mono_parameter;
 }
@@ -242,32 +257,40 @@ MonoFieldHandle CSMonoCore::RegisterField(const MonoClassHandle& mono_class_hand
 	return GetMonoClass(mono_class_handle)->AddField(field_name);
 }
 
+bool CSMonoCore::CheckIfMonoMethodExists(const MonoClassHandle& class_handle, const std::string& method_name)
+{
+	return CSMonoMethod::CheckIfMonoMethodExists(GetMonoClass(class_handle), method_name);
+}
+
+bool CSMonoCore::CheckIfMonoMethodExists(const MonoMethodHandle& method_class)
+{
+	return method_class.handle < m_mono_methods.size();
+}
+
+MonoMethodHandle CSMonoCore::TryRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name)
+{
+	MonoMethodHandle mono_method_handle = { -1 };
+	if (CheckIfMonoMethodExists(class_handle, method_name))
+	{
+		return RegisterMonoMethod(class_handle, method_name);
+	}
+	return mono_method_handle;
+}
+
 void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle)
 {
 	CallMethodInternal(method_handle, nullptr, nullptr, 0);
-
-	//MonoObject* exception = nullptr;
-
-	//mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), nullptr, nullptr, nullptr);
-
-	//HandleException(exception);
 }
 
 void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object)
 {
 	CallMethodInternal(method_handle, mono_object.GetMonoObject(), nullptr, 0);
-
-	//MonoObject* exception = nullptr;
-
-	//mono_runtime_invoke(GetMonoMethod(method_handle)->GetMonoMethod(), mono_object->GetMonoObject(), nullptr, &exception);
-
-	//HandleException(exception);
 }
 
 void CSMonoCore::HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method)
 {
 	CSMonoClass* mono_class = GetMonoClass(class_handle);
-	std::string full_name =  mono_class->GetMonoClassFullName() + "::" + method_name;
+	std::string full_name = CSMonoMethod::GetMethodFullName(mono_class, method_name);
 	mono_add_internal_call(full_name.c_str(), method);
 }
 

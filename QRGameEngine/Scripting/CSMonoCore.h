@@ -85,6 +85,7 @@ private:
 	void HandleException(_MonoObject* exception);
 
 	void* ToMethodParameter(int& number);
+	void* ToMethodParameter(uint32_t& number);
 	void* ToMethodParameter(float& number);
 	void* ToMethodParameter(double& number);
 	void* ToMethodParameter(bool& boolean);
@@ -93,6 +94,7 @@ private:
 	void* ToMethodParameter(const CSMonoObject& mono_object);
 
 	int MonoObjectToValue(int* mono_object);
+	uint32_t MonoObjectToValue(uint32_t* mono_object);
 	float MonoObjectToValue(float* mono_object);
 	double MonoObjectToValue(double* mono_object);
 	bool MonoObjectToValue(bool* mono_object);
@@ -100,6 +102,7 @@ private:
 	CSMonoObject MonoObjectToValue(CSMonoObject* mono_object);
 
 	static int MonoMethodParameter(int mono_parameter);
+	static uint32_t MonoMethodParameter(uint32_t mono_parameter);
 	static float MonoMethodParameter(float mono_parameter);
 	static double MonoMethodParameter(double mono_parameter);
 	static bool MonoMethodParameter(bool mono_parameter);
@@ -122,6 +125,11 @@ public:
 	MonoClassHandle RegisterMonoClass(const std::string& class_namespace, const std::string& class_name);
 	MonoMethodHandle RegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name);
 	MonoFieldHandle RegisterField(const MonoClassHandle& mono_class_handle, const std::string& field_name);
+
+	bool CheckIfMonoMethodExists(const MonoClassHandle& class_handle, const std::string& method_name);
+	bool CheckIfMonoMethodExists(const MonoMethodHandle& method_class);
+
+	MonoMethodHandle TryRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name);
 
 	template<typename Type>
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name);

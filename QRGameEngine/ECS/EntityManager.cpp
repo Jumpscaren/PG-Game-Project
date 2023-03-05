@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "EntityManager.h"
+#include "SceneSystem/SceneManager.h"
+#include "SceneSystem/Scene.h"
 
 bool EntityManager::EntityExists(Entity entity)
 {
@@ -61,4 +63,9 @@ void EntityManager::RemoveEntity(Entity entity)
 
 	m_entities[entity] = NULL_ENTITY;
 	m_free_entities.push_back(entity);
+}
+
+Entity EntityManager::CreateEntity(SceneIndex scene_index)
+{
+	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->NewEntity();
 }

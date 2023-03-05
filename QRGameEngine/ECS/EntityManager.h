@@ -2,6 +2,7 @@
 #include "Vendor/Include/StaticTypeInfo/static_type_info.h"
 
 typedef uint32_t Entity;
+typedef uint32_t SceneIndex;
 
 struct ComponentPool
 {
@@ -40,6 +41,8 @@ public:
 
 	Entity NewEntity();
 	void RemoveEntity(Entity entity);
+
+	static Entity CreateEntity(SceneIndex scene_index);
 
 	template <typename Component, typename ...Args>
 	Component& AddComponent(Entity entity, Args&& ...args);
