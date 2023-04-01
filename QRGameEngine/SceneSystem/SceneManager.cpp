@@ -54,6 +54,11 @@ SceneIndex SceneManager::GetActiveSceneIndex()
 	return s_singleton->m_active_scene;
 }
 
+EntityManager* SceneManager::GetEntityManager(SceneIndex scene_index)
+{
+	return s_singleton->GetScene(scene_index)->GetEntityManager();
+}
+
 SceneManager* SceneManager::GetSceneManager()
 {
 	return s_singleton;

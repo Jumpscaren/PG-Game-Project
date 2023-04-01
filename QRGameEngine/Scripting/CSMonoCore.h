@@ -86,6 +86,7 @@ private:
 
 	void* ToMethodParameter(int& number);
 	void* ToMethodParameter(uint32_t& number);
+	void* ToMethodParameter(uint64_t& number);
 	void* ToMethodParameter(float& number);
 	void* ToMethodParameter(double& number);
 	void* ToMethodParameter(bool& boolean);
@@ -95,6 +96,7 @@ private:
 
 	int MonoObjectToValue(int* mono_object);
 	uint32_t MonoObjectToValue(uint32_t* mono_object);
+	uint64_t MonoObjectToValue(uint64_t* mono_object);
 	float MonoObjectToValue(float* mono_object);
 	double MonoObjectToValue(double* mono_object);
 	bool MonoObjectToValue(bool* mono_object);
@@ -103,6 +105,7 @@ private:
 
 	static int MonoMethodParameter(int mono_parameter);
 	static uint32_t MonoMethodParameter(uint32_t mono_parameter);
+	static uint64_t MonoMethodParameter(uint64_t mono_parameter);
 	static float MonoMethodParameter(float mono_parameter);
 	static double MonoMethodParameter(double mono_parameter);
 	static bool MonoMethodParameter(bool mono_parameter);
@@ -117,6 +120,10 @@ private:
 	void SetValueInternal(const CSMonoObject& mono_object, const std::string& field_name, void* value);
 	void* GetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 	void SetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle, void* value);
+
+	//bool CheckIfParameterCountIsCorrect(uint32_t parameter_count, CS);
+
+	//MonoMethodHandle FindMonoMethod();
 
 public:
 	CSMonoCore();
@@ -166,6 +173,8 @@ public:
 
 	template<void* method, typename Type, typename...Args>
 	static Type HookedMethod(Args... args);
+
+	static CSMonoCore* Get();
 };
 
 template<typename Type>
@@ -285,5 +294,7 @@ inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClas
 template<void* method, typename Type, typename ...Args>
 inline Type CSMonoCore::HookedMethod(Args ...args)
 {
+	sizeof...(Args);
+
 	return ((Type(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...);
 }

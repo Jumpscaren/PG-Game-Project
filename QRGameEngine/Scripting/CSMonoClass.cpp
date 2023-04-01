@@ -27,7 +27,8 @@ _MonoClass* CSMonoClass::GetMonoClass() const
 
 MonoFieldHandle CSMonoClass::AddField(const std::string& field_name)
 {
-	MonoFieldHandle field_handle(m_field_handles.size());
+	MonoFieldHandle field_handle = {};
+	field_handle.handle = m_field_handles.size();
 
 	MonoClassField* field = mono_class_get_field_from_name(m_mono_class, field_name.c_str());
 	assert(field);

@@ -21,6 +21,8 @@ public:
 	void DestroyScene(SceneIndex scene_index);
 	static SceneIndex GetActiveSceneIndex();
 
+	static EntityManager* GetEntityManager(SceneIndex scene_index);
+
 	static SceneManager* GetSceneManager();
 };
 

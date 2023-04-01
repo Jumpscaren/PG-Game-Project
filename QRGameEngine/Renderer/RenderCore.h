@@ -5,6 +5,8 @@
 #include "Window.h"
 #include "RenderTypes.h"
 #include "EngineComponents.h"
+#include "Components/TransformComponent.h"
+#include "Components/SpriteComponent.h"
 
 class DX12StackAllocator;
 
@@ -16,10 +18,7 @@ private:
 	struct SpriteData
 	{
 		uint32_t GPU_texture_view_handle;
-		struct UV
-		{
-			float x, y;
-		} uv;
+		Vector2 uv;
 		float pad;
 	};
 

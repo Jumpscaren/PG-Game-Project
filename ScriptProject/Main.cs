@@ -3,8 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace ScriptProject
 {
@@ -24,8 +26,18 @@ namespace ScriptProject
             System.Console.WriteLine("Hello from C# world\n");
 
             GameObject gameObject = GameObject.CreateGameObject();
+            Transform transform = gameObject.AddComponent<Transform>();
+            Sprite sprite = gameObject.AddComponent<Sprite>();
+            transform.SetPosition(0.5f, 0, 0);
+            sprite.SetTexture(3);
 
             return 0;
+        }
+
+        float x = 0;
+        public void Update()
+        {
+            x += 1;
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

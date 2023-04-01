@@ -7,6 +7,10 @@
 #include "Time/Time.h"
 #include "Renderer/ImGUIMain.h"
 #include "Scripting/CSMonoCore.h"
+#include "Components/TransformComponent.h"
+#include "Components/SpriteComponent.h"
+#include "Scripting/Objects/GameObjectInterface.h"
+#include "Components/ComponentInterface.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -168,6 +172,11 @@ void QREntryPoint::EntryPoint()
 	mono_core->HookAndRegisterMonoMethodType<SceneManager::GetActiveSceneIndex>(scene_manager_handle, "GetActiveSceneIndex", SceneManager::GetActiveSceneIndex);
 	auto entity_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "EntityManager");
 	mono_core->HookAndRegisterMonoMethodType<EntityManager::CreateEntity>(entity_manager_handle, "CreateEntity", EntityManager::CreateEntity);
+
+	TransformComponentInterface::RegisterInterface(mono_core);
+	SpriteComponentInterface::RegisterInterface(mono_core);
+	GameObjectInterface::RegisterInterface(mono_core);
+	ComponentInterface::RegisterInterface(mono_core);
 
 	mono_core->CallStaticMethod(main_method_handle);
 }

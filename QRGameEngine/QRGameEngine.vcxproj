@@ -165,6 +165,8 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common\EngineTypes.cpp" />
+    <ClCompile Include="Components\ComponentInterface.cpp" />
+    <ClCompile Include="Scripting\Objects\GameObjectInterface.cpp" />
     <ClCompile Include="Scripting\CSMonoString.cpp" />
     <ClCompile Include="Scripting\CSMonoObject.cpp" />
     <ClCompile Include="Scripting\CSMonoMethod.cpp" />
@@ -199,8 +201,10 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClCompile Include="SceneSystem\Scene.cpp" />
     <ClCompile Include="SceneSystem\SceneManager.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Components\SpriteComponent.cpp" />
     <ClCompile Include="Time\Time.cpp" />
     <ClCompile Include="Time\Timer.cpp" />
+    <ClCompile Include="Components\TransformComponent.cpp" />
     <ClCompile Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -233,6 +237,8 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\EngineTypes.h" />
+    <ClInclude Include="Components\ComponentInterface.h" />
+    <ClInclude Include="Scripting\Objects\GameObjectInterface.h" />
     <ClInclude Include="Scripting\CSMonoString.h" />
     <ClInclude Include="Scripting\CSMonoObject.h" />
     <ClInclude Include="Scripting\CSMonoMethod.h" />
@@ -275,8 +281,10 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Components\SpriteComponent.h" />
     <ClInclude Include="Time\Time.h" />
     <ClInclude Include="Time\Timer.h" />
+    <ClInclude Include="Components\TransformComponent.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
     <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_dx12.h" />
     <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_win32.h" />

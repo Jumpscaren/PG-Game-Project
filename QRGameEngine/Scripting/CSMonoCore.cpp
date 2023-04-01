@@ -63,6 +63,11 @@ void* CSMonoCore::ToMethodParameter(uint32_t& number)
 	return &number;
 }
 
+void* CSMonoCore::ToMethodParameter(uint64_t& number)
+{
+	return &number;
+}
+
 void* CSMonoCore::ToMethodParameter(float& number)
 {
 	return &number;
@@ -103,6 +108,11 @@ uint32_t CSMonoCore::MonoObjectToValue(uint32_t* mono_object)
 	return *(uint32_t*)(mono_object_unbox((MonoObject*)mono_object));
 }
 
+uint64_t CSMonoCore::MonoObjectToValue(uint64_t* mono_object)
+{
+	return *(uint64_t*)(mono_object_unbox((MonoObject*)mono_object));
+}
+
 float CSMonoCore::MonoObjectToValue(float* mono_object)
 {
 	return *(float*)(mono_object_unbox((MonoObject*)mono_object));
@@ -136,6 +146,11 @@ int CSMonoCore::MonoMethodParameter(int mono_parameter)
 }
 
 uint32_t CSMonoCore::MonoMethodParameter(uint32_t mono_parameter)
+{
+	return mono_parameter;
+}
+
+uint64_t CSMonoCore::MonoMethodParameter(uint64_t mono_parameter)
 {
 	return mono_parameter;
 }
@@ -292,10 +307,23 @@ void CSMonoCore::HookMethod(const MonoClassHandle& class_handle, const std::stri
 	CSMonoClass* mono_class = GetMonoClass(class_handle);
 	std::string full_name = CSMonoMethod::GetMethodFullName(mono_class, method_name);
 	mono_add_internal_call(full_name.c_str(), method);
+
+	MonoMethod* m;
+	void* iter = nullptr;
+	while ((m = mono_class_get_methods(mono_class->GetMonoClass(), &iter)))
+	{
+		std::cout << mono_method_get_name(m) << "\n";
+		std::cout << mono_method_full_name(m, true) << "\n";
+	}
 }
 
 MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method)
 {
 	HookMethod(class_handle, method_name, method);
 	return RegisterMonoMethod(class_handle, method_name);
+}
+
+CSMonoCore* CSMonoCore::Get()
+{
+	return s_mono_core;
 }

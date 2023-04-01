@@ -67,5 +67,6 @@ void EntityManager::RemoveEntity(Entity entity)
 
 Entity EntityManager::CreateEntity(SceneIndex scene_index)
 {
-	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->NewEntity();
+	Entity g = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->NewEntity();
+	return g;
 }

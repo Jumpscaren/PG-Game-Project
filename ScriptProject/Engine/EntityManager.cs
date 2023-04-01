@@ -22,6 +22,6 @@ namespace ScriptProject.Engine
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static public extern UInt32 CreateEntity(UInt32 scene_index);
+        static private extern UInt32 CreateEntity(UInt32 scene_index);
     }
 }
