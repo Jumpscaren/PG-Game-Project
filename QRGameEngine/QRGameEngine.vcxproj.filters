@@ -153,6 +153,15 @@
     <ClCompile Include="Components\ComponentInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Asset\AssetManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\Objects\RenderInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\Objects\TextureInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -221,7 +230,7 @@
     <ClInclude Include="Renderer\DX12CORE\SamplerTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\DX12CORE\stb_image.h">
+    <ClInclude Include="Asset\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12CORE\TextureTypes.h">
@@ -336,6 +345,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Components\ComponentInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Asset\AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Asset\AssetTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\Objects\RenderInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\Objects\TextureInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

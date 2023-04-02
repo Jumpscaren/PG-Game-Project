@@ -20,6 +20,7 @@ public:
 
 	const std::string& GetMonoClassName() const;
 	const std::string& GetMonoClassFullName() const;
+	static std::string GetMonoClassFullName(const std::string& mono_namespace, const std::string& mono_class);
 	const std::string& GetMonoNamespace() const;
 	_MonoClass* GetMonoClass() const;
 

@@ -21,6 +21,8 @@ private:
 	std::vector<CSMonoClass> m_mono_classes;
 	std::vector<CSMonoMethod> m_mono_methods;
 
+	std::unordered_map<std::string, MonoClassHandle> m_mono_class_name_to_mono_class_handle;
+
 	static CSMonoCore* s_mono_core;
 
 private:
@@ -112,6 +114,15 @@ private:
 	static std::string MonoMethodParameter(_MonoString* mono_parameter);
 	static CSMonoObject MonoMethodParameter(_MonoObject* mono_parameter);
 
+	static int MonoMethodReturn(int mono_return);
+	static uint32_t MonoMethodReturn(uint32_t mono_return);
+	static uint64_t MonoMethodReturn(uint64_t mono_return);
+	static float MonoMethodReturn(float mono_return);
+	static double MonoMethodReturn(double mono_return);
+	static bool MonoMethodReturn(bool mono_return);
+	static _MonoString* MonoMethodReturn(const std::string& mono_return);
+	static _MonoObject* MonoMethodReturn(const CSMonoObject& mono_return);
+
 	_MonoObject* CallMethodInternal(const MonoMethodHandle& method_handle, _MonoObject* mono_object, void** parameters, uint32_t parameter_count);
 
 	MonoClassHandle RegisterMonoClass(_MonoClass* mono_class);
@@ -171,10 +182,18 @@ public:
 	template<auto t_method, typename Type, typename...Args>
 	MonoMethodHandle HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, Type(*)(Args...));
 
+	template<auto t_method, typename...Args>
+	MonoMethodHandle HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, void(*)(Args...));
+
 	template<void* method, typename Type, typename...Args>
 	static Type HookedMethod(Args... args);
 
+	template<void* method, typename...Args>
+	static void HookedMethodVoid(Args... args);
+
 	static CSMonoCore* Get();
+
+	void PrintMethod(const MonoMethodHandle& method_handle);
 };
 
 template<typename Type>
@@ -288,7 +307,13 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 template<auto t_method, typename Type, typename ...Args>
 inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, Type(*)(Args...))
 {
-	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethod<(void*)t_method, Type, ChangeType<Args>...>);
+	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethod<(void*)t_method, ChangeType<Type>, ChangeType<Args>...>);
+}
+
+template<auto t_method, typename ...Args>
+inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, void(*)(Args ...))
+{
+	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethodVoid<(void*)t_method, ChangeType<Args>...>);
 }
 
 template<void* method, typename Type, typename ...Args>
@@ -296,5 +321,11 @@ inline Type CSMonoCore::HookedMethod(Args ...args)
 {
 	sizeof...(Args);
 
-	return ((Type(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...);
+	return MonoMethodReturn(((ChangeType<Type>(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...));
+}
+
+template<void* method, typename...Args>
+inline void CSMonoCore::HookedMethodVoid(Args... args)
+{
+	((void(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...);
 }

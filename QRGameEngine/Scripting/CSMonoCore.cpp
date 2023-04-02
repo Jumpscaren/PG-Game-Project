@@ -181,6 +181,46 @@ CSMonoObject CSMonoCore::MonoMethodParameter(_MonoObject* mono_parameter)
 	return std::move(CSMonoObject(s_mono_core, (MonoObject*)(mono_parameter)));
 }
 
+int CSMonoCore::MonoMethodReturn(int mono_return)
+{
+	return mono_return;
+}
+
+uint32_t CSMonoCore::MonoMethodReturn(uint32_t mono_return)
+{
+	return mono_return;
+}
+
+uint64_t CSMonoCore::MonoMethodReturn(uint64_t mono_return)
+{
+	return mono_return;
+}
+
+float CSMonoCore::MonoMethodReturn(float mono_return)
+{
+	return mono_return;
+}
+
+double CSMonoCore::MonoMethodReturn(double mono_return)
+{
+	return mono_return;
+}
+
+bool CSMonoCore::MonoMethodReturn(bool mono_return)
+{
+	return mono_return;
+}
+
+_MonoString* CSMonoCore::MonoMethodReturn(const std::string& mono_return)
+{
+	return mono_string_new(s_mono_core->m_domain, mono_return.c_str());
+}
+
+_MonoObject* CSMonoCore::MonoMethodReturn(const CSMonoObject& mono_return)
+{
+	return mono_return.GetMonoObject();
+}
+
 _MonoObject* CSMonoCore::CallMethodInternal(const MonoMethodHandle& method_handle, _MonoObject* mono_object, void** parameters, uint32_t parameter_count)
 {
 	MonoObject* exception = nullptr;
@@ -251,9 +291,17 @@ void CSMonoCore::SetValueInternal(const CSMonoObject& mono_object, const MonoFie
 
 MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace, const std::string& class_name)
 {
+	std::string class_full_name = CSMonoClass::GetMonoClassFullName(class_namespace, class_name);
+	if (m_mono_class_name_to_mono_class_handle.contains(class_full_name))
+	{
+		return m_mono_class_name_to_mono_class_handle.find(class_full_name)->second;
+	}
+
 	MonoClassHandle class_handle = { m_mono_classes.size() };
 
 	m_mono_classes.push_back(CSMonoClass(this, class_namespace, class_name));
+
+	m_mono_class_name_to_mono_class_handle.insert({ class_full_name, class_handle });
 
 	return class_handle;
 }
@@ -326,4 +374,9 @@ MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethod(const MonoClassHandle& cl
 CSMonoCore* CSMonoCore::Get()
 {
 	return s_mono_core;
+}
+
+void CSMonoCore::PrintMethod(const MonoMethodHandle& method_handle)
+{
+	std::cout << mono_method_full_name(GetMonoMethod(method_handle)->GetMonoMethod(), true) << "\n";
 }

@@ -15,6 +15,11 @@ const std::string& CSMonoClass::GetMonoClassFullName() const
 	return m_mono_full_name;
 }
 
+std::string CSMonoClass::GetMonoClassFullName(const std::string& mono_namespace, const std::string& mono_class)
+{
+	return mono_namespace + "." + mono_class;
+}
+
 const std::string& CSMonoClass::GetMonoNamespace() const
 {
 	return m_mono_namespace;
@@ -51,5 +56,5 @@ CSMonoClass::CSMonoClass(CSMonoCore* mono_core, const std::string& mono_namespac
 
 	assert(m_mono_class);
 
-	m_mono_full_name = m_mono_namespace + "." + m_mono_class_name;
+	m_mono_full_name = GetMonoClassFullName(mono_namespace, mono_class);
 }

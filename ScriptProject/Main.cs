@@ -29,7 +29,10 @@ namespace ScriptProject
             Transform transform = gameObject.AddComponent<Transform>();
             Sprite sprite = gameObject.AddComponent<Sprite>();
             transform.SetPosition(0.5f, 0, 0);
-            sprite.SetTexture(3);
+
+            string texture_path = "../QRGameEngine/Textures/Temp.png";
+            Texture texture = Render.LoadTexture(texture_path);
+            sprite.SetTexture(texture);
 
             return 0;
         }

@@ -7,11 +7,7 @@ class DX12Core;
 class DX12CommandList;
 class DX12ResourceDestroyer;
 
-struct TextureInfo
-{
-	unsigned char* texture_data;
-	uint32_t width, height, comp, channels;
-};
+struct TextureInfo;
 
 class DX12TextureManager
 {
@@ -57,10 +53,8 @@ public:
 
 	DX12TextureHandle AddSwapchainTexture(Microsoft::WRL::ComPtr<ID3D12Resource> backbuffer);
 	DX12TextureHandle AddTexture(DX12Core* dx12_core, uint32_t texture_width, uint32_t texture_height, TextureFlags texture_flag);
-	DX12TextureHandle AddTexture(DX12Core* dx12_core, const TextureInfo& texture_data, TextureFlags texture_flag);
+	DX12TextureHandle AddTexture(DX12Core* dx12_core, TextureInfo* texture_data, TextureFlags texture_flag);
 	DX12TextureViewHandle AddView(DX12Core* dx12_core, DX12TextureHandle texture_handle, const ViewType& view_type);
-
-	TextureInfo LoadTextureFromFile(const std::string& file_name, uint32_t channels = 4);
 
 	uint32_t ConvertTextureViewHandleToGPUTextureViewHandle(DX12TextureViewHandle texture_view_handle);
 };

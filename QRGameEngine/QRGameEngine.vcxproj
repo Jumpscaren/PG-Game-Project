@@ -164,8 +164,10 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Asset\AssetManager.cpp" />
     <ClCompile Include="Common\EngineTypes.cpp" />
     <ClCompile Include="Components\ComponentInterface.cpp" />
+    <ClCompile Include="Scripting\Objects\RenderInterface.cpp" />
     <ClCompile Include="Scripting\Objects\GameObjectInterface.cpp" />
     <ClCompile Include="Scripting\CSMonoString.cpp" />
     <ClCompile Include="Scripting\CSMonoObject.cpp" />
@@ -202,6 +204,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClCompile Include="SceneSystem\SceneManager.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Components\SpriteComponent.cpp" />
+    <ClCompile Include="Scripting\Objects\TextureInterface.cpp" />
     <ClCompile Include="Time\Time.cpp" />
     <ClCompile Include="Time\Timer.cpp" />
     <ClCompile Include="Components\TransformComponent.cpp" />
@@ -236,8 +239,11 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Asset\AssetManager.h" />
+    <ClInclude Include="Asset\AssetTypes.h" />
     <ClInclude Include="Common\EngineTypes.h" />
     <ClInclude Include="Components\ComponentInterface.h" />
+    <ClInclude Include="Scripting\Objects\RenderInterface.h" />
     <ClInclude Include="Scripting\Objects\GameObjectInterface.h" />
     <ClInclude Include="Scripting\CSMonoString.h" />
     <ClInclude Include="Scripting\CSMonoObject.h" />
@@ -267,7 +273,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClInclude Include="Renderer\DX12CORE\DX12TextureManager.h" />
     <ClInclude Include="Renderer\DX12CORE\HelpTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\SamplerTypes.h" />
-    <ClInclude Include="Renderer\DX12CORE\stb_image.h" />
+    <ClInclude Include="Asset\stb_image.h" />
     <ClInclude Include="Renderer\DX12CORE\TextureTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\ViewTypes.h" />
     <ClInclude Include="Renderer\Helpers\HandleManager.h" />
@@ -282,6 +288,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Components\SpriteComponent.h" />
+    <ClInclude Include="Scripting\Objects\TextureInterface.h" />
     <ClInclude Include="Time\Time.h" />
     <ClInclude Include="Time\Timer.h" />
     <ClInclude Include="Components\TransformComponent.h" />

@@ -2,24 +2,9 @@
 #include "DX12TextureManager.h"
 #include "DX12Core.h"
 #include "../Helpers/HandleManager.h"
-
-#pragma warning(push)
-#pragma warning(disable:6262)
-#pragma warning(disable:26451)
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#pragma warning(pop)
+#include "Asset/AssetManager.h"
 
 using Microsoft::WRL::ComPtr;
-
-TextureInfo DX12TextureManager::LoadTextureFromFile(const std::string& file_name, uint32_t channels)
-{
-	int width, height, comp;
-	unsigned char* imageData = stbi_load(file_name.c_str(),
-		&width, &height, &comp, channels);
-	TextureInfo texture = { imageData, (uint32_t)width, (uint32_t)height, (uint32_t)comp, channels };
-	return texture;
-}
 
 void DX12TextureManager::FreeTexture(DX12TextureHandle& texture_handle)
 {
@@ -290,11 +275,11 @@ DX12TextureHandle DX12TextureManager::AddTexture(DX12Core* dx12_core, uint32_t t
 	return AddTexture(texture, texture_allocation, ResourceState::COMMON);
 }
 
-DX12TextureHandle DX12TextureManager::AddTexture(DX12Core* dx12_core, const TextureInfo& texture_data, TextureFlags texture_flag)
+DX12TextureHandle DX12TextureManager::AddTexture(DX12Core* dx12_core, TextureInfo* texture_data, TextureFlags texture_flag)
 {
-	DX12TextureHandle texture = AddTexture(dx12_core, texture_data.width, texture_data.height, texture_flag);
+	DX12TextureHandle texture = AddTexture(dx12_core, texture_data->width, texture_data->height, texture_flag);
 
-	UploadTextureData(dx12_core, texture, texture_data.texture_data, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+	UploadTextureData(dx12_core, texture, texture_data->texture_data, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
 	return texture;
 }

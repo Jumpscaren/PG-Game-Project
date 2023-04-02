@@ -7,12 +7,10 @@ using System.Threading.Tasks;
 
 namespace ScriptProject.Engine
 {
-    internal class Sprite : Component
+    internal class Render
     {
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public override extern void InitComponent(UInt32 scene_index, UInt32 entity);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetTexture(Texture texture);
+        static public extern Texture LoadTexture(string texture_name);
+        //static public extern Texture LoadTexture(int g);
     }
 }

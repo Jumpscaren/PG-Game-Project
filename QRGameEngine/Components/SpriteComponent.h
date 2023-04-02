@@ -17,6 +17,6 @@ public:
 	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	
 public:
-	static void SetTexture(CSMonoObject object, TextureHandle handle);
+	static void SetTexture(CSMonoObject object, CSMonoObject texture);
 };
 

@@ -6,11 +6,15 @@
 #include "SceneSystem/SceneManager.h"
 #include "ECS/EntityManager.h"
 #include "ImGUIMain.h"
+#include "Asset/AssetManager.h"
 
-DX12BufferViewHandle transform_constant_buffer_view;
-DX12BufferHandle transform_sub;
+
+RenderCore* RenderCore::s_render_core = nullptr;
+
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
 {
+	s_render_core = this;
+
 	m_window = std::make_unique<Window>(window_width, window_height, window_name, window_name);
 	m_dx12_core.InitCore(m_window.get(), 2);
 
@@ -154,12 +158,26 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	return m_window->WinMsg();
 }
 
-TextureHandle RenderCore::CreateTexture(std::string texture_file_name)
+TextureHandle RenderCore::CreateTexture(const std::string& texture_file_name)
 {
-	//Memory leak for now
-	TextureInfo texture_info = m_dx12_core.GetTextureManager()->LoadTextureFromFile(texture_file_name);
+	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTexture(texture_file_name);
+
+	if (m_texture_handles.contains(texture_asset_handle))
+	{
+		return m_texture_handles.find(texture_asset_handle)->second.texture_view_handle;
+	}
+
+	TextureInfo* texture_info = AssetManager::Get()->GetTextureData(texture_asset_handle);
+
 	DX12TextureHandle texture_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
 	DX12TextureViewHandle texture_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, texture_handle, ViewType::SHADER_RESOURCE_VIEW);
 
+	m_texture_handles.insert({texture_asset_handle, {texture_handle, texture_view_handle}});
+
 	return texture_view_handle;
+}
+
+RenderCore* RenderCore::Get()
+{
+	return s_render_core;
 }

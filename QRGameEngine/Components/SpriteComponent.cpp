@@ -18,12 +18,15 @@ void SpriteComponentInterface::InitComponent(CSMonoObject object, SceneIndex sce
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<SpriteComponent>(entity);
 }
 
-void SpriteComponentInterface::SetTexture(CSMonoObject object, TextureHandle handle)
+void SpriteComponentInterface::SetTexture(CSMonoObject object, CSMonoObject texture)
 {
 	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	uint64_t texture_handle;
+	CSMonoCore::Get()->GetValue(texture_handle, texture, "texture_asset_handle");
 	
-	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).texture_handle = handle;
+	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).texture_handle = texture_handle;
 }

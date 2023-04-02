@@ -11,12 +11,15 @@
 #include "Components/SpriteComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "Components/ComponentInterface.h"
+#include "Asset/AssetManager.h"
+#include "Scripting/Objects/RenderInterface.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
 CSMonoCore* mono_core;
 SceneIndex main_scene;
 Entity render_ent;
+AssetManager* asset_manager;
 
 struct TempData
 {
@@ -62,6 +65,8 @@ int TESTING(int h)
 
 void QREntryPoint::EntryPoint()
 {
+	asset_manager = new AssetManager();
+
 	mono_core = new CSMonoCore();
 
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
@@ -177,6 +182,7 @@ void QREntryPoint::EntryPoint()
 	SpriteComponentInterface::RegisterInterface(mono_core);
 	GameObjectInterface::RegisterInterface(mono_core);
 	ComponentInterface::RegisterInterface(mono_core);
+	RenderInterface::RegisterInterface(mono_core);
 
 	mono_core->CallStaticMethod(main_method_handle);
 }

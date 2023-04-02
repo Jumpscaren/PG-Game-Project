@@ -7,6 +7,7 @@
 #include "EngineComponents.h"
 #include "Components/TransformComponent.h"
 #include "Components/SpriteComponent.h"
+#include "Asset/AssetTypes.h"
 
 class DX12StackAllocator;
 
@@ -22,6 +23,12 @@ private:
 		float pad;
 	};
 
+	struct TextureHandleData
+	{
+		DX12TextureHandle texture_handle;
+		DX12TextureViewHandle texture_view_handle;
+	};
+
 private:
 	DX12Core m_dx12_core;
 	std::unique_ptr<Window> m_window;
@@ -35,12 +42,18 @@ private:
 	std::vector<TransformComponent> m_transform_data_vector;
 	std::vector<SpriteData> m_sprite_data_vector;
 
+	std::unordered_map<AssetHandle, TextureHandleData> m_texture_handles;
+
+	static RenderCore* s_render_core;
+
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
 	~RenderCore();
 
 	bool UpdateRender(Scene* draw_scene);
 
-	TextureHandle CreateTexture(std::string texture_file_name);
+	TextureHandle CreateTexture(const std::string& texture_file_name);
+
+	static RenderCore* Get();
 };
 
