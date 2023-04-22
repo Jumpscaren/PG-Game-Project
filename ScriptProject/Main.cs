@@ -26,9 +26,10 @@ namespace ScriptProject
             System.Console.WriteLine("Hello from C# world\n");
 
             GameObject gameObject = GameObject.CreateGameObject();
-            Transform transform = gameObject.AddComponent<Transform>();
             Sprite sprite = gameObject.AddComponent<Sprite>();
-            transform.SetPosition(0.5f, 0, 0);
+            gameObject.GetComponent<Transform>().SetPosition(0.5f, 0, 0);
+
+            gameObject.AddComponent<TestScript>();
 
             string texture_path = "../QRGameEngine/Textures/Temp.png";
             Texture texture = Render.LoadTexture(texture_path);

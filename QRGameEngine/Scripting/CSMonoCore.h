@@ -148,6 +148,7 @@ public:
 	bool CheckIfMonoMethodExists(const MonoMethodHandle& method_class);
 
 	MonoMethodHandle TryRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name);
+	MonoMethodHandle TryRegisterMonoMethod(const CSMonoObject& mono_object, const std::string& method_name);
 
 	template<typename Type>
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name);

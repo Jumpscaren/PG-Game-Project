@@ -162,6 +162,12 @@
     <ClCompile Include="Scripting\Objects\TextureInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Components\ScriptComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\ScriptingManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -357,6 +363,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scripting\Objects\TextureInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\ScriptComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\ScriptingManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

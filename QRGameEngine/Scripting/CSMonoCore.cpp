@@ -340,6 +340,11 @@ MonoMethodHandle CSMonoCore::TryRegisterMonoMethod(const MonoClassHandle& class_
 	return mono_method_handle;
 }
 
+MonoMethodHandle CSMonoCore::TryRegisterMonoMethod(const CSMonoObject& mono_object, const std::string& method_name)
+{
+	return TryRegisterMonoMethod(mono_object.m_class_handle, method_name);
+}
+
 void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle)
 {
 	CallMethodInternal(method_handle, nullptr, nullptr, 0);
