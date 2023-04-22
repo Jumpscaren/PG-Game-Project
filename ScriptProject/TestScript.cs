@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,8 +18,14 @@ namespace ScriptProject
 
         void Update()
         {
-            x += 0.01f;
-            game_object.transform.SetPosition(x, 0 ,0);
+            Vector2 pos = game_object.transform.GetPosition();
+
+            pos.x += 0.01f;
+
+            game_object.transform.SetPosition(pos);
+
+            //x += 0.01f;
+            //game_object.transform.SetPosition(x, 0);
         }
     }
 }

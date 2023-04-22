@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -11,12 +12,20 @@ namespace ScriptProject.Engine
     internal class Transform : Component
     {
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static private extern void SetPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y, float z);
+        static private extern void SetPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y);
 
-        public void SetPosition(float x, float y, float z)
+        public void SetPosition(float x, float y)
         {
-            SetPosition_Extern(game_object.GetSceneIndex(), game_object.GetEntityID(), x, y, z);
+            SetPosition_Extern(game_object.GetSceneIndex(), game_object.GetEntityID(), x, y);
         }
+
+        public void SetPosition(Vector2 position)
+        {
+            SetPosition(position.x, position.y);
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Vector2 GetPosition();
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public override extern void InitComponent(UInt32 scene_index, UInt32 entity);
