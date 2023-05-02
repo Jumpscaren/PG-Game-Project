@@ -168,6 +168,12 @@
     <ClCompile Include="Scripting\ScriptingManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Input\Keyboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -369,6 +375,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scripting\ScriptingManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\Keyboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

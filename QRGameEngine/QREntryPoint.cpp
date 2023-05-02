@@ -15,6 +15,8 @@
 #include "Scripting/Objects/RenderInterface.h"
 #include "Components/ScriptComponent.h"
 #include "Scripting/ScriptingManager.h"
+#include "Input/Keyboard.h"
+#include "Input/Input.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -23,6 +25,7 @@ SceneIndex main_scene;
 Entity render_ent;
 AssetManager* asset_manager;
 ScriptingManager* scripting_manager;
+Keyboard* keyboard;
 
 struct TempData
 {
@@ -73,6 +76,8 @@ void QREntryPoint::EntryPoint()
 	mono_core = new CSMonoCore();
 
 	scripting_manager = new ScriptingManager();
+
+	keyboard = new Keyboard();
 
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
 
@@ -189,6 +194,7 @@ void QREntryPoint::EntryPoint()
 	ComponentInterface::RegisterInterface(mono_core);
 	RenderInterface::RegisterInterface(mono_core);
 	ScriptComponentInterface::RegisterInterface(mono_core);
+	InputInterface::RegisterInterface(mono_core);
 
 	mono_core->CallStaticMethod(main_method_handle);
 }
@@ -221,6 +227,8 @@ void QREntryPoint::RunTime()
 		render_ent_trans.SetPosition(pos);
 
 		ScriptingManager::Get()->UpdateScripts(entman);
+
+		keyboard->UpdateKeys();
 
 		window_exist = render_core->UpdateRender(scene_manager->GetScene(main_scene));
 		if (!window_exist)

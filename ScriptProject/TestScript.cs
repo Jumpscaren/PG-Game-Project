@@ -1,4 +1,5 @@
-﻿using ScriptProject.Math;
+﻿using ScriptProject.Engine;
+using ScriptProject.Math;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,6 @@ namespace ScriptProject
 {
     internal class TestScript : Engine.ScriptingBehaviour
     {
-        float x = 0;
-
         void Start()
         {
 
@@ -20,7 +19,8 @@ namespace ScriptProject
         {
             Vector2 pos = game_object.transform.GetPosition();
 
-            pos.x += 0.01f;
+            if (Input.GetKeyDown())
+                pos.x += 0.01f;
 
             game_object.transform.SetPosition(pos);
 

@@ -44,6 +44,7 @@
     <Compile Include="Engine\Component.cs" />
     <Compile Include="Engine\EntityManager.cs" />
     <Compile Include="Engine\GameObject.cs" />
+    <Compile Include="Engine\Input.cs" />
     <Compile Include="Engine\Render.cs" />
     <Compile Include="Engine\Scene.cs" />
     <Compile Include="Engine\SceneManager.cs" />

@@ -3,6 +3,7 @@
 #include "Vendor/Include/ImGUI/imgui.h"
 #include "Vendor/Include/ImGUI/backends/imgui_impl_win32.h"
 #include "Vendor/Include/ImGUI/backends/imgui_impl_dx12.h"
+#include "Input/Keyboard.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -25,15 +26,6 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
         PostQuitMessage(0);
         return 0;
     }
-    case WM_KEYDOWN:
-    {
-        HandleInputs(wParam, true);
-    } break;
-
-    case WM_KEYUP:
-    {
-        HandleInputs(wParam, false);
-    } break;
     case WM_WINDOWPOSCHANGING:
     {
         //if (IsMinimized(Window::GetHandle())) return 0;
@@ -50,6 +42,152 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
         //PublishEvent<WindowResizedEvent>(LOWORD(lParam), HIWORD(lParam));
         return 0;
     }
+	case WM_KEYDOWN:
+	{
+		HandleInputs(wParam, true);
+		Keyboard::Get()->KeyDown((Keyboard::Key)(uint8_t)(wParam));
+	} break;
+
+	case WM_KEYUP:
+	{
+		HandleInputs(wParam, false);
+		Keyboard::Get()->KeyUp((Keyboard::Key)(uint8_t)(wParam));
+	} break;
+	case WM_LBUTTONDOWN:
+	{
+		//Mouse::OnButtonPressed(Button::Left);
+		return 0;
+	}
+	case WM_LBUTTONUP:
+	{
+		//Mouse::OnButtonReleased(Button::Left);
+		return 0;
+	}
+	case WM_RBUTTONDOWN:
+	{
+		//Mouse::OnButtonPressed(Button::Right);
+		return 0;
+	}
+	case WM_RBUTTONUP:
+	{
+		//Mouse::OnButtonReleased(Button::Right);
+		return 0;
+	}
+	case WM_MBUTTONDOWN:
+	{
+		//Mouse::OnButtonPressed(Button::Wheel);
+		return 0;
+	}
+	case WM_MBUTTONUP:
+	{
+		//Mouse::OnButtonReleased(Button::Wheel);
+		return 0;
+	}
+	//case WM_MOUSEACTIVATE:
+	//{
+	//	if (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTBOTTOM || LOWORD(lParam) == HTLEFT || LOWORD(lParam) == HTRIGHT ||
+	//		LOWORD(lParam) == HTCLOSE || LOWORD(lParam) == HTMAXBUTTON || LOWORD(lParam) == HTMINBUTTON)
+	//	{
+	//		PublishEvent<WindowHitBorderEvent>();
+	//		return MA_NOACTIVATE;
+	//	}
+	//	return MA_ACTIVATEANDEAT;
+	//}
+	//case WM_ACTIVATEAPP:
+	//{
+	//	PublishEvent<WindowActiveEvent>(static_cast<bool>(wParam));
+	//	return 0;
+	//}
+	//case WM_SYSKEYDOWN:
+	//{
+	//	bool keyIsRepeated = (lParam >> 30) & 1;
+	//	if (wParam == VK_RETURN && (lParam & (1 << 29) && !keyIsRepeated))
+	//	{
+	//		PublishEvent<WindowAltEnterEvent>(); // Handle ALT+ENTER:
+	//	}
+	//	if (wParam == VK_F4 && (lParam & (1 << 29) && !keyIsRepeated))
+	//	{
+	//		PublishEvent<WindowClosedEvent>();  // Handle ALT+F4
+	//	}
+	//}
+	//case WM_KEYDOWN:
+	//{
+	//	bool keyIsRepeated = (lParam >> 30) & 1;
+	//	if (!keyIsRepeated)
+	//	{
+	//		MapLeftRightShiftAndControl(wParam, lParam);
+	//		Keyboard::OnKeyDown((Key)(u8)(wParam));
+	//	}
+	//	return 0;
+	//}
+	//case WM_SYSKEYUP:
+	//case WM_KEYUP:
+	//{
+	//	MapLeftRightShiftAndControl(wParam, lParam);
+	//	Keyboard::OnKeyUp((Key)(u8)(wParam));
+	//	return 0;
+	//}
+	//case WM_LBUTTONDOWN:
+	//{
+	//	Mouse::OnButtonPressed(Button::Left);
+	//	return 0;
+	//}
+	//case WM_LBUTTONUP:
+	//{
+	//	Mouse::OnButtonReleased(Button::Left);
+	//	return 0;
+	//}
+	//case WM_RBUTTONDOWN:
+	//{
+	//	Mouse::OnButtonPressed(Button::Right);
+	//	return 0;
+	//}
+	//case WM_RBUTTONUP:
+	//{
+	//	Mouse::OnButtonReleased(Button::Right);
+	//	return 0;
+	//}
+	//case WM_MBUTTONDOWN:
+	//{
+	//	Mouse::OnButtonPressed(Button::Wheel);
+	//	return 0;
+	//}
+	//case WM_MBUTTONUP:
+	//{
+	//	Mouse::OnButtonReleased(Button::Wheel);
+	//	return 0;
+	//}
+	//case WM_MOUSEMOVE:
+	//{
+	//	// LOWORD and HIWORD can't be used because x and y can be negative
+	//	POINTS point = MAKEPOINTS(lParam);
+	//	if (point.x < 0 || point.y < 0 || point.x >= static_cast<int>(GetWidth()) || point.y >= static_cast<int>(GetHeight()))
+	//	{
+	//		std::cout << "Warning WM_MOUSEMOVE returned point outside the windows dimensions! x: " << point.x << " y: " << point.y << std::endl;
+	//	}
+	//	Mouse::OnMove({ static_cast<u32>(point.x), static_cast<u32>(point.y) });
+	//	return 0;
+	//}
+	//case WM_INPUT:
+	//{
+	//	UINT size = 0u;
+	//	if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) == -1)
+	//		return 0;
+
+	//	std::vector<char> rawBuffer;
+	//	rawBuffer.resize(size);
+
+	//	if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, rawBuffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
+	//		return 0;
+
+	//	auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+	//	if (ri.header.dwType == RIM_TYPEMOUSE && (ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
+	//	{
+	//		Mouse::OnRawDelta({ ri.data.mouse.lLastX, ri.data.mouse.lLastY });
+	//	}
+
+	//	return 0;
+	//}
     }
 
     return DefWindowProc(hwnd, message, wParam, lParam);
