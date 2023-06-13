@@ -4,6 +4,7 @@
 #include "Vendor/Include/ImGUI/backends/imgui_impl_win32.h"
 #include "Vendor/Include/ImGUI/backends/imgui_impl_dx12.h"
 #include "Input/Keyboard.h"
+#include "Input/Mouse.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -55,31 +56,37 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 	} break;
 	case WM_LBUTTONDOWN:
 	{
+		Mouse::Get()->MouseButtonDown(Mouse::MouseButton::LEFT);
 		//Mouse::OnButtonPressed(Button::Left);
 		return 0;
 	}
 	case WM_LBUTTONUP:
 	{
+		Mouse::Get()->MouseButtonUp(Mouse::MouseButton::LEFT);
 		//Mouse::OnButtonReleased(Button::Left);
 		return 0;
 	}
 	case WM_RBUTTONDOWN:
 	{
+		Mouse::Get()->MouseButtonDown(Mouse::MouseButton::RIGHT);
 		//Mouse::OnButtonPressed(Button::Right);
 		return 0;
 	}
 	case WM_RBUTTONUP:
 	{
+		Mouse::Get()->MouseButtonUp(Mouse::MouseButton::RIGHT);
 		//Mouse::OnButtonReleased(Button::Right);
 		return 0;
 	}
 	case WM_MBUTTONDOWN:
 	{
+		Mouse::Get()->MouseButtonDown(Mouse::MouseButton::WHEEL);
 		//Mouse::OnButtonPressed(Button::Wheel);
 		return 0;
 	}
 	case WM_MBUTTONUP:
 	{
+		Mouse::Get()->MouseButtonUp(Mouse::MouseButton::WHEEL);
 		//Mouse::OnButtonReleased(Button::Wheel);
 		return 0;
 	}

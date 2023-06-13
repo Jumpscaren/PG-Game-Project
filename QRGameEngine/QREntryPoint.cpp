@@ -17,6 +17,7 @@
 #include "Scripting/ScriptingManager.h"
 #include "Input/Keyboard.h"
 #include "Input/Input.h"
+#include "Input/Mouse.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -26,6 +27,7 @@ Entity render_ent;
 AssetManager* asset_manager;
 ScriptingManager* scripting_manager;
 Keyboard* keyboard;
+Mouse* mouse;
 
 struct TempData
 {
@@ -78,6 +80,8 @@ void QREntryPoint::EntryPoint()
 	scripting_manager = new ScriptingManager();
 
 	keyboard = new Keyboard();
+
+	mouse = new Mouse();
 
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
 
@@ -229,6 +233,7 @@ void QREntryPoint::RunTime()
 		ScriptingManager::Get()->UpdateScripts(entman);
 
 		keyboard->UpdateKeys();
+		mouse->UpdateMouseButtons();
 
 		window_exist = render_core->UpdateRender(scene_manager->GetScene(main_scene));
 		if (!window_exist)

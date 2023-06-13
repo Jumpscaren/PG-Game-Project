@@ -19,8 +19,29 @@ namespace ScriptProject
         {
             Vector2 pos = game_object.transform.GetPosition();
 
-            if (Input.GetKeyDown())
+            if (Input.GetKeyDown(Input.Key.D))
                 pos.x += 0.01f;
+
+            if (Input.GetKeyDown(Input.Key.A))
+                pos.x -= 0.01f;
+
+            if (Input.GetKeyDown(Input.Key.W))
+                pos.y += 0.01f;
+
+            if (Input.GetKeyDown(Input.Key.S))
+                pos.y -= 0.01f;
+
+            if (Input.GetKeyDown(Input.Key.R) || Input.GetMouseButtonPressed(Input.MouseButton.WHEEL))
+            {
+                pos.x = 0;
+                pos.y = 0;
+            }
+
+            if (Input.GetMouseButtonPressed(Input.MouseButton.LEFT))
+                pos.y -= 0.02f;
+
+            if (Input.GetMouseButtonPressed(Input.MouseButton.RIGHT))
+                pos.y += 0.02f;
 
             game_object.transform.SetPosition(pos);
 

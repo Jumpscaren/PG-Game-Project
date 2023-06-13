@@ -170,6 +170,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClCompile Include="Components\ScriptComponent.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Input\Keyboard.cpp" />
+    <ClCompile Include="Input\Mouse.cpp" />
     <ClCompile Include="Scripting\ScriptingManager.cpp" />
     <ClCompile Include="Scripting\Objects\RenderInterface.cpp" />
     <ClCompile Include="Scripting\Objects\GameObjectInterface.cpp" />
@@ -250,6 +251,7 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClInclude Include="Components\ScriptComponent.h" />
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Input\Keyboard.h" />
+    <ClInclude Include="Input\Mouse.h" />
     <ClInclude Include="Scripting\ScriptingManager.h" />
     <ClInclude Include="Scripting\Objects\RenderInterface.h" />
     <ClInclude Include="Scripting\Objects\GameObjectInterface.h" />
