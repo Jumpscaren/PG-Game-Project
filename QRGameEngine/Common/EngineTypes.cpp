@@ -84,3 +84,12 @@ const Vector4 Vector4::operator=(const DirectX::XMVECTOR& vector)
 {
 	return Vector4(vector.m128_f32[0], vector.m128_f32[1], vector.m128_f32[2], vector.m128_f32[3]);
 }
+
+Vector2i::Vector2i(int32_t x, int32_t y) : x(x), y(y)
+{
+
+}
+
+Vector2u::Vector2u(uint32_t x, uint32_t y) : x(x), y(y)
+{
+}

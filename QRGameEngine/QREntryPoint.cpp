@@ -211,6 +211,8 @@ void QREntryPoint::RunTime()
 	{
 		Time::Start();
 
+		Mouse::Get()->ResetMouseDeltaCoords();
+
 		ImGUIMain::StartFrame();
 
 		average_frame_time = average_frame_time * 0.9f + 0.1f * (float)Time::GetDeltaTime(Timer::TimeTypes::Milliseconds);

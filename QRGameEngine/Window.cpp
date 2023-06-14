@@ -90,6 +90,40 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 		//Mouse::OnButtonReleased(Button::Wheel);
 		return 0;
 	}
+
+	case WM_MOUSEMOVE:
+	{
+		// LOWORD and HIWORD can't be used because x and y can be negative
+		POINTS point = MAKEPOINTS(lParam);
+		//if (point.x < 0 || point.y < 0 || point.x >= static_cast<int>(s_window.GetWindowWidth()) || point.y >= static_cast<int>(GetWindowHeight()))
+		//{
+		//	std::cout << "Warning WM_MOUSEMOVE returned point outside the windows dimensions! x: " << point.x << " y: " << point.y << std::endl;
+		//}
+		Mouse::Get()->MouseMove({ static_cast<uint32_t>(point.x), static_cast<uint32_t>(point.y) });
+		//Mouse::OnMove({ static_cast<u32>(point.x), static_cast<u32>(point.y) });
+		return 0;
+	}
+	case WM_INPUT:
+	{
+		UINT size = 0u;
+		if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) == -1)
+			return 0;
+
+		std::vector<char> rawBuffer;
+		rawBuffer.resize(size);
+
+		if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, rawBuffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
+			return 0;
+
+		auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+		if (ri.header.dwType == RIM_TYPEMOUSE && (ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
+		{
+			Mouse::Get()->MouseDeltaMove({ ri.data.mouse.lLastX, ri.data.mouse.lLastY });
+			//Mouse::OnRawDelta({ ri.data.mouse.lLastX, ri.data.mouse.lLastY });
+		}
+
+		return 0;
+	}
 	//case WM_MOUSEACTIVATE:
 	//{
 	//	if (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTBOTTOM || LOWORD(lParam) == HTLEFT || LOWORD(lParam) == HTRIGHT ||

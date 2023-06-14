@@ -11,6 +11,20 @@ struct Vector2
 	const Vector2 operator= (const DirectX::XMVECTOR& vector);
 };
 
+struct Vector2i
+{
+	int32_t x, y;
+
+	Vector2i(int32_t x = 0, int32_t y = 0);
+};
+
+struct Vector2u
+{
+	uint32_t x, y;
+
+	Vector2u(uint32_t x = 0, uint32_t y = 0);
+};
+
 struct Vector3
 {
 	float x, y, z;

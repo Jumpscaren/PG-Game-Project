@@ -58,6 +58,8 @@ Mouse::MousePress Mouse::GetMouseButtonPress(const MouseButton& mouse_button)
 Mouse::Mouse()
 {
 	s_mouse = this;
+	m_delta_mouse_coords_index = 0;
+	m_delta_mouse_coords_old_index = 1;
 	UpdateMouseButtons(false);
 }
 
@@ -92,4 +94,38 @@ void Mouse::UpdateMouseButtons(bool pressed)
 	MouseButtonAlreadyPressed(mouse_button_pressed.left, pressed, true);
 	MouseButtonAlreadyPressed(mouse_button_pressed.right, pressed, true);
 	MouseButtonAlreadyPressed(mouse_button_pressed.wheel, pressed, true);
+}
+
+void Mouse::MouseMove(Vector2u mouse_coords)
+{
+	std::cout << "Mouse Coords: X = " << mouse_coords.x << ", Y = " << mouse_coords.y << "\n";
+	m_current_mouse_coords = mouse_coords;
+}
+
+void Mouse::MouseDeltaMove(Vector2i mouse_delta_coords)
+{
+	m_delta_mouse_coords[m_delta_mouse_coords_index].x += mouse_delta_coords.x;
+	m_delta_mouse_coords[m_delta_mouse_coords_index].y += mouse_delta_coords.y;
+}
+
+Vector2u Mouse::GetMouseCoords() const
+{
+	return m_current_mouse_coords;
+}
+
+Vector2i Mouse::GetDeltaMouseCoords() const
+{
+	return m_delta_mouse_coords[m_delta_mouse_coords_old_index];
+}
+
+void Mouse::ResetMouseDeltaCoords()
+{
+	SwitchMouseDeltaCoords();
+	m_delta_mouse_coords[m_delta_mouse_coords_index] = { 0,0 };
+}
+
+void Mouse::SwitchMouseDeltaCoords()
+{
+	m_delta_mouse_coords_old_index = m_delta_mouse_coords_index;
+	m_delta_mouse_coords_index = (++m_delta_mouse_coords_index) % 2;
 }
