@@ -1,6 +1,5 @@
 #pragma once
-
-class EntityManager;
+#include "Components/ScriptComponent.h"
 
 class ScriptingManager
 {
@@ -9,6 +8,7 @@ private:
 
 public:
 	ScriptingManager();
+	void StartScript(const ScriptComponent& script);
 	void UpdateScripts(EntityManager* entity_manager);
 
 	static ScriptingManager* Get();

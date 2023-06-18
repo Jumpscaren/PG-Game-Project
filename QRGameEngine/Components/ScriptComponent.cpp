@@ -2,6 +2,7 @@
 #include "ScriptComponent.h"
 #include "SceneSystem/SceneManager.h"
 #include "Scripting/CSMonoCore.h"
+#include "Scripting/ScriptingManager.h"
 
 void ScriptComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -17,4 +18,6 @@ void ScriptComponentInterface::InitComponent(CSMonoObject object, SceneIndex sce
 	script_component.script_object = object;
 	script_component.script_start = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Start");
 	script_component.script_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Update");
+
+	ScriptingManager::Get()->StartScript(script_component);
 }

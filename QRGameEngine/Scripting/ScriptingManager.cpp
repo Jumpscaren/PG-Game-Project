@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "ScriptingManager.h"
-#include "ECS/EntityManager.h"
-#include "Components/ScriptComponent.h"
 #include "Scripting/CSMonoCore.h"
 
 ScriptingManager* ScriptingManager::s_scripting_manager = nullptr;
@@ -9,6 +7,13 @@ ScriptingManager* ScriptingManager::s_scripting_manager = nullptr;
 ScriptingManager::ScriptingManager()
 {
 	s_scripting_manager = this;
+}
+
+void ScriptingManager::StartScript(const ScriptComponent& script)
+{
+	CSMonoCore* mono_core = CSMonoCore::Get();
+	if (mono_core->CheckIfMonoMethodExists(script.script_start))
+		mono_core->CallMethod(script.script_start, script.script_object);
 }
 
 void ScriptingManager::UpdateScripts(EntityManager* entity_manager)

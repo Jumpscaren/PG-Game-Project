@@ -12,7 +12,7 @@ namespace ScriptProject
     {
         void Start()
         {
-
+            Console.WriteLine("START WORKS YEHAHHHH!");
         }
 
         void Update()

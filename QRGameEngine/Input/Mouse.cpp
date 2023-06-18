@@ -108,7 +108,7 @@ void Mouse::UpdateMouseButtons(bool pressed)
 
 void Mouse::MouseMove(Vector2u mouse_coords)
 {
-	std::cout << "Mouse Coords: X = " << mouse_coords.x << ", Y = " << mouse_coords.y << "\n";
+	//std::cout << "Mouse Coords: X = " << mouse_coords.x << ", Y = " << mouse_coords.y << "\n";
 	m_current_mouse_coords = mouse_coords;
 }
 

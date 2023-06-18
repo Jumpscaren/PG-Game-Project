@@ -361,13 +361,13 @@ void CSMonoCore::HookMethod(const MonoClassHandle& class_handle, const std::stri
 	std::string full_name = CSMonoMethod::GetMethodFullName(mono_class, method_name);
 	mono_add_internal_call(full_name.c_str(), method);
 
-	MonoMethod* m;
-	void* iter = nullptr;
-	while ((m = mono_class_get_methods(mono_class->GetMonoClass(), &iter)))
-	{
-		std::cout << mono_method_get_name(m) << "\n";
-		std::cout << mono_method_full_name(m, true) << "\n";
-	}
+	//MonoMethod* m;
+	//void* iter = nullptr;
+	//while ((m = mono_class_get_methods(mono_class->GetMonoClass(), &iter)))
+	//{
+	//	std::cout << mono_method_get_name(m) << "\n";
+	//	std::cout << mono_method_full_name(m, true) << "\n";
+	//}
 }
 
 MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method)
