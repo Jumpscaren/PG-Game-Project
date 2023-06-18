@@ -42,6 +42,9 @@ private:
 	std::vector<TransformComponent> m_transform_data_vector;
 	std::vector<SpriteData> m_sprite_data_vector;
 
+	DX12BufferHandle m_camera_buffer;
+	DX12BufferViewHandle m_camera_buffer_view;
+
 	std::unordered_map<AssetHandle, TextureHandleData> m_texture_handles;
 
 	static RenderCore* s_render_core;

@@ -18,6 +18,7 @@
 #include "Input/Keyboard.h"
 #include "Input/Input.h"
 #include "Input/Mouse.h"
+#include "Components/CameraComponent.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -28,6 +29,7 @@ AssetManager* asset_manager;
 ScriptingManager* scripting_manager;
 Keyboard* keyboard;
 Mouse* mouse;
+Entity editor_camera_ent;
 
 struct TempData
 {
@@ -169,21 +171,24 @@ void QREntryPoint::EntryPoint()
 
 	EntityManager* em = scene_manager->GetScene(main_scene)->GetEntityManager();
 	render_ent = em->NewEntity();
-	em->AddComponent<TransformComponent>(render_ent, Vector3(), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 2.0f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 2.0f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 
 	render_ent = em->NewEntity();
-	em->AddComponent<TransformComponent>(render_ent, Vector3(0.2f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 1.0f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.2f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 1.0f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 
 	render_ent = em->NewEntity();
-	em->AddComponent<TransformComponent>(render_ent, Vector3(0.4f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 1.5f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.4f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 1.5f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 
 	render_ent = em->NewEntity();
-	em->AddComponent<TransformComponent>(render_ent, Vector3(0.6f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 0.5f), Vector3(0.2f, 0.2f, 0.2f));
+	em->AddComponent<TransformComponent>(render_ent, Vector3(0.6f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 0.5f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 
+	editor_camera_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(editor_camera_ent, Vector3(0.0f, 0.0f, 0.0f));
+	em->AddComponent<CameraComponent>(editor_camera_ent);
 
 	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
 
@@ -199,6 +204,7 @@ void QREntryPoint::EntryPoint()
 	RenderInterface::RegisterInterface(mono_core);
 	ScriptComponentInterface::RegisterInterface(mono_core);
 	InputInterface::RegisterInterface(mono_core);
+	CameraComponentInterface::RegisterInterface(mono_core);
 
 	mono_core->CallStaticMethod(main_method_handle);
 }
@@ -232,6 +238,43 @@ void QREntryPoint::RunTime()
 		pos.x += (float)Time::GetDeltaTime();
 		render_ent_trans.SetPosition(pos);
 
+		//Editor Camera Movement Temporary Placement
+		Vector3 editor_camera_pos = entman->GetComponent<TransformComponent>(editor_camera_ent).GetPosition();
+
+		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::D))
+			editor_camera_pos.x += 0.01f;
+
+		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::A))
+			editor_camera_pos.x -= 0.01f;
+
+		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::W))
+			editor_camera_pos.y += 0.01f;
+
+		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::S))
+			editor_camera_pos.y -= 0.01f;
+
+		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::R))
+		{
+			editor_camera_pos.x = 0;
+			editor_camera_pos.y = 0;
+			editor_camera_pos.z = 1;
+		}
+
+		if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::UP))
+		{
+			editor_camera_pos.z -= 1.0f;
+		}
+		if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::DOWN))
+		{
+			editor_camera_pos.z += 1.0f;
+		}
+
+		if (editor_camera_pos.z < 1.0f)
+			editor_camera_pos.z = 1.0f;
+
+		entman->GetComponent<TransformComponent>(editor_camera_ent).SetPosition(editor_camera_pos);
+
+		//Update scripts
 		ScriptingManager::Get()->UpdateScripts(entman);
 
 		keyboard->UpdateKeys();

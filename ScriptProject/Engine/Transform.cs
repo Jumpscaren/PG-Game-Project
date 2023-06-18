@@ -29,5 +29,11 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public override extern void InitComponent(UInt32 scene_index, UInt32 entity);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetZIndex(float z_index);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern float GetZIndex();
     }
 }

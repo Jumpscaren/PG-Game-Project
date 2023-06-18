@@ -53,6 +53,14 @@ Mouse::MousePress Mouse::GetMouseButtonPress(const MouseButton& mouse_button)
 	case MouseButton::WHEEL:
 		return mouse_button_pressed.wheel;
 	}
+
+	assert(false);
+	return MousePress::UP;
+}
+
+void Mouse::StopMouseWheelSpin()
+{
+	m_mouse_wheel_spin = MouseWheelSpin::MIDDLE;
 }
 
 Mouse::Mouse()
@@ -94,6 +102,8 @@ void Mouse::UpdateMouseButtons(bool pressed)
 	MouseButtonAlreadyPressed(mouse_button_pressed.left, pressed, true);
 	MouseButtonAlreadyPressed(mouse_button_pressed.right, pressed, true);
 	MouseButtonAlreadyPressed(mouse_button_pressed.wheel, pressed, true);
+
+	StopMouseWheelSpin();
 }
 
 void Mouse::MouseMove(Vector2u mouse_coords)
@@ -128,4 +138,17 @@ void Mouse::SwitchMouseDeltaCoords()
 {
 	m_delta_mouse_coords_old_index = m_delta_mouse_coords_index;
 	m_delta_mouse_coords_index = (++m_delta_mouse_coords_index) % 2;
+}
+
+void Mouse::SpinMouseWheel(bool up)
+{
+	if (up)
+		m_mouse_wheel_spin = MouseWheelSpin::UP;
+	else
+		m_mouse_wheel_spin = MouseWheelSpin::DOWN;
+}
+
+bool Mouse::GetMouseWheelSpinDirection(const MouseWheelSpin& mouse_wheel_spin_direction)
+{
+	return mouse_wheel_spin_direction == m_mouse_wheel_spin;
 }

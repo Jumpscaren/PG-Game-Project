@@ -22,6 +22,7 @@ namespace ScriptProject.Engine
             Console.WriteLine("GameObject Entity ID = " + gameObject.entity_id);
 
             gameObject.transform = gameObject.AddComponent<Transform>();
+            gameObject.transform.SetZIndex(1);
             return gameObject;
         }
 

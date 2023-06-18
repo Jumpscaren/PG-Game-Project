@@ -6,10 +6,16 @@ class Mouse
 public:
 	enum class MouseButton : uint8_t
 	{
-		LEFT = 0, RIGHT, WHEEL
+		LEFT = 0, RIGHT, WHEEL,
 		//Etc for more mouse buttons
 	};
 
+	enum class MouseWheelSpin : uint8_t
+	{
+		UP = 0,
+		DOWN = 1,
+		MIDDLE = 2,
+	};
 
 private:
 	enum class MousePress : uint8_t
@@ -31,10 +37,14 @@ private:
 	Vector2i m_delta_mouse_coords[2];
 	uint8_t m_delta_mouse_coords_index, m_delta_mouse_coords_old_index;
 
+	MouseWheelSpin m_mouse_wheel_spin;
+
 private:
 	void SetMouseButton(const MouseButton& mouse_button, bool pressed);
 	void MouseButtonAlreadyPressed(MousePress& mouse_button_press, bool pressed, bool update_mouse_button = false);
 	MousePress GetMouseButtonPress(const MouseButton& mouse_button);
+
+	void StopMouseWheelSpin();
 
 public:
 	Mouse();
@@ -57,6 +67,8 @@ public:
 	void ResetMouseDeltaCoords();
 	void SwitchMouseDeltaCoords();
 
+	void SpinMouseWheel(bool up);
 
+	bool GetMouseWheelSpinDirection(const MouseWheelSpin& mouse_wheel_spin_direction);
 };
 

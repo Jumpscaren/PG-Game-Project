@@ -33,5 +33,9 @@ public:
 	static void SetPosition(SceneIndex scene_index, Entity entity, float x, float y);
 
 	static CSMonoObject GetPosition(CSMonoObject cs_transform);
+
+	static void SetZIndex(CSMonoObject object, float z_index);
+
+	static float GetZIndex(CSMonoObject object);
 };
 

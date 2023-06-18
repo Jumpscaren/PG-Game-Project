@@ -19,6 +19,8 @@ private:
 	std::unordered_map<uint64_t, uint32_t> m_component_type_to_pool;
 
 	std::vector<ComponentPool> m_component_pools;
+	uint32_t m_current_component_pool_index;
+	static constexpr uint32_t MAX_COMPONENT_POOLS = 100;
 
 	static constexpr Entity NULL_ENTITY = -1;
 
@@ -126,14 +128,18 @@ public:
 template<typename Component>
 inline uint32_t EntityManager::CreateComponentPool()
 {
-	uint32_t component_pool_index = (uint32_t)m_component_pools.size();
+	//uint32_t component_pool_index = (uint32_t)m_component_pools.size(); 
+	uint32_t component_pool_index = m_current_component_pool_index++;
+
+	assert(component_pool_index < MAX_COMPONENT_POOLS);
 
 	void* component_pool_data = malloc(sizeof(Component) * m_max_entities);
 
 	ComponentPool component_pool;
 	component_pool.component_pool_data = component_pool_data;
 
-	m_component_pools.push_back(component_pool);
+	//m_component_pools.push_back(component_pool);
+	m_component_pools[component_pool_index] = component_pool;
 
 	return component_pool_index;
 }

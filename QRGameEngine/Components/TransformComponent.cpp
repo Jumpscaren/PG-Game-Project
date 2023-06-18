@@ -3,6 +3,10 @@
 #include "SceneSystem/SceneManager.h"
 #include "Scripting/CSMonoCore.h"
 #include "Scripting/Objects/GameObjectInterface.h"
+#include "Input/Mouse.h"
+#include "ComponentInterface.h"
+
+#include "CameraComponent.h"
 
 MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
@@ -84,6 +88,9 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetPosition>(transform_class, "SetPosition_Extern", TransformComponentInterface::SetPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::AddTransformComponent>(transform_class, "InitComponent", TransformComponentInterface::AddTransformComponent);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetPosition>(transform_class, "GetPosition", TransformComponentInterface::GetPosition);
+
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetZIndex>(transform_class, "SetZIndex", TransformComponentInterface::SetZIndex);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetZIndex>(transform_class, "GetZIndex", TransformComponentInterface::GetZIndex);
 }
 
 void TransformComponentInterface::AddTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
@@ -108,4 +115,27 @@ CSMonoObject TransformComponentInterface::GetPosition(CSMonoObject cs_transform)
 	CSMonoCore::Get()->SetValue(position.y, vector2_position, "y");
 
 	return vector2_position;
+}
+
+void TransformComponentInterface::SetZIndex(CSMonoObject object, float z_index)
+{
+	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+
+	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	TransformComponent& transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(entity);
+	Vector3 pos = transform.GetPosition();
+	pos.z = z_index;
+	transform.SetPosition(pos);
+}
+
+float TransformComponentInterface::GetZIndex(CSMonoObject object)
+{
+	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+
+	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	return SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(entity).GetPosition().z;
 }

@@ -124,6 +124,18 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
 		return 0;
 	}
+	case WM_MOUSEWHEEL:
+	{
+		//auto fwKeys = GET_KEYSTATE_WPARAM(wParam);
+		int z_delta = GET_WHEEL_DELTA_WPARAM(wParam);
+
+		Mouse::Get()->SpinMouseWheel(z_delta > 0);
+
+		//auto xPos = GET_X_LPARAM(lParam);
+		//auto yPos = GET_Y_LPARAM(lParam);
+
+		return 0;
+	}
 	//case WM_MOUSEACTIVATE:
 	//{
 	//	if (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTBOTTOM || LOWORD(lParam) == HTLEFT || LOWORD(lParam) == HTRIGHT ||

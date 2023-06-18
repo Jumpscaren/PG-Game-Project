@@ -7,6 +7,7 @@
 #include "ECS/EntityManager.h"
 #include "ImGUIMain.h"
 #include "Asset/AssetManager.h"
+#include "Components/CameraComponent.h"
 
 
 RenderCore* RenderCore::s_render_core = nullptr;
@@ -46,6 +47,9 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	DX12BufferHandle quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
 	m_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
+	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::CONSTANT_BUFFER);
+	m_camera_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_camera_buffer, ViewType::SHADER_RESOURCE_VIEW);
+
 	m_stack_allocator = new DX12StackAllocator(&m_dx12_core, 1'000);
 
 	m_root_signature
@@ -53,6 +57,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)
+		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 2)
 		.InitRootSignature(&m_dx12_core);
 
 
@@ -136,6 +141,28 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	}
 
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_quad_view_handle, 0);
+
+	//Camera
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 3);
+
+	CameraComponent active_camera = {};
+	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent&, TransformComponent& transform)
+		{
+			Vector3 pos = transform.GetPosition();
+			//Hardcoded camera position to 0
+			float fake_camera_z_position = 0.0f;
+			active_camera.view_matrix = DirectX::XMMatrixLookAtLH({ pos.x,pos.y, fake_camera_z_position }, { pos.x,pos.y, fake_camera_z_position + 1.0f }, { 0,1,0 });
+			//active_camera.proj_matrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, m_window->GetWindowHeight() / m_window->GetWindowWidth(), 0.1f, 800.0f);
+			//float width = m_window->GetWindowWidth();
+			//float height = m_window->GetWindowHeight();
+			float view_size = pos.z;
+			if (view_size < 1.0f)
+				view_size = 1.0f;
+			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size, 0.1f, 1000.0f);
+			//active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(100 - view_size, 100 - view_size, 0.1f, 1000.0f);
+
+		});
+	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_camera_buffer, &active_camera, sizeof(CameraComponent), 1);
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
 

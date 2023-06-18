@@ -19,6 +19,8 @@ EntityManager::EntityManager(uint32_t max_entities) : m_max_entities(max_entitie
 
 	m_entities.resize(max_entities);
 	m_free_entities.resize(max_entities);
+	m_component_pools.resize(MAX_COMPONENT_POOLS);
+	m_current_component_pool_index = 0;
 
 	const uint32_t max_ent = (max_entities - 1);
 	for (uint32_t i = max_ent; i >= 0 && i < max_entities; --i)

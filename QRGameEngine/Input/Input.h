@@ -17,4 +17,6 @@ private:
 
 	static bool GetMouseButtonPressed(int mouse_button);
 	static bool GetMouseButtonDown(int mouse_button);
+
+	static bool GetMouseWheelSpin(int direction);
 };

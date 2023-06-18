@@ -31,6 +31,13 @@ namespace ScriptProject.Engine
             //Etc for more mouse buttons
         };
 
+        public enum MouseWheelSpin
+        {
+            UP = 0,
+		    DOWN = 1,
+		    MIDDLE = 2,
+	    };
+
         //When key is pressed
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern bool GetKeyPressed(Key key);
@@ -46,5 +53,9 @@ namespace ScriptProject.Engine
         //When mouse button is down
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern bool GetMouseButtonDown(MouseButton key);
+
+        //When mouse button is down
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern bool GetMouseWheelSpin(MouseWheelSpin direction);
     }
 }
