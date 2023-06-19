@@ -12,6 +12,9 @@
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
+DX12BufferViewHandle editor_lines_view_handle;
+uint64_t editor_lines_amount = 0;
+
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
 {
 	s_render_core = this;
@@ -47,7 +50,25 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	DX12BufferHandle quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
 	m_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
-	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::CONSTANT_BUFFER);
+	struct VertexGrid
+	{
+		float position[3];
+		float pad;
+	};
+	std::vector<VertexGrid> lines;
+	for (int j = -1000; j <= 1000; ++j)
+	{
+		lines.push_back({ {(float)(-1000), (float)(j), 1.0f}, 0.0f });
+		lines.push_back({ {(float)(1000), (float)(j), 1.0f}, 0.0f });
+		lines.push_back({ {(float)(j), (float)(-1000), 1.0f}, 0.0f });
+		lines.push_back({ {(float)(j), (float)(1000), 1.0f}, 0.0f });
+	}
+	editor_lines_amount = lines.size();
+
+	DX12BufferHandle editor_lines_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, lines.data(), sizeof(VertexGrid), editor_lines_amount, BufferType::CONSTANT_BUFFER);
+	editor_lines_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, editor_lines_handle, ViewType::SHADER_RESOURCE_VIEW);
+
+	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::MODIFIABLE_BUFFER);
 	m_camera_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_camera_buffer, ViewType::SHADER_RESOURCE_VIEW);
 
 	m_stack_allocator = new DX12StackAllocator(&m_dx12_core, 1'000);
@@ -63,6 +84,18 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 
 	m_pipeline.InitPipeline(&m_dx12_core, &m_root_signature, L"../QRGameEngine/Shaders/VertexShader.hlsl", L"../QRGameEngine/Shaders/PixelShader.hlsl");
+
+
+	//Other shader
+	m_grid_root_signature
+		.AddStaticSampler(&m_dx12_core, SamplerTypes::LINEAR_WRAP, 0)
+		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
+		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)
+		.InitRootSignature(&m_dx12_core);
+
+	m_grid_pipeline
+		.AddTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE)
+		.InitPipeline(&m_dx12_core, &m_grid_root_signature, L"../QRGameEngine/Shaders/GridVS.hlsl", L"../QRGameEngine/Shaders/GridPS.hlsl");
 
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
@@ -90,6 +123,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetPipeline(&m_pipeline);
 
 	DX12TextureHandle render_target_texture = m_dx12_core.GetSwapChain()->GetBackbufferTexture();
+	DX12TextureViewHandle render_target_view_handle = m_dx12_core.GetSwapChain()->GetBackbufferView();
 
 	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::RENDER_TARGET, ResourceState::PRESENT);
 
@@ -146,6 +180,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 3);
 
 	CameraComponent active_camera = {};
+	float view_size = 0.0f;
 	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent&, TransformComponent& transform)
 		{
 			Vector3 pos = transform.GetPosition();
@@ -153,18 +188,29 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			float fake_camera_z_position = 0.0f;
 			active_camera.view_matrix = DirectX::XMMatrixLookAtLH({ pos.x,pos.y, fake_camera_z_position }, { pos.x,pos.y, fake_camera_z_position + 1.0f }, { 0,1,0 });
 			//active_camera.proj_matrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, m_window->GetWindowHeight() / m_window->GetWindowWidth(), 0.1f, 800.0f);
-			//float width = m_window->GetWindowWidth();
-			//float height = m_window->GetWindowHeight();
-			float view_size = pos.z;
+
+			float screen_width = m_window->GetWindowWidth();
+			float screen_height = m_window->GetWindowHeight();
+			view_size = pos.z;
 			if (view_size < 1.0f)
 				view_size = 1.0f;
-			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size, 0.1f, 1000.0f);
-			//active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(100 - view_size, 100 - view_size, 0.1f, 1000.0f);
+			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
 
 		});
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_camera_buffer, &active_camera, sizeof(CameraComponent), 1);
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
+
+	m_dx12_core.GetCommandList()->SetRootSignature(&m_grid_root_signature);
+	m_dx12_core.GetCommandList()->SetPipeline(&m_grid_pipeline);
+	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, editor_lines_view_handle, 0);
+
+	//Camera
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 1);
+
+	m_dx12_core.GetCommandList()->Draw(editor_lines_amount, 1, 0, 0);
 
 	if (render_object_amount)
 	{

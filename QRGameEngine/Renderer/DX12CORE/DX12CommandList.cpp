@@ -197,3 +197,10 @@ void DX12CommandList::CopyTextureRegion(D3D12_TEXTURE_COPY_LOCATION* destination
 {
 	m_command_list->CopyTextureRegion(destination, 0, 0, 0, source, nullptr);
 }
+
+void DX12CommandList::CopyTexture(DX12Core* dx12_core, DX12TextureHandle destination, DX12TextureHandle source)
+{
+	ID3D12Resource* texture_destination = dx12_core->GetTextureManager()->GetTextureResource(destination);
+	ID3D12Resource* texture_source = dx12_core->GetTextureManager()->GetTextureResource(source);
+	m_command_list->CopyResource(texture_destination, texture_source);
+}

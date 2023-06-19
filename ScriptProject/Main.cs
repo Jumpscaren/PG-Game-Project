@@ -28,6 +28,7 @@ namespace ScriptProject
             GameObject gameObject = GameObject.CreateGameObject();
             Sprite sprite = gameObject.AddComponent<Sprite>();
             gameObject.GetComponent<Transform>().SetPosition(0.5f, 0);
+            gameObject.GetComponent<Transform>().SetZIndex(2);
 
             gameObject.AddComponent<TestScript>();
 

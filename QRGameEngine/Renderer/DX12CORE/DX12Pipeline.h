@@ -10,6 +10,12 @@ class DX12Pipeline
 private:
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipeline_state;
 
+	struct PipelineInfo
+	{
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE topology_type = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		//More stuff if needed
+	} m_pipeline_info;
+
 private:
 	ID3DBlob* LoadCSO(const std::string& shader_name);
 	ID3D12PipelineState* GetPipeline();
@@ -18,6 +24,7 @@ public:
 	DX12Pipeline() = default;
 	~DX12Pipeline();
 
+	DX12Pipeline& AddTopology(const D3D12_PRIMITIVE_TOPOLOGY_TYPE& topology_type);
 	void InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_signature, const std::wstring& vertex_shader, const std::wstring& pixel_shader);
 };
 

@@ -25,6 +25,12 @@ DX12Pipeline::~DX12Pipeline()
 {
 }
 
+DX12Pipeline& DX12Pipeline::AddTopology(const D3D12_PRIMITIVE_TOPOLOGY_TYPE& topology_type)
+{
+	m_pipeline_info.topology_type = topology_type;
+	return *this;
+}
+
 void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_signature, const std::wstring& vertex_shader, const std::wstring& pixel_shader)
 {
 	//Create pipeline
@@ -60,7 +66,7 @@ void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_sig
 	rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 	pipeline_desc.RasterizerState = rasterizer_desc;
 
-	pipeline_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipeline_desc.PrimitiveTopologyType = m_pipeline_info.topology_type;
 	pipeline_desc.NumRenderTargets = static_cast<UINT>(1);
 
 	pipeline_desc.BlendState.AlphaToCoverageEnable = false;

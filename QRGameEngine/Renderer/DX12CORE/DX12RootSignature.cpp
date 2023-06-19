@@ -129,6 +129,29 @@ DX12RootSignature& DX12RootSignature::AddConstant(DX12Core* dx12_core, const Sha
 	return *this;
 }
 
+DX12RootSignature& DX12RootSignature::AddShaderResourceView(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
+{
+	D3D12_DESCRIPTOR_RANGE descriptor_range;
+	descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptor_range.NumDescriptors = 1;
+	descriptor_range.BaseShaderRegister = shader_binding_index;
+	descriptor_range.RegisterSpace = shader_space;
+	descriptor_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	std::vector<D3D12_DESCRIPTOR_RANGE> range = { descriptor_range };
+	m_ranges.push_back(range);
+
+	D3D12_ROOT_PARAMETER descriptor_table;
+	descriptor_table.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	descriptor_table.ShaderVisibility = (D3D12_SHADER_VISIBILITY)shader_visibility;
+	descriptor_table.DescriptorTable.NumDescriptorRanges = (UINT)(m_ranges[m_ranges.size() - 1].size());
+	descriptor_table.DescriptorTable.pDescriptorRanges = m_ranges[m_ranges.size() - 1].size() != 0 ? m_ranges[m_ranges.size() - 1].data() : nullptr;
+
+	m_root_parameters.push_back(descriptor_table);
+
+	return *this;
+}
+
 void DX12RootSignature::InitRootSignature(DX12Core* dx12_core)
 {
 	D3D12_ROOT_SIGNATURE_DESC desc;

@@ -221,16 +221,18 @@ void QREntryPoint::RunTime()
 
 		ImGUIMain::StartFrame();
 
+		Scene* active_scene = scene_manager->GetScene(main_scene);
+		EntityManager* entman = active_scene->GetEntityManager();
+
 		average_frame_time = average_frame_time * 0.9f + 0.1f * (float)Time::GetDeltaTime(Timer::TimeTypes::Milliseconds);
+		Vector3 editor_camera_position = entman->GetComponent<TransformComponent>(editor_camera_ent).GetPosition();
 
 		ImGui::Begin("App Statistics");
 		{
 			ImGui::Text("Average Frame Time: %f ms", average_frame_time);
+			ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
 		ImGui::End();
-
-		Scene* active_scene = scene_manager->GetScene(main_scene);
-		EntityManager* entman = active_scene->GetEntityManager();
 
 		TransformComponent& render_ent_trans = entman->GetComponent<TransformComponent>(render_ent);
 		

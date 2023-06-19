@@ -301,8 +301,10 @@ DX12TextureViewHandle DX12TextureManager::AddView(DX12Core* dx12_core, DX12Textu
 		texture_descriptor_handle = m_rendertarget_view.AddDescriptor();
 		dx12_core->GetDevice()->CreateRenderTargetView(GetTextureResource(texture_handle), nullptr, texture_descriptor_handle.cpu_handle);
 		break;
-	//case ViewType::UNORDERED_ACCESS_VIEW:
-	//	break;
+	case ViewType::UNORDERED_ACCESS_VIEW:
+		texture_descriptor_handle = m_shader_bindable_view.AddDescriptor();
+		dx12_core->GetDevice()->CreateUnorderedAccessView(GetTextureResource(texture_handle), nullptr, nullptr, texture_descriptor_handle.cpu_handle);
+		break;
 	default:
 		assert(false);
 		break;

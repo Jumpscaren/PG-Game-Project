@@ -18,13 +18,13 @@ struct Constants
 };
 ConstantBuffer<Constants> sprite_buffer_index : register(b0, space0);
 
-SamplerState standardSampler : register(s0);
+SamplerState standard_sampler : register(s0);
 
 float4 main(VS_OUT input) : SV_TARGET
-{
+{	
 	StructuredBuffer<Sprite> sprite_data = ResourceDescriptorHeap[sprite_buffer_index.index];
 
 	Texture2D colourTexture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
 
-	return colourTexture.Sample(standardSampler, input.uv);
+    return colourTexture.Sample(standard_sampler, input.uv);
 }

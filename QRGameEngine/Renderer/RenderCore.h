@@ -47,6 +47,9 @@ private:
 
 	std::unordered_map<AssetHandle, TextureHandleData> m_texture_handles;
 
+	DX12RootSignature m_grid_root_signature;
+	DX12Pipeline m_grid_pipeline;
+
 	static RenderCore* s_render_core;
 
 public:
