@@ -243,17 +243,19 @@ void QREntryPoint::RunTime()
 		//Editor Camera Movement Temporary Placement
 		Vector3 editor_camera_pos = entman->GetComponent<TransformComponent>(editor_camera_ent).GetPosition();
 
+		float camera_speed = editor_camera_pos.z * Time::GetDeltaTime();
+
 		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::D))
-			editor_camera_pos.x += 0.01f;
+			editor_camera_pos.x += camera_speed;
 
 		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::A))
-			editor_camera_pos.x -= 0.01f;
+			editor_camera_pos.x -= camera_speed;
 
 		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::W))
-			editor_camera_pos.y += 0.01f;
+			editor_camera_pos.y += camera_speed;
 
 		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::S))
-			editor_camera_pos.y -= 0.01f;
+			editor_camera_pos.y -= camera_speed;
 
 		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::R))
 		{

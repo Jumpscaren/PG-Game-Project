@@ -12,9 +12,6 @@
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
-DX12BufferViewHandle editor_lines_view_handle;
-uint64_t editor_lines_amount = 0;
-
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
 {
 	s_render_core = this;
@@ -38,6 +35,20 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 	Vertex quad[6] =
 	{
+		{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
+		{{0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, 0.0f},
+		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
+
+		{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
+		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
+		{{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}, 0.0f},
+	};
+
+	m_quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
+	m_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_quad_handle, ViewType::SHADER_RESOURCE_VIEW);
+
+	Vertex fullscreen_quad[6] =
+	{
 		{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
 		{{-1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, 0.0f},
 		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
@@ -47,8 +58,8 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 		{{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}, 0.0f},
 	};
 
-	DX12BufferHandle quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
-	m_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, quad_handle, ViewType::SHADER_RESOURCE_VIEW);
+	m_fullscreen_quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &fullscreen_quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
+	m_fullscreen_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
 	struct VertexGrid
 	{
@@ -63,10 +74,10 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 		lines.push_back({ {(float)(j), (float)(-1000), 1.0f}, 0.0f });
 		lines.push_back({ {(float)(j), (float)(1000), 1.0f}, 0.0f });
 	}
-	editor_lines_amount = lines.size();
+	m_editor_lines_amount = lines.size();
 
-	DX12BufferHandle editor_lines_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, lines.data(), sizeof(VertexGrid), editor_lines_amount, BufferType::CONSTANT_BUFFER);
-	editor_lines_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, editor_lines_handle, ViewType::SHADER_RESOURCE_VIEW);
+	m_editor_lines_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, lines.data(), sizeof(VertexGrid), m_editor_lines_amount, BufferType::CONSTANT_BUFFER);
+	m_editor_lines_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_editor_lines_handle, ViewType::SHADER_RESOURCE_VIEW);
 
 	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::MODIFIABLE_BUFFER);
 	m_camera_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_camera_buffer, ViewType::SHADER_RESOURCE_VIEW);
@@ -205,12 +216,12 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetPipeline(&m_grid_pipeline);
 	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, editor_lines_view_handle, 0);
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_editor_lines_view_handle, 0);
 
 	//Camera
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 1);
 
-	m_dx12_core.GetCommandList()->Draw(editor_lines_amount, 1, 0, 0);
+	m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
 
 	if (render_object_amount)
 	{

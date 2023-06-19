@@ -36,7 +36,10 @@ private:
 	DX12TextureViewHandle m_depthstencil_view;
 	DX12RootSignature m_root_signature;
 	DX12Pipeline m_pipeline;
+	DX12BufferHandle m_quad_handle;
 	DX12BufferViewHandle m_quad_view_handle;
+	DX12BufferHandle m_fullscreen_quad_handle;
+	DX12BufferViewHandle m_fullscreen_quad_view_handle;
 	DX12StackAllocator* m_stack_allocator;
 
 	std::vector<TransformComponent> m_transform_data_vector;
@@ -49,6 +52,9 @@ private:
 
 	DX12RootSignature m_grid_root_signature;
 	DX12Pipeline m_grid_pipeline;
+	DX12BufferHandle m_editor_lines_handle;
+	DX12BufferViewHandle m_editor_lines_view_handle;
+	uint64_t m_editor_lines_amount = 0;
 
 	static RenderCore* s_render_core;
 
