@@ -411,4 +411,7 @@ Keyboard::KeyPress Keyboard::GetKeyPress(const Key& key)
 	case Key::PERIOD:
 		return key_pressed.period;
 	}
+
+	assert(false);
+	return KeyPress::UP;
 }

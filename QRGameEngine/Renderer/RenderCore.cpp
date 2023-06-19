@@ -61,6 +61,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_fullscreen_quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &fullscreen_quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
 	m_fullscreen_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
+#ifdef _EDITOR
 	struct VertexGrid
 	{
 		float position[3];
@@ -78,6 +79,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 	m_editor_lines_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, lines.data(), sizeof(VertexGrid), m_editor_lines_amount, BufferType::CONSTANT_BUFFER);
 	m_editor_lines_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_editor_lines_handle, ViewType::SHADER_RESOURCE_VIEW);
+#endif
 
 	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::MODIFIABLE_BUFFER);
 	m_camera_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_camera_buffer, ViewType::SHADER_RESOURCE_VIEW);
@@ -212,6 +214,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
 
+#ifdef _EDITOR
 	m_dx12_core.GetCommandList()->SetRootSignature(&m_grid_root_signature);
 	m_dx12_core.GetCommandList()->SetPipeline(&m_grid_pipeline);
 	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
@@ -222,6 +225,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 1);
 
 	m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
+#endif
 
 	if (render_object_amount)
 	{

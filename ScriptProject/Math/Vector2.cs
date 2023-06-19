@@ -8,6 +8,6 @@ namespace ScriptProject.Math
 {
     internal class Vector2
     {
-        public float x, y;
+        public float x = 0.0f, y = 0.0f;
     }
 }

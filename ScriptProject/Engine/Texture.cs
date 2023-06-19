@@ -8,6 +8,6 @@ namespace ScriptProject.Engine
 {
     internal class Texture
     {
-        UInt64 texture_asset_handle;
+        UInt64 texture_asset_handle = 0;
     }
 }

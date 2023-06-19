@@ -122,8 +122,6 @@ void QREntryPoint::EntryPoint()
 	mono_core->SetValue(this_object, object, mono_i_handle);
 	mono_core->GetValue(return_int, object, mono_num_handle);
 	mono_core->SetValue(return_int, object, mono_num_handle);
-	double health;
-	mono_core->GetValue(health, object, "health");
 
 	auto test_script_class = mono_core->RegisterMonoClass("ScriptProject", "TestScript");
 	auto start_method = mono_core->RegisterMonoMethod(test_script_class, "Start");
@@ -243,7 +241,7 @@ void QREntryPoint::RunTime()
 		//Editor Camera Movement Temporary Placement
 		Vector3 editor_camera_pos = entman->GetComponent<TransformComponent>(editor_camera_ent).GetPosition();
 
-		float camera_speed = editor_camera_pos.z * Time::GetDeltaTime();
+		float camera_speed = editor_camera_pos.z * (float)Time::GetDeltaTime();
 
 		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::D))
 			editor_camera_pos.x += camera_speed;
