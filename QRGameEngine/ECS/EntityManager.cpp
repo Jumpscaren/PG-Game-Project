@@ -40,6 +40,8 @@ EntityManager::~EntityManager()
 
 Entity EntityManager::NewEntity()
 {
+	assert(m_free_entities.size());
+
 	Entity entity = m_free_entities.back();
 	m_free_entities.pop_back();
 

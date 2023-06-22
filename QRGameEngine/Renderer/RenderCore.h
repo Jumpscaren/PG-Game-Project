@@ -67,5 +67,7 @@ public:
 	TextureHandle CreateTexture(const std::string& texture_file_name);
 
 	static RenderCore* Get();
+
+	Window* GetWindow();
 };
 

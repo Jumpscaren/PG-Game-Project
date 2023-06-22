@@ -315,6 +315,8 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClCompile Include="Common\EngineTypes.cpp" />
     <ClCompile Include="Components\ComponentInterface.cpp" />
     <ClCompile Include="Components\ScriptComponent.cpp" />
+    <ClCompile Include="Editor\EditorCore.cpp" />
+    <ClCompile Include="Editor\DrawScene.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Input\Keyboard.cpp" />
     <ClCompile Include="Input\Mouse.cpp" />
@@ -413,6 +415,8 @@ xcopy "$(SolutionDir)Vendor\Libs\Mono\mono-2.0-sgen.dll" "$(TargetDir)" /y</Comm
     <ClInclude Include="Common\EngineTypes.h" />
     <ClInclude Include="Components\ComponentInterface.h" />
     <ClInclude Include="Components\ScriptComponent.h" />
+    <ClInclude Include="Editor\EditorCore.h" />
+    <ClInclude Include="Editor\DrawScene.h" />
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Input\Keyboard.h" />
     <ClInclude Include="Input\Mouse.h" />

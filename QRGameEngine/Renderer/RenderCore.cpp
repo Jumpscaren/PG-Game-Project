@@ -9,6 +9,8 @@
 #include "Asset/AssetManager.h"
 #include "Components/CameraComponent.h"
 
+//Temp
+#include "Input/Mouse.h"
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
@@ -35,13 +37,13 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 	Vertex quad[6] =
 	{
-		{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
-		{{0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, 0.0f},
-		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
+		{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f}, 0.0f},
+		{{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f}, 0.0f},
+		{{0.5f, 0.5f, 0.0f}, {1.0f, 0.0f}, 0.0f},
 
-		{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
-		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
-		{{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}, 0.0f},
+		{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f}, 0.0f},
+		{{0.5f, 0.5f, 0.0f}, {1.0f, 0.0f}, 0.0f},
+		{{0.5f, -0.5f, 0.0f}, {1.0f, 1.0f}, 0.0f},
 	};
 
 	m_quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
@@ -194,7 +196,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	CameraComponent active_camera = {};
 	float view_size = 0.0f;
-	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent&, TransformComponent& transform)
+	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, TransformComponent& transform)
 		{
 			Vector3 pos = transform.GetPosition();
 			//Hardcoded camera position to 0
@@ -208,6 +210,8 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			if (view_size < 1.0f)
 				view_size = 1.0f;
 			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
+
+			camera = active_camera;
 
 		});
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_camera_buffer, &active_camera, sizeof(CameraComponent), 1);
@@ -268,4 +272,9 @@ TextureHandle RenderCore::CreateTexture(const std::string& texture_file_name)
 RenderCore* RenderCore::Get()
 {
 	return s_render_core;
+}
+
+Window* RenderCore::GetWindow()
+{
+	return m_window.get();
 }

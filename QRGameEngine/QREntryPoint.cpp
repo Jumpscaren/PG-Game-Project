@@ -19,6 +19,7 @@
 #include "Input/Input.h"
 #include "Input/Mouse.h"
 #include "Components/CameraComponent.h"
+#include "Editor/EditorCore.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -29,7 +30,7 @@ AssetManager* asset_manager;
 ScriptingManager* scripting_manager;
 Keyboard* keyboard;
 Mouse* mouse;
-Entity editor_camera_ent;
+EditorCore* editor_core;
 
 struct TempData
 {
@@ -184,10 +185,6 @@ void QREntryPoint::EntryPoint()
 	em->AddComponent<TransformComponent>(render_ent, Vector3(0.6f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, DirectX::XM_PIDIV4 / 0.5f), Vector3(0.2f, 0.2f, 0.2f));
 	em->AddComponent<SpriteComponent>(render_ent).texture_handle = texture;
 
-	editor_camera_ent = em->NewEntity();
-	em->AddComponent<TransformComponent>(editor_camera_ent, Vector3(0.0f, 0.0f, 0.0f));
-	em->AddComponent<CameraComponent>(editor_camera_ent);
-
 	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
 
 	auto scene_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "SceneManager");
@@ -205,6 +202,10 @@ void QREntryPoint::EntryPoint()
 	CameraComponentInterface::RegisterInterface(mono_core);
 
 	mono_core->CallStaticMethod(main_method_handle);
+
+#ifdef _EDITOR
+	editor_core = new EditorCore();
+#endif // _EDITOR
 }
 
 float average_frame_time = 0;
@@ -223,12 +224,11 @@ void QREntryPoint::RunTime()
 		EntityManager* entman = active_scene->GetEntityManager();
 
 		average_frame_time = average_frame_time * 0.9f + 0.1f * (float)Time::GetDeltaTime(Timer::TimeTypes::Milliseconds);
-		Vector3 editor_camera_position = entman->GetComponent<TransformComponent>(editor_camera_ent).GetPosition();
 
 		ImGui::Begin("App Statistics");
 		{
 			ImGui::Text("Average Frame Time: %f ms", average_frame_time);
-			ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
+			//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
 		ImGui::End();
 
@@ -238,43 +238,9 @@ void QREntryPoint::RunTime()
 		pos.x += (float)Time::GetDeltaTime();
 		render_ent_trans.SetPosition(pos);
 
-		//Editor Camera Movement Temporary Placement
-		Vector3 editor_camera_pos = entman->GetComponent<TransformComponent>(editor_camera_ent).GetPosition();
-
-		float camera_speed = editor_camera_pos.z * (float)Time::GetDeltaTime();
-
-		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::D))
-			editor_camera_pos.x += camera_speed;
-
-		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::A))
-			editor_camera_pos.x -= camera_speed;
-
-		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::W))
-			editor_camera_pos.y += camera_speed;
-
-		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::S))
-			editor_camera_pos.y -= camera_speed;
-
-		if (Keyboard::Get()->GetKeyDown(Keyboard::Key::R))
-		{
-			editor_camera_pos.x = 0;
-			editor_camera_pos.y = 0;
-			editor_camera_pos.z = 1;
-		}
-
-		if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::UP))
-		{
-			editor_camera_pos.z -= 1.0f;
-		}
-		if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::DOWN))
-		{
-			editor_camera_pos.z += 1.0f;
-		}
-
-		if (editor_camera_pos.z < 1.0f)
-			editor_camera_pos.z = 1.0f;
-
-		entman->GetComponent<TransformComponent>(editor_camera_ent).SetPosition(editor_camera_pos);
+#ifdef _EDITOR
+		editor_core->Update();
+#endif // _EDITOR
 
 		//Update scripts
 		ScriptingManager::Get()->UpdateScripts(entman);

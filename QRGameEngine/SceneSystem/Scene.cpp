@@ -4,7 +4,7 @@
 
 Scene::Scene()
 {
-	const uint32_t max_entities = 1000;
+	const uint32_t max_entities = 10000;
 
 	m_entity_manager = std::make_unique<EntityManager>(max_entities);
 }
