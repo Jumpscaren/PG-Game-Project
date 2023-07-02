@@ -1,7 +1,7 @@
 #pragma once
 #include "Vendor/Include/StaticTypeInfo/static_type_info.h"
+#include "EntityDefinition.h"
 
-typedef uint32_t Entity;
 typedef uint32_t SceneIndex;
 
 struct ComponentPool

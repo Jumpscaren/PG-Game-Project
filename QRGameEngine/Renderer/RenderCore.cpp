@@ -8,9 +8,7 @@
 #include "ImGUIMain.h"
 #include "Asset/AssetManager.h"
 #include "Components/CameraComponent.h"
-
-//Temp
-#include "Input/Mouse.h"
+#include "Time/Timer.h"
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
@@ -152,6 +150,9 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 
 	uint64_t render_object_amount = 0;
+
+	//Slow, needs to be fixed
+	//Timer timer;
 	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](TransformComponent& transform, SpriteComponent& sprite)
 		{
 			SpriteData sprite_data;
@@ -172,6 +173,8 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 			++render_object_amount;
 		});
+	//std::cout << "Time: " << timer.StopTimer()/(double)Timer::TimeTypes::Milliseconds << " ms\n";
+
 
 	DX12BufferHandle transform_data_buffer = 0;
 	DX12BufferHandle sprite_data_buffer = 0;

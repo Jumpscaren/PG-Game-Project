@@ -6,6 +6,8 @@
 #include "Input/Mouse.h"
 #include "Input/Keyboard.h"
 #include "Time/Time.h"
+#include "Renderer/ImGUIMain.h"
+#include "IO/Output.h"
 
 EditorCore* EditorCore::s_editor_core = nullptr;
 
@@ -70,7 +72,29 @@ void EditorCore::Update()
 
 	em->GetComponent<TransformComponent>(m_editor_camera_ent).SetPosition(editor_camera_pos);
 
-	m_draw_scene.Update();
+	bool save_pressed = false;
+	bool load_pressed = false;
+	bool hovering_window = false;
+	ImGui::Begin("Draw Blocks");
+	{
+		save_pressed = ImGui::Button("Save", {0,0});
+		load_pressed = ImGui::Button("Load", { 0,10 });
+		hovering_window = ImGui::IsWindowHovered();
+		//ImGui::Text("Average Frame Time: %f ms", average_frame_time);
+		//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
+	}
+	ImGui::End();
+
+	if (!hovering_window && !save_pressed && !load_pressed)
+		m_draw_scene.Update();
+	if (save_pressed)
+	{
+		m_draw_scene.Save();
+	}
+	if (load_pressed)
+	{
+		m_draw_scene.Load();
+	}
 }
 
 Entity EditorCore::GetEditorCameraEntity() const
