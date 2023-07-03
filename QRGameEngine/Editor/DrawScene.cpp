@@ -9,6 +9,7 @@
 #include "Asset/AssetManager.h"
 #include "Renderer/ImGUIMain.h"
 #include "IO/Output.h"
+#include <set>
 
 uint64_t DrawScene::GetNumberFromPosition(const Vector3& position)
 {
@@ -80,36 +81,47 @@ void DrawScene::Update()
 
 void DrawScene::Save()
 {
+	//Fix saving other components aswell
+
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
 
 	OutputFile save_file = Output::CreateCompressedOutputFile("SaveFile.sav");
-	//OutputFile save_file_not_compressed = Output::CreateOutputFile("SaveFile.txt");
 
 	uint32_t numberofblocks = (uint32_t)m_blocks.size();
 	save_file.Write(numberofblocks);
-	//save_file_not_compressed.Write(numberofblocks);
+
+	std::unordered_map<TextureHandle, std::string> texture_paths;
 
 	for (auto it = m_blocks.begin(); it != m_blocks.end(); it++)
 	{
-		//struct SaveBlockData
-		//{
-		//	uint64_t block_number;
-		//	BlockData block_data;
-		//} m_save_block_data;
+		TextureHandle texture_handle = entity_manager->GetComponent<SpriteComponent>(it->second.block_entity).texture_handle;
 
-		//m_save_block_data.block_data = it->second;
-		//m_save_block_data.block_number = it->first;
+		if (texture_paths.find(texture_handle) == texture_paths.end())
+		{
+			std::string texture_path = AssetManager::Get()->GetAssetPath(texture_handle);
+			texture_paths.insert({ texture_handle, texture_path });
+		}
+	}
 
+	save_file.Write((uint32_t)texture_paths.size());
+	for (auto it = texture_paths.begin(); it != texture_paths.end(); it++)
+	{
 		save_file.Write(it->first);
-		//save_file_not_compressed.Write(it->first);
+		save_file.Write((uint32_t)it->second.size());
+		save_file.Write((void*)it->second.c_str(), (uint32_t)it->second.size());
+	}
+
+	for (auto it = m_blocks.begin(); it != m_blocks.end(); it++)
+	{
+		save_file.Write(it->first);
 		
 		save_file.Write(entity_manager->GetComponent<TransformComponent>(it->second.block_entity).world_matrix);
-		
+
+		save_file.Write(entity_manager->GetComponent<SpriteComponent>(it->second.block_entity).texture_handle);
 	}
 
 	save_file.Close();
-	//save_file_not_compressed.Close();
 }
 
 void DrawScene::Load()
@@ -127,11 +139,26 @@ void DrawScene::Load()
 
 	uint32_t numberofblocks = save_file.Read<uint32_t>();
 	
+	uint32_t number_texture_paths = save_file.Read<uint32_t>();
+
+	std::unordered_map<TextureHandle, std::string> texture_paths;
+
+	for (uint32_t i = 0; i < number_texture_paths; ++i)
+	{
+		TextureHandle texture_handle = save_file.Read<TextureHandle>();
+		uint32_t text_size = save_file.Read<uint32_t>();
+		std::string text;
+		text.resize(text_size);
+		save_file.Read((void*)text.c_str(), text_size);
+
+		texture_paths.insert({texture_handle, text});
+	}
+
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
 		Entity new_block = entity_manager->CreateEntity(scene_manager->GetActiveSceneIndex());
 		TransformComponent& transform = entity_manager->AddComponent<TransformComponent>(new_block);
-		entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = AssetManager::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
+		SpriteComponent& sprite = entity_manager->AddComponent<SpriteComponent>(new_block);
 	
 		BlockData new_block_data;
 		new_block_data.block_entity = new_block;
@@ -139,17 +166,9 @@ void DrawScene::Load()
 		m_blocks.insert({unique_number , new_block_data});
 
 		transform.world_matrix = save_file.Read<DirectX::XMMATRIX>();
+		sprite.texture_handle = AssetManager::Get()->LoadTexture(texture_paths.find(save_file.Read<TextureHandle>())->second);
+		
 	}
 
 	save_file.Close();
-	//if (m_blocks.find(unique_number) == m_blocks.end())
-	//{
-	//	Entity new_block = entity_manager->CreateEntity(scene_manager->GetActiveSceneIndex());
-	//	entity_manager->AddComponent<TransformComponent>(new_block, world_mouse_position);
-	//	entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = AssetManager::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
-
-	//	BlockData new_block_data;
-	//	new_block_data.block_entity = new_block;
-	//	m_blocks.insert({ unique_number, new_block_data });
-	//}
 }

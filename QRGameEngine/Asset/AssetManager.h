@@ -18,6 +18,7 @@ class AssetManager
 	{
 		void* asset_data;
 		AssetType asset_type;
+		std::string asset_path;
 	};
 
 private:
@@ -40,5 +41,6 @@ public:
 
 	AssetHandle LoadTexture(const std::string& texture_path);
 	TextureInfo* GetTextureData(const AssetHandle& texture_handle);
+	std::string GetAssetPath(const AssetHandle& asset_handle);
 };
 

@@ -36,7 +36,7 @@ AssetHandle AssetManager::LoadTexture(const std::string& texture_path)
 			&width, &height, &comp, channels);
 		TextureInfo* texture = new TextureInfo{ imageData, (uint32_t)width, (uint32_t)height, (uint32_t)comp, (uint32_t)channels };
 
-		m_assets.insert({ texture_handle, {texture, AssetType::TEXTURE} });
+		m_assets.insert({ texture_handle, {texture, AssetType::TEXTURE, texture_path} });
 	}
 
 	return texture_handle;
@@ -54,6 +54,15 @@ TextureInfo* AssetManager::GetTextureData(const AssetHandle& texture_handle)
 	}
 
 	return (TextureInfo*)asset_data->second.asset_data;
+}
+
+std::string AssetManager::GetAssetPath(const AssetHandle& asset_handle)
+{
+	assert(m_assets.contains(asset_handle));
+
+	auto asset_data = m_assets.find(asset_handle);
+
+	return asset_data->second.asset_path;
 }
 
 AssetHandle AssetManager::LoadAssetPath(const std::string& asset_path, bool& asset_existing)

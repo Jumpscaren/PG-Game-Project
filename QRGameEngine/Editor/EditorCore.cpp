@@ -78,7 +78,7 @@ void EditorCore::Update()
 	ImGui::Begin("Draw Blocks");
 	{
 		save_pressed = ImGui::Button("Save", {0,0});
-		load_pressed = ImGui::Button("Load", { 0,10 });
+		load_pressed = ImGui::Button("Load", { 0,0 });
 		hovering_window = ImGui::IsWindowHovered();
 		//ImGui::Text("Average Frame Time: %f ms", average_frame_time);
 		//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
