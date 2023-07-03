@@ -10,11 +10,14 @@
 #include "Asset/AssetTypes.h"
 
 class DX12StackAllocator;
+class ImGUIMain;
 
 class Scene;
 
 class RenderCore
 {
+	friend ImGUIMain;
+
 private:
 	struct SpriteData
 	{
@@ -49,6 +52,7 @@ private:
 	DX12BufferViewHandle m_camera_buffer_view;
 
 	std::unordered_map<AssetHandle, TextureHandleData> m_texture_handles;
+	std::unordered_map<TextureHandle, AssetHandle> m_texture_to_asset;
 
 	DX12RootSignature m_grid_root_signature;
 	DX12Pipeline m_grid_pipeline;
@@ -58,13 +62,17 @@ private:
 
 	static RenderCore* s_render_core;
 
+private:
+	DX12Core* GetDX12Core();
+
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
 	~RenderCore();
 
 	bool UpdateRender(Scene* draw_scene);
 
-	TextureHandle CreateTexture(const std::string& texture_file_name);
+	TextureHandle LoadTexture(const std::string& texture_file_name);
+	AssetHandle GetTextureAssetHandle(TextureHandle texture_handle);
 
 	static RenderCore* Get();
 

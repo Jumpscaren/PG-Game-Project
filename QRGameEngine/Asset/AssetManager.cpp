@@ -24,7 +24,7 @@ AssetManager* AssetManager::Get()
 	return s_asset_manager;
 }
 
-AssetHandle AssetManager::LoadTexture(const std::string& texture_path)
+AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path)
 {
 	bool texture_exists = false;
 	AssetHandle texture_handle = LoadAssetPath(texture_path, texture_exists);

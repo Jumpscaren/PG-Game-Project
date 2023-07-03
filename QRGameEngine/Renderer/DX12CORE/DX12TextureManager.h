@@ -39,8 +39,7 @@ private:
 
 	ID3D12Resource* GetTextureResource(const DX12TextureHandle& texture_handle);
 	DX12Texture* GetTexture(DX12TextureHandle texture_handle);
-	DX12TextureView* GetTextureView(DX12TextureViewHandle texture_view_handle);
-
+private:
 	void FreeTexture(DX12TextureHandle& texture_handle);
 	void FreeView(DX12TextureViewHandle& view_handle);
 
@@ -57,5 +56,7 @@ public:
 	DX12TextureViewHandle AddView(DX12Core* dx12_core, DX12TextureHandle texture_handle, const ViewType& view_type);
 
 	uint32_t ConvertTextureViewHandleToGPUTextureViewHandle(DX12TextureViewHandle texture_view_handle);
+
+	DX12TextureView* GetTextureView(DX12TextureViewHandle texture_view_handle);
 };
 

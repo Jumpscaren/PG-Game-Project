@@ -2,6 +2,7 @@
 #include "ImGUIMain.h"
 #include "DX12CORE/DX12Core.h"
 #include "Window.h"
+#include "RenderCore.h"
 
 ImGUIMain::ImGUIMain()
 {
@@ -51,4 +52,9 @@ void ImGUIMain::EndFrame(DX12Core* dx12_core)
 {
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dx12_core->GetCommandList()->GetCommandList());
+}
+
+bool ImGUIMain::ImageButton(const std::string& image_id, TextureHandle image_texture)
+{
+	return ImGui::ImageButton(image_id.c_str(), (ImTextureID)RenderCore::Get()->GetDX12Core()->GetTextureManager()->GetTextureView(image_texture)->texture_descriptor_handle.gpu_handle.ptr, {100.0f, 100.0f});
 }

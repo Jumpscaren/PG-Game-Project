@@ -12,6 +12,11 @@
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
+DX12Core* RenderCore::GetDX12Core()
+{
+	return &m_dx12_core;
+}
+
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
 {
 	s_render_core = this;
@@ -253,9 +258,9 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	return m_window->WinMsg();
 }
 
-TextureHandle RenderCore::CreateTexture(const std::string& texture_file_name)
+TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name)
 {
-	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTexture(texture_file_name);
+	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTextureAsset(texture_file_name);
 
 	if (m_texture_handles.contains(texture_asset_handle))
 	{
@@ -267,9 +272,21 @@ TextureHandle RenderCore::CreateTexture(const std::string& texture_file_name)
 	DX12TextureHandle texture_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
 	DX12TextureViewHandle texture_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, texture_handle, ViewType::SHADER_RESOURCE_VIEW);
 
-	m_texture_handles.insert({texture_asset_handle, {texture_handle, texture_view_handle}});
+	m_texture_handles.insert({ texture_asset_handle, {texture_handle, texture_view_handle} });
+	m_texture_to_asset.insert({ texture_view_handle, texture_asset_handle });
 
 	return texture_view_handle;
+}
+
+AssetHandle RenderCore::GetTextureAssetHandle(TextureHandle texture_handle)
+{
+	if (m_texture_to_asset.contains(texture_handle))
+	{
+		return m_texture_to_asset.find(texture_handle)->second;
+	}
+
+	assert(false);
+	return 0;
 }
 
 RenderCore* RenderCore::Get()

@@ -39,7 +39,7 @@ public:
 
 	static AssetManager* Get();
 
-	AssetHandle LoadTexture(const std::string& texture_path);
+	AssetHandle LoadTextureAsset(const std::string& texture_path);
 	TextureInfo* GetTextureData(const AssetHandle& texture_handle);
 	std::string GetAssetPath(const AssetHandle& asset_handle);
 };

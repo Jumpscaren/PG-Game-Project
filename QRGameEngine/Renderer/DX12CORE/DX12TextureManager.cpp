@@ -152,7 +152,8 @@ void DX12TextureManager::UploadTextureData(DX12Core* dx12_core, DX12TextureHandl
 	source.PlacedFootprint.Footprint.Format = resource_desc.Format;
 
 	//Wait until the gpu is completed
-	dx12_core->GetCommandList()->Throttle(dx12_core);
+	dx12_core->GetCommandList()->Wait(dx12_core);
+	dx12_core->GetCommandList()->Reset();
 
 	dx12_core->GetCommandList()->TransitionResource(texture_resource, ResourceState::COPY_DEST, ResourceState::COMMON);
 	dx12_core->GetCommandList()->CopyTextureRegion(&destination, &source);
@@ -160,7 +161,10 @@ void DX12TextureManager::UploadTextureData(DX12Core* dx12_core, DX12TextureHandl
 
 	dx12_core->GetCommandList()->TransitionResource(texture_resource, ResourceState::COMMON, ResourceState::COPY_DEST);
 
-	m_upload_current_offset = destination_offset;
+	//Throttle the GPU to upload texture data (which requires less memory for CPU buffer)
+	dx12_core->GetCommandList()->Throttle(dx12_core);
+
+	//m_upload_current_offset = destination_offset;
 }
 
 DX12TextureManager::DX12TextureManager(DX12Core* dx12_core)

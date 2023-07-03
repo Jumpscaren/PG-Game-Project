@@ -34,9 +34,6 @@ void EditorCore::Update()
 	//Editor Camera Movement Temporary Placement
 	Vector3 editor_camera_pos = em->GetComponent<TransformComponent>(m_editor_camera_ent).GetPosition();
 
-	Vector2u mouse_coords = Mouse::Get()->GetMouseCoords();
-	CameraComponentInterface::ScreenToWorld(em->GetComponent<CameraComponent>(m_editor_camera_ent), Vector2((float)mouse_coords.x, (float)mouse_coords.y));
-
 	float camera_speed = editor_camera_pos.z * (float)Time::GetDeltaTime();
 
 	if (Keyboard::Get()->GetKeyDown(Keyboard::Key::D))
@@ -72,29 +69,7 @@ void EditorCore::Update()
 
 	em->GetComponent<TransformComponent>(m_editor_camera_ent).SetPosition(editor_camera_pos);
 
-	bool save_pressed = false;
-	bool load_pressed = false;
-	bool hovering_window = false;
-	ImGui::Begin("Draw Blocks");
-	{
-		save_pressed = ImGui::Button("Save", {0,0});
-		load_pressed = ImGui::Button("Load", { 0,0 });
-		hovering_window = ImGui::IsWindowHovered();
-		//ImGui::Text("Average Frame Time: %f ms", average_frame_time);
-		//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
-	}
-	ImGui::End();
-
-	if (!hovering_window && !save_pressed && !load_pressed)
-		m_draw_scene.Update();
-	if (save_pressed)
-	{
-		m_draw_scene.Save();
-	}
-	if (load_pressed)
-	{
-		m_draw_scene.Load();
-	}
+	m_draw_scene.Update();
 }
 
 Entity EditorCore::GetEditorCameraEntity() const

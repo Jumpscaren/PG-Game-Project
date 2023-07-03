@@ -16,7 +16,7 @@ void RenderInterface::RegisterInterface(CSMonoCore* mono_core)
 
 CSMonoObject RenderInterface::LoadTexture(std::string texture_name)
 {
-    TextureHandle handle = RenderCore::Get()->CreateTexture(texture_name);
+    TextureHandle handle = RenderCore::Get()->LoadTexture(texture_name);
 
     CSMonoObject texture_object(CSMonoCore::Get(), texture_handle);
     CSMonoCore::Get()->SetValue(handle, texture_object, "texture_asset_handle");

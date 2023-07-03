@@ -93,8 +93,9 @@ void DX12CommandList::Wait(DX12Core* dx12_core)
 
 void DX12CommandList::Throttle(DX12Core* dx12_core)
 {
-	Wait(dx12_core);
-	Reset();
+	Execute(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	//Wait(dx12_core);
+	//Reset();
 }
 
 void DX12CommandList::CopyBufferRegion(ID3D12Resource* destination_buffer, ID3D12Resource* source_buffer, uint64_t destination_offset, uint64_t source_offset, uint64_t size)

@@ -6,6 +6,7 @@
 #include "Input/Mouse.h"
 #include "Components/TransformComponent.h"
 #include "Components/SpriteComponent.h"
+#include "Renderer/RenderCore.h"
 #include "Asset/AssetManager.h"
 #include "Renderer/ImGUIMain.h"
 #include "IO/Output.h"
@@ -36,9 +37,75 @@ Vector3 DrawScene::GetWorldPositionFromMouse(const CameraComponent& editor_camer
 
 DrawScene::DrawScene()
 {
+	m_current_texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
 }
 
 void DrawScene::Update()
+{
+	Vector2u mouse_coords = Mouse::Get()->GetMouseCoords();
+	
+	bool save_pressed = false;
+	bool load_pressed = false;
+	bool clear_pressed = false;
+	bool hovering_window = false;
+	Vector2 window_position;
+	float window_height, window_width;
+	bool texture_1 = false, texture_2 = false;
+
+	ImGui::Begin("Draw Blocks");
+	{
+		save_pressed = ImGui::Button("Save", { 0,0 });
+		load_pressed = ImGui::Button("Load", { 0,0 });
+		clear_pressed = ImGui::Button("Clear");
+		window_position = Vector2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
+		window_height = ImGui::GetWindowHeight();
+		window_width = ImGui::GetWindowWidth();
+
+		auto texture = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
+		texture_1 = ImGUIMain::ImageButton("Click", texture);
+		texture = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png");
+		texture_2 = ImGUIMain::ImageButton("Click2", texture);
+	}
+	ImGui::End();
+
+	Vector2 window_x_min_max(window_position.x, window_position.x + window_width);
+	Vector2 window_y_min_max(window_position.y, window_position.y + window_height);
+
+	if (mouse_coords.x >= window_x_min_max.x && mouse_coords.x <= window_x_min_max.y
+		&& mouse_coords.y >= window_y_min_max.x && mouse_coords.y <= window_y_min_max.y)
+	{
+		hovering_window = true;
+	}
+
+	if (texture_1)
+	{
+		m_current_texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
+	}
+
+	if (texture_2)
+	{
+		m_current_texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png");
+	}
+
+	if (!hovering_window)
+	{
+		DrawBlock();
+	}
+	if (save_pressed)
+	{
+		Save();
+	}
+	if (load_pressed)
+	{
+		Load();
+	}
+	if (clear_pressed)
+	{
+		Clear();
+	}
+}
+
+void DrawScene::DrawBlock()
 {
 	Entity editor_camera = EditorCore::Get()->GetEditorCameraEntity();
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
@@ -56,8 +123,8 @@ void DrawScene::Update()
 		{
 			Entity new_block = entity_manager->CreateEntity(scene_manager->GetActiveSceneIndex());
 			entity_manager->AddComponent<TransformComponent>(new_block, world_mouse_position);
-			entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = AssetManager::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
-			
+			entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = m_current_texture_handle;
+
 			BlockData new_block_data;
 			new_block_data.block_entity = new_block;
 			m_blocks.insert({ unique_number, new_block_data });
@@ -76,7 +143,6 @@ void DrawScene::Update()
 			m_blocks.erase(unique_number);
 		}
 	}
-
 }
 
 void DrawScene::Save()
@@ -99,7 +165,7 @@ void DrawScene::Save()
 
 		if (texture_paths.find(texture_handle) == texture_paths.end())
 		{
-			std::string texture_path = AssetManager::Get()->GetAssetPath(texture_handle);
+			std::string texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(texture_handle));
 			texture_paths.insert({ texture_handle, texture_path });
 		}
 	}
@@ -129,11 +195,7 @@ void DrawScene::Load()
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
 
-	for (auto it = m_blocks.begin(); it != m_blocks.end(); it++)
-	{
-		entity_manager->RemoveEntity(it->second.block_entity);
-	}
-	m_blocks.clear();
+	Clear();
 
 	OutputFile save_file = Output::LoadCompressedOutputFile("SaveFile.sav");
 
@@ -166,9 +228,21 @@ void DrawScene::Load()
 		m_blocks.insert({unique_number , new_block_data});
 
 		transform.world_matrix = save_file.Read<DirectX::XMMATRIX>();
-		sprite.texture_handle = AssetManager::Get()->LoadTexture(texture_paths.find(save_file.Read<TextureHandle>())->second);
+		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_paths.find(save_file.Read<TextureHandle>())->second);
 		
 	}
 
 	save_file.Close();
+}
+
+void DrawScene::Clear()
+{
+	SceneManager* scene_manager = SceneManager::GetSceneManager();
+	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
+
+	for (auto it = m_blocks.begin(); it != m_blocks.end(); it++)
+	{
+		entity_manager->RemoveEntity(it->second.block_entity);
+	}
+	m_blocks.clear();
 }

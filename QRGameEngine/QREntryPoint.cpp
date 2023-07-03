@@ -166,7 +166,7 @@ void QREntryPoint::EntryPoint()
 	main_scene = scene_manager->CreateScene();
 	scene_manager->SetSceneAsActiveScene(main_scene);
 
-	TextureHandle texture = render_core->CreateTexture("../QRGameEngine/Textures/Temp.png");
+	TextureHandle texture = render_core->LoadTexture("../QRGameEngine/Textures/Temp.png");
 
 	EntityManager* em = scene_manager->GetScene(main_scene)->GetEntityManager();
 	render_ent = em->NewEntity();
