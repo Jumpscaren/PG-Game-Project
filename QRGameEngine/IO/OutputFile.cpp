@@ -13,6 +13,9 @@ OutputFile::OutputFile(const std::string& file_name, const FileMode& file_mode, 
 		m_file.compressed_file = gzopen(file_name.c_str(), file_mode_text.c_str());
 	else
 		fopen_s(&m_file.file, file_name.c_str(), file_mode_text.c_str());
+
+	if (!FileExists())
+		std::cout << "ERROR: Couldn't create/find file name requested\n";
 }
 
 OutputFile::~OutputFile()
@@ -26,6 +29,11 @@ void OutputFile::Close()
 		gzclose(m_file.compressed_file);
 	else
 		fclose(m_file.file);
+}
+
+bool OutputFile::FileExists()
+{
+	return m_file.compressed_file != nullptr || m_file.file != nullptr;
 }
 
 void OutputFile::Read(void* data, uint32_t data_size)

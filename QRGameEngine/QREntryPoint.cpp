@@ -20,6 +20,7 @@
 #include "Input/Mouse.h"
 #include "Components/CameraComponent.h"
 #include "Editor/EditorCore.h"
+#include "SceneSystem/SceneLoader.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -31,6 +32,7 @@ ScriptingManager* scripting_manager;
 Keyboard* keyboard;
 Mouse* mouse;
 EditorCore* editor_core;
+SceneLoader* scene_loader;
 
 struct TempData
 {
@@ -163,6 +165,8 @@ void QREntryPoint::EntryPoint()
 	render_core = new RenderCore(1920, 1080, L"2DRENDERER");
 
 	scene_manager = new SceneManager();
+	scene_loader = new SceneLoader();
+
 	main_scene = scene_manager->CreateScene();
 	scene_manager->SetSceneAsActiveScene(main_scene);
 
@@ -201,11 +205,11 @@ void QREntryPoint::EntryPoint()
 	InputInterface::RegisterInterface(mono_core);
 	CameraComponentInterface::RegisterInterface(mono_core);
 
-	mono_core->CallStaticMethod(main_method_handle);
-
 #ifdef _EDITOR
 	editor_core = new EditorCore();
 #endif // _EDITOR
+
+	mono_core->CallStaticMethod(main_method_handle);
 }
 
 float average_frame_time = 0;

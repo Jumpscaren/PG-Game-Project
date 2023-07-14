@@ -40,6 +40,8 @@ public:
 	}
 
 	void Close();
+
+	bool FileExists();
 };
 
 template<typename T>

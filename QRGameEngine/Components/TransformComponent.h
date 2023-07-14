@@ -13,6 +13,7 @@ struct TransformComponent
 	TransformComponent& SetPosition(const Vector2& position);
 	TransformComponent& SetRotation(const Vector3& rotation);
 	TransformComponent& SetScale(const Vector3& scale);
+	TransformComponent& SetPositionZ(float z);
 
 	Vector3 GetPosition() const;
 	Vector4 GetRotation() const;
@@ -29,6 +30,8 @@ public:
 	static void RegisterInterface(CSMonoCore* mono_core);
 
 	static void AddTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+
+	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
 	static void SetPosition(SceneIndex scene_index, Entity entity, float x, float y);
 

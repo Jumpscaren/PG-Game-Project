@@ -8,6 +8,10 @@
 #include "Time/Time.h"
 #include "Renderer/ImGUIMain.h"
 #include "IO/Output.h"
+#include "Components/SpriteComponent.h"
+#include "Renderer/RenderCore.h"
+#include "Components/ScriptComponent.h"
+#include "SceneSystem/SceneLoader.h"
 
 EditorCore* EditorCore::s_editor_core = nullptr;
 

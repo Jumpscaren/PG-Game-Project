@@ -35,6 +35,9 @@ namespace ScriptProject
             Texture texture = Render.LoadTexture(texture_path);
             sprite.SetTexture(texture);
 
+            PrefabSystem.CreateUserPrefab(Prefab1, 1);
+            PrefabSystem.CreateUserPrefab(Prefab2, 2);
+
             return 0;
         }
 
@@ -74,5 +77,16 @@ namespace ScriptProject
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public static extern int Testing(int h);
+
+        static void Prefab1(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
+            game_object.AddComponent<TestScript>();
+        }
+
+        static void Prefab2(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+        }
     }
 }

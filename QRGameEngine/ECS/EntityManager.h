@@ -8,15 +8,30 @@ struct ComponentPool
 {
 	void* component_pool_data;
 	std::unordered_set<Entity> m_component_pool_entities;
+	std::string component_name;
+};
+
+struct ComponentData
+{
+	char* component_data;
+	uint32_t component_size;
 };
 
 class EntityManager
 {
 private:
+	struct NameToPoolData
+	{
+		uint32_t component_pool_index;
+		uint32_t component_size;
+	};
+
+private:
 	std::vector<Entity> m_free_entities;
 	std::vector<Entity> m_entities;
 
 	std::unordered_map<uint64_t, uint32_t> m_component_type_to_pool;
+	std::unordered_map<std::string, NameToPoolData> m_component_name_to_pool;
 
 	std::vector<ComponentPool> m_component_pools;
 	uint32_t m_current_component_pool_index;
@@ -36,6 +51,8 @@ private:
 	ComponentPool& GetComponentPool();
 
 	bool HasComponent(Entity entity, ComponentPool& component_pool);
+
+	char* GetComponentPoolDataFromName(Entity entity, const std::string& component_name);
 
 public:
 	EntityManager(uint32_t max_entities);
@@ -57,6 +74,17 @@ public:
 
 	template <typename Component>
 	void RemoveComponent(Entity entity);
+
+	template<typename Component>
+	static std::string GetComponentNameFromComponent();
+
+	void SetComponentData(Entity entity, const std::string& component_name, void* component_data);
+
+	ComponentData GetComponentData(Entity entity, const std::string& component_name);
+
+	std::vector<std::string> GetComponentNameList(Entity entity);
+
+	uint32_t GetComponentSize(const std::string& component_name);
 
 	template <typename... Component>
 	void System(std::invocable<Component&...> auto&& func)
@@ -137,9 +165,12 @@ inline uint32_t EntityManager::CreateComponentPool()
 
 	ComponentPool component_pool;
 	component_pool.component_pool_data = component_pool_data;
+	component_pool.component_name = GetComponentNameFromComponent<Component>();
 
 	//m_component_pools.push_back(component_pool);
 	m_component_pools[component_pool_index] = component_pool;
+
+	m_component_name_to_pool.insert({ component_pool.component_name, {component_pool_index, (uint32_t)sizeof(Component)}});
 
 	return component_pool_index;
 }
@@ -164,6 +195,16 @@ inline ComponentPool& EntityManager::GetComponentPool()
 	}
 
 	return m_component_pools[component_pool_index];
+}
+
+template<typename Component>
+inline std::string EntityManager::GetComponentNameFromComponent()
+{
+	std::string component_name = typeid(Component).name();
+	//Removes the "struct " from the "struct componentname" which comes from typeid(Component).name()
+	component_name.erase(0, 7);
+
+	return component_name;
 }
 
 template<typename Component, typename ...Args>

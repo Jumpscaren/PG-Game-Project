@@ -8,6 +8,7 @@ private:
 	static MonoMethodHandle get_scene_index_method;
 	static MonoFieldHandle get_entity_id_field;
 	static MonoClassHandle game_object_class;
+	static MonoMethodHandle create_game_object_method;
 
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
@@ -15,5 +16,7 @@ public:
 public:
 	static Entity GetEntityID(const CSMonoObject& game_object);
 	static SceneIndex GetSceneIndex(const CSMonoObject& game_object);
+
+	static CSMonoObject CreateGameObject();
 };
 

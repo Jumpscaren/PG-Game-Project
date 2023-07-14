@@ -14,6 +14,30 @@ namespace ScriptProject.Engine
 
         List<Component> components = new List<Component>();
 
+        public static bool operator ==(GameObject left, GameObject right)
+        {
+            return left.entity_id == right.entity_id;
+        }
+        public static bool operator !=(GameObject left, GameObject right)
+        {
+            return left.entity_id != right.entity_id;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as GameObject;
+
+            if (other == null)
+                return false;
+
+            return this.entity_id == other.entity_id;
+        }
+
+        public override int GetHashCode() 
+        { 
+            return this.entity_id.GetHashCode();
+        }
+
         static public GameObject CreateGameObject()
         {
             GameObject gameObject = new GameObject();
@@ -52,15 +76,30 @@ namespace ScriptProject.Engine
         }
 
         //Slow should not be used every frame
-        public T GetComponent<T>() where T : Component
+        public T GetComponent<T>() where T : Component, new()
         {
             foreach (Component comp in components)
             {
                 if (comp.GetType() == typeof(T))
-                    return(T)comp;
+                    return (T)comp;
             }
 
+            T component = new T();
+            if (HasComponent<T>(component))
+            {
+                component.SetGameObject(this);
+                components.Add(component);
+                return component;
+            }
+
+            Console.WriteLine("ERROR: COULDN'T FIND COMPONENT");
+
             return null;
+        }
+
+        private bool HasComponent<T>(T component) where T : Component, new()
+        {
+            return component.HasComponent(scene.GetSceneIndex(), entity_id);
         }
     }
 }

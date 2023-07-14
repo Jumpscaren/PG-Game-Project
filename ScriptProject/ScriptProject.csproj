@@ -32,7 +32,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Editor_Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Editor_Debug\</OutputPath>
+    <OutputPath>build\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -40,7 +40,7 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Editor_Release|AnyCPU'">
-    <OutputPath>bin\Editor_Release\</OutputPath>
+    <OutputPath>build\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -64,6 +64,7 @@
     <Compile Include="Engine\EntityManager.cs" />
     <Compile Include="Engine\GameObject.cs" />
     <Compile Include="Engine\Input.cs" />
+    <Compile Include="Engine\PrefabSystem.cs" />
     <Compile Include="Engine\Render.cs" />
     <Compile Include="Engine\Scene.cs" />
     <Compile Include="Engine\SceneManager.cs" />

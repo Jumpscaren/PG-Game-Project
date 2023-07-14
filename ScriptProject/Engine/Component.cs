@@ -28,5 +28,11 @@ namespace ScriptProject.Engine
         {
             Console.WriteLine("Component is incorrectly initalized");
         }
+
+        public virtual bool HasComponent(UInt32 scene_index, UInt32 entity)
+        {
+            Console.WriteLine("Component is incorrectly implemented");
+            return false;
+        }
     }
 }

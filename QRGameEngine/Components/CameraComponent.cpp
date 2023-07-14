@@ -10,11 +10,17 @@ void CameraComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	auto camera_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "Camera");
 
 	mono_core->HookAndRegisterMonoMethodType<CameraComponentInterface::AddCameraComponent>(camera_class, "InitComponent", CameraComponentInterface::AddCameraComponent);
+	mono_core->HookAndRegisterMonoMethodType<CameraComponentInterface::HasComponent>(camera_class, "HasComponent", CameraComponentInterface::HasComponent);
 }
 
 void CameraComponentInterface::AddCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<CameraComponent>(entity);
+}
+
+bool CameraComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+{
+	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<CameraComponent>(entity);
 }
 
 Vector3 CameraComponentInterface::ScreenToWorld(const CameraComponent& camera_component, const Vector2& position)

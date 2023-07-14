@@ -60,6 +60,15 @@ TransformComponent& TransformComponent::SetScale(const Vector3& scale)
 	return *this;
 }
 
+TransformComponent& TransformComponent::SetPositionZ(float z)
+{
+	Vector3 position = GetPosition();
+	position.z = z;
+	SetPosition(position);
+
+	return *this;
+}
+
 Vector3 TransformComponent::GetPosition() const
 {
 	return Vector3(world_matrix.r[3].m128_f32[0], world_matrix.r[3].m128_f32[1], world_matrix.r[3].m128_f32[2]);
@@ -87,8 +96,9 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetPosition>(transform_class, "SetPosition_Extern", TransformComponentInterface::SetPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::AddTransformComponent>(transform_class, "InitComponent", TransformComponentInterface::AddTransformComponent);
-	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetPosition>(transform_class, "GetPosition", TransformComponentInterface::GetPosition);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::HasComponent>(transform_class, "HasComponent", TransformComponentInterface::HasComponent);
 
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetPosition>(transform_class, "GetPosition", TransformComponentInterface::GetPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetZIndex>(transform_class, "SetZIndex", TransformComponentInterface::SetZIndex);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetZIndex>(transform_class, "GetZIndex", TransformComponentInterface::GetZIndex);
 }
@@ -96,6 +106,11 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 void TransformComponentInterface::AddTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<TransformComponent>(entity);
+}
+
+bool TransformComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+{
+	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<TransformComponent>(entity);
 }
 
 void TransformComponentInterface::SetPosition(SceneIndex scene_index, Entity entity, float x, float y)

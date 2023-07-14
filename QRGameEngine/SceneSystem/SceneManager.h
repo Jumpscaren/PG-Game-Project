@@ -3,6 +3,8 @@
 
 typedef uint32_t SceneIndex;
 
+class SceneLoader;
+
 class SceneManager
 {
 private:
