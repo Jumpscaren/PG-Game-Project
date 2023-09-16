@@ -14,5 +14,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public override extern bool HasComponent(uint scene_index, uint entity);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public override extern void RemoveComponent(uint scene_index, uint entity);
     }
 }

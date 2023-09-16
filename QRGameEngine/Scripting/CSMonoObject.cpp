@@ -41,6 +41,11 @@ CSMonoObject::CSMonoObject()
 
 CSMonoObject::~CSMonoObject()
 {
+	RemoveLinkToMono();
+}
+
+void CSMonoObject::RemoveLinkToMono()
+{
 	mono_gchandle_free(m_gchandle);
 }
 

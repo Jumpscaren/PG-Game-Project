@@ -15,6 +15,7 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::InitComponent>(sprite_class, "InitComponent", SpriteComponentInterface::InitComponent);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::HasComponent>(sprite_class, "HasComponent", SpriteComponentInterface::HasComponent);
+	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::RemoveComponent>(sprite_class, "RemoveComponent", SpriteComponentInterface::RemoveComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetTexture>(sprite_class, "SetTexture", SpriteComponentInterface::SetTexture);
 
@@ -29,6 +30,11 @@ void SpriteComponentInterface::InitComponent(CSMonoObject object, SceneIndex sce
 bool SpriteComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<SpriteComponent>(entity);
+}
+
+void SpriteComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+{
+	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<SpriteComponent>(entity);
 }
 
 void SpriteComponentInterface::SetTexture(CSMonoObject object, CSMonoObject texture)

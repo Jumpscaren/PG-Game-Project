@@ -26,6 +26,33 @@ char* EntityManager::GetComponentPoolDataFromName(Entity entity, const std::stri
 	return (char*)component_pool.component_pool_data;
 }
 
+void EntityManager::DestroyEntity(Entity entity)
+{
+	//If this become a critical point, introduce that entities have a list of components on them aswell
+	for (int i = 0; i < m_component_pools.size(); ++i)
+	{
+		ComponentPool& component_pool = m_component_pools[i];
+
+		if (HasComponent(entity, component_pool))
+		{
+			component_pool.m_component_pool_entities.erase(entity);
+		}
+	}
+
+	m_entities[entity] = NULL_ENTITY;
+	m_free_entities.push_back(entity);
+}
+
+//Quick solution, might have to be significantly improved
+void EntityManager::UpdateEntityListIfPoolHasChanged(ComponentPool* component_pool)
+{
+	if (component_pool->pool_changed)
+	{
+		component_pool->pool_changed = false;
+		component_pool->list_of_component_pool_entities = std::vector<Entity>(component_pool->m_component_pool_entities.begin(), component_pool->m_component_pool_entities.end());
+	}
+}
+
 EntityManager::EntityManager(uint32_t max_entities) : m_max_entities(max_entities)
 {
 	assert(m_max_entities != NULL_ENTITY);
@@ -66,20 +93,15 @@ Entity EntityManager::NewEntity()
 void EntityManager::RemoveEntity(Entity entity)
 {
 	assert(EntityExists(entity));
+	AddComponent<DeferredEntityDeletion>(entity);
+}
 
-	//If this become a critical point, introduce that entities have a list of components on them aswell
-	for (int i = 0; i < m_component_pools.size(); ++i)
-	{
-		ComponentPool& component_pool = m_component_pools[i];
-
-		if (HasComponent(entity, component_pool))
+void EntityManager::DestroyDeferredEntities()
+{
+	System<DeferredEntityDeletion>([&](Entity entity, DeferredEntityDeletion&) 
 		{
-			component_pool.m_component_pool_entities.erase(entity);
-		}
-	}
-
-	m_entities[entity] = NULL_ENTITY;
-	m_free_entities.push_back(entity);
+			DestroyEntity(entity);
+		});
 }
 
 Entity EntityManager::CreateEntity(SceneIndex scene_index)

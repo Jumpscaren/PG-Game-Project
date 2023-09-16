@@ -26,5 +26,7 @@ public:
 	CSMonoObject();
 	~CSMonoObject();
 
+	void RemoveLinkToMono();
+
 	void CallMethod(const MonoMethodHandle& method_handle);
 };

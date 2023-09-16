@@ -140,22 +140,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)Vendor\Include\mono-2.0;$(SolutionDir)Vendor\Include\zlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(SolutionDir)Vendor\Libs\Box2D\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)Vendor\Include\mono-2.0;$(SolutionDir)Vendor\Include\zlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(SolutionDir)Vendor\Libs\Box2D\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)Vendor\Include\mono-2.0;$(SolutionDir)Vendor\Include\zlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(SolutionDir)Vendor\Libs\Box2D\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)Vendor\Include\mono-2.0;$(SolutionDir)Vendor\Include\zlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Vendor\Libs\Mono\;$(SolutionDir)Vendor\Libs\zlib\;$(SolutionDir)Vendor\Libs\Box2D\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -315,10 +315,13 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Asset\AssetManager.cpp" />
+    <ClCompile Include="Components\BoxColliderComponent.cpp" />
+    <ClCompile Include="Components\CircleColliderComponent.cpp" />
     <ClCompile Include="Components\CameraComponent.cpp" />
     <ClCompile Include="Common\EngineTypes.cpp" />
     <ClCompile Include="Components\ComponentInterface.cpp" />
     <ClCompile Include="Components\ScriptComponent.cpp" />
+    <ClCompile Include="Components\DynamicBodyComponent.cpp" />
     <ClCompile Include="Editor\EditorCore.cpp" />
     <ClCompile Include="Editor\DrawScene.cpp" />
     <ClCompile Include="Input\Input.cpp" />
@@ -326,6 +329,10 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Input\Mouse.cpp" />
     <ClCompile Include="IO\Output.cpp" />
     <ClCompile Include="IO\OutputFile.cpp" />
+    <ClCompile Include="Physics\PhysicsInternal\PhysicsDestructionListener.cpp" />
+    <ClCompile Include="Physics\PhysicsInternal\PhysicsContactListener.cpp" />
+    <ClCompile Include="Physics\PhysicsInternal\PhysicsDebugDraw.cpp" />
+    <ClCompile Include="Physics\PhysicsCore.cpp" />
     <ClCompile Include="SceneSystem\SceneLoader.cpp" />
     <ClCompile Include="Scripting\ScriptingManager.cpp" />
     <ClCompile Include="Scripting\Objects\RenderInterface.cpp" />
@@ -368,6 +375,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Components\SpriteComponent.cpp" />
     <ClCompile Include="Scripting\Objects\TextureInterface.cpp" />
+    <ClCompile Include="Components\StaticBodyComponent.cpp" />
     <ClCompile Include="Time\Time.cpp" />
     <ClCompile Include="Time\Timer.cpp" />
     <ClCompile Include="Components\TransformComponent.cpp" />
@@ -418,10 +426,13 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
   <ItemGroup>
     <ClInclude Include="Asset\AssetManager.h" />
     <ClInclude Include="Asset\AssetTypes.h" />
+    <ClInclude Include="Components\BoxColliderComponent.h" />
+    <ClInclude Include="Components\CircleColliderComponent.h" />
     <ClInclude Include="Components\CameraComponent.h" />
     <ClInclude Include="Common\EngineTypes.h" />
     <ClInclude Include="Components\ComponentInterface.h" />
     <ClInclude Include="Components\ScriptComponent.h" />
+    <ClInclude Include="Components\DynamicBodyComponent.h" />
     <ClInclude Include="ECS\EntityDefinition.h" />
     <ClInclude Include="Editor\EditorCore.h" />
     <ClInclude Include="Editor\DrawScene.h" />
@@ -430,6 +441,12 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Input\Mouse.h" />
     <ClInclude Include="IO\Output.h" />
     <ClInclude Include="IO\OutputFile.h" />
+    <ClInclude Include="Math\MathHelp.h" />
+    <ClInclude Include="Physics\PhysicDefines.h" />
+    <ClInclude Include="Physics\PhysicsInternal\PhysicsDestructionListener.h" />
+    <ClInclude Include="Physics\PhysicsInternal\PhysicsContactListener.h" />
+    <ClInclude Include="Physics\PhysicsInternal\PhysicsDebugDraw.h" />
+    <ClInclude Include="Physics\PhysicsCore.h" />
     <ClInclude Include="SceneSystem\SceneLoaderTypes.h" />
     <ClInclude Include="SceneSystem\SceneLoader.h" />
     <ClInclude Include="Scripting\ScriptingManager.h" />
@@ -481,9 +498,50 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     </ClInclude>
     <ClInclude Include="Components\SpriteComponent.h" />
     <ClInclude Include="Scripting\Objects\TextureInterface.h" />
+    <ClInclude Include="Components\StaticBodyComponent.h" />
     <ClInclude Include="Time\Time.h" />
     <ClInclude Include="Time\Timer.h" />
     <ClInclude Include="Components\TransformComponent.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_api.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_block_allocator.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_body.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_broad_phase.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_chain_shape.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_circle_shape.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_collision.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_common.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_contact.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_contact_manager.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_distance.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_distance_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_draw.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_dynamic_tree.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_edge_shape.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_fixture.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_friction_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_gear_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_growable_stack.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_math.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_motor_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_mouse_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_polygon_shape.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_prismatic_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_pulley_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_revolute_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_rope.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_settings.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_shape.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_stack_allocator.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_timer.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_time_of_impact.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_time_step.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_types.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_weld_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_wheel_joint.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_world.h" />
+    <ClInclude Include="Vendor\Include\Box2D\b2_world_callbacks.h" />
+    <ClInclude Include="Vendor\Include\Box2D\box2d.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
     <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_dx12.h" />
     <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_win32.h" />

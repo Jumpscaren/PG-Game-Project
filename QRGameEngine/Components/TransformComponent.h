@@ -17,6 +17,7 @@ struct TransformComponent
 
 	Vector3 GetPosition() const;
 	Vector4 GetRotation() const;
+	Vector3 GetRotationEuler() const;
 	Vector3 GetScale() const;
 
 	DirectX::XMMATRIX world_matrix;
@@ -33,6 +34,9 @@ public:
 
 	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
+	static void RemoveTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+
+public:
 	static void SetPosition(SceneIndex scene_index, Entity entity, float x, float y);
 
 	static CSMonoObject GetPosition(CSMonoObject cs_transform);

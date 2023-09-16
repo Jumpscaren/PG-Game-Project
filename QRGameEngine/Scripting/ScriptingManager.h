@@ -10,6 +10,7 @@ public:
 	ScriptingManager();
 	void StartScript(const ScriptComponent& script);
 	void UpdateScripts(EntityManager* entity_manager);
+	void RemoveDeferredScripts(EntityManager* entity_manager);
 
 	static ScriptingManager* Get();
 };

@@ -332,7 +332,7 @@ bool CSMonoCore::CheckIfMonoMethodExists(const MonoMethodHandle& method_class)
 
 MonoMethodHandle CSMonoCore::TryRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name)
 {
-	MonoMethodHandle mono_method_handle = { (uint64_t)(-1) };
+	MonoMethodHandle mono_method_handle = NULL_METHOD;
 	if (CheckIfMonoMethodExists(class_handle, method_name))
 	{
 		return RegisterMonoMethod(class_handle, method_name);

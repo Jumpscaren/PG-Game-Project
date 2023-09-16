@@ -21,6 +21,7 @@
 #include "Components/CameraComponent.h"
 #include "Editor/EditorCore.h"
 #include "SceneSystem/SceneLoader.h"
+#include "Physics/PhysicsCore.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -33,6 +34,7 @@ Keyboard* keyboard;
 Mouse* mouse;
 EditorCore* editor_core;
 SceneLoader* scene_loader;
+PhysicsCore* physics_core;
 
 struct TempData
 {
@@ -210,6 +212,60 @@ void QREntryPoint::EntryPoint()
 #endif // _EDITOR
 
 	mono_core->CallStaticMethod(main_method_handle);
+
+	physics_core = new PhysicsCore();
+
+	//Testcase 1
+	PhysicsCore::Get()->AddCirclePhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, 0.5f);
+	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
+	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+
+	//Testcase 2
+	PhysicsCore::Get()->AddBoxPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
+	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
+	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+
+	//Testcase 3
+	PhysicsCore::Get()->AddPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
+	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
+	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
+	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+
+	//Testcase 4
+	PhysicsCore::Get()->AddPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
+	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
+	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
+	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+
+	//Testcase 5
+	PhysicsCore::Get()->AddPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
+	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
+	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+
+	PhysicsCore::Get()->AddBoxPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
+
+	auto ground_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(ground_ent, Vector3(0.0f, -5.0f, 0.0f));
+	PhysicsCore::Get()->AddBoxPhysicObject(em, ground_ent, PhysicsCore::PhysicObjectBodyType::StaticBody, Vector2(20.0f, 1.0f));
+
+	auto trigger_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(trigger_ent, Vector3(0.0f, 5.0f, 0.0f));
+	PhysicsCore::Get()->AddBoxPhysicObject(em, trigger_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
+
+	auto circle_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(circle_ent, Vector3(0.0f, 3.0f, 0.0f));
+	PhysicsCore::Get()->AddCirclePhysicObject(em, circle_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, 1.0f);
+
+	PhysicsCore::Get()->testg();
 }
 
 float average_frame_time = 0;
@@ -228,10 +284,12 @@ void QREntryPoint::RunTime()
 		EntityManager* entman = active_scene->GetEntityManager();
 
 		average_frame_time = average_frame_time * 0.9f + 0.1f * (float)Time::GetDeltaTime(Timer::TimeTypes::Milliseconds);
+		float average_fps = 1000.0f / average_frame_time;
 
 		ImGui::Begin("App Statistics");
 		{
 			ImGui::Text("Average Frame Time: %f ms", average_frame_time);
+			ImGui::Text("Average Frame Per Second: %f", average_fps);
 			//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
 		ImGui::End();
@@ -242,12 +300,23 @@ void QREntryPoint::RunTime()
 		pos.x += (float)Time::GetDeltaTime();
 		render_ent_trans.SetPosition(pos);
 
+		Vector3 rot = render_ent_trans.GetRotationEuler();
+
 #ifdef _EDITOR
 		editor_core->Update();
 #endif // _EDITOR
 
+		/*
+		* NOTE
+		* If the user changes the scene to another then we should wait until the next frame to change and not change during!!!
+		*/
+
 		//Update scripts
 		ScriptingManager::Get()->UpdateScripts(entman);
+
+		PhysicsCore::Get()->SetWorldPhysicObjectData(entman);
+		PhysicsCore::Get()->Update();
+		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
 
 		keyboard->UpdateKeys();
 		mouse->UpdateMouseButtons();
@@ -255,6 +324,10 @@ void QREntryPoint::RunTime()
 		window_exist = render_core->UpdateRender(scene_manager->GetScene(main_scene));
 		if (!window_exist)
 			break;
+
+		physics_core->RemoveDeferredPhysicObjects(entman);
+		scripting_manager->RemoveDeferredScripts(entman);
+		entman->DestroyDeferredEntities();
 
 		Time::Stop();
 	}

@@ -13,6 +13,9 @@ class CSMonoCore
 	friend CSMonoObject;
 	friend CSMonoClass;
 
+public:
+	static constexpr MonoMethodHandle NULL_METHOD = { (uint64_t)(-1) };
+
 private:
 	_MonoDomain* m_domain;
 	_MonoAssembly* m_assembly;

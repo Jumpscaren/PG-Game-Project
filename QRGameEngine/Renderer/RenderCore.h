@@ -31,6 +31,11 @@ private:
 		DX12TextureHandle texture_handle;
 		DX12TextureViewHandle texture_view_handle;
 	};
+	struct VertexGrid
+	{
+		float position[3];
+		float pad;
+	};
 
 private:
 	DX12Core m_dx12_core;
@@ -60,6 +65,11 @@ private:
 	DX12BufferViewHandle m_editor_lines_view_handle;
 	uint64_t m_editor_lines_amount = 0;
 
+	DX12BufferHandle m_line_color_buffer;
+	DX12BufferViewHandle m_line_color_buffer_view;
+
+	std::vector<VertexGrid> m_debug_lines;
+
 	static RenderCore* s_render_core;
 
 private:
@@ -73,6 +83,8 @@ public:
 
 	TextureHandle LoadTexture(const std::string& texture_file_name);
 	AssetHandle GetTextureAssetHandle(TextureHandle texture_handle);
+	
+	void AddLine(const Vector2& line);
 
 	static RenderCore* Get();
 

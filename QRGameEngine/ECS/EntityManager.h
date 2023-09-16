@@ -8,6 +8,8 @@ struct ComponentPool
 {
 	void* component_pool_data;
 	std::unordered_set<Entity> m_component_pool_entities;
+	bool pool_changed = false;
+	std::vector<Entity> list_of_component_pool_entities;
 	std::string component_name;
 };
 
@@ -15,6 +17,11 @@ struct ComponentData
 {
 	char* component_data;
 	uint32_t component_size;
+};
+
+struct DeferredEntityDeletion
+{
+
 };
 
 class EntityManager
@@ -37,8 +44,6 @@ private:
 	uint32_t m_current_component_pool_index;
 	static constexpr uint32_t MAX_COMPONENT_POOLS = 100;
 
-	static constexpr Entity NULL_ENTITY = -1;
-
 	uint32_t m_max_entities;
 
 private:
@@ -54,12 +59,17 @@ private:
 
 	char* GetComponentPoolDataFromName(Entity entity, const std::string& component_name);
 
+	void DestroyEntity(Entity entity);
+
+	void UpdateEntityListIfPoolHasChanged(ComponentPool* component_pool);
+
 public:
 	EntityManager(uint32_t max_entities);
 	~EntityManager();
 
 	Entity NewEntity();
 	void RemoveEntity(Entity entity);
+	void DestroyDeferredEntities();
 
 	static Entity CreateEntity(SceneIndex scene_index);
 
@@ -104,10 +114,13 @@ public:
 			}
 		}
 
-		auto& entities = smallest_component_pool->m_component_pool_entities;
-		for (auto it = entities.begin(); it != entities.end(); it++)
+		UpdateEntityListIfPoolHasChanged(smallest_component_pool);
+
+		auto& entities = smallest_component_pool->list_of_component_pool_entities;
+		for (Entity& entity : entities)
 		{
-			Entity entity = *it;
+			if (!EntityExists(entity))
+				continue;
 
 			bool has_all_components = (HasComponent<Component>(entity) &&...);
 
@@ -136,10 +149,13 @@ public:
 			}
 		}
 
-		auto& entities = smallest_component_pool->m_component_pool_entities;
-		for (auto it = entities.begin(); it != entities.end(); it++)
+		UpdateEntityListIfPoolHasChanged(smallest_component_pool);
+
+		auto& entities = smallest_component_pool->list_of_component_pool_entities;
+		for (Entity& entity : entities)
 		{
-			Entity entity = *it;
+			if (!EntityExists(entity))
+				continue;
 
 			bool has_all_components = (HasComponent<Component>(entity) &&...);
 
@@ -217,6 +233,7 @@ inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
 	assert(!HasComponent(entity, component_pool));
 
 	component_pool.m_component_pool_entities.insert(entity);
+	component_pool.pool_changed = true;
 
 	char* component_pool_data = (char*)component_pool.component_pool_data;
 
@@ -260,4 +277,5 @@ inline void EntityManager::RemoveComponent(Entity entity)
 	assert(HasComponent(entity, component_pool));
 
 	component_pool.m_component_pool_entities.erase(entity);
+	component_pool.pool_changed = true;
 }

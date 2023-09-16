@@ -18,7 +18,9 @@ public:
 
 	static void AddCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void RemoveCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
+public:
 	static Vector3 ScreenToWorld(const CameraComponent& camera_component, const Vector2& position);
 };
 

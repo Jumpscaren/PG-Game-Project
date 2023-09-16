@@ -55,6 +55,11 @@ const Vector3 Vector3::operator=(const DirectX::XMVECTOR& vector)
 	return Vector3(vector.m128_f32[0], vector.m128_f32[1], vector.m128_f32[2]);
 }
 
+const Vector3 Vector3::operator*(float scalar)
+{
+	return Vector3(x * scalar, y * scalar, z * scalar);
+}
+
 Vector4::Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
 {
 	

@@ -26,6 +26,14 @@ void ScriptingManager::UpdateScripts(EntityManager* entity_manager)
 		});
 }
 
+void ScriptingManager::RemoveDeferredScripts(EntityManager* entity_manager)
+{
+	entity_manager->System<DeferredEntityDeletion, ScriptComponent>([&](DeferredEntityDeletion, ScriptComponent& script)
+		{
+			ScriptComponentInterface::RemoveComponentData(script);
+		});
+}
+
 ScriptingManager* ScriptingManager::Get()
 {
 	return s_scripting_manager;

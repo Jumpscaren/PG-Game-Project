@@ -5,6 +5,7 @@
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "Input/Mouse.h"
 #include "ComponentInterface.h"
+#include "Math/MathHelp.h"
 
 #include "CameraComponent.h"
 
@@ -81,6 +82,11 @@ Vector4 TransformComponent::GetRotation() const
 	return rotationQuat;
 }
 
+Vector3 TransformComponent::GetRotationEuler() const
+{
+	return MathHelp::ToEulerAngles(GetRotation());
+}
+
 Vector3 TransformComponent::GetScale() const
 {
 	DirectX::XMVECTOR xmScale, rotationQuat, translation;
@@ -97,6 +103,7 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetPosition>(transform_class, "SetPosition_Extern", TransformComponentInterface::SetPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::AddTransformComponent>(transform_class, "InitComponent", TransformComponentInterface::AddTransformComponent);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::HasComponent>(transform_class, "HasComponent", TransformComponentInterface::HasComponent);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::RemoveTransformComponent>(transform_class, "RemoveComponent", TransformComponentInterface::RemoveTransformComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetPosition>(transform_class, "GetPosition", TransformComponentInterface::GetPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetZIndex>(transform_class, "SetZIndex", TransformComponentInterface::SetZIndex);
@@ -111,6 +118,11 @@ void TransformComponentInterface::AddTransformComponent(CSMonoObject object, Sce
 bool TransformComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<TransformComponent>(entity);
+}
+
+void TransformComponentInterface::RemoveTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+{
+	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<TransformComponent>(entity);
 }
 
 void TransformComponentInterface::SetPosition(SceneIndex scene_index, Entity entity, float x, float y)

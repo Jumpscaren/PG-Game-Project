@@ -11,6 +11,7 @@ void CameraComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 
 	mono_core->HookAndRegisterMonoMethodType<CameraComponentInterface::AddCameraComponent>(camera_class, "InitComponent", CameraComponentInterface::AddCameraComponent);
 	mono_core->HookAndRegisterMonoMethodType<CameraComponentInterface::HasComponent>(camera_class, "HasComponent", CameraComponentInterface::HasComponent);
+	mono_core->HookAndRegisterMonoMethodType<CameraComponentInterface::RemoveCameraComponent>(camera_class, "RemoveComponent", CameraComponentInterface::RemoveCameraComponent);
 }
 
 void CameraComponentInterface::AddCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
@@ -21,6 +22,11 @@ void CameraComponentInterface::AddCameraComponent(CSMonoObject object, SceneInde
 bool CameraComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<CameraComponent>(entity);
+}
+
+void CameraComponentInterface::RemoveCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+{
+	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<CameraComponent>(entity);
 }
 
 Vector3 CameraComponentInterface::ScreenToWorld(const CameraComponent& camera_component, const Vector2& position)

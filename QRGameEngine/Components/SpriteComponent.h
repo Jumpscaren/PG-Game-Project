@@ -20,6 +20,7 @@ public:
 	static void RegisterInterface(CSMonoCore* mono_core);
 	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
 public:
 	static void SetTexture(CSMonoObject object, CSMonoObject texture);

@@ -67,18 +67,13 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_fullscreen_quad_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_quad_handle, ViewType::SHADER_RESOURCE_VIEW);
 
 #ifdef _EDITOR
-	struct VertexGrid
-	{
-		float position[3];
-		float pad;
-	};
 	std::vector<VertexGrid> lines;
 	for (int j = -1000; j <= 1000; ++j)
 	{
-		lines.push_back({ {(float)(-1000), (float)(j), 1.0f}, 0.0f });
-		lines.push_back({ {(float)(1000), (float)(j), 1.0f}, 0.0f });
-		lines.push_back({ {(float)(j), (float)(-1000), 1.0f}, 0.0f });
-		lines.push_back({ {(float)(j), (float)(1000), 1.0f}, 0.0f });
+		lines.push_back({ {(float)(-1000), (float)(j), 2.0f}, 0.0f });
+		lines.push_back({ {(float)(1000), (float)(j), 2.0f}, 0.0f });
+		lines.push_back({ {(float)(j), (float)(-1000), 2.0f}, 0.0f });
+		lines.push_back({ {(float)(j), (float)(1000), 2.0f}, 0.0f });
 	}
 	m_editor_lines_amount = lines.size();
 
@@ -88,6 +83,9 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::MODIFIABLE_BUFFER);
 	m_camera_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_camera_buffer, ViewType::SHADER_RESOURCE_VIEW);
+
+	m_line_color_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(Vector4), 1, BufferType::MODIFIABLE_BUFFER);
+	m_line_color_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_line_color_buffer, ViewType::SHADER_RESOURCE_VIEW);
 
 	m_stack_allocator = new DX12StackAllocator(&m_dx12_core, 1'000);
 
@@ -109,6 +107,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 		.AddStaticSampler(&m_dx12_core, SamplerTypes::LINEAR_WRAP, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)
+		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
 		.InitRootSignature(&m_dx12_core);
 
 	m_grid_pipeline
@@ -236,7 +235,26 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	//Camera
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 1);
 
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_line_color_buffer_view, 2);
+	Vector4 editor_line_color(1.0f, 1.0f, 1.0f, 1.0f);
+	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_line_color_buffer, &editor_line_color, sizeof(Vector4), 1);
+
 	m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
+
+	//Draw Debug Lines eg. Physics Debug Lines
+	if (m_debug_lines.size())
+	{
+		auto debug_line_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, m_debug_lines.data(), sizeof(VertexGrid), m_debug_lines.size(), BufferType::CONSTANT_BUFFER);
+		DX12BufferViewHandle debug_lines_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, debug_line_buffer, ViewType::SHADER_RESOURCE_VIEW);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, debug_lines_view, 0);
+
+		Vector4 debug_line_color(0.0f, 1.0f, 0.0f, 1.0f);
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_line_color_buffer, &debug_line_color, sizeof(Vector4), 1);
+
+		m_dx12_core.GetCommandList()->Draw(m_debug_lines.size(), 1, 0, 0);
+
+		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, debug_line_buffer);
+	}
 #endif
 
 	if (render_object_amount)
@@ -254,6 +272,8 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->Signal(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 
 	m_dx12_core.EndOfFrame();
+
+	m_debug_lines.clear();
 
 	return m_window->WinMsg();
 }
@@ -287,6 +307,15 @@ AssetHandle RenderCore::GetTextureAssetHandle(TextureHandle texture_handle)
 
 	assert(false);
 	return 0;
+}
+
+void RenderCore::AddLine(const Vector2& line)
+{
+	VertexGrid vertex_line;
+	vertex_line.position[0] = line.x;
+	vertex_line.position[1] = line.y;
+	vertex_line.position[2] = 1.0f;
+	m_debug_lines.push_back(vertex_line);
 }
 
 RenderCore* RenderCore::Get()

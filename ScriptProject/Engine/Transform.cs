@@ -34,6 +34,9 @@ namespace ScriptProject.Engine
         public override extern bool HasComponent(uint scene_index, uint entity);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public override extern void RemoveComponent(uint scene_index, uint entity);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetZIndex(float z_index);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

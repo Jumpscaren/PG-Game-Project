@@ -34,6 +34,7 @@ struct Vector3
 
 	operator DirectX::XMVECTOR() const;
 	const Vector3 operator= (const DirectX::XMVECTOR& vector);
+	const Vector3 operator* (float scalar);
 };
 
 struct Vector4

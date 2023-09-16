@@ -43,11 +43,16 @@ namespace ScriptProject.Engine
             GameObject gameObject = new GameObject();
             gameObject.entity_id = SceneManager.GetActiveScene().GetEntityManager().NewEntity();
             gameObject.scene = SceneManager.GetActiveScene();
-            Console.WriteLine("GameObject Entity ID = " + gameObject.entity_id);
+            //Console.WriteLine("GameObject Entity ID = " + gameObject.entity_id);
 
             gameObject.transform = gameObject.AddComponent<Transform>();
             gameObject.transform.SetZIndex(1);
             return gameObject;
+        }
+
+        static public void DeleteGameObject()
+        {
+
         }
 
         public UInt32 GetEntityID() 
@@ -69,7 +74,7 @@ namespace ScriptProject.Engine
         {
             T component = new T();
             component.SetGameObject(this);
-            Console.WriteLine("GG " + scene.GetSceneIndex() + " , " + entity_id);
+            //Console.WriteLine("GG " + scene.GetSceneIndex() + " , " + entity_id);
             component.InitComponent(scene.GetSceneIndex(), entity_id);
             components.Add(component);
             return component;
@@ -100,6 +105,18 @@ namespace ScriptProject.Engine
         private bool HasComponent<T>(T component) where T : Component, new()
         {
             return component.HasComponent(scene.GetSceneIndex(), entity_id);
+        }
+
+        public void RemoveComponent<T>() where T : Component
+        {
+            foreach (Component comp in components)
+            {
+                if (comp.GetType() == typeof(T))
+                {
+                    comp.RemoveComponent(scene.GetSceneIndex(), entity_id);
+                    break;
+                }
+            }
         }
     }
 }

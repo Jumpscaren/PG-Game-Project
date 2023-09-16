@@ -34,5 +34,10 @@ namespace ScriptProject.Engine
             Console.WriteLine("Component is incorrectly implemented");
             return false;
         }
+
+        public virtual void RemoveComponent(UInt32 scene_index, UInt32 entity)
+        {
+            Console.WriteLine("Component is incorrectly removed");
+        }
     }
 }
