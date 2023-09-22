@@ -324,6 +324,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Components\DynamicBodyComponent.cpp" />
     <ClCompile Include="Editor\EditorCore.cpp" />
     <ClCompile Include="Editor\DrawScene.cpp" />
+    <ClCompile Include="Event\EventCore.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Input\Keyboard.cpp" />
     <ClCompile Include="Input\Mouse.cpp" />
@@ -333,6 +334,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Physics\PhysicsInternal\PhysicsContactListener.cpp" />
     <ClCompile Include="Physics\PhysicsInternal\PhysicsDebugDraw.cpp" />
     <ClCompile Include="Physics\PhysicsCore.cpp" />
+    <ClCompile Include="Scripting\Objects\SceneInterface.cpp" />
     <ClCompile Include="SceneSystem\SceneLoader.cpp" />
     <ClCompile Include="Scripting\ScriptingManager.cpp" />
     <ClCompile Include="Scripting\Objects\RenderInterface.cpp" />
@@ -436,6 +438,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="ECS\EntityDefinition.h" />
     <ClInclude Include="Editor\EditorCore.h" />
     <ClInclude Include="Editor\DrawScene.h" />
+    <ClInclude Include="Event\EventCore.h" />
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Input\Keyboard.h" />
     <ClInclude Include="Input\Mouse.h" />
@@ -447,6 +450,8 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Physics\PhysicsInternal\PhysicsContactListener.h" />
     <ClInclude Include="Physics\PhysicsInternal\PhysicsDebugDraw.h" />
     <ClInclude Include="Physics\PhysicsCore.h" />
+    <ClInclude Include="Scripting\Objects\SceneInterface.h" />
+    <ClInclude Include="SceneSystem\SceneDefines.h" />
     <ClInclude Include="SceneSystem\SceneLoaderTypes.h" />
     <ClInclude Include="SceneSystem\SceneLoader.h" />
     <ClInclude Include="Scripting\ScriptingManager.h" />

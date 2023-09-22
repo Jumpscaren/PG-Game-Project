@@ -17,6 +17,11 @@ namespace ScriptProject.Engine
             m_entity_manager = new EntityManager(this);
         }
 
+        static private Scene CreateSceneWithSceneIndex(UInt32 scene_index)
+        {
+            return new Scene(scene_index);
+        }
+
         public EntityManager GetEntityManager()
         {
             return m_entity_manager;

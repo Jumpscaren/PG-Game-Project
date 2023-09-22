@@ -52,5 +52,15 @@ namespace ScriptProject
             //x += 0.01f;
             //game_object.transform.SetPosition(x, 0);
         }
+
+        void BeginCollision(GameObject collided_game_object)
+        {
+            //Console.WriteLine("Woah a = " + collided_game_object.GetEntityID());
+        }
+
+        void EndCollision(GameObject collided_game_object)
+        {
+            //Console.WriteLine("Woah b = " + collided_game_object.GetEntityID());
+        }
     }
 }

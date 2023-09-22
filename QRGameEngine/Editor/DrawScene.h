@@ -43,5 +43,6 @@ public:
 	void Load(std::string scene_name);
 	void Clear();
 
+	static void SetAddUserPrefab();
 	static void AddUserPrefab(uint32_t prefab_instance_id, uint32_t z_index);
 };

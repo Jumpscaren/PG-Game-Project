@@ -1,8 +1,7 @@
 #pragma once
 #include "Vendor/Include/StaticTypeInfo/static_type_info.h"
 #include "EntityDefinition.h"
-
-typedef uint32_t SceneIndex;
+#include "SceneSystem/SceneDefines.h"
 
 struct ComponentPool
 {
@@ -34,6 +33,8 @@ private:
 	};
 
 private:
+	SceneIndex m_entity_manager_scene_index;
+
 	std::vector<Entity> m_free_entities;
 	std::vector<Entity> m_entities;
 
@@ -47,8 +48,6 @@ private:
 	uint32_t m_max_entities;
 
 private:
-	bool EntityExists(Entity entity);
-
 	template <typename Component>
 	uint32_t CreateComponentPool();
 
@@ -64,14 +63,18 @@ private:
 	void UpdateEntityListIfPoolHasChanged(ComponentPool* component_pool);
 
 public:
-	EntityManager(uint32_t max_entities);
+	EntityManager(uint32_t max_entities, SceneIndex scene_index);
 	~EntityManager();
+
+	SceneIndex GetSceneIndex() const;
 
 	Entity NewEntity();
 	void RemoveEntity(Entity entity);
 	void DestroyDeferredEntities();
 
 	static Entity CreateEntity(SceneIndex scene_index);
+
+	bool EntityExists(Entity entity);
 
 	template <typename Component, typename ...Args>
 	Component& AddComponent(Entity entity, Args&& ...args);

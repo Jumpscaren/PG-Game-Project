@@ -22,6 +22,12 @@
 #include "Editor/EditorCore.h"
 #include "SceneSystem/SceneLoader.h"
 #include "Physics/PhysicsCore.h"
+#include "Event/EventCore.h"
+#include "Scripting/Objects/SceneInterface.h"
+#include "Components/BoxColliderComponent.h"
+#include "Components/DynamicBodyComponent.h"
+#include "Components/StaticBodyComponent.h"
+#include "Components/CircleColliderComponent.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -35,6 +41,7 @@ Mouse* mouse;
 EditorCore* editor_core;
 SceneLoader* scene_loader;
 PhysicsCore* physics_core;
+EventCore* event_core;
 
 struct TempData
 {
@@ -49,6 +56,11 @@ struct TempData
 struct TempComp
 {
 	int mine;
+};
+
+class TempClass
+{
+
 };
 
 void PrintText()
@@ -80,6 +92,8 @@ int TESTING(int h)
 
 void QREntryPoint::EntryPoint()
 {
+	event_core = new EventCore();
+
 	asset_manager = new AssetManager();
 
 	mono_core = new CSMonoCore();
@@ -134,33 +148,33 @@ void QREntryPoint::EntryPoint()
 
 	//assert(mono_core->CheckIfMonoMethodExists(update_method));
 
-	EntityManager ent(100);
-	Entity e = ent.NewEntity();
-	TempData& data = ent.AddComponent<TempData>(e, 2);
-	++data.mine;
+	//EntityManager ent(100, );
+	//Entity e = ent.NewEntity();
+	//TempData& data = ent.AddComponent<TempData>(e, 2);
+	//++data.mine;
 
-	bool check = ent.HasComponent<TempData>(e);
-	check = ent.HasComponent<TempComp>(e);
+	//bool check = ent.HasComponent<TempData>(e);
+	//check = ent.HasComponent<TempComp>(e);
 
-	data = ent.GetComponent<TempData>(e);
-	//Crashes as intended
-	//ent.GetComponent<TempComp>(e);
+	//data = ent.GetComponent<TempData>(e);
+	////Crashes as intended
+	////ent.GetComponent<TempComp>(e);
 
-	ent.System<TempData>([&](TempData& mdata)
-		{
-			std::cout << mdata.mine << "\n";
-		});
+	//ent.System<TempData>([&](TempData& mdata)
+	//	{
+	//		std::cout << mdata.mine << "\n";
+	//	});
 
-	ent.System<TempData>([&](Entity e, TempData& mdata)
-		{
-			std::cout << e << " GG " << mdata.mine << "\n";
-		});
+	//ent.System<TempData>([&](Entity e, TempData& mdata)
+	//	{
+	//		std::cout << e << " GG " << mdata.mine << "\n";
+	//	});
 
-	ent.AddComponent<TempComp>(e);
-	ent.RemoveComponent<TempComp>(e);
-	ent.AddComponent<TempComp>(e);
+	//ent.AddComponent<TempComp>(e);
+	//ent.RemoveComponent<TempComp>(e);
+	//ent.AddComponent<TempComp>(e);
 
-	ent.RemoveEntity(e);
+	//ent.RemoveEntity(e);
 
 	std::cout << "h\n";
 
@@ -201,74 +215,89 @@ void QREntryPoint::EntryPoint()
 	TransformComponentInterface::RegisterInterface(mono_core);
 	SpriteComponentInterface::RegisterInterface(mono_core);
 	GameObjectInterface::RegisterInterface(mono_core);
+	SceneInterface::RegisterInterface(mono_core);
 	ComponentInterface::RegisterInterface(mono_core);
 	RenderInterface::RegisterInterface(mono_core);
 	ScriptComponentInterface::RegisterInterface(mono_core);
 	InputInterface::RegisterInterface(mono_core);
 	CameraComponentInterface::RegisterInterface(mono_core);
+	DynamicBodyComponentInterface::RegisterInterface(mono_core);
+	BoxColliderComponentInterface::RegisterInterface(mono_core);
+	CircleColliderComponentInterface::RegisterInterface(mono_core);
+	StaticBodyComponentInterface::RegisterInterface(mono_core);
 
 #ifdef _EDITOR
 	editor_core = new EditorCore();
+#else
+	DrawScene::SetAddUserPrefab();
+	//Temp
+	auto m_editor_camera_ent = em->NewEntity();
+	em->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 0.0f));
+	em->AddComponent<CameraComponent>(m_editor_camera_ent);
 #endif // _EDITOR
+
+	physics_core = new PhysicsCore(true);
 
 	mono_core->CallStaticMethod(main_method_handle);
 
-	physics_core = new PhysicsCore();
-
 	//Testcase 1
-	PhysicsCore::Get()->AddCirclePhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, 0.5f);
-	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
-	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
-	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
-	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+	PhysicsCore::Get()->AddCirclePhysicObject(main_scene, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, 0.5f);
+	PhysicsCore::Get()->AddBoxCollider(main_scene, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->RemoveBoxCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemoveCircleCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(main_scene, render_ent);
 
 	//Testcase 2
-	PhysicsCore::Get()->AddBoxPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
-	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
-	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
-	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
-	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+	PhysicsCore::Get()->AddBoxPhysicObject(main_scene, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddCircleCollider(main_scene, render_ent, 0.5f);
+	PhysicsCore::Get()->RemoveCircleCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemoveBoxCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(main_scene, render_ent);
 
 	//Testcase 3
-	PhysicsCore::Get()->AddPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
-	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
-	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
-	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
-	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
-	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+	PhysicsCore::Get()->AddPhysicObject(main_scene, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
+	PhysicsCore::Get()->AddBoxCollider(main_scene, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddCircleCollider(main_scene, render_ent, 0.5f);
+	PhysicsCore::Get()->RemoveCircleCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemoveBoxCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(main_scene, render_ent);
 
 	//Testcase 4
-	PhysicsCore::Get()->AddPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
-	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
-	PhysicsCore::Get()->RemoveCircleCollider(em, render_ent);
-	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
-	PhysicsCore::Get()->RemoveBoxCollider(em, render_ent);
-	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+	PhysicsCore::Get()->AddPhysicObject(main_scene, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
+	PhysicsCore::Get()->AddCircleCollider(main_scene, render_ent, 0.5f);
+	PhysicsCore::Get()->RemoveCircleCollider(main_scene, render_ent);
+	PhysicsCore::Get()->AddBoxCollider(main_scene, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->RemoveBoxCollider(main_scene, render_ent);
+	PhysicsCore::Get()->RemovePhysicObject(main_scene, render_ent);
 
 	//Testcase 5
-	PhysicsCore::Get()->AddPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
-	PhysicsCore::Get()->AddBoxCollider(em, render_ent, Vector2(0.5f, 0.5f));
-	PhysicsCore::Get()->AddCircleCollider(em, render_ent, 0.5f);
-	PhysicsCore::Get()->RemovePhysicObject(em, render_ent);
+	PhysicsCore::Get()->AddPhysicObject(main_scene, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody);
+	PhysicsCore::Get()->AddBoxCollider(main_scene, render_ent, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddCircleCollider(main_scene, render_ent, 0.5f);
+	PhysicsCore::Get()->RemovePhysicObject(main_scene, render_ent);
 
-	PhysicsCore::Get()->AddBoxPhysicObject(em, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddBoxPhysicObject(main_scene, render_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
 
 	auto ground_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(ground_ent, Vector3(0.0f, -5.0f, 0.0f));
-	PhysicsCore::Get()->AddBoxPhysicObject(em, ground_ent, PhysicsCore::PhysicObjectBodyType::StaticBody, Vector2(20.0f, 1.0f));
+	PhysicsCore::Get()->AddBoxPhysicObject(main_scene, ground_ent, PhysicsCore::PhysicObjectBodyType::StaticBody, Vector2(1000.0f, 1.0f));
 
 	auto trigger_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(trigger_ent, Vector3(0.0f, 5.0f, 0.0f));
-	PhysicsCore::Get()->AddBoxPhysicObject(em, trigger_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
+	PhysicsCore::Get()->AddBoxPhysicObject(main_scene, trigger_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, Vector2(0.5f, 0.5f));
 
 	auto circle_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(circle_ent, Vector3(0.0f, 3.0f, 0.0f));
-	PhysicsCore::Get()->AddCirclePhysicObject(em, circle_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, 1.0f);
+	PhysicsCore::Get()->AddCirclePhysicObject(main_scene, circle_ent, PhysicsCore::PhysicObjectBodyType::DynamicBody, 1.0f);
+	ScriptComponentInterface::AddScriptComponent("TestScript", main_scene, circle_ent);
 
-	PhysicsCore::Get()->testg();
+	//PhysicsCore::Get()->testg();
 }
 
 float average_frame_time = 0;
+double total_frame_time = 0.0;
+int max_frames = 4'000'0;
+int frame_count = 0;
 void QREntryPoint::RunTime()
 {
 	bool window_exist = true;
@@ -294,14 +323,6 @@ void QREntryPoint::RunTime()
 		}
 		ImGui::End();
 
-		TransformComponent& render_ent_trans = entman->GetComponent<TransformComponent>(render_ent);
-		
-		Vector3 pos = render_ent_trans.GetPosition();
-		pos.x += (float)Time::GetDeltaTime();
-		render_ent_trans.SetPosition(pos);
-
-		Vector3 rot = render_ent_trans.GetRotationEuler();
-
 #ifdef _EDITOR
 		editor_core->Update();
 #endif // _EDITOR
@@ -311,12 +332,25 @@ void QREntryPoint::RunTime()
 		* If the user changes the scene to another then we should wait until the next frame to change and not change during!!!
 		*/
 
+		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
+		PhysicsCore::Get()->HandleDeferredPhysicData();
+
 		//Update scripts
 		ScriptingManager::Get()->UpdateScripts(entman);
 
+		TransformComponent& render_ent_trans = entman->GetComponent<TransformComponent>(render_ent);
+
+		Vector3 pos = render_ent_trans.GetPosition();
+		pos.x += (float)Time::GetDeltaTime();
+		render_ent_trans.SetPosition(pos);
+
+		Vector3 rot = render_ent_trans.GetRotationEuler();
+
+		PhysicsCore::Get()->DrawColliders();
+
 		PhysicsCore::Get()->SetWorldPhysicObjectData(entman);
-		PhysicsCore::Get()->Update();
-		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
+		PhysicsCore::Get()->UpdatePhysics();
+		//PhysicsCore::Get()->Update();
 
 		keyboard->UpdateKeys();
 		mouse->UpdateMouseButtons();
@@ -330,6 +364,13 @@ void QREntryPoint::RunTime()
 		entman->DestroyDeferredEntities();
 
 		Time::Stop();
+
+		total_frame_time += Time::GetDeltaTime();
+
+		if (++frame_count == max_frames)
+		{
+			std::cout << "Total Frame Time: " << total_frame_time << "\n";
+		}
 	}
 
 	delete mono_core;

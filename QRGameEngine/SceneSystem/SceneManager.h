@@ -1,7 +1,6 @@
 #pragma once
 #include "Scene.h"
-
-typedef uint32_t SceneIndex;
+#include "SceneSystem/SceneDefines.h"
 
 class SceneLoader;
 

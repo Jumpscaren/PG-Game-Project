@@ -1,12 +1,75 @@
 #include "pch.h"
 #include "ScriptingManager.h"
 #include "Scripting/CSMonoCore.h"
+#include "Event/EventCore.h"
+#include "SceneSystem/SceneManager.h"
+#include "Scripting/Objects/GameObjectInterface.h"
+#include "ECS/EntityManager.h"
 
 ScriptingManager* ScriptingManager::s_scripting_manager = nullptr;
+
+void ScriptingManager::ScriptBeginCollision(Entity entity_1, SceneIndex scene_index_1, Entity entity_2, SceneIndex scene_index_2)
+{
+	EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(scene_index_1);
+	EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(scene_index_2);
+
+	CSMonoCore* mono_core = CSMonoCore::Get();
+
+	if (entity_manager_1->HasComponent<ScriptComponent>(entity_1))
+	{
+		const ScriptComponent& script = entity_manager_1->GetComponent<ScriptComponent>(entity_1);
+
+		if (mono_core->CheckIfMonoMethodExists(script.script_begin_collision))
+		{
+			mono_core->CallMethod(script.script_begin_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_2, scene_index_2));
+		}
+	}
+
+	if (entity_manager_2->HasComponent<ScriptComponent>(entity_2))
+	{
+		const ScriptComponent& script = entity_manager_2->GetComponent<ScriptComponent>(entity_2);
+
+		if (mono_core->CheckIfMonoMethodExists(script.script_begin_collision))
+		{
+			mono_core->CallMethod(script.script_begin_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_1, scene_index_1));
+		}
+	}
+}
+
+void ScriptingManager::ScriptEndCollision(Entity entity_1, SceneIndex scene_index_1, Entity entity_2, SceneIndex scene_index_2)
+{
+	EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(scene_index_1);
+	EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(scene_index_2);
+
+	CSMonoCore* mono_core = CSMonoCore::Get();
+
+	if (entity_manager_1->HasComponent<ScriptComponent>(entity_1))
+	{
+		const ScriptComponent& script = entity_manager_1->GetComponent<ScriptComponent>(entity_1);
+
+		if (mono_core->CheckIfMonoMethodExists(script.script_end_collision))
+		{
+			mono_core->CallMethod(script.script_end_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_1, scene_index_1));
+		}
+	}
+
+	if (entity_manager_2->HasComponent<ScriptComponent>(entity_2))
+	{
+		const ScriptComponent& script = entity_manager_2->GetComponent<ScriptComponent>(entity_2);
+
+		if (mono_core->CheckIfMonoMethodExists(script.script_end_collision))
+		{
+			mono_core->CallMethod(script.script_end_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_2, scene_index_2));
+		}
+	}
+}
 
 ScriptingManager::ScriptingManager()
 {
 	s_scripting_manager = this;
+
+	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptBeginCollision>("BeginCollision", ScriptingManager::ScriptBeginCollision);
+	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptEndCollision>("EndCollision", ScriptingManager::ScriptEndCollision);
 }
 
 void ScriptingManager::StartScript(const ScriptComponent& script)

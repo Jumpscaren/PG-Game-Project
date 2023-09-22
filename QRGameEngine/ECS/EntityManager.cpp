@@ -53,7 +53,7 @@ void EntityManager::UpdateEntityListIfPoolHasChanged(ComponentPool* component_po
 	}
 }
 
-EntityManager::EntityManager(uint32_t max_entities) : m_max_entities(max_entities)
+EntityManager::EntityManager(uint32_t max_entities, SceneIndex scene_index) : m_max_entities(max_entities), m_entity_manager_scene_index(scene_index)
 {
 	assert(m_max_entities != NULL_ENTITY);
 
@@ -76,6 +76,11 @@ EntityManager::~EntityManager()
 	{
 		free(m_component_pools[i].component_pool_data);
 	}
+}
+
+SceneIndex EntityManager::GetSceneIndex() const
+{
+	return m_entity_manager_scene_index;
 }
 
 Entity EntityManager::NewEntity()

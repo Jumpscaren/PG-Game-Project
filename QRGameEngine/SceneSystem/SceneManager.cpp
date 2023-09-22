@@ -16,14 +16,14 @@ SceneIndex SceneManager::CreateScene()
 	if (!m_free_scene_indicies.size())
 	{
 		scene_index = (SceneIndex)m_scenes.size();
-		m_scenes.push_back(new Scene());
+		m_scenes.push_back(new Scene(scene_index));
 	}
 	else
 	{
 		scene_index = m_free_scene_indicies.back();
 
 		m_free_scene_indicies.pop_back();
-		m_scenes[scene_index] = new Scene();
+		m_scenes[scene_index] = new Scene(scene_index);
 	}
 
 	return scene_index;

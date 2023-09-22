@@ -314,7 +314,7 @@ void RenderCore::AddLine(const Vector2& line)
 	VertexGrid vertex_line;
 	vertex_line.position[0] = line.x;
 	vertex_line.position[1] = line.y;
-	vertex_line.position[2] = 1.0f;
+	vertex_line.position[2] = 0.1f;
 	m_debug_lines.push_back(vertex_line);
 }
 

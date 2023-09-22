@@ -151,9 +151,6 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 			new_block_data.prefab_data.prefab_index = save_file.Read<uint32_t>();
 			layer_block_map.insert({ new_block_data.prefab_data.z_index, new_block_data });
 
-			InstancePrefab(game_object, new_block_data.prefab_data.prefab_index);
-			entity_manager->GetComponent<TransformComponent>(new_block).SetPositionZ((float)new_block_data.prefab_data.z_index);
-
 			uint32_t component_list_size = save_file.Read<uint32_t>();
 
 			for (uint32_t i = 0; i < component_list_size; ++i)
@@ -176,6 +173,14 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 				else
 				{
 					override_method->second.load_override_method(new_block_data.block_entity, entity_manager, &save_file);
+				}
+
+				//So that the position is set before instancing the prefab, one case is physics will have the wrong position otherwise
+				if (i == 0)
+				{
+					assert(component_name == "TransformComponent");
+					InstancePrefab(game_object, new_block_data.prefab_data.prefab_index);
+					//entity_manager->GetComponent<TransformComponent>(new_block).SetPositionZ((float)new_block_data.prefab_data.z_index);
 				}
 			}
 		}

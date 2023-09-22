@@ -82,11 +82,14 @@ namespace ScriptProject
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
             game_object.AddComponent<TestScript>();
+            game_object.AddComponent<DynamicBody>();
+            game_object.AddComponent<BoxCollider>();
         }
 
         static void Prefab2(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            game_object.AddComponent<CircleCollider>();
         }
     }
 }

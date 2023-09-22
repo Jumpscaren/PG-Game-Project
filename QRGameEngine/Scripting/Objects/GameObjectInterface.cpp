@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "GameObjectInterface.h"
 #include "Scripting/CSMonoCore.h"
+#include "Scripting/Objects/SceneInterface.h"
 
 MonoFieldHandle GameObjectInterface::get_entity_id_field;
 MonoClassHandle GameObjectInterface::game_object_class;
 MonoMethodHandle GameObjectInterface::get_scene_index_method;
 MonoMethodHandle GameObjectInterface::create_game_object_method;
+MonoMethodHandle GameObjectInterface::new_game_object_with_existing_entity_method;
 
 void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -13,6 +15,7 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     get_scene_index_method = mono_core->RegisterMonoMethod(game_object_class, "GetSceneIndex");
     get_entity_id_field = mono_core->RegisterField(game_object_class, "entity_id");
     create_game_object_method = mono_core->RegisterMonoMethod(game_object_class, "CreateGameObject");
+    new_game_object_with_existing_entity_method = mono_core->RegisterMonoMethod(game_object_class, "NewGameObjectWithExistingEntity");
 }
 
 Entity GameObjectInterface::GetEntityID(const CSMonoObject& game_object)
@@ -33,6 +36,15 @@ CSMonoObject GameObjectInterface::CreateGameObject()
 {
     CSMonoObject game_object;
     CSMonoCore::Get()->CallStaticMethod(game_object, create_game_object_method);
+
+    return game_object;
+}
+
+CSMonoObject GameObjectInterface::NewGameObjectWithExistingEntity(Entity entity, SceneIndex scene_index)
+{
+    CSMonoObject game_object;
+    CSMonoObject scene_object = SceneInterface::CreateSceneWithSceneIndex(scene_index);
+    CSMonoCore::Get()->CallStaticMethod(game_object, new_game_object_with_existing_entity_method, entity, scene_object);
 
     return game_object;
 }

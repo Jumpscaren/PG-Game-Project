@@ -310,6 +310,15 @@ MonoMethodHandle CSMonoCore::RegisterMonoMethod(const MonoClassHandle& class_han
 {
 	MonoMethodHandle method_handle = { m_mono_methods.size() };
 
+	//auto mono_class = GetMonoClass(class_handle);
+	//MonoMethod* m;
+	//void* iter = nullptr;
+	//while ((m = mono_class_get_methods(mono_class->GetMonoClass(), &iter)))
+	//{
+	//	std::cout << mono_method_get_name(m) << "\n";
+	//	std::cout << mono_method_full_name(m, true) << "\n";
+	//}
+
 	m_mono_methods.push_back(CSMonoMethod(GetMonoClass(class_handle), class_handle, method_name));
 
 	return method_handle;

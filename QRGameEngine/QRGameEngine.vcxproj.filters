@@ -219,6 +219,12 @@
     <ClCompile Include="Components\StaticBodyComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Event\EventCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\Objects\SceneInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -603,6 +609,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Components\StaticBodyComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Event\EventCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneSystem\SceneDefines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\Objects\SceneInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

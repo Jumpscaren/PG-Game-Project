@@ -23,6 +23,8 @@ void ScriptComponentInterface::InitComponent(CSMonoObject object, SceneIndex sce
 	script_component.script_object = object;
 	script_component.script_start = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Start");
 	script_component.script_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Update");
+	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "BeginCollision");
+	script_component.script_end_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "EndCollision");
 
 	//Change later
 	ScriptingManager::Get()->StartScript(script_component);
@@ -42,6 +44,15 @@ void ScriptComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex s
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<ScriptComponent>(entity);
 }
 
+void ScriptComponentInterface::AddScriptComponent(const std::string& script_class_name, SceneIndex scene_index, Entity entity)
+{
+	//Temp
+	auto script_class = CSMonoCore::Get()->RegisterMonoClass("ScriptProject", "TestScript");
+
+	CSMonoObject script(CSMonoCore::Get(), script_class);
+	InitComponent(script, scene_index, entity);
+}
+
 void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
 {
 }
@@ -55,4 +66,6 @@ void ScriptComponentInterface::RemoveComponentData(ScriptComponent& script_compo
 	script_component.script_object.RemoveLinkToMono();
 	script_component.script_start = CSMonoCore::NULL_METHOD;
 	script_component.script_update = CSMonoCore::NULL_METHOD;
+	script_component.script_begin_collision = CSMonoCore::NULL_METHOD;
+	script_component.script_end_collision = CSMonoCore::NULL_METHOD;
 }

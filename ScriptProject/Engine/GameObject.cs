@@ -12,15 +12,15 @@ namespace ScriptProject.Engine
         Scene scene;
         public Transform transform;
 
-        List<Component> components = new List<Component>();
+        //List<Component> components = new List<Component>();
 
         public static bool operator ==(GameObject left, GameObject right)
         {
-            return left.entity_id == right.entity_id;
+            return left.entity_id == right.entity_id && left.scene.GetSceneIndex() == right.scene.GetSceneIndex();
         }
         public static bool operator !=(GameObject left, GameObject right)
         {
-            return left.entity_id != right.entity_id;
+            return left.entity_id != right.entity_id || left.scene.GetSceneIndex() != right.scene.GetSceneIndex();
         }
 
         public override bool Equals(object obj)
@@ -30,12 +30,21 @@ namespace ScriptProject.Engine
             if (other == null)
                 return false;
 
-            return this.entity_id == other.entity_id;
+            return this.entity_id == other.entity_id && this.scene.GetSceneIndex() == other.scene.GetSceneIndex();
         }
 
         public override int GetHashCode() 
         { 
             return this.entity_id.GetHashCode();
+        }
+
+        static private GameObject NewGameObjectWithExistingEntity(UInt32 entity, Scene scene)
+        {
+            GameObject gameObject = new GameObject();
+            gameObject.entity_id = entity;
+            gameObject.scene = scene;
+
+            return gameObject;
         }
 
         static public GameObject CreateGameObject()
@@ -76,24 +85,24 @@ namespace ScriptProject.Engine
             component.SetGameObject(this);
             //Console.WriteLine("GG " + scene.GetSceneIndex() + " , " + entity_id);
             component.InitComponent(scene.GetSceneIndex(), entity_id);
-            components.Add(component);
+            //components.Add(component);
             return component;
         }
 
         //Slow should not be used every frame
         public T GetComponent<T>() where T : Component, new()
         {
-            foreach (Component comp in components)
-            {
-                if (comp.GetType() == typeof(T))
-                    return (T)comp;
-            }
+            //foreach (Component comp in components)
+            //{
+            //    if (comp.GetType() == typeof(T))
+            //        return (T)comp;
+            //}
 
             T component = new T();
             if (HasComponent<T>(component))
             {
                 component.SetGameObject(this);
-                components.Add(component);
+                //components.Add(component);
                 return component;
             }
 
@@ -107,16 +116,21 @@ namespace ScriptProject.Engine
             return component.HasComponent(scene.GetSceneIndex(), entity_id);
         }
 
-        public void RemoveComponent<T>() where T : Component
+        public void RemoveComponent<T>() where T : Component, new()
         {
-            foreach (Component comp in components)
-            {
-                if (comp.GetType() == typeof(T))
-                {
-                    comp.RemoveComponent(scene.GetSceneIndex(), entity_id);
-                    break;
-                }
-            }
+            T component = new T();
+            component.SetGameObject(this);
+            component.RemoveComponent(scene.GetSceneIndex(), entity_id);
+
+            //foreach (Component comp in components)
+            //{
+            //    if (comp.GetType() == typeof(T))
+            //    {
+            //        comp.RemoveComponent(scene.GetSceneIndex(), entity_id);
+            //        components.Remove(comp);
+            //        break;
+            //    }
+            //}
         }
     }
 }

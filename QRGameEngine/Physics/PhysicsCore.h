@@ -2,6 +2,8 @@
 #include "ECS/EntityDefinition.h"
 #include "PhysicDefines.h"
 #include "Common/EngineTypes.h"
+#include "SceneSystem/SceneDefines.h"
+#include <thread>
 
 class b2World;
 class b2Body;
@@ -14,6 +16,8 @@ class EntityManager;
 
 class PhysicsCore
 {
+	friend PhysicsContactListener;
+
 public:
 	enum PhysicObjectBodyType
 	{
@@ -28,9 +32,33 @@ private:
 		b2Body* object_body;
 		PhysicObjectBodyType object_body_type;
 		Entity object_entity = NULL_ENTITY;
+		SceneIndex object_scene_index;
 
 		b2Fixture* object_box_fixture = nullptr;
 		b2Fixture* object_circle_fixture = nullptr;
+	};
+
+	struct DeferredPhysicObjectCreationData
+	{
+		Entity entity;
+		SceneIndex scene_index;
+		PhysicObjectBodyType physic_object_body_type;
+
+		bool has_collider_data;
+		bool is_box_collider;
+		Vector2 half_box_size;
+		float circle_radius;
+
+		bool trigger;
+	};
+
+	struct DeferredPhysicObjectDestructionData
+	{
+		Entity entity;
+		SceneIndex scene_index;
+		bool is_collider;
+		bool is_box_collider;
+		PhysicObjectHandle physic_object_handle;
 	};
 
 private:
@@ -45,32 +73,71 @@ private:
 	std::vector<PhysicObjectData> m_physic_object_data;
 	std::stack<PhysicObjectHandle> m_free_physic_object_handles;
 
+	static constexpr float TIME_STEP = 1.0f / 120.0f;
+	static constexpr int32_t VELOCITY_ITERATIONS = 8;
+	static constexpr int32_t POSITION_ITERATIONS = 3;
+	float m_time_since_last_update = 0.0f;
+
+	bool m_threaded_physics;
+	std::thread* m_physic_update_thread = nullptr;
+	std::mutex m_physic_update_thread_mutex;
+	std::atomic<bool> m_update_physics;
+
+	std::vector<DeferredPhysicObjectCreationData> m_deferred_physic_object_creations;
+	std::vector<DeferredPhysicObjectDestructionData> m_deferred_physic_object_destructions;
+
 private:
 	b2Fixture* AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger);
 
+	void RemovePhysicObjectInternal(PhysicObjectHandle physic_object_handle);
+	void RemoveBoxColliderInternal(PhysicObjectHandle physic_object_handle);
+	void RemoveCircleColliderInternal(PhysicObjectHandle physic_object_handle);
+
 	PhysicObjectHandle GetPhysicObjectHandle(EntityManager* entity_manager, Entity entity);
 
+	std::pair<Entity, SceneIndex> GetEntityAndSceneFromUserData(void* user_data) const;
+
+	bool IsSteppingWorld();
+
+	void AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
+	void AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger);
+	void AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger);
+
+	void AddDeferredPhysicObjectDestruction(SceneIndex scene_index, Entity entity, bool is_collider, bool is_box_collider);
+
+	void HandleDeferredPhysicObjectCreationData();
+	void HandleDeferredPhysicObjectDestructionData();
+
 public:
-	PhysicsCore();
+	PhysicsCore(bool threaded_physics);
 
 	static PhysicsCore* Get();
 
+	const bool& IsThreaded() const;
+
 	void testg();
 
+	void ThreadUpdatePhysic();
+
 	void Update();
+
+	void UpdatePhysics();
+
+	void DrawColliders();
+	void HandleDeferredPhysicData();
 
 	void SetWorldPhysicObjectData(EntityManager* entity_manager);
 	void GetWorldPhysicObjectData(EntityManager* entity_manager);
 
-	void AddPhysicObject(EntityManager* entity_manager, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
-	void AddBoxCollider(EntityManager* entity_manager, Entity entity, const Vector2& half_box_size, bool trigger = false);
-	void AddCircleCollider(EntityManager* entity_manager, Entity entity, float circle_radius, bool trigger = false);
-	void AddBoxPhysicObject(EntityManager* entity_manager, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false);
-	void AddCirclePhysicObject(EntityManager* entity_manager, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false);
+	void AddPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
+	void AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false);
+	void AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false);
+	void AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false);
+	void AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false);
 
-	void RemovePhysicObject(EntityManager* entity_manager, Entity entity);
-	void RemoveBoxCollider(EntityManager* entity_manager, Entity entity);
-	void RemoveCircleCollider(EntityManager* entity_manager, Entity entity);
+	void RemovePhysicObject(SceneIndex scene_index, Entity entity);
+	void RemoveBoxCollider(SceneIndex scene_index, Entity entity);
+	void RemoveCircleCollider(SceneIndex scene_index, Entity entity);
 
 	void RemoveDeferredPhysicObjects(EntityManager* entity_manager);
 };

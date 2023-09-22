@@ -63,12 +63,7 @@ BlockData DrawScene::CreateBlock(const Vector3& block_transform)
 
 DrawScene::DrawScene()
 {
-	auto mono_core = CSMonoCore::Get();
-
-	auto transform_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "PrefabSystem");
-
-	mono_core->HookAndRegisterMonoMethodType<DrawScene::AddUserPrefab>(transform_class, "AddUserPrefab", &DrawScene::AddUserPrefab);
-
+	SetAddUserPrefab();
 	m_scene_name.resize(50);
 }
 
@@ -210,6 +205,15 @@ void DrawScene::Clear()
 		}
 	}
 	m_blocks.clear();
+}
+
+void DrawScene::SetAddUserPrefab()
+{
+	auto mono_core = CSMonoCore::Get();
+
+	auto transform_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "PrefabSystem");
+
+	mono_core->HookAndRegisterMonoMethodType<DrawScene::AddUserPrefab>(transform_class, "AddUserPrefab", &DrawScene::AddUserPrefab);
 }
 
 void DrawScene::AddUserPrefab(uint32_t prefab_instance_id, uint32_t z_index)
