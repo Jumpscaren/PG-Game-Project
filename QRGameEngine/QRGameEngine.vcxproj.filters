@@ -225,6 +225,9 @@
     <ClCompile Include="Scripting\Objects\SceneInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SceneSystem\GlobalScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -618,6 +621,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scripting\Objects\SceneInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneSystem\GlobalScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

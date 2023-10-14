@@ -12,6 +12,7 @@
 #include "Renderer/RenderCore.h"
 #include "Components/ScriptComponent.h"
 #include "SceneSystem/SceneLoader.h"
+#include "SceneSystem/GlobalScene.h"
 
 EditorCore* EditorCore::s_editor_core = nullptr;
 
@@ -19,7 +20,7 @@ EditorCore::EditorCore()
 {
 	s_editor_core = this;
 
-	EntityManager* em = SceneManager::GetSceneManager()->GetScene(SceneManager::GetSceneManager()->GetActiveSceneIndex())->GetEntityManager();
+	EntityManager* em = SceneManager::GetSceneManager()->GetScene(GlobalScene::Get()->GetSceneIndex())->GetEntityManager();
 
 	m_editor_camera_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 0.0f));
@@ -33,7 +34,7 @@ EditorCore* EditorCore::Get()
 
 void EditorCore::Update()
 {
-	EntityManager* em = SceneManager::GetSceneManager()->GetScene(SceneManager::GetSceneManager()->GetActiveSceneIndex())->GetEntityManager();
+	EntityManager* em = SceneManager::GetSceneManager()->GetScene(GlobalScene::Get()->GetSceneIndex())->GetEntityManager();
 
 	//Editor Camera Movement Temporary Placement
 	Vector3 editor_camera_pos = em->GetComponent<TransformComponent>(m_editor_camera_ent).GetPosition();

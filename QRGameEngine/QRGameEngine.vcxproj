@@ -325,6 +325,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Editor\EditorCore.cpp" />
     <ClCompile Include="Editor\DrawScene.cpp" />
     <ClCompile Include="Event\EventCore.cpp" />
+    <ClCompile Include="SceneSystem\GlobalScene.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Input\Keyboard.cpp" />
     <ClCompile Include="Input\Mouse.cpp" />
@@ -439,6 +440,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Editor\EditorCore.h" />
     <ClInclude Include="Editor\DrawScene.h" />
     <ClInclude Include="Event\EventCore.h" />
+    <ClInclude Include="SceneSystem\GlobalScene.h" />
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Input\Keyboard.h" />
     <ClInclude Include="Input\Mouse.h" />

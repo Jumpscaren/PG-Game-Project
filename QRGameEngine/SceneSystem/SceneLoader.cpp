@@ -11,6 +11,58 @@
 
 SceneLoader* SceneLoader::s_scene_loader = nullptr;
 
+void SceneLoader::LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths)
+{
+	m_texture_paths.clear();
+
+	std::string text;
+	for (uint32_t i = 0; i < number_of_texture_paths; ++i)
+	{
+		TextureHandle texture_handle = save_file->Read<TextureHandle>();
+		uint32_t text_size = save_file->Read<uint32_t>();
+		text.resize(text_size);
+		save_file->Read((void*)text.c_str(), text_size);
+
+		m_texture_paths.insert({ texture_handle, text });
+	}
+}
+
+void SceneLoader::LoadComponents(OutputFile* save_file, EntityManager* entity_manager, const CSMonoObject& game_object, Entity enitity, uint32_t prefab_index)
+{
+	const uint32_t component_data_max_size = 2000;
+	char component_data[component_data_max_size];
+	std::string component_name;
+
+	uint32_t component_list_size = save_file->Read<uint32_t>();
+	for (uint32_t i = 0; i < component_list_size; ++i)
+	{
+		uint32_t component_name_size = save_file->Read<uint32_t>();
+		component_name.resize(component_name_size);
+		save_file->Read((void*)component_name.c_str(), component_name_size);
+
+		auto override_method = m_override_methods.find(component_name);
+		//Check if there is an override method for the components
+		if (override_method == m_override_methods.end())
+		{
+			uint32_t component_size = entity_manager->GetComponentSize(component_name);
+			assert(component_size <= component_data_max_size);
+			save_file->Read((void*)component_data, component_size);
+			entity_manager->SetComponentData(enitity, component_name, component_data);
+		}
+		else
+		{
+			override_method->second.load_override_method(enitity, entity_manager, save_file);
+		}
+
+		//So that the position is set before instancing the prefab, one case is physics will have the wrong position otherwise
+		if (i == 0)
+		{
+			assert(component_name == "TransformComponent");
+			InstancePrefab(game_object, prefab_index);
+		}
+	}
+}
+
 SceneLoader::SceneLoader()
 {
 	s_scene_loader = this;
@@ -99,7 +151,7 @@ void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint
 	save_file.Close();
 }
 
-std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoader::LoadScene(std::string scene_name)
+std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoader::LoadSceneEditor(std::string scene_name)
 {
 	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> blocks;
 
@@ -119,18 +171,7 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 
 	uint32_t number_texture_paths = save_file.Read<uint32_t>();
 
-	m_texture_paths.clear();
-
-	for (uint32_t i = 0; i < number_texture_paths; ++i)
-	{
-		TextureHandle texture_handle = save_file.Read<TextureHandle>();
-		uint32_t text_size = save_file.Read<uint32_t>();
-		std::string text;
-		text.resize(text_size);
-		save_file.Read((void*)text.c_str(), text_size);
-
-		m_texture_paths.insert({ texture_handle, text });
-	}
+	LoadTexturePaths(&save_file, number_texture_paths);
 
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
@@ -151,38 +192,7 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 			new_block_data.prefab_data.prefab_index = save_file.Read<uint32_t>();
 			layer_block_map.insert({ new_block_data.prefab_data.z_index, new_block_data });
 
-			uint32_t component_list_size = save_file.Read<uint32_t>();
-
-			for (uint32_t i = 0; i < component_list_size; ++i)
-			{
-				uint32_t component_name_size = save_file.Read<uint32_t>();
-				std::string component_name;
-				component_name.resize(component_name_size);
-				save_file.Read((void*)component_name.c_str(), component_name_size);
-
-				auto override_method = m_override_methods.find(component_name);
-				//Check if there is an override method for the components
-				if (override_method == m_override_methods.end())
-				{
-					uint32_t component_size = entity_manager->GetComponentSize(component_name);
-					char* component_data = (char*)malloc(component_size);
-					save_file.Read((void*)component_data, component_size);
-					entity_manager->SetComponentData(new_block_data.block_entity, component_name, component_data);
-					free(component_data);
-				}
-				else
-				{
-					override_method->second.load_override_method(new_block_data.block_entity, entity_manager, &save_file);
-				}
-
-				//So that the position is set before instancing the prefab, one case is physics will have the wrong position otherwise
-				if (i == 0)
-				{
-					assert(component_name == "TransformComponent");
-					InstancePrefab(game_object, new_block_data.prefab_data.prefab_index);
-					//entity_manager->GetComponent<TransformComponent>(new_block).SetPositionZ((float)new_block_data.prefab_data.z_index);
-				}
-			}
+			LoadComponents(&save_file, entity_manager, game_object, new_block, new_block_data.prefab_data.prefab_index);
 		}
 
 		blocks.insert({ unique_number , layer_block_map });
@@ -191,6 +201,46 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 	save_file.Close();
 
 	return blocks;
+}
+
+void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene)
+{
+	std::string scene_name_file;
+	//So goddamn stupid!!!
+	scene_name_file.insert(0, scene_name.c_str());
+	scene_name_file += ".scene";
+	OutputFile save_file = Output::LoadCompressedOutputFile(scene_name_file);
+
+	assert(save_file.FileExists());
+
+	SceneManager* scene_manager = SceneManager::GetSceneManager();
+	EntityManager* entity_manager = scene_manager->GetEntityManager(load_scene);
+
+	uint32_t numberofblocks = save_file.Read<uint32_t>();
+
+	uint32_t number_texture_paths = save_file.Read<uint32_t>();
+
+	LoadTexturePaths(&save_file, number_texture_paths);
+
+	for (uint32_t i = 0; i < numberofblocks; ++i)
+	{
+		uint64_t unique_number = save_file.Read<uint64_t>();
+		uint64_t block_layers = save_file.Read<uint64_t>();
+
+		for (uint64_t layers = 0; layers < block_layers; ++layers)
+		{
+			Entity new_entity = entity_manager->NewEntity();
+			CSMonoObject game_object = GameObjectInterface::NewGameObjectWithExistingEntity(new_entity, load_scene);
+			entity_manager->AddComponent<TransformComponent>(new_entity);
+			SpriteComponent& sprite = entity_manager->AddComponent<SpriteComponent>(new_entity);
+			save_file.Read<uint32_t>();
+			uint32_t prefab_index = save_file.Read<uint32_t>();
+
+			LoadComponents(&save_file, entity_manager, game_object, new_entity, prefab_index);
+		}
+	}
+
+	save_file.Close();
 }
 
 void SceneLoader::InstancePrefab(const CSMonoObject& game_object, uint32_t prefab_instance_id)

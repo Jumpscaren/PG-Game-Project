@@ -47,6 +47,10 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 {
 	for (uint64_t i = 0; i < m_deferred_begin_collision_data.size(); ++i)
 	{
+		if (!SceneManager::GetSceneManager()->SceneExists(m_deferred_begin_collision_data[i].body_1_scene_index) ||
+			!SceneManager::GetSceneManager()->SceneExists(m_deferred_begin_collision_data[i].body_2_scene_index))
+			continue;
+
 		EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(m_deferred_begin_collision_data[i].body_1_scene_index);
 		EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(m_deferred_begin_collision_data[i].body_2_scene_index);
 		if (!entity_manager_1->EntityExists(m_deferred_begin_collision_data[i].body_1_entity) || !entity_manager_2->EntityExists(m_deferred_begin_collision_data[i].body_2_entity))
@@ -58,6 +62,10 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 
 	for (uint64_t i = 0; i < m_deferred_end_collision_data.size(); ++i)
 	{
+		if (!SceneManager::GetSceneManager()->SceneExists(m_deferred_end_collision_data[i].body_1_scene_index) ||
+			!SceneManager::GetSceneManager()->SceneExists(m_deferred_end_collision_data[i].body_2_scene_index))
+			continue;
+
 		EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(m_deferred_end_collision_data[i].body_1_scene_index);
 		EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(m_deferred_end_collision_data[i].body_2_scene_index);
 		if (!entity_manager_1->EntityExists(m_deferred_end_collision_data[i].body_1_entity) || !entity_manager_2->EntityExists(m_deferred_end_collision_data[i].body_2_entity))

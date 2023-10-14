@@ -101,6 +101,15 @@ void EntityManager::RemoveEntity(Entity entity)
 	AddComponent<DeferredEntityDeletion>(entity);
 }
 
+void EntityManager::RemoveAllEntities()
+{
+	for (Entity entity : m_entities)
+	{
+		if (EntityExists(entity))
+			RemoveEntity(entity);
+	}
+}
+
 void EntityManager::DestroyDeferredEntities()
 {
 	System<DeferredEntityDeletion>([&](Entity entity, DeferredEntityDeletion&) 
@@ -111,8 +120,7 @@ void EntityManager::DestroyDeferredEntities()
 
 Entity EntityManager::CreateEntity(SceneIndex scene_index)
 {
-	Entity g = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->NewEntity();
-	return g;
+	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->NewEntity();
 }
 
 void EntityManager::SetComponentData(Entity entity, const std::string& component_name, void* component_data)

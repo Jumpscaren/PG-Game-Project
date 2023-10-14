@@ -14,6 +14,7 @@
 #include "Scripting/CSMonoCore.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "SceneSystem/SceneLoader.h"
+#include "SceneSystem/GlobalScene.h"
 
 std::vector<PrefabAndTextureData> DrawScene::m_user_prefabs;
 
@@ -131,8 +132,8 @@ void DrawScene::DrawBlock()
 	Entity editor_camera = EditorCore::Get()->GetEditorCameraEntity();
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 
-	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
-	CameraComponent editor_camera_component = entity_manager->GetComponent<CameraComponent>(editor_camera);
+	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+	CameraComponent editor_camera_component = scene_manager->GetEntityManager(GlobalScene::Get()->GetSceneIndex())->GetComponent<CameraComponent>(editor_camera);
 
 	if (Mouse::Get()->GetMouseButtonDown(Mouse::MouseButton::LEFT))
 	{
@@ -189,7 +190,7 @@ void DrawScene::Load(std::string scene_name)
 {
 	Clear();
 
-	m_blocks = SceneLoader::Get()->LoadScene(scene_name);
+	m_blocks = SceneLoader::Get()->LoadSceneEditor(scene_name);
 }
 
 void DrawScene::Clear()

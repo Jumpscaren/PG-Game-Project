@@ -70,6 +70,7 @@ public:
 
 	Entity NewEntity();
 	void RemoveEntity(Entity entity);
+	void RemoveAllEntities();
 	void DestroyDeferredEntities();
 
 	static Entity CreateEntity(SceneIndex scene_index);

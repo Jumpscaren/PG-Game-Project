@@ -513,6 +513,9 @@ void PhysicsCore::AddPhysicObject(SceneIndex scene_index, Entity entity, const P
 	if (physic_object_body_type == PhysicObjectBodyType::DynamicBody)
 	{
 		entity_manager->GetComponent<DynamicBodyComponent>(entity).physic_object_handle = new_physic_object_handle;
+#ifdef _EDITOR
+		physic_object_data.object_body->SetAwake(false);
+#endif // _EDITOR
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::StaticBody)
 	{

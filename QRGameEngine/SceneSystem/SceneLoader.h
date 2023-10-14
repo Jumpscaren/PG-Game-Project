@@ -4,12 +4,15 @@
 #include "Editor/DrawScene.h"
 #include "Scripting/CSMonoObject.h"
 #include "SceneLoaderTypes.h"
+#include "SceneDefines.h"
 
 class EntityManager;
 class OutputFile;
+class SceneManager;
 
 class SceneLoader
 {
+	friend SceneManager;
 private:
 	struct OverrideSaveLoadMethods
 	{
@@ -24,11 +27,16 @@ private:
 	std::unordered_map<std::string, OverrideSaveLoadMethods> m_override_methods;
 	std::unordered_map<TextureHandle, std::string> m_texture_paths;
 
+private:
+	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths);
+	void LoadComponents(OutputFile* save_file, EntityManager* entity_manager, const CSMonoObject& game_object, Entity enitity, uint32_t prefab_index);
+	void LoadScene(std::string scene_name, SceneIndex load_scene);
+
 public:
 	SceneLoader();
 
 	void SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name);
-	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> LoadScene(std::string scene_name);
+	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> LoadSceneEditor(std::string scene_name);
 
 	static SceneLoader* Get();
 

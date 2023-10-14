@@ -9,6 +9,7 @@
 #include "Asset/AssetManager.h"
 #include "Components/CameraComponent.h"
 #include "Time/Timer.h"
+#include "SceneSystem/GlobalScene.h"
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
@@ -177,6 +178,27 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 			++render_object_amount;
 		});
+	Scene* draw_global_scene = SceneManager::GetSceneManager()->GetScene(GlobalScene::Get()->GetSceneIndex());
+	draw_global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](TransformComponent& transform, SpriteComponent& sprite)
+		{
+			SpriteData sprite_data;
+			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
+			sprite_data.uv.x = sprite.uv.x;
+			sprite_data.uv.y = sprite.uv.y;
+
+			if (render_object_amount < m_transform_data_vector.size())
+			{
+				m_transform_data_vector[render_object_amount] = std::move(transform);
+				m_sprite_data_vector[render_object_amount] = sprite_data;
+			}
+			else
+			{
+				m_transform_data_vector.push_back(transform);
+				m_sprite_data_vector.push_back(sprite_data);
+			}
+
+			++render_object_amount;
+		});
 	//std::cout << "Time: " << timer.StopTimer()/(double)Timer::TimeTypes::Milliseconds << " ms\n";
 
 
@@ -204,6 +226,24 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	CameraComponent active_camera = {};
 	float view_size = 0.0f;
 	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, TransformComponent& transform)
+		{
+			Vector3 pos = transform.GetPosition();
+			//Hardcoded camera position to 0
+			float fake_camera_z_position = 0.0f;
+			active_camera.view_matrix = DirectX::XMMatrixLookAtLH({ pos.x,pos.y, fake_camera_z_position }, { pos.x,pos.y, fake_camera_z_position + 1.0f }, { 0,1,0 });
+			//active_camera.proj_matrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, m_window->GetWindowHeight() / m_window->GetWindowWidth(), 0.1f, 800.0f);
+
+			float screen_width = m_window->GetWindowWidth();
+			float screen_height = m_window->GetWindowHeight();
+			view_size = pos.z;
+			if (view_size < 1.0f)
+				view_size = 1.0f;
+			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
+
+			camera = active_camera;
+
+		});
+	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, TransformComponent& transform)
 		{
 			Vector3 pos = transform.GetPosition();
 			//Hardcoded camera position to 0
