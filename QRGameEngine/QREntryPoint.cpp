@@ -332,8 +332,9 @@ void QREntryPoint::RunTime()
 		* If the user changes the scene to another then we should wait until the next frame to change and not change during!!!
 		*/
 
-		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
+		PhysicsCore::Get()->WaitForPhysics();
 		PhysicsCore::Get()->HandleDeferredPhysicData();
+		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
 
 		//Update scripts
 		ScriptingManager::Get()->UpdateScripts(entman);

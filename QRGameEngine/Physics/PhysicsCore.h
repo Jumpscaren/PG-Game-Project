@@ -38,6 +38,12 @@ private:
 		b2Fixture* object_circle_fixture = nullptr;
 	};
 
+	struct DeferredPhysicObjectHandle
+	{
+		bool is_physic_object_creation_data;
+		uint64_t index_to_physic_object_data;
+	};
+
 	struct DeferredPhysicObjectCreationData
 	{
 		Entity entity;
@@ -69,7 +75,7 @@ private:
 
 	static PhysicsCore* s_physics_core;
 
-	static constexpr uint64_t MAX_PHYSIC_OBJECTS = 1000;
+	static constexpr uint64_t MAX_PHYSIC_OBJECTS = 2000;
 	std::vector<PhysicObjectData> m_physic_object_data;
 	std::stack<PhysicObjectHandle> m_free_physic_object_handles;
 
@@ -82,7 +88,9 @@ private:
 	std::thread* m_physic_update_thread = nullptr;
 	std::mutex m_physic_update_thread_mutex;
 	std::atomic<bool> m_update_physics;
+	bool m_defer_physic_calls;
 
+	std::vector<DeferredPhysicObjectHandle> m_deferred_physic_object_handles;
 	std::vector<DeferredPhysicObjectCreationData> m_deferred_physic_object_creations;
 	std::vector<DeferredPhysicObjectDestructionData> m_deferred_physic_object_destructions;
 
@@ -97,16 +105,22 @@ private:
 
 	std::pair<Entity, SceneIndex> GetEntityAndSceneFromUserData(void* user_data) const;
 
-	bool IsSteppingWorld();
+	bool IsDeferringPhysicCalls();
+
+	void AddDeferredPhysicObjectHandle(uint64_t index_to_data, bool is_physic_object_creation_data);
 
 	void AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
 	void AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger);
 	void AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger);
 
-	void AddDeferredPhysicObjectDestruction(SceneIndex scene_index, Entity entity, bool is_collider, bool is_box_collider);
+	void AddDeferredPhysicObjectDestruction(SceneIndex scene_index, Entity entity, PhysicObjectHandle physic_object_handle, bool is_collider, bool is_box_collider);
 
-	void HandleDeferredPhysicObjectCreationData();
-	void HandleDeferredPhysicObjectDestructionData();
+	void HandleDeferredPhysicObjectHandleData();
+	void HandleDeferredPhysicObjectCreationData(const DeferredPhysicObjectCreationData& creation_data);
+	void HandleDeferredPhysicObjectDestructionData(const DeferredPhysicObjectDestructionData& destruction_data);
+
+	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false);
+	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false);
 
 public:
 	PhysicsCore(bool threaded_physics);
@@ -116,6 +130,8 @@ public:
 	const bool& IsThreaded() const;
 
 	void testg();
+
+	void WaitForPhysics();
 
 	void ThreadUpdatePhysic();
 

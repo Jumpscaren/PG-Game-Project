@@ -4,10 +4,14 @@
 #include "Scripting/CSMonoObject.h"
 #include "ECS/EntityDefinition.h"
 #include "SceneSystem/SceneDefines.h"
+#include "Common/EngineTypes.h"
 
 struct BoxColliderComponent
 {
 	PhysicObjectHandle physic_object_handle;
+	Vector2 half_box_size;
+	bool update_box_collider = false;
+	bool trigger;
 };
 
 class OutputFile;

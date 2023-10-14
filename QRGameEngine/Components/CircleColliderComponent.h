@@ -7,6 +7,9 @@
 
 struct CircleColliderComponent {
 	PhysicObjectHandle physic_object_handle;
+	float circle_radius;
+	bool update_circle_collider = false;
+	bool trigger;
 };
 
 class OutputFile;
