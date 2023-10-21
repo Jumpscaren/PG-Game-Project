@@ -9,7 +9,7 @@ struct StaticBodyComponent
 	PhysicObjectHandle physic_object_handle;
 };
 
-class OutputFile;
+class JsonObject;
 class EntityManager;
 
 class StaticBodyComponentInterface
@@ -21,7 +21,7 @@ public:
 	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file);
-	static void LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file);
+	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
+	static void LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 };
 

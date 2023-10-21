@@ -13,7 +13,7 @@ struct ScriptComponent
 	MonoMethodHandle script_end_collision;
 };
 
-class OutputFile;
+class JsonObject;
 class EntityManager;
 
 class ScriptComponentInterface
@@ -27,7 +27,7 @@ public:
 	static void AddScriptComponent(const std::string& script_class_name, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file);
-	static void LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file);
+	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
+	static void LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void RemoveComponentData(ScriptComponent& script_component);
 };

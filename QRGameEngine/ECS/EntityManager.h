@@ -82,6 +82,8 @@ public:
 
 	template <typename Component>
 	bool HasComponent(Entity entity);
+	bool HasComponentName(Entity entity, const std::string& component_name);
+	bool ComponentExists(const std::string& component_name);
 
 	template <typename Component>
 	Component& GetComponent(Entity entity);
@@ -96,6 +98,7 @@ public:
 
 	ComponentData GetComponentData(Entity entity, const std::string& component_name);
 
+	std::vector<std::string> GetAllComponentNames();
 	std::vector<std::string> GetComponentNameList(Entity entity);
 
 	uint32_t GetComponentSize(const std::string& component_name);

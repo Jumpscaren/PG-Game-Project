@@ -325,6 +325,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Editor\EditorCore.cpp" />
     <ClCompile Include="Editor\DrawScene.cpp" />
     <ClCompile Include="Event\EventCore.cpp" />
+    <ClCompile Include="IO\JsonObject.cpp" />
     <ClCompile Include="SceneSystem\GlobalScene.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Input\Keyboard.cpp" />
@@ -440,6 +441,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Editor\EditorCore.h" />
     <ClInclude Include="Editor\DrawScene.h" />
     <ClInclude Include="Event\EventCore.h" />
+    <ClInclude Include="IO\JsonObject.h" />
     <ClInclude Include="SceneSystem\GlobalScene.h" />
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Input\Keyboard.h" />
@@ -558,6 +560,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Vendor\Include\ImGUI\imstb_rectpack.h" />
     <ClInclude Include="Vendor\Include\ImGUI\imstb_textedit.h" />
     <ClInclude Include="Vendor\Include\ImGUI\imstb_truetype.h" />
+    <ClInclude Include="Vendor\Include\Json\json.hpp" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\hash.h" />
     <ClInclude Include="Vendor\Include\StaticTypeInfo\static_type_info\type_id.h" />

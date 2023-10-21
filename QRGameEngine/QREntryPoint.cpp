@@ -145,7 +145,7 @@ void QREntryPoint::RunTime()
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
 			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
-			SceneIndex scene = scene_manager->LoadScene("tt2");
+			SceneIndex scene = scene_manager->LoadScene("t1");
 			scene_manager->ChangeScene(scene);
 		}
 

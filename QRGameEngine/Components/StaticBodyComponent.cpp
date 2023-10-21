@@ -32,10 +32,10 @@ void StaticBodyComponentInterface::RemoveComponent(CSMonoObject object, SceneInd
 	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
 }
 
-void StaticBodyComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void StaticBodyComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 }
 
-void StaticBodyComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void StaticBodyComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 }

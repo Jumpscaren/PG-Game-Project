@@ -8,6 +8,7 @@
 #include "IO/Output.h"
 #include "Renderer/RenderCore.h"
 #include "SceneSystem/SceneLoader.h"
+#include "IO/JsonObject.h"
 
 void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -50,16 +51,17 @@ void SpriteComponentInterface::SetTexture(CSMonoObject object, CSMonoObject text
 	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).texture_handle = texture_handle;
 }
 
-void SpriteComponentInterface::SaveSpriteComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void SpriteComponentInterface::SaveSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	SpriteComponent& sprite_component = entman->GetComponent<SpriteComponent>(ent);
-	file->Write(sprite_component);
+	json_object->SetData(sprite_component.texture_handle, "texture_handle");
+	json_object->SetData(sprite_component.uv, "uv");
+
 }
 
-void SpriteComponentInterface::LoadSpriteComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void SpriteComponentInterface::LoadSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	SpriteComponent& sprite_component = entman->GetComponent<SpriteComponent>(ent);
-	sprite_component = file->Read<SpriteComponent>();
 
 	sprite_component.texture_handle = RenderCore::Get()->LoadTexture(SceneLoader::Get()->GetTexturePath(sprite_component.texture_handle));
 }

@@ -40,10 +40,10 @@ void CircleColliderComponentInterface::RemoveComponent(CSMonoObject object, Scen
 	PhysicsCore::Get()->RemoveCircleCollider(scene_index, entity);
 }
 
-void CircleColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void CircleColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* file)
 {
 }
 
-void CircleColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void CircleColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* file)
 {
 }

@@ -11,7 +11,7 @@ struct SpriteComponent
 	Vector2 uv;
 };
 
-class OutputFile;
+class JsonObject;
 class EntityManager;
 
 class SpriteComponentInterface
@@ -24,7 +24,7 @@ public:
 
 public:
 	static void SetTexture(CSMonoObject object, CSMonoObject texture);
-	static void SaveSpriteComponent(Entity ent, EntityManager* entman, OutputFile* file);
-	static void LoadSpriteComponent(Entity ent, EntityManager* entman, OutputFile* file);
+	static void SaveSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
+	static void LoadSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 };
 

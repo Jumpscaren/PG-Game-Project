@@ -9,6 +9,7 @@
 class EntityManager;
 class OutputFile;
 class SceneManager;
+class JsonObject;
 
 class SceneLoader
 {
@@ -16,8 +17,8 @@ class SceneLoader
 private:
 	struct OverrideSaveLoadMethods
 	{
-		std::function<void(Entity, EntityManager*, OutputFile*)> save_override_method;
-		std::function<void(Entity, EntityManager*, OutputFile*)> load_override_method;
+		std::function<void(Entity, EntityManager*, JsonObject*)> save_override_method;
+		std::function<void(Entity, EntityManager*, JsonObject*)> load_override_method;
 	};
 
 private:
@@ -29,7 +30,7 @@ private:
 
 private:
 	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths);
-	void LoadComponents(OutputFile* save_file, EntityManager* entity_manager, const CSMonoObject& game_object, Entity enitity, uint32_t prefab_index);
+	void LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity enitity);
 	void LoadScene(std::string scene_name, SceneIndex load_scene);
 
 public:
@@ -45,11 +46,11 @@ public:
 	std::string GetTexturePath(TextureHandle texture_handle);
 
 	template<typename Component>
-	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, OutputFile*)> override_save_method, std::function<void(Entity, EntityManager*, OutputFile*)> override_load_method);
+	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method);
 };
 
 template<typename Component>
-inline void SceneLoader::OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, OutputFile*)> override_save_method, std::function<void(Entity, EntityManager*, OutputFile*)> override_load_method)
+inline void SceneLoader::OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method)
 {
 	std::string component_name = EntityManager::GetComponentNameFromComponent<Component>();
 	OverrideSaveLoadMethods methods = {};

@@ -228,6 +228,9 @@
     <ClCompile Include="SceneSystem\GlobalScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IO\JsonObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -624,6 +627,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SceneSystem\GlobalScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\Include\Json\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\JsonObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

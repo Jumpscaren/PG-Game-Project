@@ -12,7 +12,7 @@ struct CircleColliderComponent {
 	bool trigger;
 };
 
-class OutputFile;
+class JsonObject;
 class EntityManager;
 
 class CircleColliderComponentInterface
@@ -24,7 +24,7 @@ public:
 	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file);
-	static void LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file);
+	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* file);
+	static void LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* file);
 };
 

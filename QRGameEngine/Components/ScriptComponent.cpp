@@ -55,11 +55,11 @@ void ScriptComponentInterface::AddScriptComponent(const std::string& script_clas
 	InitComponent(script, scene_index, entity);
 }
 
-void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 }
 
-void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 }
 

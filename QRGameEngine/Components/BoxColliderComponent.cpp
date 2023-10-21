@@ -40,10 +40,10 @@ void BoxColliderComponentInterface::RemoveComponent(CSMonoObject object, SceneIn
 	PhysicsCore::Get()->RemoveBoxCollider(scene_index, entity);
 }
 
-void BoxColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void BoxColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 }
 
-void BoxColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, OutputFile* file)
+void BoxColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 }

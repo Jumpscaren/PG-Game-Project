@@ -8,6 +8,18 @@ bool EntityManager::EntityExists(Entity entity)
 	return (entity < m_max_entities && m_entities[entity] == entity);
 }
 
+bool EntityManager::HasComponentName(Entity entity, const std::string& component_name)
+{
+	assert(ComponentExists(component_name));
+	const uint32_t component_pool_index = m_component_name_to_pool.find(component_name)->second.component_pool_index;
+	return m_component_pools[component_pool_index].m_component_pool_entities.contains(entity);
+}
+
+bool EntityManager::ComponentExists(const std::string& component_name)
+{
+	return m_component_name_to_pool.contains(component_name);
+}
+
 bool EntityManager::HasComponent(Entity entity, ComponentPool& component_pool)
 {
 	return component_pool.m_component_pool_entities.find(entity) != component_pool.m_component_pool_entities.end();
@@ -143,6 +155,18 @@ ComponentData EntityManager::GetComponentData(Entity entity, const std::string& 
 	return component_data;
 }
 
+std::vector<std::string> EntityManager::GetAllComponentNames()
+{
+	std::vector<std::string> component_names = {};
+	//Slow could be improved by having a map from entity to components
+	//This however would require more upkeep which is unnessary as this method should not be used during gameplay frequently
+	for (uint32_t i = 0; i < m_current_component_pool_index; ++i)
+	{
+		component_names.push_back(m_component_pools[i].component_name);
+	}
+	return component_names;
+}
+
 std::vector<std::string> EntityManager::GetComponentNameList(Entity entity)
 {
 	std::vector<std::string> component_names = {};
@@ -160,7 +184,7 @@ std::vector<std::string> EntityManager::GetComponentNameList(Entity entity)
 
 uint32_t EntityManager::GetComponentSize(const std::string& component_name)
 {
-	assert(m_component_name_to_pool.contains(component_name));
+	assert(ComponentExists(component_name));
 
 	return m_component_name_to_pool.find(component_name)->second.component_size;
 }
