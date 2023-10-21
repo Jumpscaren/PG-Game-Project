@@ -6,6 +6,7 @@
 
 struct DynamicBodyComponent {
 	PhysicObjectHandle physic_object_handle;
+	bool awake;
 };
 
 class JsonObject;

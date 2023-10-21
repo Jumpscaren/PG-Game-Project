@@ -122,6 +122,8 @@ private:
 	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false);
 	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false);
 
+	static void AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index);
+
 public:
 	PhysicsCore(bool threaded_physics);
 

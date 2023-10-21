@@ -15,6 +15,8 @@
 
 #include "Time/Time.h"
 
+#include "Event/EventCore.h"
+
 #include <thread>
 
 PhysicsCore* PhysicsCore::s_physics_core;
@@ -54,6 +56,8 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 		m_physic_update_thread = new std::thread(&PhysicsCore::ThreadUpdatePhysic, this);
 
 	m_defer_physic_calls = false;
+
+	EventCore::Get()->ListenToEvent<PhysicsCore::AwakePhysicObjectsFromLoadedScene>("SceneLoaded", PhysicsCore::AwakePhysicObjectsFromLoadedScene);
 }
 
 PhysicsCore* PhysicsCore::Get()
@@ -219,6 +223,15 @@ void PhysicsCore::AddCircleFixture(SceneIndex scene_index, Entity entity, float 
 	circle_collider.trigger = trigger;
 }
 
+void PhysicsCore::AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index)
+{
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	entity_manager->System<DynamicBodyComponent>([&](DynamicBodyComponent& dynamic_body)
+		{
+			dynamic_body.awake = true;
+		});
+}
+
 const bool& PhysicsCore::IsThreaded() const
 {
 	return m_threaded_physics;
@@ -337,7 +350,10 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 {
 	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](const DynamicBodyComponent& dynamic_body, const TransformComponent& transform)
 		{
-			m_physic_object_data[dynamic_body.physic_object_handle].object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+			PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
+			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+			if (dynamic_body.awake != physic_object.object_body->IsAwake())
+				physic_object.object_body->SetAwake(dynamic_body.awake);
 		});
 
 	//Timer timer;
@@ -512,10 +528,18 @@ void PhysicsCore::AddPhysicObject(SceneIndex scene_index, Entity entity, const P
 
 	if (physic_object_body_type == PhysicObjectBodyType::DynamicBody)
 	{
-		entity_manager->GetComponent<DynamicBodyComponent>(entity).physic_object_handle = new_physic_object_handle;
+		DynamicBodyComponent& dynamic_body = entity_manager->GetComponent<DynamicBodyComponent>(entity);
+		dynamic_body.physic_object_handle = new_physic_object_handle;
+#ifndef _EDITOR
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		{
+			physic_object_data.object_body->SetAwake(false);
+		}
+#endif // !_EDITOR
 #ifdef _EDITOR
 		physic_object_data.object_body->SetAwake(false);
 #endif // _EDITOR
+		dynamic_body.awake = physic_object_data.object_body->IsAwake();
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::StaticBody)
 	{

@@ -11,6 +11,7 @@ private:
 private:
 	static void ScriptBeginCollision(Entity entity_1, SceneIndex scene_index_1, Entity entity_2, SceneIndex scene_index_2);
 	static void ScriptEndCollision(Entity entity_1, SceneIndex scene_index_1, Entity entity_2, SceneIndex scene_index_2);
+	static void StartScriptsFromLoadedScene(SceneIndex scene_index);
 
 public:
 	ScriptingManager();

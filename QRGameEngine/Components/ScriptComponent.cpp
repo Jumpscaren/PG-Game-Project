@@ -26,9 +26,9 @@ void ScriptComponentInterface::InitComponent(CSMonoObject object, SceneIndex sce
 	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "BeginCollision");
 	script_component.script_end_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "EndCollision");
 
-#ifdef _EDITOR
-	//Change later
-	ScriptingManager::Get()->StartScript(script_component);
+#ifndef _EDITOR
+	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		ScriptingManager::Get()->StartScript(script_component);
 #endif // _EDITOR
 }
 

@@ -64,12 +64,22 @@ void ScriptingManager::ScriptEndCollision(Entity entity_1, SceneIndex scene_inde
 	}
 }
 
+void ScriptingManager::StartScriptsFromLoadedScene(SceneIndex scene_index)
+{
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+
+	entity_manager->System<ScriptComponent>([&](const ScriptComponent& script_component) {
+			ScriptingManager::Get()->StartScript(script_component);
+		});
+}
+
 ScriptingManager::ScriptingManager()
 {
 	s_scripting_manager = this;
 
 	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptBeginCollision>("BeginCollision", ScriptingManager::ScriptBeginCollision);
 	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptEndCollision>("EndCollision", ScriptingManager::ScriptEndCollision);
+	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromLoadedScene>("SceneLoaded", ScriptingManager::StartScriptsFromLoadedScene);
 }
 
 void ScriptingManager::StartScript(const ScriptComponent& script)

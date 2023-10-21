@@ -2,6 +2,7 @@
 #include "SceneManager.h"
 #include "ECS/EntityManager.h"
 #include "SceneLoader.h"
+#include "Event/EventCore.h"
 
 SceneManager* SceneManager::s_singleton;
 
@@ -84,6 +85,8 @@ void SceneManager::HandleDeferredScenes()
 	if (m_load_scene)
 	{
 		SceneLoader::Get()->LoadScene(m_load_scene_name, m_load_scene_index);
+		GetScene(m_load_scene_index)->SetSceneAsLoaded();
+		EventCore::Get()->SendEvent("SceneLoaded", m_load_scene_index);
 	}
 	m_load_scene = false;
 }
