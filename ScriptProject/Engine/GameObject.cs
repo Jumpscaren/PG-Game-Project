@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,6 +44,12 @@ namespace ScriptProject.Engine
             GameObject gameObject = new GameObject();
             gameObject.entity_id = entity;
             gameObject.scene = scene;
+            Transform component = new Transform();
+            if (gameObject.HasComponent<Transform>(component))
+                gameObject.transform = gameObject.GetComponent<Transform>();
+            else
+                gameObject.transform = gameObject.AddComponent<Transform>();
+            gameObject.AddEntityData();
 
             return gameObject;
         }
@@ -52,6 +59,7 @@ namespace ScriptProject.Engine
             GameObject gameObject = new GameObject();
             gameObject.entity_id = SceneManager.GetActiveScene().GetEntityManager().NewEntity();
             gameObject.scene = SceneManager.GetActiveScene();
+            gameObject.AddEntityData();
             //Console.WriteLine("GameObject Entity ID = " + gameObject.entity_id);
 
             gameObject.transform = gameObject.AddComponent<Transform>();
@@ -132,5 +140,17 @@ namespace ScriptProject.Engine
             //    }
             //}
         }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        private extern void AddEntityData();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetName(string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern string GetName();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern GameObject TempFindGameObject(string name);
     }
 }

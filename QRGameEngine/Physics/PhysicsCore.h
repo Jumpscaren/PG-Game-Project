@@ -143,6 +143,7 @@ public:
 
 	void DrawColliders();
 	void HandleDeferredPhysicData();
+	void HandleDeferredCollisionData();
 
 	void SetWorldPhysicObjectData(EntityManager* entity_manager);
 	void GetWorldPhysicObjectData(EntityManager* entity_manager);

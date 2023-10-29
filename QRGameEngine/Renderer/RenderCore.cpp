@@ -10,6 +10,7 @@
 #include "Components/CameraComponent.h"
 #include "Time/Timer.h"
 #include "SceneSystem/GlobalScene.h"
+#include <algorithm>
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
@@ -154,11 +155,11 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetViewport((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 
-	uint64_t render_object_amount = 0;
+	uint32_t render_object_amount = 0;
 
 	//Slow, needs to be fixed
 	//Timer timer;
-	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](TransformComponent& transform, SpriteComponent& sprite)
+	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](const TransformComponent& transform, const SpriteComponent& sprite)
 		{
 			SpriteData sprite_data;
 			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
@@ -167,7 +168,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 			if (render_object_amount < m_transform_data_vector.size())
 			{
-				m_transform_data_vector[render_object_amount] = std::move(transform);
+				m_transform_data_vector[render_object_amount] = transform;
 				m_sprite_data_vector[render_object_amount] = sprite_data;
 			}
 			else
@@ -179,7 +180,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			++render_object_amount;
 		});
 	Scene* draw_global_scene = SceneManager::GetSceneManager()->GetScene(GlobalScene::Get()->GetSceneIndex());
-	draw_global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](TransformComponent& transform, SpriteComponent& sprite)
+	draw_global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](const TransformComponent& transform, const SpriteComponent& sprite)
 		{
 			SpriteData sprite_data;
 			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
@@ -188,7 +189,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 			if (render_object_amount < m_transform_data_vector.size())
 			{
-				m_transform_data_vector[render_object_amount] = std::move(transform);
+				m_transform_data_vector[render_object_amount] = transform;
 				m_sprite_data_vector[render_object_amount] = sprite_data;
 			}
 			else
@@ -199,6 +200,10 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 			++render_object_amount;
 		});
+
+	//std::sort(draw_entities.begin(), draw_entities.end(), [&](uint32_t i, uint32_t j){
+	//	return (m_transform_data_vector[i].GetPosition().z < m_transform_data_vector[j].GetPosition().z);
+	//	});
 	//std::cout << "Time: " << timer.StopTimer()/(double)Timer::TimeTypes::Milliseconds << " ms\n";
 
 
@@ -225,7 +230,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	CameraComponent active_camera = {};
 	float view_size = 0.0f;
-	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, TransformComponent& transform)
+	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, const TransformComponent& transform)
 		{
 			Vector3 pos = transform.GetPosition();
 			//Hardcoded camera position to 0
@@ -243,7 +248,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			camera = active_camera;
 
 		});
-	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, TransformComponent& transform)
+	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, const TransformComponent& transform)
 		{
 			Vector3 pos = transform.GetPosition();
 			//Hardcoded camera position to 0

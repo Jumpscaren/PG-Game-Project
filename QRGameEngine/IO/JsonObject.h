@@ -20,16 +20,22 @@ public:
 	bool ObjectExist(const std::string& name);
 	JsonObject CreateSubJsonObject(const std::string& name);
 	JsonObject GetSubJsonObject(const std::string& name);
+
+	void SetData(uint8_t data, const std::string& name);
 	void SetData(uint32_t data, const std::string& name);
 	void SetData(uint64_t data, const std::string& name);
 	void SetData(float data, const std::string& name);
 	void SetData(const Vector2& data, const std::string& name);
 	void SetData(char* data, uint32_t data_size, const std::string& name);
+	void SetData(const std::string& data, const std::string& name);
+
+	void LoadData(uint8_t& data, const std::string& name);
 	void LoadData(uint32_t& data, const std::string& name);
 	void LoadData(uint64_t& data, const std::string& name);
 	void LoadData(float& data, const std::string& name);
 	void LoadData(Vector2& data, const std::string& name);
 	void LoadData(char* data, uint32_t data_size, const std::string& name);
+	void LoadData(std::string& data, const std::string& name);
 
 	std::string GetJsonString();
 };

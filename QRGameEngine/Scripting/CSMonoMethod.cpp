@@ -14,7 +14,9 @@ _MonoMethod* CSMonoMethod::GetMonoMethodFromMono(CSMonoClass* mono_class, const 
 {
 	std::string full_name = GetMethodFullName(mono_class, method_name);
 	MonoMethodDesc* desc = mono_method_desc_new(full_name.c_str(), false);
-	return mono_method_desc_search_in_class(desc, mono_class->GetMonoClass());
+	MonoMethod* mono_method = mono_method_desc_search_in_class(desc, mono_class->GetMonoClass());
+	mono_method_desc_free(desc);
+	return mono_method;
 }
 
 CSMonoMethod::CSMonoMethod(CSMonoClass* mono_class, const MonoClassHandle& class_handle, const std::string& method_name) : m_class_handle(class_handle), m_method_name(method_name)

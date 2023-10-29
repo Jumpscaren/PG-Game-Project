@@ -92,7 +92,7 @@ void ScriptingManager::StartScript(const ScriptComponent& script)
 void ScriptingManager::UpdateScripts(EntityManager* entity_manager)
 {
 	CSMonoCore* mono_core = CSMonoCore::Get();
-	entity_manager->System<ScriptComponent>([&](ScriptComponent script)
+	entity_manager->System<ScriptComponent>([&](Entity e, ScriptComponent script)
 		{
 			if (mono_core->CheckIfMonoMethodExists(script.script_update))
 				mono_core->CallMethod(script.script_update, script.script_object);

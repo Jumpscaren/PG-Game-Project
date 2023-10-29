@@ -38,7 +38,8 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 	m_destruction_listener = new PhysicsDestructionListener();
 
 	b2Vec2 gravity;
-	gravity.Set(0.0f, -9.82f);
+	//gravity.Set(0.0f, -9.82f);
+	gravity.Set(0.0f, 0.0f);
 	m_world = new b2World(gravity);
 
 	m_world->SetDestructionListener(m_destruction_listener);
@@ -314,8 +315,11 @@ void PhysicsCore::ThreadUpdatePhysic()
 void PhysicsCore::Update()
 {
 	m_time_since_last_update += (float)Time::GetDeltaTime();
+	if (m_time_since_last_update > TIME_STEP * 10.0f)
+		m_time_since_last_update = TIME_STEP * 10.0f;
 	while (m_time_since_last_update > TIME_STEP)
 	{
+		//std::cout << "TIME: " << m_time_since_last_update << "\n";
 		m_world->Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
 		m_time_since_last_update -= TIME_STEP;
 	}
@@ -342,8 +346,12 @@ void PhysicsCore::DrawColliders()
 
 void PhysicsCore::HandleDeferredPhysicData()
 {
-	m_contact_listener->HandleDeferredCollisionData();
 	HandleDeferredPhysicObjectHandleData();
+}
+
+void PhysicsCore::HandleDeferredCollisionData()
+{
+	m_contact_listener->HandleDeferredCollisionData();
 }
 
 void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
@@ -354,6 +362,9 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
 			if (dynamic_body.awake != physic_object.object_body->IsAwake())
 				physic_object.object_body->SetAwake(dynamic_body.awake);
+			physic_object.object_body->SetLinearVelocity({ dynamic_body.velocity.x, dynamic_body.velocity.y });
+			if (dynamic_body.fixed_rotation != physic_object.object_body->IsFixedRotation())
+				physic_object.object_body->SetFixedRotation(dynamic_body.fixed_rotation);
 		});
 
 	//Timer timer;
@@ -385,13 +396,18 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 
 void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 {
-	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](const DynamicBodyComponent& dynamic_body, TransformComponent& transform)
+	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](DynamicBodyComponent& dynamic_body, TransformComponent& transform)
 		{
-			 const b2Transform& transform_physic_object = m_physic_object_data[dynamic_body.physic_object_handle].object_body->GetTransform();
+			 PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
+			 const b2Transform& transform_physic_object = physic_object.object_body->GetTransform();
 			 transform.SetPosition(Vector2(transform_physic_object.p.x, transform_physic_object.p.y));
 			 Vector3 rotation = transform.GetRotationEuler();
 			 rotation.z = transform_physic_object.q.GetAngle();
 			 transform.SetRotation(rotation);
+
+			 const b2Vec2& velocity = physic_object.object_body->GetLinearVelocity();
+			 dynamic_body.velocity.x = velocity.x;
+			 dynamic_body.velocity.y = velocity.y;
 		});
 }
 

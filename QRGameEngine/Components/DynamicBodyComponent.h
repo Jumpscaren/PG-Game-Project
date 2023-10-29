@@ -3,10 +3,13 @@
 #include "Scripting/CSMonoObject.h"
 #include "ECS/EntityDefinition.h"
 #include "SceneSystem/SceneDefines.h"
+#include "Common/EngineTypes.h"
 
 struct DynamicBodyComponent {
 	PhysicObjectHandle physic_object_handle;
 	bool awake;
+	Vector2 velocity;
+	bool fixed_rotation;
 };
 
 class JsonObject;
@@ -19,6 +22,11 @@ public:
 	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+
+public:
+	static void SetVelocity(CSMonoObject object, CSMonoObject velocity);
+	static CSMonoObject GetVelocity(CSMonoObject object);
+	static void SetFixedRotation(CSMonoObject object, bool fixed_rotation);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

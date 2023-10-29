@@ -28,7 +28,10 @@
 #include "Components/DynamicBodyComponent.h"
 #include "Components/StaticBodyComponent.h"
 #include "Components/CircleColliderComponent.h"
+#include "Scripting/Objects/Vector2Interface.h"
 #include "SceneSystem/GlobalScene.h"
+#include "Components/EntityDataComponent.h"
+#include "Scripting/Objects/TimeInterface.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -90,6 +93,9 @@ void QREntryPoint::EntryPoint()
 	BoxColliderComponentInterface::RegisterInterface(mono_core);
 	CircleColliderComponentInterface::RegisterInterface(mono_core);
 	StaticBodyComponentInterface::RegisterInterface(mono_core);
+	Vector2Interface::RegisterInterface(mono_core);
+	EntityDataComponentInterface::RegisterInterface(mono_core);
+	TimeInterface::RegisterInterface(mono_core);
 
 #ifdef _EDITOR
 	editor_core = new EditorCore();
@@ -99,7 +105,7 @@ void QREntryPoint::EntryPoint()
 	EntityManager* global_entity_manager = scene_manager->GetEntityManager(global_scene->Get()->GetSceneIndex());
 	auto m_editor_camera_ent = global_entity_manager->NewEntity();
 	global_entity_manager->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 50.0f));
-	global_entity_manager->AddComponent<CameraComponent>(m_editor_camera_ent);
+	//global_entity_manager->AddComponent<CameraComponent>(m_editor_camera_ent);
 #endif // _EDITOR
 
 	physics_core = new PhysicsCore(true);
@@ -145,7 +151,7 @@ void QREntryPoint::RunTime()
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
 			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
-			SceneIndex scene = scene_manager->LoadScene("t1");
+			SceneIndex scene = scene_manager->LoadScene("t4");
 			scene_manager->ChangeScene(scene);
 		}
 
@@ -162,10 +168,13 @@ void QREntryPoint::RunTime()
 		PhysicsCore::Get()->HandleDeferredPhysicData();
 		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->GetWorldPhysicObjectData(global_entity_manager);
+		PhysicsCore::Get()->HandleDeferredCollisionData();
 
 		//Update scripts
+#ifndef _EDITOR
 		ScriptingManager::Get()->UpdateScripts(entman);
 		ScriptingManager::Get()->UpdateScripts(global_entity_manager);
+#endif // EDITOR
 
 		PhysicsCore::Get()->DrawColliders();
 

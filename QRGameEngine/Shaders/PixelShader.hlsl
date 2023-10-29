@@ -24,7 +24,10 @@ float4 main(VS_OUT input) : SV_TARGET
 {	
 	StructuredBuffer<Sprite> sprite_data = ResourceDescriptorHeap[sprite_buffer_index.index];
 
-	Texture2D colourTexture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
+	Texture2D colour_texture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
 
-    return colourTexture.Sample(standard_sampler, input.uv);
+    //float alpha = colour_texture.Sample(standard_sampler, input.uv).w;
+    //return float4(alpha, alpha, alpha, alpha);
+	
+    return colour_texture.Sample(standard_sampler, input.uv);
 }

@@ -8,8 +8,6 @@
 
 void PhysicsContactListener::BeginContact(b2Contact* contact)
 {
-	//Make thread safe
-
 	if (contact->GetFixtureA()->GetBody()->GetUserData().pointer && contact->GetFixtureB()->GetBody()->GetUserData().pointer)
 	{
 		auto body_1 = PhysicsCore::Get()->GetEntityAndSceneFromUserData((void*)contact->GetFixtureA()->GetBody()->GetUserData().pointer);

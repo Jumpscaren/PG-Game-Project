@@ -51,6 +51,11 @@ JsonObject JsonObject::GetSubJsonObject(const std::string& name)
 	return JsonObject((void*)json);
 }
 
+void JsonObject::SetData(uint8_t data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
 void JsonObject::SetData(uint32_t data, const std::string& name)
 {
 	(*((nlohmann::json*)m_json_object))[name] = data;
@@ -77,6 +82,21 @@ void JsonObject::SetData(char* data, uint32_t data_size, const std::string& name
 {
 	std::vector<uint8_t> v(data, data + data_size);
 	(*((nlohmann::json*)m_json_object))[name] = v;
+}
+
+void JsonObject::SetData(const std::string& data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
+void JsonObject::LoadData(uint8_t& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = 0;
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
 }
 
 void JsonObject::LoadData(uint32_t& data, const std::string& name)
@@ -131,6 +151,16 @@ void JsonObject::LoadData(char* data, uint32_t data_size, const std::string& nam
 	}
 	std::vector<uint8_t> v = (*((nlohmann::json*)m_json_object))[name];
 	memcpy(data, v.data(), data_size);
+}
+
+void JsonObject::LoadData(std::string& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = "";
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
 }
 
 std::string JsonObject::GetJsonString()

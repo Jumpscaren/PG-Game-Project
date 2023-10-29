@@ -204,13 +204,13 @@ template<typename Type>
 inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name)
 {
 	void* value = GetValueInternal(mono_object, field_name);
-	return_value = MonoObjectToValue((Type*)value);
+	return_value = std::move(MonoObjectToValue((Type*)value));
 }
 
 template<typename Type>
 inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name)
 {
-	void* value = ToMethodParameter(value_to_set);
+	void* value = std::move(ToMethodParameter(value_to_set));
 	SetValueInternal(mono_object, field_name, value);
 }
 
@@ -218,13 +218,13 @@ template<typename Type>
 inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
 {
 	void* value = GetValueInternal(mono_object, mono_field_handle);
-	return_value = MonoObjectToValue((Type*)value);
+	return_value = std::move(MonoObjectToValue((Type*)value));
 }
 
 template<typename Type>
 inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
 {
-	void* value = ToMethodParameter(value_to_set);
+	void* value = std::move(ToMethodParameter(value_to_set));
 	SetValueInternal(mono_object, mono_field_handle, value);
 }
 
@@ -237,7 +237,7 @@ inline void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle, 
 
 	int index = 0;
 
-	((parameters[index++] = ToMethodParameter(args)), ...);
+	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
 
 	CallMethodInternal(method_handle, nullptr, parameters, index);
 }
@@ -251,7 +251,7 @@ inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, const 
 	
 	int index = 0;
 
-	((parameters[index++] = ToMethodParameter(args)), ...);
+	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
 
 	CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, index);
 }
@@ -285,7 +285,7 @@ inline void CSMonoCore::CallStaticMethod(Type& return_value, const MonoMethodHan
 
 	int index = 0;
 
-	((parameters[index++] = ToMethodParameter(args)), ...);
+	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
 
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, nullptr, parameters, index);
 
@@ -301,7 +301,7 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 
 	int index = 0;
 
-	((parameters[index++] = ToMethodParameter(args)), ...);
+	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
 
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, index);
 
@@ -325,11 +325,11 @@ inline Type CSMonoCore::HookedMethod(Args ...args)
 {
 	sizeof...(Args);
 
-	return MonoMethodReturn(((ChangeType<Type>(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...));
+	return MonoMethodReturn(((ChangeType<Type>(*)(ChangeType<Args>...))(method))(std::move(MonoMethodParameter(args))...));
 }
 
 template<void* method, typename...Args>
 inline void CSMonoCore::HookedMethodVoid(Args... args)
 {
-	((void(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...);
+	((void(*)(ChangeType<Args>...))(method))(std::move(MonoMethodParameter(args))...);
 }

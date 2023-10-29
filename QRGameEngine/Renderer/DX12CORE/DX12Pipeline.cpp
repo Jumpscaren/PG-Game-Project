@@ -69,7 +69,7 @@ void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_sig
 	pipeline_desc.PrimitiveTopologyType = m_pipeline_info.topology_type;
 	pipeline_desc.NumRenderTargets = static_cast<UINT>(1);
 
-	pipeline_desc.BlendState.AlphaToCoverageEnable = false;
+	pipeline_desc.BlendState.AlphaToCoverageEnable = true;
 	pipeline_desc.BlendState.IndependentBlendEnable = false;
 
 	pipeline_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;

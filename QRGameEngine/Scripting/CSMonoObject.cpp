@@ -8,31 +8,42 @@
 _MonoObject* CSMonoObject::GetMonoObject() const
 {
 	assert(!m_not_initialized);
-	return m_mono_object;
+	assert(mono_gchandle_get_target(m_gchandle) != nullptr);
+	return mono_gchandle_get_target(m_gchandle);
+}
+
+void CSMonoObject::CreateLinkToMono(_MonoObject* mono_object)
+{
+	m_gchandle = mono_gchandle_new(mono_object, false);
+	//std::cout << "New handle: " << m_gchandle << "\n";
 }
 
 CSMonoObject::CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle) : m_class_handle(class_handle), m_mono_core_ref(mono_core)
 {
-	m_mono_object = mono_object_new(mono_core->GetDomain(), mono_core->GetMonoClass(class_handle)->GetMonoClass());
-	m_gchandle = mono_gchandle_new(m_mono_object, false);
-	mono_runtime_object_init(m_mono_object);
+	MonoObject* mono_object = mono_object_new(mono_core->GetDomain(), mono_core->GetMonoClass(class_handle)->GetMonoClass());
+	CreateLinkToMono(mono_object);
+	mono_runtime_object_init(mono_object);
 }
 
-CSMonoObject::CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object) : m_mono_core_ref(mono_core), m_mono_object(mono_object)
+CSMonoObject::CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object) : m_mono_core_ref(mono_core)
 {
-	m_gchandle = mono_gchandle_new(m_mono_object, false);
-	MonoClass* mono_class = mono_object_get_class(m_mono_object);
+	CreateLinkToMono(mono_object);
+	MonoClass* mono_class = mono_object_get_class(mono_object);
 	m_class_handle = mono_core->RegisterMonoClass(mono_class);
 }
 
-CSMonoObject::CSMonoObject(const CSMonoObject& obj) : m_mono_object(obj.m_mono_object), m_class_handle(obj.m_class_handle), m_mono_core_ref(obj.m_mono_core_ref), m_not_initialized(obj.m_not_initialized)
+CSMonoObject::CSMonoObject(const CSMonoObject& obj) : m_class_handle(obj.m_class_handle), m_mono_core_ref(obj.m_mono_core_ref), m_not_initialized(obj.m_not_initialized)
 {
-	m_gchandle = mono_gchandle_new(m_mono_object, false);
+	CreateLinkToMono(obj.GetMonoObject());
+}
+
+CSMonoObject::CSMonoObject(CSMonoObject&& obj) noexcept : m_class_handle(obj.m_class_handle), m_mono_core_ref(obj.m_mono_core_ref), m_not_initialized(obj.m_not_initialized)
+{
+	CreateLinkToMono(obj.GetMonoObject());
 }
 
 CSMonoObject::CSMonoObject()
 {
-	m_mono_object = nullptr;
 	m_class_handle.handle = -1;
 	m_mono_core_ref = nullptr;
 	m_gchandle = 0;
@@ -44,12 +55,28 @@ CSMonoObject::~CSMonoObject()
 	RemoveLinkToMono();
 }
 
-void CSMonoObject::RemoveLinkToMono()
+CSMonoObject& CSMonoObject::operator=(const CSMonoObject& obj)
 {
-	mono_gchandle_free(m_gchandle);
+	CreateLinkToMono(obj.GetMonoObject());
+	m_class_handle = obj.m_class_handle;
+	m_mono_core_ref = obj.m_mono_core_ref;
+	m_not_initialized = obj.m_not_initialized;
+	return *this;
 }
 
-void CSMonoObject::CallMethod(const MonoMethodHandle& method_handle)
+CSMonoObject& CSMonoObject::operator=(CSMonoObject&& obj) noexcept
 {
-	//m_mono_core_ref->CallMethod(method_handle, this);
+	CreateLinkToMono(obj.GetMonoObject());
+	m_class_handle = obj.m_class_handle;
+	m_mono_core_ref = obj.m_mono_core_ref;
+	m_not_initialized = obj.m_not_initialized;
+	return *this;
+}
+
+void CSMonoObject::RemoveLinkToMono()
+{
+	//std::cout << "Free handle: " << m_gchandle << "\n";
+	m_not_initialized = false;
+	mono_gchandle_free(m_gchandle);
+	m_gchandle = -1;
 }

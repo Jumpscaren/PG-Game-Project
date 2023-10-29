@@ -26,6 +26,9 @@ public:
 	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
 public:
+	static void SetTrigger(CSMonoObject object, bool trigger);
+
+public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 };

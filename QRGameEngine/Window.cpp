@@ -31,12 +31,22 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
     {
         //if (IsMinimized(Window::GetHandle())) return 0;
         //PublishEvent<WindowPosChangingEvent>();
-        break;
+		Mouse::Get()->UpdateMouseButtons(false);
+		Keyboard::Get()->UpdateKeys(false);
+		return 0;
     }
+	case WM_MOVE:
+	{
+		Mouse::Get()->UpdateMouseButtons(false);
+		Keyboard::Get()->UpdateKeys(false);
+		//Mouse::Get()->
+		return 0;
+	}
     case WM_SIZE:
     {
         //if (IsMinimized(Window::GetHandle())) return 0;
-
+		Mouse::Get()->UpdateMouseButtons(false);
+		Keyboard::Get()->UpdateKeys(false);
         //s_windowData.dimensions.x = LOWORD(lParam);
         //s_windowData.dimensions.y = HIWORD(lParam);
 
@@ -136,6 +146,9 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
 		return 0;
 	}
+
+	std::cout << "Help me!\n";
+
 	//case WM_MOUSEACTIVATE:
 	//{
 	//	if (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTBOTTOM || LOWORD(lParam) == HTLEFT || LOWORD(lParam) == HTRIGHT ||

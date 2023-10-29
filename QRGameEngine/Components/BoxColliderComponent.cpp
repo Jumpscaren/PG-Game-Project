@@ -7,6 +7,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "DynamicBodyComponent.h"
 #include "StaticBodyComponent.h"
+#include "Scripting/Objects/GameObjectInterface.h"
 
 void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -15,6 +16,8 @@ void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::InitComponent>(box_collider_class, "InitComponent", BoxColliderComponentInterface::InitComponent);
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::HasComponent>(box_collider_class, "HasComponent", BoxColliderComponentInterface::HasComponent);
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::RemoveComponent>(box_collider_class, "RemoveComponent", BoxColliderComponentInterface::RemoveComponent);
+
+	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetTrigger>(box_collider_class, "SetTrigger", BoxColliderComponentInterface::SetTrigger);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<BoxColliderComponent>(SaveScriptComponent, LoadScriptComponent);
 }
@@ -38,6 +41,14 @@ bool BoxColliderComponentInterface::HasComponent(CSMonoObject object, SceneIndex
 void BoxColliderComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->RemoveBoxCollider(scene_index, entity);
+}
+
+void BoxColliderComponentInterface::SetTrigger(CSMonoObject object, bool trigger)
+{
+	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
+	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const auto entity = GameObjectInterface::GetEntityID(game_object);
+	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity).trigger = trigger;
 }
 
 void BoxColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)

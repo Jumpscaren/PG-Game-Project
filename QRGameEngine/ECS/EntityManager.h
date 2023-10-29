@@ -123,13 +123,13 @@ public:
 
 		UpdateEntityListIfPoolHasChanged(smallest_component_pool);
 
-		auto& entities = smallest_component_pool->list_of_component_pool_entities;
-		for (Entity& entity : entities)
+		const auto& entities = smallest_component_pool->list_of_component_pool_entities;
+		for (const Entity& entity : entities)
 		{
 			if (!EntityExists(entity))
 				continue;
 
-			bool has_all_components = (HasComponent<Component>(entity) &&...);
+			const bool has_all_components = (HasComponent<Component>(entity) &&...);
 
 			if (has_all_components)
 			{
@@ -158,13 +158,13 @@ public:
 
 		UpdateEntityListIfPoolHasChanged(smallest_component_pool);
 
-		auto& entities = smallest_component_pool->list_of_component_pool_entities;
-		for (Entity& entity : entities)
+		const auto& entities = smallest_component_pool->list_of_component_pool_entities;
+		for (const Entity& entity : entities)
 		{
 			if (!EntityExists(entity))
 				continue;
 
-			bool has_all_components = (HasComponent<Component>(entity) &&...);
+			const bool has_all_components = (HasComponent<Component>(entity) &&...);
 
 			if (has_all_components)
 			{

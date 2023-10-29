@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -75,10 +76,13 @@
     <Compile Include="Engine\Sprite.cs" />
     <Compile Include="Engine\StaticBody.cs" />
     <Compile Include="Engine\Texture.cs" />
+    <Compile Include="Engine\Time.cs" />
     <Compile Include="Engine\Transform.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Math\Vector2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scripts\Player.cs" />
+    <Compile Include="Scripts\PlayerCamera.cs" />
     <Compile Include="TestScript.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

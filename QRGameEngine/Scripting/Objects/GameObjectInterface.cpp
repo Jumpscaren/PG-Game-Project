@@ -2,6 +2,9 @@
 #include "GameObjectInterface.h"
 #include "Scripting/CSMonoCore.h"
 #include "Scripting/Objects/SceneInterface.h"
+#include "SceneSystem/SceneManager.h"
+#include "ECS/EntityManager.h"
+#include "Components/EntityDataComponent.h"
 
 MonoFieldHandle GameObjectInterface::get_entity_id_field;
 MonoClassHandle GameObjectInterface::game_object_class;
@@ -16,6 +19,18 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     get_entity_id_field = mono_core->RegisterField(game_object_class, "entity_id");
     create_game_object_method = mono_core->RegisterMonoMethod(game_object_class, "CreateGameObject");
     new_game_object_with_existing_entity_method = mono_core->RegisterMonoMethod(game_object_class, "NewGameObjectWithExistingEntity");
+
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::AddEntityData>(game_object_class, "AddEntityData", GameObjectInterface::AddEntityData);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetName>(game_object_class, "SetName", GameObjectInterface::SetName);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetName>(game_object_class, "GetName", GameObjectInterface::GetName);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::TempFindGameObject>(game_object_class, "TempFindGameObject", GameObjectInterface::TempFindGameObject);
+}
+
+CSMonoObject GameObjectInterface::GetGameObjectFromComponent(const CSMonoObject& component)
+{
+    CSMonoObject game_object;
+    CSMonoCore::Get()->GetValue(game_object, component, "game_object");
+    return game_object;
 }
 
 Entity GameObjectInterface::GetEntityID(const CSMonoObject& game_object)
@@ -47,4 +62,33 @@ CSMonoObject GameObjectInterface::NewGameObjectWithExistingEntity(Entity entity,
     CSMonoCore::Get()->CallStaticMethod(game_object, new_game_object_with_existing_entity_method, entity, scene_object);
 
     return game_object;
+}
+
+void GameObjectInterface::AddEntityData(CSMonoObject object)
+{
+    if (!SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->HasComponent<EntityDataComponent>(GetEntityID(object)))
+        SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->AddComponent<EntityDataComponent>(GetEntityID(object));
+}
+
+void GameObjectInterface::SetName(CSMonoObject object, std::string name)
+{
+    SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->GetComponent<EntityDataComponent>(GetEntityID(object)).entity_name = name;
+}
+
+std::string GameObjectInterface::GetName(CSMonoObject object)
+{
+    return SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->GetComponent<EntityDataComponent>(GetEntityID(object)).entity_name;
+}
+
+CSMonoObject GameObjectInterface::TempFindGameObject(std::string name)
+{
+    Entity found_game_object = NULL_ENTITY;
+    SceneManager::GetSceneManager()->GetEntityManager(SceneManager::GetSceneManager()->GetActiveSceneIndex())->System<EntityDataComponent>([&](Entity entity, const EntityDataComponent& entity_data)
+        {
+            if (found_game_object != NULL_ENTITY)
+                return;
+            if (entity_data.entity_name == name)
+                found_game_object = entity;
+        });
+    return NewGameObjectWithExistingEntity(found_game_object, SceneManager::GetSceneManager()->GetActiveSceneIndex());
 }

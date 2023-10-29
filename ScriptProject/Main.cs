@@ -1,4 +1,5 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Scripts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,9 @@ namespace ScriptProject
 
             PrefabSystem.CreateUserPrefab(Prefab1, 1);
             PrefabSystem.CreateUserPrefab(Prefab2, 2);
+            PrefabSystem.CreateUserPrefab(PlayerPrefab, 1);
+            PrefabSystem.CreateUserPrefab(PlayerCameraPrefab, 1);
+            PrefabSystem.CreateUserPrefab(BouncePrefab, 1);
 
             return 0;
         }
@@ -44,7 +48,6 @@ namespace ScriptProject
         static void Prefab1(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
-            game_object.AddComponent<TestScript>();
             game_object.AddComponent<DynamicBody>();
             game_object.AddComponent<BoxCollider>();
         }
@@ -52,7 +55,32 @@ namespace ScriptProject
         static void Prefab2(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            game_object.AddComponent<BoxCollider>();
+        }
+
+        static void PlayerPrefab(GameObject game_object)
+        {
+            game_object.SetName("Player");
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
+            game_object.AddComponent<Player>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             game_object.AddComponent<CircleCollider>();
+        }
+
+        static void PlayerCameraPrefab(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
+            game_object.AddComponent<Camera>();
+            game_object.AddComponent<PlayerCamera>();
+        }
+
+        static void BouncePrefab(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
+            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<BoxCollider>();
+            game_object.GetComponent<BoxCollider>().SetTrigger(true);
+            game_object.SetName("Bouncer");
         }
     }
 }

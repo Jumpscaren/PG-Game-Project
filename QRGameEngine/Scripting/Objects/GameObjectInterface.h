@@ -16,10 +16,19 @@ public:
 	static void RegisterInterface(CSMonoCore* mono_core);
 
 public:
+	static CSMonoObject GetGameObjectFromComponent(const CSMonoObject& component);
 	static Entity GetEntityID(const CSMonoObject& game_object);
 	static SceneIndex GetSceneIndex(const CSMonoObject& game_object);
 
 	static CSMonoObject CreateGameObject();
 	static CSMonoObject NewGameObjectWithExistingEntity(Entity entity, SceneIndex scene_index);
+
+	static void AddEntityData(CSMonoObject object);
+
+public:
+	static void SetName(CSMonoObject object, std::string name);
+	static std::string GetName(CSMonoObject object);
+
+	static CSMonoObject TempFindGameObject(std::string name);
 };
 
