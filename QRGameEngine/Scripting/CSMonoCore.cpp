@@ -255,6 +255,15 @@ MonoClassHandle CSMonoCore::RegisterMonoClass(_MonoClass* mono_class)
 	return RegisterMonoClass(class_namespace, class_name);
 }
 
+bool CSMonoCore::IsValueTypeInternal(const CSMonoType cs_mono_type, const CSMonoObject& mono_object, const std::string& field_name)
+{
+	const auto mono_class = GetMonoClass(mono_object.m_class_handle);
+	MonoClassField* mono_field = mono_class_get_field_from_name(mono_class->GetMonoClass(), field_name.c_str());
+	MonoType* mono_type = mono_field_get_type(mono_field);
+	const int mono_type_enum = mono_type_get_type(mono_type);
+	return mono_type_enum == (int)cs_mono_type;
+}
+
 void* CSMonoCore::GetValueInternal(const CSMonoObject& mono_object, const std::string& field_name)
 {
 	MonoClassField* field = mono_class_get_field_from_name(GetMonoClass(mono_object.m_class_handle)->GetMonoClass(), field_name.c_str());
@@ -308,6 +317,12 @@ MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace
 
 MonoMethodHandle CSMonoCore::RegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name)
 {
+	std::string method_full_name = CSMonoMethod::GetMethodFullName(GetMonoClass(class_handle), method_name);
+	if (m_mono_method_name_to_mono_method_handle.contains(method_full_name))
+	{
+		return m_mono_method_name_to_mono_method_handle.find(method_full_name)->second;
+	}
+
 	MonoMethodHandle method_handle = { m_mono_methods.size() };
 
 	//auto mono_class = GetMonoClass(class_handle);
@@ -320,7 +335,7 @@ MonoMethodHandle CSMonoCore::RegisterMonoMethod(const MonoClassHandle& class_han
 	//}
 
 	m_mono_methods.push_back(CSMonoMethod(GetMonoClass(class_handle), class_handle, method_name));
-
+	m_mono_method_name_to_mono_method_handle.insert({method_full_name, method_handle});
 	return method_handle;
 }
 
@@ -388,6 +403,24 @@ MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethod(const MonoClassHandle& cl
 CSMonoCore* CSMonoCore::Get()
 {
 	return s_mono_core;
+}
+
+std::vector<std::string> CSMonoCore::GetAllFieldNames(const CSMonoObject& mono_object)
+{
+	const auto mono_class = GetMonoClass(mono_object.m_class_handle);
+
+	std::vector<std::string> field_names;
+	field_names.resize(mono_class_num_fields(mono_class->GetMonoClass()));
+
+	MonoClassField* field;
+	void* iter = nullptr;
+	uint32_t i = 0;
+	while ((field = mono_class_get_fields(mono_class->GetMonoClass(), &iter)))
+	{
+		field_names[i++] = mono_field_get_name(field);
+	}
+
+	return field_names;
 }
 
 void CSMonoCore::PrintMethod(const MonoMethodHandle& method_handle)

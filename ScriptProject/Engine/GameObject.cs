@@ -44,8 +44,7 @@ namespace ScriptProject.Engine
             GameObject gameObject = new GameObject();
             gameObject.entity_id = entity;
             gameObject.scene = scene;
-            Transform component = new Transform();
-            if (gameObject.HasComponent<Transform>(component))
+            if (gameObject.HasComponent<Transform>())
                 gameObject.transform = gameObject.GetComponent<Transform>();
             else
                 gameObject.transform = gameObject.AddComponent<Transform>();
@@ -106,9 +105,9 @@ namespace ScriptProject.Engine
             //        return (T)comp;
             //}
 
-            T component = new T();
-            if (HasComponent<T>(component))
+            if (HasComponent<T>())
             {
+                T component = new T();
                 component.SetGameObject(this);
                 //components.Add(component);
                 return component;
@@ -119,8 +118,9 @@ namespace ScriptProject.Engine
             return null;
         }
 
-        private bool HasComponent<T>(T component) where T : Component, new()
+        private bool HasComponent<T>() where T : Component, new()
         {
+            T component = new T();
             return component.HasComponent(scene.GetSceneIndex(), entity_id);
         }
 

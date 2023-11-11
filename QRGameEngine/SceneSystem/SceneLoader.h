@@ -47,6 +47,9 @@ public:
 
 	template<typename Component>
 	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method);
+
+	std::function<void(Entity, EntityManager*, JsonObject*)>* GetOverrideSaveComponentMethod(const std::string& component_name);
+	std::function<void(Entity, EntityManager*, JsonObject*)>* GetOverrideLoadComponentMethod(const std::string& component_name);
 };
 
 template<typename Component>

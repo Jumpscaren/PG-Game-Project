@@ -8,6 +8,7 @@
 #include "DynamicBodyComponent.h"
 #include "StaticBodyComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
+#include "IO/JsonObject.h"
 
 void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -48,13 +49,25 @@ void BoxColliderComponentInterface::SetTrigger(CSMonoObject object, bool trigger
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	const auto entity = GameObjectInterface::GetEntityID(game_object);
-	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity).trigger = trigger;
+	BoxColliderComponent& box_collider = SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity);
+	box_collider.trigger = trigger;
+	box_collider.update_box_collider = true;
 }
 
 void BoxColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
+	const BoxColliderComponent& box_collider = entman->GetComponent<BoxColliderComponent>(ent);
+	json_object->SetData(box_collider.trigger, "trigger");
+	json_object->SetData(box_collider.half_box_size, "half_box_size");
 }
 
 void BoxColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
+	BoxColliderComponent& box_collider = entman->GetComponent<BoxColliderComponent>(ent);
+	Vector2 half_box_size;
+	json_object->LoadData(box_collider.trigger, "trigger");
+	json_object->LoadData(half_box_size, "half_box_size");
+	if (half_box_size.x != 0.0f && half_box_size.y != 0.0f)
+		box_collider.half_box_size = half_box_size;
+	box_collider.update_box_collider = true;
 }

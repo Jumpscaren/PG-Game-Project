@@ -28,6 +28,11 @@ private:
 
 	std::string m_scene_name;
 
+	bool m_select;
+	Entity m_select_entity;
+
+	bool m_in_editor_menu;
+
 private:
 	uint64_t GetNumberFromPosition(const Vector3& position);
 	Vector3 GetWorldPositionFromMouse(const CameraComponent& editor_camera_component);
@@ -42,6 +47,9 @@ public:
 	void Save(std::string scene_name);
 	void Load(std::string scene_name);
 	void Clear();
+	void Select();
+
+	bool InEditorMenu() const;
 
 	static void SetAddUserPrefab();
 	static void AddUserPrefab(uint32_t prefab_instance_id, uint32_t z_index);

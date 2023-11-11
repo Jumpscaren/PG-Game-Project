@@ -60,13 +60,16 @@ void EditorCore::Update()
 		editor_camera_pos.z = 1;
 	}
 
-	if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::UP))
+	if (!m_draw_scene.InEditorMenu())
 	{
-		editor_camera_pos.z -= 1.0f;
-	}
-	if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::DOWN))
-	{
-		editor_camera_pos.z += 1.0f;
+		if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::UP))
+		{
+			editor_camera_pos.z -= 1.0f;
+		}
+		if (Mouse::Get()->GetMouseWheelSpinDirection(Mouse::MouseWheelSpin::DOWN))
+		{
+			editor_camera_pos.z += 1.0f;
+		}
 	}
 
 	if (editor_camera_pos.z < 1.0f)

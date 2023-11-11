@@ -27,7 +27,6 @@ void DynamicBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 void DynamicBodyComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::DynamicBody);
-	//CSMonoObject* f = new CSMonoObject();
 }
 
 bool DynamicBodyComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)

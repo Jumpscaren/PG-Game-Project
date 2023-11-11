@@ -4,6 +4,7 @@
 #include "Scripting/CSMonoCore.h"
 #include "Scripting/ScriptingManager.h"
 #include "SceneSystem/SceneLoader.h"
+#include "IO/JsonObject.h"
 
 void ScriptComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -48,8 +49,7 @@ void ScriptComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex s
 
 void ScriptComponentInterface::AddScriptComponent(const std::string& script_class_name, SceneIndex scene_index, Entity entity)
 {
-	//Temp
-	auto script_class = CSMonoCore::Get()->RegisterMonoClass("ScriptProject", "TestScript");
+	auto script_class = CSMonoCore::Get()->RegisterMonoClass("ScriptProject", script_class_name);
 
 	CSMonoObject script(CSMonoCore::Get(), script_class);
 	InitComponent(script, scene_index, entity);
@@ -57,10 +57,68 @@ void ScriptComponentInterface::AddScriptComponent(const std::string& script_clas
 
 void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
+	const ScriptComponent& script_component = entman->GetComponent<ScriptComponent>(ent);
+	const std::vector<std::string> field_names = CSMonoCore::Get()->GetAllFieldNames(script_component.script_object);
+	for (const std::string& field_name : field_names)
+	{
+		if (CSMonoCore::Get()->IsValueType<uint32_t>(script_component.script_object, field_name))
+		{
+			uint32_t value;
+			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+			json_object->SetData(value, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<bool>(script_component.script_object, field_name))
+		{
+			bool value;
+			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+			json_object->SetData(value, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<double>(script_component.script_object, field_name))
+		{
+			double value;
+			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+			json_object->SetData(value, field_name);
+		}
+		//else if (CSMonoCore::Get()->IsValueType<CSMonoObject>(script_component.script_object, field_name))
+		//{
+		//	CSMonoObject value;
+		//	//CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+		//	//json_object->SetData(value, field_name);
+		//}
+	}
 }
 
 void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
+	const ScriptComponent& script_component = entman->GetComponent<ScriptComponent>(ent);
+	const std::vector<std::string> field_names = CSMonoCore::Get()->GetAllFieldNames(script_component.script_object);
+	for (const std::string& field_name : field_names)
+	{
+		if (CSMonoCore::Get()->IsValueType<uint32_t>(script_component.script_object, field_name))
+		{
+			uint32_t value;
+			json_object->LoadData(value, field_name);
+			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<bool>(script_component.script_object, field_name))
+		{
+			bool value;
+			json_object->LoadData(value, field_name);
+			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<double>(script_component.script_object, field_name))
+		{
+			double value;
+			json_object->LoadData(value, field_name);
+			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
+		}
+		//else if (CSMonoCore::Get()->IsValueType<CSMonoObject>(script_component.script_object, field_name))
+		//{
+		//	CSMonoObject value;
+		//	//CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+		//	//json_object->SetData(value, field_name);
+		//}
+	}
 }
 
 void ScriptComponentInterface::RemoveComponentData(ScriptComponent& script_component)

@@ -15,6 +15,9 @@
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "SceneSystem/SceneLoader.h"
 #include "SceneSystem/GlobalScene.h"
+#include "Input/Mouse.h"
+#include "Components/EntityDataComponent.h"
+#include "IO/JsonObject.h"
 
 std::vector<PrefabAndTextureData> DrawScene::m_user_prefabs;
 
@@ -66,6 +69,7 @@ DrawScene::DrawScene()
 {
 	SetAddUserPrefab();
 	m_scene_name.resize(50);
+	m_select = false;
 }
 
 void DrawScene::Update()
@@ -75,12 +79,14 @@ void DrawScene::Update()
 	bool save_pressed = false;
 	bool load_pressed = false;
 	bool clear_pressed = false;
+	bool select_pressed = false;
 	bool hovering_window = false;
 	Vector2 window_position;
 	float window_height, window_width;
 
 	ImGui::Begin("Draw Blocks");
 	{
+		ImGui::InputText("Scene Name", (char*)m_scene_name.c_str(), m_scene_name.size());
 		save_pressed = ImGui::Button("Save", { 0,0 });
 		load_pressed = ImGui::Button("Load", { 0,0 });
 		clear_pressed = ImGui::Button("Clear");
@@ -88,13 +94,14 @@ void DrawScene::Update()
 		window_height = ImGui::GetWindowHeight();
 		window_width = ImGui::GetWindowWidth();
 
-		ImGui::InputText("Scene Name", (char*)m_scene_name.c_str(), m_scene_name.size());
+		select_pressed = ImGui::Button("Select");
 
 		for (int i = 0; i < m_user_prefabs.size(); ++i)
 		{
 			if (ImGUIMain::ImageButton("Prefab Click" + std::to_string(i), m_user_prefabs[i].texture_handle))
 			{
 				m_prefab_selected = m_user_prefabs[i].prefab_data;
+				m_select = false;
 			}
 		}
 	}
@@ -108,10 +115,15 @@ void DrawScene::Update()
 	{
 		hovering_window = true;
 	}
+	m_in_editor_menu = hovering_window;
 
-	if (!hovering_window)
+	if (!hovering_window && !m_select)
 	{
 		DrawBlock();
+	}
+	if (m_select)
+	{
+		Select();
 	}
 	if (save_pressed)
 	{
@@ -124,6 +136,10 @@ void DrawScene::Update()
 	if (clear_pressed)
 	{
 		Clear();
+	}
+	if (select_pressed)
+	{
+		m_select = true;
 	}
 }
 
@@ -206,6 +222,124 @@ void DrawScene::Clear()
 		}
 	}
 	m_blocks.clear();
+}
+
+void WriteData(JsonObject& json, const std::string& object_name)
+{
+	if (json.IsObjectBool(object_name))
+	{
+		bool temp;
+		json.LoadData(temp, object_name);
+		ImGui::Checkbox(object_name.c_str(), (bool*)&temp);
+		json.SetData(temp, object_name);
+	}
+	if (json.IsObjectUnsigned(object_name))
+	{
+		uint32_t temp;
+		json.LoadData(temp, object_name);
+		ImGui::InputInt(object_name.c_str(), (int*)&temp);
+		json.SetData(temp, object_name);
+	}
+	if (json.IsObjectFloat(object_name))
+	{
+		float temp;
+		json.LoadData(temp, object_name);
+		ImGui::InputFloat(object_name.c_str(), (float*)&temp);
+		json.SetData(temp, object_name);
+	}
+	if (json.IsObjectString(object_name))
+	{
+		std::string temp;
+		json.LoadData(temp, object_name);
+		temp.resize(50);
+		ImGui::InputText(object_name.c_str(), (char*)temp.c_str(), temp.size());
+		json.SetData(temp, object_name);
+	}
+	if (json.IsObject(object_name))
+	{
+		ImGui::Text(object_name.c_str());
+		JsonObject sub_json = json.GetSubJsonObject(object_name);
+		std::vector<std::string> sub_object_names = sub_json.GetObjectNames();
+		for (const std::string& sub_object_name : sub_object_names)
+		{
+			WriteData(sub_json, sub_object_name);
+		}
+	}
+}
+
+void DrawScene::Select()
+{
+	Entity editor_camera = EditorCore::Get()->GetEditorCameraEntity();
+	SceneManager* scene_manager = SceneManager::GetSceneManager();
+
+	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+	CameraComponent editor_camera_component = scene_manager->GetEntityManager(GlobalScene::Get()->GetSceneIndex())->GetComponent<CameraComponent>(editor_camera);
+
+	if (Mouse::Get()->GetMouseButtonPressed(Mouse::MouseButton::LEFT))
+	{
+		Vector3 world_mouse_position = GetWorldPositionFromMouse(editor_camera_component);
+
+		uint64_t unique_number = GetNumberFromPosition(world_mouse_position);
+
+		if (m_blocks.contains(unique_number))
+		{
+			m_select_entity = m_blocks.find(unique_number)->second.begin()->second.block_entity;
+		}
+	}
+
+	if (entity_manager->EntityExists(m_select_entity))
+	{
+		ImGui::Begin("Block Data");
+		{
+			std::vector<std::string> component_names = entity_manager->GetComponentNameList(m_select_entity);
+
+			for (const std::string& component_name : component_names)
+			{
+				if (component_name == "SpriteComponent")
+					continue;
+
+				ImGui::Separator();
+				ImGui::Text(component_name.c_str());
+				ImGui::Separator();
+
+				auto save_method = SceneLoader::Get()->GetOverrideSaveComponentMethod(component_name);
+				if (save_method != nullptr)
+				{
+					JsonObject json;
+					(*save_method)(m_select_entity, entity_manager, &json);
+					std::vector<std::string> object_names = json.GetObjectNames();
+					for (const std::string& object_name : object_names)
+					{
+						WriteData(json, object_name);
+					}
+					auto load_method = SceneLoader::Get()->GetOverrideLoadComponentMethod(component_name);
+					if (load_method != nullptr)
+					{
+						(*load_method)(m_select_entity, entity_manager, &json);
+					}
+				}
+			}
+			ImGui::Separator();
+
+			const auto window_position = Vector2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
+			const auto window_height = ImGui::GetWindowHeight();
+			const auto window_width = ImGui::GetWindowWidth();
+			Vector2 window_x_min_max(window_position.x, window_position.x + window_width);
+			Vector2 window_y_min_max(window_position.y, window_position.y + window_height);
+			Vector2u mouse_coords = Mouse::Get()->GetMouseCoords();
+			if (mouse_coords.x >= window_x_min_max.x && mouse_coords.x <= window_x_min_max.y
+				&& mouse_coords.y >= window_y_min_max.x && mouse_coords.y <= window_y_min_max.y)
+			{
+				m_in_editor_menu = true;
+			}
+		}
+		ImGui::End();
+	}
+}
+
+bool DrawScene::InEditorMenu() const
+{
+	return m_in_editor_menu;
 }
 
 void DrawScene::SetAddUserPrefab()

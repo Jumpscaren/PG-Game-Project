@@ -17,6 +17,48 @@ public:
 	static constexpr MonoMethodHandle NULL_METHOD = { (uint64_t)(-1) };
 
 private:
+	typedef enum {
+		MONO_TYPE_END = 0x00,       /* End of List */
+		MONO_TYPE_VOID = 0x01,
+		MONO_TYPE_BOOLEAN = 0x02,
+		MONO_TYPE_CHAR = 0x03,
+		MONO_TYPE_I1 = 0x04,
+		MONO_TYPE_U1 = 0x05,
+		MONO_TYPE_I2 = 0x06,
+		MONO_TYPE_U2 = 0x07,
+		MONO_TYPE_I4 = 0x08,
+		MONO_TYPE_U4 = 0x09,
+		MONO_TYPE_I8 = 0x0a,
+		MONO_TYPE_U8 = 0x0b,
+		MONO_TYPE_R4 = 0x0c,
+		MONO_TYPE_R8 = 0x0d,
+		MONO_TYPE_STRING = 0x0e,
+		MONO_TYPE_PTR = 0x0f,       /* arg: <type> token */
+		MONO_TYPE_BYREF = 0x10,       /* arg: <type> token */
+		MONO_TYPE_VALUETYPE = 0x11,       /* arg: <type> token */
+		MONO_TYPE_CLASS = 0x12,       /* arg: <type> token */
+		MONO_TYPE_VAR = 0x13,	   /* number */
+		MONO_TYPE_ARRAY = 0x14,       /* type, rank, boundsCount, bound1, loCount, lo1 */
+		MONO_TYPE_GENERICINST = 0x15,	   /* <type> <type-arg-count> <type-1> \x{2026} <type-n> */
+		MONO_TYPE_TYPEDBYREF = 0x16,
+		MONO_TYPE_I = 0x18,
+		MONO_TYPE_U = 0x19,
+		MONO_TYPE_FNPTR = 0x1b,	      /* arg: full method signature */
+		MONO_TYPE_OBJECT = 0x1c,
+		MONO_TYPE_SZARRAY = 0x1d,       /* 0-based one-dim-array */
+		MONO_TYPE_MVAR = 0x1e,       /* number */
+		MONO_TYPE_CMOD_REQD = 0x1f,       /* arg: typedef or typeref token */
+		MONO_TYPE_CMOD_OPT = 0x20,       /* optional arg: typedef or typref token */
+		MONO_TYPE_INTERNAL = 0x21,       /* CLR internal type */
+
+		MONO_TYPE_MODIFIER = 0x40,       /* Or with the following types */
+		MONO_TYPE_SENTINEL = 0x41,       /* Sentinel for varargs method signature */
+		MONO_TYPE_PINNED = 0x45,       /* Local var that points to pinned object */
+
+		MONO_TYPE_ENUM = 0x55        /* an enumeration */
+	} CSMonoType;
+
+private:
 	_MonoDomain* m_domain;
 	_MonoAssembly* m_assembly;
 	_MonoImage* m_image;
@@ -25,6 +67,7 @@ private:
 	std::vector<CSMonoMethod> m_mono_methods;
 
 	std::unordered_map<std::string, MonoClassHandle> m_mono_class_name_to_mono_class_handle;
+	std::unordered_map<std::string, MonoMethodHandle> m_mono_method_name_to_mono_method_handle;
 
 	static CSMonoCore* s_mono_core;
 
@@ -130,6 +173,8 @@ private:
 
 	MonoClassHandle RegisterMonoClass(_MonoClass* mono_class);
 
+	bool IsValueTypeInternal(const CSMonoType cs_mono_type, const CSMonoObject& mono_object, const std::string& field_name);
+
 	void* GetValueInternal(const CSMonoObject& mono_object, const std::string& field_name);
 	void SetValueInternal(const CSMonoObject& mono_object, const std::string& field_name, void* value);
 	void* GetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
@@ -153,6 +198,9 @@ public:
 	MonoMethodHandle TryRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name);
 	MonoMethodHandle TryRegisterMonoMethod(const CSMonoObject& mono_object, const std::string& method_name);
 
+	template<typename T>
+	bool IsValueType(const CSMonoObject& mono_object, const std::string& field_name);
+
 	template<typename Type>
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name);
 	template<typename Type>
@@ -161,6 +209,8 @@ public:
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 	template<typename Type>
 	void SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
+
+	std::vector<std::string> GetAllFieldNames(const CSMonoObject& mono_object);
 
 	void CallStaticMethod(const MonoMethodHandle& method_handle);
 	void CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object);
@@ -199,6 +249,43 @@ public:
 
 	void PrintMethod(const MonoMethodHandle& method_handle);
 };
+
+template<typename T>
+inline bool CSMonoCore::IsValueType(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	assert(false);
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_END, mono_object, field_name);
+}
+
+template<>
+inline bool CSMonoCore::IsValueType<uint32_t>(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_U4, mono_object, field_name);
+}
+
+template<>
+inline bool CSMonoCore::IsValueType<float>(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_R4, mono_object, field_name);
+}
+
+template<>
+inline bool CSMonoCore::IsValueType<double>(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_R8, mono_object, field_name);
+}
+
+template<>
+inline bool CSMonoCore::IsValueType<bool>(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_BOOLEAN, mono_object, field_name);
+}
+
+template<>
+inline bool CSMonoCore::IsValueType<CSMonoObject>(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_CLASS, mono_object, field_name);
+}
 
 template<typename Type>
 inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name)

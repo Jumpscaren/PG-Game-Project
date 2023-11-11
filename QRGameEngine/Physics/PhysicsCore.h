@@ -52,10 +52,6 @@ private:
 
 		bool has_collider_data;
 		bool is_box_collider;
-		Vector2 half_box_size;
-		float circle_radius;
-
-		bool trigger;
 	};
 
 	struct DeferredPhysicObjectDestructionData
@@ -110,8 +106,8 @@ private:
 	void AddDeferredPhysicObjectHandle(uint64_t index_to_data, bool is_physic_object_creation_data);
 
 	void AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
-	void AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger);
-	void AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger);
+	void AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
+	void AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
 
 	void AddDeferredPhysicObjectDestruction(SceneIndex scene_index, Entity entity, PhysicObjectHandle physic_object_handle, bool is_collider, bool is_box_collider);
 

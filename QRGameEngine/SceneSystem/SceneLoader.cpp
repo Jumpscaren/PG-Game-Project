@@ -271,6 +271,24 @@ std::string SceneLoader::GetTexturePath(TextureHandle texture_handle)
 	return m_texture_paths.find(texture_handle)->second;
 }
 
+std::function<void(Entity, EntityManager*, JsonObject*)>* SceneLoader::GetOverrideSaveComponentMethod(const std::string& component_name)
+{
+	if (m_override_methods.contains(component_name))
+	{
+		return &(m_override_methods.find(component_name)->second.save_override_method);
+	}
+	return nullptr;
+}
+
+std::function<void(Entity, EntityManager*, JsonObject*)>* SceneLoader::GetOverrideLoadComponentMethod(const std::string& component_name)
+{
+	if (m_override_methods.contains(component_name))
+	{
+		return &(m_override_methods.find(component_name)->second.load_override_method);
+	}
+	return nullptr;
+}
+
 SceneLoader* SceneLoader::Get()
 {
 	return s_scene_loader;

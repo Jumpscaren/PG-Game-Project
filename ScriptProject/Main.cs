@@ -78,8 +78,7 @@ namespace ScriptProject
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
             game_object.AddComponent<StaticBody>();
-            game_object.AddComponent<BoxCollider>();
-            game_object.GetComponent<BoxCollider>().SetTrigger(true);
+            game_object.AddComponent<BoxCollider>().SetTrigger(true);
             game_object.SetName("Bouncer");
         }
     }

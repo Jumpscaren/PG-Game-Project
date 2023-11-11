@@ -84,29 +84,25 @@ void PhysicsCore::AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size()-1, true);
 }
 
-void PhysicsCore::AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger)
+void PhysicsCore::AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity)
 {
 	DeferredPhysicObjectCreationData physic_object_creation_data;
 	physic_object_creation_data.entity = entity;
 	physic_object_creation_data.scene_index = scene_index;
 	physic_object_creation_data.has_collider_data = true;
 	physic_object_creation_data.is_box_collider = true;
-	physic_object_creation_data.trigger = trigger;
-	physic_object_creation_data.half_box_size = half_box_size;
 	m_deferred_physic_object_creations.push_back(physic_object_creation_data);
 
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
 }
 
-void PhysicsCore::AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger)
+void PhysicsCore::AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity)
 {
 	DeferredPhysicObjectCreationData physic_object_creation_data;
 	physic_object_creation_data.entity = entity;
 	physic_object_creation_data.scene_index = scene_index;
 	physic_object_creation_data.has_collider_data = true;
 	physic_object_creation_data.is_box_collider = false;
-	physic_object_creation_data.trigger = trigger;
-	physic_object_creation_data.circle_radius = circle_radius;
 	m_deferred_physic_object_creations.push_back(physic_object_creation_data);
 
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
@@ -152,13 +148,16 @@ void PhysicsCore::HandleDeferredPhysicObjectCreationData(const DeferredPhysicObj
 	}
 	else
 	{
+		EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(creation_data.scene_index);
 		if (creation_data.is_box_collider)
 		{
-			AddBoxCollider(creation_data.scene_index, creation_data.entity, creation_data.half_box_size, creation_data.trigger);
+			const BoxColliderComponent& box_collider = entity_manager->GetComponent<BoxColliderComponent>(creation_data.entity);
+			AddBoxCollider(creation_data.scene_index, creation_data.entity, box_collider.half_box_size, box_collider.trigger);
 		}
 		else
 		{
-			AddCircleCollider(creation_data.scene_index, creation_data.entity, creation_data.circle_radius, creation_data.trigger);
+			const CircleColliderComponent& circle_collider = entity_manager->GetComponent<CircleColliderComponent>(creation_data.entity);
+			AddCircleCollider(creation_data.scene_index, creation_data.entity, circle_collider.circle_radius, circle_collider.trigger);
 		}
 	}
 }
@@ -375,21 +374,23 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 		});
 	//std::cout << "Time: " << timer.StopTimer() << "\n";
 
-	entity_manager->System<BoxColliderComponent>([&](Entity entity, const BoxColliderComponent& box_collider)
+	entity_manager->System<BoxColliderComponent>([&](Entity entity, BoxColliderComponent& box_collider)
 		{
 			if (box_collider.update_box_collider) [[unlikely]]
 			{
 				RemoveBoxColliderInternal(box_collider.physic_object_handle);
 				AddBoxFixture(entity_manager->GetSceneIndex(), entity, box_collider.half_box_size, box_collider.trigger);
+				box_collider.update_box_collider = false;
 			}
 		});
 
-	entity_manager->System<CircleColliderComponent>([&](Entity entity, const CircleColliderComponent& circle_collider)
+	entity_manager->System<CircleColliderComponent>([&](Entity entity, CircleColliderComponent& circle_collider)
 		{
 			if (circle_collider.update_circle_collider) [[unlikely]]
 			{
 				RemoveCircleColliderInternal(circle_collider.physic_object_handle);
-				AddCircleCollider(entity_manager->GetSceneIndex(), entity, circle_collider.circle_radius, circle_collider.trigger);
+				AddCircleFixture(entity_manager->GetSceneIndex(), entity, circle_collider.circle_radius, circle_collider.trigger);
+				circle_collider.update_circle_collider = false;
 			}
 		});
 }
@@ -568,13 +569,18 @@ void PhysicsCore::AddBoxCollider(SceneIndex scene_index, Entity entity, const Ve
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
 	if (!entity_manager->HasComponent<BoxColliderComponent>(entity))
-		entity_manager->AddComponent<BoxColliderComponent>(entity).physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
+	{
+		BoxColliderComponent& box_collider = entity_manager->AddComponent<BoxColliderComponent>(entity);
+		box_collider.physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
+		box_collider.trigger = trigger;
+		box_collider.half_box_size = half_box_size;
+	}
 	else
 		assert(entity_manager->GetComponent<BoxColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
 
 	if (IsDeferringPhysicCalls())
 	{
-		AddBoxColliderDeferredPhysicObjectCreation(scene_index, entity, half_box_size, trigger);
+		AddBoxColliderDeferredPhysicObjectCreation(scene_index, entity);
 		return;
 	}
 
@@ -586,13 +592,18 @@ void PhysicsCore::AddCircleCollider(SceneIndex scene_index, Entity entity, float
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
 	if (!entity_manager->HasComponent<CircleColliderComponent>(entity))
-		entity_manager->AddComponent<CircleColliderComponent>(entity).physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
+	{
+		CircleColliderComponent& circle_collider = entity_manager->AddComponent<CircleColliderComponent>(entity);
+		circle_collider.physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
+		circle_collider.trigger = trigger;
+		circle_collider.circle_radius = circle_radius;
+	}
 	else
 		assert(entity_manager->GetComponent<CircleColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
 
 	if (IsDeferringPhysicCalls())
 	{
-		AddCircleColliderDeferredPhysicObjectCreation(scene_index, entity, circle_radius, trigger);
+		AddCircleColliderDeferredPhysicObjectCreation(scene_index, entity);
 		return;
 	}
 

@@ -12,6 +12,7 @@
 #include <stack>
 #include <chrono>
 #include <concepts>
+#include <algorithm>
 
 //Windows
 #include <Windows.h>

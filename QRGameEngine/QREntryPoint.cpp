@@ -114,7 +114,11 @@ void QREntryPoint::EntryPoint()
 }
 
 Timer rendering_timer;
+Timer scripting_timer;
+Timer physic_timer;
 double average_rendering_frame_time = 0.0;
+double average_scripting_frame_time = 0.0;
+double average_physic_frame_time = 0.0;
 float average_frame_time = 0;
 int frame_count = 0;
 void QREntryPoint::RunTime()
@@ -144,6 +148,8 @@ void QREntryPoint::RunTime()
 			ImGui::Text("Average Frame Time: %f ms", average_frame_time);
 			ImGui::Text("Average Frame Per Second: %f", average_fps);
 			ImGui::Text("Average Rendering Time: %f ms", average_rendering_frame_time);
+			ImGui::Text("Average Scripting Time: %f ms", average_scripting_frame_time);
+			ImGui::Text("Average Physic Time: %f ms", average_physic_frame_time);
 			//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
 		ImGui::End();
@@ -166,22 +172,28 @@ void QREntryPoint::RunTime()
 
 		PhysicsCore::Get()->WaitForPhysics();
 		PhysicsCore::Get()->HandleDeferredPhysicData();
+		physic_timer.StartTimer();
 		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->GetWorldPhysicObjectData(global_entity_manager);
 		PhysicsCore::Get()->HandleDeferredCollisionData();
-
+		double physic_time_1 = physic_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 		//Update scripts
 #ifndef _EDITOR
+		scripting_timer.StartTimer();
 		ScriptingManager::Get()->UpdateScripts(entman);
 		ScriptingManager::Get()->UpdateScripts(global_entity_manager);
+		average_scripting_frame_time = average_scripting_frame_time * 0.9 + 0.1 * scripting_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 #endif // EDITOR
 
+		physic_timer.StartTimer();
 		PhysicsCore::Get()->DrawColliders();
 
 		PhysicsCore::Get()->SetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->SetWorldPhysicObjectData(global_entity_manager);
 
 		PhysicsCore::Get()->UpdatePhysics();
+
+		average_physic_frame_time = average_physic_frame_time * 0.9 + 0.1 * (physic_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds + physic_time_1);
 
 		keyboard->UpdateKeys();
 		mouse->UpdateMouseButtons();

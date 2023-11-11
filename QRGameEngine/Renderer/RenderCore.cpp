@@ -163,8 +163,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 		{
 			SpriteData sprite_data;
 			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
-			sprite_data.uv.x = sprite.uv.x;
-			sprite_data.uv.y = sprite.uv.y;
+			sprite_data.uv = sprite.uv;
 
 			if (render_object_amount < m_transform_data_vector.size())
 			{
@@ -184,8 +183,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 		{
 			SpriteData sprite_data;
 			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
-			sprite_data.uv.x = sprite.uv.x;
-			sprite_data.uv.y = sprite.uv.y;
+			sprite_data.uv = sprite.uv;
 
 			if (render_object_amount < m_transform_data_vector.size())
 			{

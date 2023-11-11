@@ -10,6 +10,9 @@ namespace ScriptProject.Scripts
 {
     internal class Player : ScriptingBehaviour
     {
+        UInt32 fisk;
+        bool majs;
+        double mj1;
         DynamicBody body;
         void Start()
         {

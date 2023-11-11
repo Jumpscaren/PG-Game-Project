@@ -38,6 +38,36 @@ JsonObject::~JsonObject()
 		delete m_json_object;
 }
 
+bool JsonObject::IsObjectInteger(const std::string& name)
+{
+	return (*((nlohmann::json*)m_json_object))[name].is_number_integer();
+}
+
+bool JsonObject::IsObjectUnsigned(const std::string& name)
+{
+	return (*((nlohmann::json*)m_json_object))[name].is_number_unsigned();
+}
+
+bool JsonObject::IsObjectFloat(const std::string& name)
+{
+	return (*((nlohmann::json*)m_json_object))[name].is_number_float();
+}
+
+bool JsonObject::IsObjectString(const std::string& name)
+{
+	return (*((nlohmann::json*)m_json_object))[name].is_string();
+}
+
+bool JsonObject::IsObjectBool(const std::string& name)
+{
+	return (*((nlohmann::json*)m_json_object))[name].is_boolean();
+}
+
+bool JsonObject::IsObject(const std::string& name)
+{
+	return (*((nlohmann::json*)m_json_object))[name].is_object();
+}
+
 JsonObject JsonObject::CreateSubJsonObject(const std::string& name)
 {
 	(*((nlohmann::json*)m_json_object))[name] = {};
@@ -67,6 +97,16 @@ void JsonObject::SetData(uint64_t data, const std::string& name)
 }
 
 void JsonObject::SetData(float data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
+void JsonObject::SetData(double data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
+void JsonObject::SetData(bool data, const std::string& name)
 {
 	(*((nlohmann::json*)m_json_object))[name] = data;
 }
@@ -129,6 +169,26 @@ void JsonObject::LoadData(float& data, const std::string& name)
 	data = (*((nlohmann::json*)m_json_object))[name];
 }
 
+void JsonObject::LoadData(double& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = 0.0;
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
+}
+
+void JsonObject::LoadData(bool& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = false;
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
+}
+
 void JsonObject::LoadData(Vector2& data, const std::string& name)
 {
 	if (!ObjectExist(name))
@@ -161,6 +221,15 @@ void JsonObject::LoadData(std::string& data, const std::string& name)
 		return;
 	}
 	data = (*((nlohmann::json*)m_json_object))[name];
+}
+
+std::vector<std::string> JsonObject::GetObjectNames()
+{
+	std::vector<std::string> names;
+	for (auto& el : (*((nlohmann::json*)m_json_object)).items()) {
+		names.push_back(el.key());
+	}
+	return names;
 }
 
 std::string JsonObject::GetJsonString()

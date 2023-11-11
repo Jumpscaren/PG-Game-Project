@@ -7,6 +7,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "DynamicBodyComponent.h"
 #include "StaticBodyComponent.h"
+#include "IO/JsonObject.h"
 
 void CircleColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -40,10 +41,17 @@ void CircleColliderComponentInterface::RemoveComponent(CSMonoObject object, Scen
 	PhysicsCore::Get()->RemoveCircleCollider(scene_index, entity);
 }
 
-void CircleColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* file)
+void CircleColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
+	const CircleColliderComponent& circle_collider = entman->GetComponent<CircleColliderComponent>(ent);
+	json_object->SetData(circle_collider.trigger, "trigger");
+	json_object->SetData(circle_collider.circle_radius, "circle_radius");
 }
 
-void CircleColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* file)
+void CircleColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
+	CircleColliderComponent& circle_collider = entman->GetComponent<CircleColliderComponent>(ent);
+	json_object->LoadData(circle_collider.trigger, "trigger");
+	json_object->LoadData(circle_collider.circle_radius, "circle_radius");
+	circle_collider.update_circle_collider = true;
 }
