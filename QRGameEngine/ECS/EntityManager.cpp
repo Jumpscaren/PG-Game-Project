@@ -3,7 +3,7 @@
 #include "SceneSystem/SceneManager.h"
 #include "SceneSystem/Scene.h"
 
-bool EntityManager::EntityExists(Entity entity)
+bool EntityManager::EntityExists(Entity entity) const
 {
 	return (entity < m_max_entities && m_entities[entity] == entity);
 }
@@ -20,9 +20,10 @@ bool EntityManager::ComponentExists(const std::string& component_name)
 	return m_component_name_to_pool.contains(component_name);
 }
 
-bool EntityManager::HasComponent(Entity entity, ComponentPool& component_pool)
+bool EntityManager::HasComponent(Entity entity, const ComponentPool& component_pool)
 {
-	return component_pool.m_component_pool_entities.find(entity) != component_pool.m_component_pool_entities.end();
+	return component_pool.has_component_entities[entity];
+	//return component_pool.m_component_pool_entities.find(entity) != component_pool.m_component_pool_entities.end();
 }
 
 char* EntityManager::GetComponentPoolDataFromName(Entity entity, const std::string& component_name)
@@ -45,7 +46,7 @@ void EntityManager::DestroyEntity(Entity entity)
 	{
 		ComponentPool& component_pool = m_component_pools[i];
 
-		if (HasComponent(entity, component_pool))
+		if (component_pool.has_component_entities.size() && HasComponent(entity, component_pool))
 		{
 			component_pool.m_component_pool_entities.erase(entity);
 		}
@@ -62,6 +63,7 @@ void EntityManager::UpdateEntityListIfPoolHasChanged(ComponentPool* component_po
 	{
 		component_pool->pool_changed = false;
 		component_pool->list_of_component_pool_entities = std::vector<Entity>(component_pool->m_component_pool_entities.begin(), component_pool->m_component_pool_entities.end());
+		std::sort(component_pool->list_of_component_pool_entities.begin(), component_pool->list_of_component_pool_entities.end());
 	}
 }
 
@@ -80,6 +82,8 @@ EntityManager::EntityManager(uint32_t max_entities, SceneIndex scene_index) : m_
 		m_entities[i] = NULL_ENTITY;
 		m_free_entities[i] = max_ent - i;
 	}
+
+	//m_data_pool = new char[DATA_POOL_SIZE];
 }
 
 EntityManager::~EntityManager()
@@ -88,6 +92,7 @@ EntityManager::~EntityManager()
 	{
 		free(m_component_pools[i].component_pool_data);
 	}
+	//delete[] m_data_pool;
 }
 
 SceneIndex EntityManager::GetSceneIndex() const
