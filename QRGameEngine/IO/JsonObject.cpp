@@ -19,15 +19,13 @@ bool JsonObject::ObjectExist(const std::string& name)
 
 JsonObject::JsonObject()
 {
-	m_json_object = malloc(sizeof(nlohmann::json));
-	nlohmann::json json;
-	*((nlohmann::json*)m_json_object) = json;
+	m_json_object = new nlohmann::json();
 	m_created_memory = true;
 }
 
 JsonObject::JsonObject(const std::string& json_string)
 {
-	m_json_object = malloc(sizeof(nlohmann::json));
+	m_json_object = new nlohmann::json();
 	*((nlohmann::json*)m_json_object) = nlohmann::json::parse(json_string);
 	m_created_memory = true;
 }
@@ -35,7 +33,7 @@ JsonObject::JsonObject(const std::string& json_string)
 JsonObject::~JsonObject()
 {
 	if (m_created_memory)
-		delete m_json_object;
+		delete (nlohmann::json*)(m_json_object);
 }
 
 bool JsonObject::IsObjectInteger(const std::string& name)
