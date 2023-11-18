@@ -38,6 +38,7 @@ namespace ScriptProject
 
             PrefabSystem.CreateUserPrefab(Prefab1, 1);
             PrefabSystem.CreateUserPrefab(Prefab2, 2);
+            PrefabSystem.CreateUserPrefab(WallCollider, 2);
             PrefabSystem.CreateUserPrefab(PlayerPrefab, 1);
             PrefabSystem.CreateUserPrefab(PlayerCameraPrefab, 1);
             PrefabSystem.CreateUserPrefab(BouncePrefab, 1);
@@ -55,13 +56,20 @@ namespace ScriptProject
         static void Prefab2(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            //game_object.AddComponent<BoxCollider>();
+        }
+
+        static void WallCollider(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
             game_object.AddComponent<BoxCollider>();
         }
 
         static void PlayerPrefab(GameObject game_object)
         {
             game_object.SetName("Player");
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png"));
+            game_object.AddComponent<AnimatableSprite>();
             game_object.AddComponent<Player>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             game_object.AddComponent<CircleCollider>();

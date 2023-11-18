@@ -8,8 +8,9 @@
 #include "ImGUIMain.h"
 #include "Asset/AssetManager.h"
 #include "Components/CameraComponent.h"
-#include "Time/Timer.h"
+#include "Time/Time.h"
 #include "SceneSystem/GlobalScene.h"
+#include "Components/AnimatableSpriteComponent.h"
 #include <algorithm>
 
 RenderCore* RenderCore::s_render_core = nullptr;
@@ -36,19 +37,18 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	struct Vertex
 	{
 		float position[3];
-		float uv[2];
-		float pad;
+		uint32_t uv_index;
 	};
 
 	Vertex quad[6] =
 	{
-		{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f}, 0.0f},
-		{{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f}, 0.0f},
-		{{0.5f, 0.5f, 0.0f}, {1.0f, 0.0f}, 0.0f},
+		{{-0.5f, -0.5f, 0.0f}, 2},
+		{{-0.5f, 0.5f, 0.0f}, 0},
+		{{0.5f, 0.5f, 0.0f}, 1},
 
-		{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f}, 0.0f},
-		{{0.5f, 0.5f, 0.0f}, {1.0f, 0.0f}, 0.0f},
-		{{0.5f, -0.5f, 0.0f}, {1.0f, 1.0f}, 0.0f},
+		{{-0.5f, -0.5f, 0.0f}, 2},
+		{{0.5f, 0.5f, 0.0f}, 1},
+		{{0.5f, -0.5f, 0.0f}, 3},
 	};
 
 	m_quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
@@ -56,13 +56,13 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 
 	Vertex fullscreen_quad[6] =
 	{
-		{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
-		{{-1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, 0.0f},
-		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
+		{{-1.0f, -1.0f, 0.0f}, 2},
+		{{-1.0f, 1.0f, 0.0f}, 0},
+		{{1.0f, 1.0f, 0.0f}, 1},
 
-		{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, 0.0f},
-		{{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, 0.0f},
-		{{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}, 0.0f},
+		{{-1.0f, -1.0f, 0.0f}, 2},
+		{{1.0f, 1.0f, 0.0f}, 1},
+		{{1.0f, -1.0f, 0.0f}, 3},
 	};
 
 	m_fullscreen_quad_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, &fullscreen_quad, sizeof(Vertex), 6, BufferType::CONSTANT_BUFFER);
@@ -97,12 +97,10 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 2)
+		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1, 1)
 		.InitRootSignature(&m_dx12_core);
 
-
-
 	m_pipeline.InitPipeline(&m_dx12_core, &m_root_signature, L"../QRGameEngine/Shaders/VertexShader.hlsl", L"../QRGameEngine/Shaders/PixelShader.hlsl");
-
 
 	//Other shader
 	m_grid_root_signature
@@ -157,47 +155,55 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	uint32_t render_object_amount = 0;
 
+	EntityManager* assamble_render_data_ent_man = draw_scene->GetEntityManager();
+	const auto assamble_render_data = [&](const Entity entity, const TransformComponent& transform, const SpriteComponent& sprite)
+		{
+			SpriteData sprite_data;
+			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
+			//if (render_target_texture == 0)
+			//	sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(3);
+			//else
+			//	sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(5);
+			Vector2 uv;
+			if (assamble_render_data_ent_man->HasComponent<AnimatableSpriteComponent>(entity))
+			{
+				AnimatableSpriteComponent& animatable_sprite = assamble_render_data_ent_man->GetComponent<AnimatableSpriteComponent>(entity);
+				uv = animatable_sprite.split_size * animatable_sprite.current_split_index;
+				animatable_sprite.time_since_last_split += (float)Time::GetDeltaTime();
+				if (animatable_sprite.time_between_splits < animatable_sprite.time_since_last_split)
+				{
+					++animatable_sprite.current_split_index;
+					animatable_sprite.time_since_last_split = 0.0f;
+				}
+				if (animatable_sprite.current_split_index >= animatable_sprite.max_split_index)
+					animatable_sprite.current_split_index = 0;
+			}
+	
+			sprite_data.uv[0] = sprite.uv[sprite.uv_indicies[0]] + uv;
+			sprite_data.uv[1] = sprite.uv[sprite.uv_indicies[1]] + uv;
+			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]] + uv;
+			sprite_data.uv[3] = sprite.uv[sprite.uv_indicies[3]] + uv;
+
+			if (render_object_amount < m_transform_data_vector.size())
+			{
+				m_transform_data_vector[render_object_amount] = transform;
+				m_sprite_data_vector[render_object_amount] = sprite_data;
+			}
+			else
+			{
+				m_transform_data_vector.push_back(transform);
+				m_sprite_data_vector.push_back(sprite_data);
+			}
+
+			++render_object_amount;
+		};
+
 	//Slow, needs to be fixed
 	//Timer timer;
-	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](const TransformComponent& transform, const SpriteComponent& sprite)
-		{
-			SpriteData sprite_data;
-			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
-			sprite_data.uv = sprite.uv;
-
-			if (render_object_amount < m_transform_data_vector.size())
-			{
-				m_transform_data_vector[render_object_amount] = transform;
-				m_sprite_data_vector[render_object_amount] = sprite_data;
-			}
-			else
-			{
-				m_transform_data_vector.push_back(transform);
-				m_sprite_data_vector.push_back(sprite_data);
-			}
-
-			++render_object_amount;
-		});
+	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>(assamble_render_data);
 	Scene* draw_global_scene = SceneManager::GetSceneManager()->GetScene(GlobalScene::Get()->GetSceneIndex());
-	draw_global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>([&](const TransformComponent& transform, const SpriteComponent& sprite)
-		{
-			SpriteData sprite_data;
-			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
-			sprite_data.uv = sprite.uv;
-
-			if (render_object_amount < m_transform_data_vector.size())
-			{
-				m_transform_data_vector[render_object_amount] = transform;
-				m_sprite_data_vector[render_object_amount] = sprite_data;
-			}
-			else
-			{
-				m_transform_data_vector.push_back(transform);
-				m_sprite_data_vector.push_back(sprite_data);
-			}
-
-			++render_object_amount;
-		});
+	assamble_render_data_ent_man = draw_global_scene->GetEntityManager();
+	draw_global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>(assamble_render_data);
 
 	//std::sort(draw_entities.begin(), draw_entities.end(), [&](uint32_t i, uint32_t j){
 	//	return (m_transform_data_vector[i].GetPosition().z < m_transform_data_vector[j].GetPosition().z);
@@ -208,7 +214,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	DX12BufferHandle transform_data_buffer = 0;
 	DX12BufferHandle sprite_data_buffer = 0;
 
-	if (m_transform_data_vector.size())
+	if (render_object_amount)
 	{
 		transform_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(TransformComponent), render_object_amount, BufferType::CONSTANT_BUFFER);
 		DX12BufferViewHandle transform_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, transform_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
@@ -218,6 +224,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 		sprite_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(SpriteData), render_object_amount, BufferType::CONSTANT_BUFFER);
 		DX12BufferViewHandle sprite_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, sprite_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
 		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, sprite_data_buffer_view, 1);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, sprite_data_buffer_view, 4);
 		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, sprite_data_buffer, m_sprite_data_vector.data(), sizeof(SpriteData), render_object_amount);
 	}
 
@@ -228,7 +235,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	CameraComponent active_camera = {};
 	float view_size = 0.0f;
-	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, const TransformComponent& transform)
+	const auto assamble_camera_data = [&](CameraComponent& camera, const TransformComponent& transform)
 		{
 			Vector3 pos = transform.GetPosition();
 			//Hardcoded camera position to 0
@@ -245,25 +252,9 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 			camera = active_camera;
 
-		});
-	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>([&](CameraComponent& camera, const TransformComponent& transform)
-		{
-			Vector3 pos = transform.GetPosition();
-			//Hardcoded camera position to 0
-			float fake_camera_z_position = 0.0f;
-			active_camera.view_matrix = DirectX::XMMatrixLookAtLH({ pos.x,pos.y, fake_camera_z_position }, { pos.x,pos.y, fake_camera_z_position + 1.0f }, { 0,1,0 });
-			//active_camera.proj_matrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, m_window->GetWindowHeight() / m_window->GetWindowWidth(), 0.1f, 800.0f);
-
-			float screen_width = m_window->GetWindowWidth();
-			float screen_height = m_window->GetWindowHeight();
-			view_size = pos.z;
-			if (view_size < 1.0f)
-				view_size = 1.0f;
-			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
-
-			camera = active_camera;
-
-		});
+		};
+	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
+	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_camera_buffer, &active_camera, sizeof(CameraComponent), 1);
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
@@ -337,6 +328,8 @@ TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name)
 
 	m_texture_handles.insert({ texture_asset_handle, {texture_handle, texture_view_handle} });
 	m_texture_to_asset.insert({ texture_view_handle, texture_asset_handle });
+
+	AssetManager::Get()->DeleteCPUAssetDataIfGPUOnly(texture_asset_handle);
 
 	return texture_view_handle;
 }

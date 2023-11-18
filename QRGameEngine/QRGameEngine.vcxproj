@@ -314,6 +314,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Components\AnimatableSpriteComponent.cpp" />
     <ClCompile Include="Asset\AssetManager.cpp" />
     <ClCompile Include="Components\BoxColliderComponent.cpp" />
     <ClCompile Include="Components\CircleColliderComponent.cpp" />
@@ -431,6 +432,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Components\AnimatableSpriteComponent.h" />
     <ClInclude Include="Asset\AssetManager.h" />
     <ClInclude Include="Asset\AssetTypes.h" />
     <ClInclude Include="Components\BoxColliderComponent.h" />

@@ -13,8 +13,6 @@ namespace ScriptProject.Engine
         Scene scene;
         public Transform transform;
 
-        //List<Component> components = new List<Component>();
-
         public static bool operator ==(GameObject left, GameObject right)
         {
             return left.entity_id == right.entity_id && left.scene.GetSceneIndex() == right.scene.GetSceneIndex();
@@ -59,7 +57,6 @@ namespace ScriptProject.Engine
             gameObject.entity_id = SceneManager.GetActiveScene().GetEntityManager().NewEntity();
             gameObject.scene = SceneManager.GetActiveScene();
             gameObject.AddEntityData();
-            //Console.WriteLine("GameObject Entity ID = " + gameObject.entity_id);
 
             gameObject.transform = gameObject.AddComponent<Transform>();
             gameObject.transform.SetZIndex(1);
@@ -90,26 +87,17 @@ namespace ScriptProject.Engine
         {
             T component = new T();
             component.SetGameObject(this);
-            //Console.WriteLine("GG " + scene.GetSceneIndex() + " , " + entity_id);
             component.InitComponent(scene.GetSceneIndex(), entity_id);
-            //components.Add(component);
             return component;
         }
 
         //Slow should not be used every frame
         public T GetComponent<T>() where T : Component, new()
         {
-            //foreach (Component comp in components)
-            //{
-            //    if (comp.GetType() == typeof(T))
-            //        return (T)comp;
-            //}
-
             if (HasComponent<T>())
             {
                 T component = new T();
                 component.SetGameObject(this);
-                //components.Add(component);
                 return component;
             }
 
@@ -129,16 +117,6 @@ namespace ScriptProject.Engine
             T component = new T();
             component.SetGameObject(this);
             component.RemoveComponent(scene.GetSceneIndex(), entity_id);
-
-            //foreach (Component comp in components)
-            //{
-            //    if (comp.GetType() == typeof(T))
-            //    {
-            //        comp.RemoveComponent(scene.GetSceneIndex(), entity_id);
-            //        components.Remove(comp);
-            //        break;
-            //    }
-            //}
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

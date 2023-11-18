@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ScriptProject.Engine
 {
-    internal class Sprite : Component
+    internal class AnimatableSprite : Component
     {
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public override extern void InitComponent(UInt32 scene_index, UInt32 entity);
@@ -20,21 +20,12 @@ namespace ScriptProject.Engine
         public override extern void RemoveComponent(uint scene_index, uint entity);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetTexture(Texture texture);
+        public extern void SetSplitSize(Vector2 split_size);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void FlipX(bool flip_x);
+        public extern void SetMaxSplits(UInt32 max_splits);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void FlipY(bool flip_y);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern bool GetFlipX();
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern bool GetFlipY();
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetUV(Vector2 uv_1_position, Vector2 uv_4_position);
+        public extern void SetTimeBetweenSplits(float time_between_splits);
     }
 }

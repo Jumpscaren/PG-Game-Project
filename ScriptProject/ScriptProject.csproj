@@ -73,6 +73,7 @@
     <Compile Include="Engine\Scene.cs" />
     <Compile Include="Engine\SceneManager.cs" />
     <Compile Include="Engine\ScriptingBehaviour.cs" />
+    <Compile Include="Engine\AnimatableSprite.cs" />
     <Compile Include="Engine\Sprite.cs" />
     <Compile Include="Engine\StaticBody.cs" />
     <Compile Include="Engine\Texture.cs" />

@@ -9,6 +9,9 @@ struct Vector2
 
 	operator DirectX::XMVECTOR() const;
 	const Vector2 operator= (const DirectX::XMVECTOR& vector);
+	const Vector2 operator+ (const Vector2& vector);
+	friend const Vector2 operator+ (const Vector2& vector_1, const Vector2& vector_2);
+	const Vector2 operator* (uint8_t scalar);
 };
 
 struct Vector2i

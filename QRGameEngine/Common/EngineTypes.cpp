@@ -27,6 +27,21 @@ const Vector2 Vector2::operator=(const DirectX::XMVECTOR& vector)
 	return Vector2(vector.m128_f32[0], vector.m128_f32[1]);
 }
 
+const Vector2 Vector2::operator+(const Vector2& vector)
+{
+	return Vector2(x + vector.x, y + vector.y);
+}
+
+const Vector2 operator+(const Vector2& vector_1, const Vector2& vector_2)
+{
+	return Vector2(vector_1.x + vector_2.x, vector_1.y + vector_2.y);
+}
+
+const Vector2 Vector2::operator*(const uint8_t scalar)
+{
+	return Vector2(x * scalar, y * scalar);
+}
+
 Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z)
 {
 	

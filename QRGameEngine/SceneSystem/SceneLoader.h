@@ -44,6 +44,7 @@ public:
 	void InstancePrefab(const CSMonoObject& game_object, uint32_t prefab_instance_id);
 
 	std::string GetTexturePath(TextureHandle texture_handle);
+	bool HasTexturePath(TextureHandle texture_handle);
 
 	template<typename Component>
 	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method);

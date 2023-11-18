@@ -83,11 +83,14 @@ std::string GameObjectInterface::GetName(CSMonoObject object)
 CSMonoObject GameObjectInterface::TempFindGameObject(std::string name)
 {
     Entity found_game_object = NULL_ENTITY;
-    SceneManager::GetSceneManager()->GetEntityManager(SceneManager::GetSceneManager()->GetActiveSceneIndex())->System<EntityDataComponent>([&](Entity entity, const EntityDataComponent& entity_data)
+    SceneManager::GetSceneManager()->GetEntityManager(SceneManager::GetSceneManager()->GetActiveSceneIndex())->System<EntityDataComponent>([&](const Entity entity, const EntityDataComponent& entity_data)
         {
             if (found_game_object != NULL_ENTITY)
                 return;
-            if (entity_data.entity_name == name)
+
+            const std::string entity_name = entity_data.entity_name.substr(0, name.length());
+            
+            if (entity_name == name)
                 found_game_object = entity;
         });
     return NewGameObjectWithExistingEntity(found_game_object, SceneManager::GetSceneManager()->GetActiveSceneIndex());

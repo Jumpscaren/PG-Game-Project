@@ -26,6 +26,11 @@ bool EntityManager::HasComponent(Entity entity, const ComponentPool& component_p
 	//return component_pool.m_component_pool_entities.find(entity) != component_pool.m_component_pool_entities.end();
 }
 
+void EntityManager::SetHasComponent(Entity entity, ComponentPool* const component_pool, bool has_component)
+{
+	component_pool->has_component_entities[entity] = has_component;
+}
+
 char* EntityManager::GetComponentPoolDataFromName(Entity entity, const std::string& component_name)
 {
 	auto it = m_component_name_to_pool.find(component_name);
@@ -49,6 +54,7 @@ void EntityManager::DestroyEntity(Entity entity)
 		if (component_pool.has_component_entities.size() && HasComponent(entity, component_pool))
 		{
 			component_pool.m_component_pool_entities.erase(entity);
+			SetHasComponent(entity, &component_pool, false);
 		}
 	}
 

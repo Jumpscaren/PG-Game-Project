@@ -24,7 +24,7 @@ AssetManager* AssetManager::Get()
 	return s_asset_manager;
 }
 
-AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path)
+AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, const AssetLoadFlag& asset_load_flag)
 {
 	bool texture_exists = false;
 	AssetHandle texture_handle = LoadAssetPath(texture_path, texture_exists);
@@ -36,7 +36,7 @@ AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path)
 			&width, &height, &comp, channels);
 		TextureInfo* texture = new TextureInfo{ imageData, (uint32_t)width, (uint32_t)height, (uint32_t)comp, (uint32_t)channels };
 
-		m_assets.insert({ texture_handle, {texture, AssetType::TEXTURE, texture_path} });
+		m_assets.insert({ texture_handle, {texture, AssetType::TEXTURE, texture_path, asset_load_flag} });
 	}
 
 	return texture_handle;
@@ -60,9 +60,35 @@ std::string AssetManager::GetAssetPath(const AssetHandle& asset_handle)
 {
 	assert(m_assets.contains(asset_handle));
 
-	auto asset_data = m_assets.find(asset_handle);
+	const auto asset_data = m_assets.find(asset_handle);
 
 	return asset_data->second.asset_path;
+}
+
+const AssetManager::AssetLoadFlag& AssetManager::GetAssetLoadFlag(AssetHandle asset_handle)
+{
+	assert(m_assets.contains(asset_handle));
+
+	const auto asset_data = m_assets.find(asset_handle);
+
+	return asset_data->second.asset_load_flag;
+}
+
+void AssetManager::DeleteCPUAssetDataIfGPUOnly(AssetHandle asset_handle)
+{
+	assert(m_assets.contains(asset_handle));
+
+	const auto asset_data = m_assets.find(asset_handle);
+	
+	if (asset_data->second.asset_load_flag != AssetLoadFlag::GPU_ONLY)
+		return;
+
+	if (asset_data->second.asset_type == AssetType::TEXTURE)
+	{
+		TextureInfo* texture_info = (TextureInfo*)asset_data->second.asset_data;
+		delete[] texture_info->texture_data;
+		delete texture_info;
+	}
 }
 
 AssetHandle AssetManager::LoadAssetPath(const std::string& asset_path, bool& asset_existing)

@@ -15,7 +15,7 @@ namespace ScriptProject.Scripts
         {
             player_game_object = GameObject.TempFindGameObject("Player");
             Console.WriteLine("Player Name = " + player_game_object.GetName());
-            game_object.transform.SetZIndex(50);
+            game_object.transform.SetZIndex(20);
         }
 
         void Update()

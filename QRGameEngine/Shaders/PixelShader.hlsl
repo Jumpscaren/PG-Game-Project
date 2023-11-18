@@ -1,8 +1,8 @@
 struct Sprite
 {
 	uint index;
-	float2 uv;
-	float pad;
+	float2 uv[4];
+	float pad[3];
 };
 
 struct VS_OUT

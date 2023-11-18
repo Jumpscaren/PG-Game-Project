@@ -216,6 +216,8 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 
 	save_file.Close();
 
+	m_texture_paths.clear();
+
 	return blocks;
 }
 
@@ -258,6 +260,8 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene)
 	}
 
 	save_file.Close();
+
+	m_texture_paths.clear();
 }
 
 void SceneLoader::InstancePrefab(const CSMonoObject& game_object, uint32_t prefab_instance_id)
@@ -269,6 +273,11 @@ void SceneLoader::InstancePrefab(const CSMonoObject& game_object, uint32_t prefa
 std::string SceneLoader::GetTexturePath(TextureHandle texture_handle)
 {
 	return m_texture_paths.find(texture_handle)->second;
+}
+
+bool SceneLoader::HasTexturePath(const TextureHandle texture_handle)
+{
+	return m_texture_paths.contains(texture_handle);
 }
 
 std::function<void(Entity, EntityManager*, JsonObject*)>* SceneLoader::GetOverrideSaveComponentMethod(const std::string& component_name)

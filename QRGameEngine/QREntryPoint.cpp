@@ -32,6 +32,7 @@
 #include "SceneSystem/GlobalScene.h"
 #include "Components/EntityDataComponent.h"
 #include "Scripting/Objects/TimeInterface.h"
+#include "Components/AnimatableSpriteComponent.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -95,6 +96,7 @@ void QREntryPoint::EntryPoint()
 	StaticBodyComponentInterface::RegisterInterface(mono_core);
 	Vector2Interface::RegisterInterface(mono_core);
 	EntityDataComponentInterface::RegisterInterface(mono_core);
+	AnimatableSpriteComponentInterface::RegisterInterface(mono_core);
 	TimeInterface::RegisterInterface(mono_core);
 
 #ifdef _EDITOR
@@ -124,14 +126,15 @@ int frame_count = 0;
 void QREntryPoint::RunTime()
 {
 	EntityManager* global_entity_manager = scene_manager->GetEntityManager(global_scene->Get()->GetSceneIndex());
-	Entity player = global_entity_manager->NewEntity();
-	global_entity_manager->AddComponent<TransformComponent>(player, Vector3(0.0f, 0.0f, 1.0f));
-	global_entity_manager->AddComponent<SpriteComponent>(player).texture_handle = render_core->LoadTexture("../QRGameEngine/Textures/Temp.png");
+	//Entity player = global_entity_manager->NewEntity();
+	//global_entity_manager->AddComponent<TransformComponent>(player, Vector3(0.0f, 0.0f, 1.0f));
+	//global_entity_manager->AddComponent<SpriteComponent>(player).texture_handle = render_core->LoadTexture("../QRGameEngine/Textures/Temp.png");
 
 	bool window_exist = true;
 	while (window_exist)
 	{
 		Time::Start();
+		Timer time;
 
 		Mouse::Get()->ResetMouseDeltaCoords();
 
@@ -154,12 +157,14 @@ void QREntryPoint::RunTime()
 		}
 		ImGui::End();
 
+#ifndef _EDITOR
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
 			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
-			SceneIndex scene = scene_manager->LoadScene("t4");
+			SceneIndex scene = scene_manager->LoadScene("port");
 			scene_manager->ChangeScene(scene);
 		}
+#endif // EDITOR
 
 #ifdef _EDITOR
 		editor_core->Update();
@@ -212,6 +217,12 @@ void QREntryPoint::RunTime()
 		global_entity_manager->DestroyDeferredEntities();
 
 		scene_manager->HandleDeferredScenes();
+
+		//double frame_time = 0.0f;
+		//while (frame_time < 1000.0/60.0)
+		//{
+		//	frame_time = time.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
+		//}
 
 		Time::Stop();
 	}

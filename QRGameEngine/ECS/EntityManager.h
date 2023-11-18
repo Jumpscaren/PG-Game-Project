@@ -62,6 +62,7 @@ private:
 	bool HasComponent(Entity entity, const ComponentPool& component_pool);
 	template <typename Component>
 	bool HasComponent(Entity entity, const ComponentPool* component_pool);
+	void SetHasComponent(Entity entity, ComponentPool* const component_pool, bool has_component);
 	template <typename Component>
 	Component& GetComponent(Entity entity, const ComponentPool* component_pool);
 
@@ -271,7 +272,7 @@ inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
 
 	component_pool.m_component_pool_entities.insert(entity);
 	component_pool.pool_changed = true;
-	component_pool.has_component_entities[entity] = true;
+	SetHasComponent(entity, &component_pool, true);
 
 	char* component_pool_data = (char*)component_pool.component_pool_data;
 
@@ -321,5 +322,5 @@ inline void EntityManager::RemoveComponent(Entity entity)
 
 	component_pool.m_component_pool_entities.erase(entity);
 	component_pool.pool_changed = true;
-	component_pool.has_component_entities[entity] = false;
+	SetHasComponent(entity, &component_pool, false);
 }

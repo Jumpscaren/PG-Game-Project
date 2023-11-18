@@ -9,6 +9,15 @@ struct TextureInfo
 
 class AssetManager
 {
+public:
+	enum AssetLoadFlag
+	{
+		CPU_ONLY,
+		GPU_ONLY,
+		CPU_AND_GPU
+	};
+
+private:
 	enum AssetType
 	{
 		TEXTURE = 0,
@@ -19,6 +28,7 @@ class AssetManager
 		void* asset_data;
 		AssetType asset_type;
 		std::string asset_path;
+		AssetLoadFlag asset_load_flag;
 	};
 
 private:
@@ -39,8 +49,10 @@ public:
 
 	static AssetManager* Get();
 
-	AssetHandle LoadTextureAsset(const std::string& texture_path);
+	AssetHandle LoadTextureAsset(const std::string& texture_path, const AssetLoadFlag& asset_load_flag = GPU_ONLY);
 	TextureInfo* GetTextureData(const AssetHandle& texture_handle);
 	std::string GetAssetPath(const AssetHandle& asset_handle);
+	const AssetLoadFlag& GetAssetLoadFlag(AssetHandle asset_handle);
+	void DeleteCPUAssetDataIfGPUOnly(AssetHandle asset_handle);
 };
 
