@@ -23,6 +23,7 @@
 #include "Components/SpriteComponent.h"
 #include "Components/AnimatableSpriteComponent.h"
 #include <filesystem>
+#include "Animation/AnimationManager.h"
 
 std::vector<PrefabAndTextureData> DrawScene::m_user_prefabs;
 
@@ -75,6 +76,7 @@ DrawScene::DrawScene()
 	SetAddUserPrefab();
 	m_scene_name.resize(50);
 	m_animation_texture_name.resize(50);
+	m_animation_file_name.resize(50);
 	m_select = false;
 }
 
@@ -352,9 +354,9 @@ void DrawScene::Select()
 
 	if (!InEditorMenu() && Mouse::Get()->GetMouseButtonPressed(Mouse::MouseButton::LEFT))
 	{
-		Vector3 world_mouse_position = GetWorldPositionFromMouse(editor_camera_component);
+		const Vector3 world_mouse_position = GetWorldPositionFromMouse(editor_camera_component);
 
-		uint64_t unique_number = GetNumberFromPosition(world_mouse_position);
+		const uint64_t unique_number = GetNumberFromPosition(world_mouse_position);
 
 		if (m_blocks.contains(unique_number))
 		{
@@ -388,16 +390,29 @@ void DrawScene::Animation()
 	}
 
 	bool back_pressed = false;
+	bool save_animation_pressed = false;
+	bool load_animation_pressed = false;
+	SpriteComponent& sprite = ent_man->GetComponent<SpriteComponent>(m_animation_base_entity);
+	Vector2 uv_1 = sprite.uv[0];
+	Vector2 uv_4 = sprite.uv[3];
 	ImGui::Begin("Animation");
 	{
 		back_pressed = ImGui::Button("Back");
+		ImGui::InputText("Animation Name", (char*)m_animation_file_name.c_str(), m_animation_file_name.size());
+		save_animation_pressed = ImGui::Button("Save Animation");
+		load_animation_pressed = ImGui::Button("Load Animation");
 		ImGui::InputText("Texture Name", (char*)m_animation_texture_name.c_str(), m_animation_texture_name.size());
+		ImGui::InputFloat("uv_1.x", (float*)&uv_1.x);
+		ImGui::InputFloat("uv_1.y", (float*)&uv_1.y);
+		ImGui::InputFloat("uv_4.x", (float*)&uv_4.x);
+		ImGui::InputFloat("uv_4.y", (float*)&uv_4.y);
 	}
 	ImGui::End();
 
-	const std::string texture_full_path = "../QRGameEngine/Textures/" + m_animation_texture_name;
-	if (std::filesystem::exists(texture_full_path) && std::filesystem::is_regular_file(texture_full_path))
-		ent_man->GetComponent<SpriteComponent>(m_animation_base_entity).texture_handle = RenderCore::Get()->LoadTexture(texture_full_path);
+	sprite.uv[0] = uv_1;
+	sprite.uv[1] = Vector2(uv_4.x, uv_1.y);
+	sprite.uv[2] = Vector2(uv_1.x, uv_4.y);
+	sprite.uv[3] = uv_4;
 
 	if (back_pressed)
 	{
@@ -405,6 +420,37 @@ void DrawScene::Animation()
 		ent_man->RemoveEntity(m_animation_base_entity);
 		m_animation_base_entity = NULL_ENTITY;
 		Load(m_animation_temp_save_file_name);
+	}
+
+	const std::string folder_path = "../QRGameEngine/Textures/";
+	const std::string texture_full_path = folder_path + m_animation_texture_name;
+	bool texture_exists = false;
+	if (std::filesystem::exists(texture_full_path) && std::filesystem::is_regular_file(texture_full_path))
+	{
+		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_full_path);
+		texture_exists = true;
+	}
+
+	std::string fixed_animation_file_name = "Animations/";
+	//So goddamn stupid!!!
+	fixed_animation_file_name.insert(fixed_animation_file_name.length(), m_animation_file_name.c_str());
+	fixed_animation_file_name += ".anim";
+
+	if (save_animation_pressed && !texture_exists)
+	{
+		std::cout << "Animation Texture doesn't exists\n";
+	}
+	if (save_animation_pressed && texture_exists)
+	{
+		AnimationManager::Get()->SaveAnimation(SceneManager::GetSceneManager()->GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
+	}
+	if (load_animation_pressed)
+	{
+		if (AnimationManager::Get()->LoadAnimation(SceneManager::GetSceneManager()->GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name))
+		{
+			const auto& sprite_texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
+			m_animation_texture_name = sprite_texture_path.substr(folder_path.length(), sprite_texture_path.length() - folder_path.length());
+		}
 	}
 }
 

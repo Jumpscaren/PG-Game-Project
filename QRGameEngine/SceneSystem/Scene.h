@@ -17,6 +17,8 @@ public:
 	void SetSceneAsLoaded();
 	bool IsSceneLoaded();
 
+	SceneIndex GetSceneIndex() const; 
+
 	EntityManager* GetEntityManager();
 };
 

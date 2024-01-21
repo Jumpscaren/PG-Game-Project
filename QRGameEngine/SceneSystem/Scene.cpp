@@ -30,3 +30,8 @@ bool Scene::IsSceneLoaded()
 {
 	return m_scene_loaded;
 }
+
+SceneIndex Scene::GetSceneIndex() const
+{
+	return m_scene_index;
+}

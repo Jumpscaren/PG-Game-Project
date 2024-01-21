@@ -130,5 +130,11 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern GameObject TempFindGameObject(string name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void AddChild(GameObject child_game_object);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void RemoveChild(GameObject child_game_object);
     }
 }

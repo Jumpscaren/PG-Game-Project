@@ -5,6 +5,7 @@
 #include "SceneSystem/SceneManager.h"
 #include "ECS/EntityManager.h"
 #include "Components/EntityDataComponent.h"
+#include "SceneSystem/SceneHierarchy.h"
 
 MonoFieldHandle GameObjectInterface::get_entity_id_field;
 MonoClassHandle GameObjectInterface::game_object_class;
@@ -24,6 +25,9 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetName>(game_object_class, "SetName", GameObjectInterface::SetName);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetName>(game_object_class, "GetName", GameObjectInterface::GetName);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::TempFindGameObject>(game_object_class, "TempFindGameObject", GameObjectInterface::TempFindGameObject);
+
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::AddChild>(game_object_class, "AddChild", GameObjectInterface::AddChild);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::RemoveChild>(game_object_class, "RemoveChild", GameObjectInterface::RemoveChild);
 }
 
 CSMonoObject GameObjectInterface::GetGameObjectFromComponent(const CSMonoObject& component)
@@ -94,4 +98,21 @@ CSMonoObject GameObjectInterface::TempFindGameObject(std::string name)
                 found_game_object = entity;
         });
     return NewGameObjectWithExistingEntity(found_game_object, SceneManager::GetSceneManager()->GetActiveSceneIndex());
+}
+
+void GameObjectInterface::AddChild(const CSMonoObject game_object, const CSMonoObject child_game_object)
+{
+    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+    const auto entity = GameObjectInterface::GetEntityID(game_object);
+    const auto child_entity = GameObjectInterface::GetEntityID(child_game_object);
+
+    SceneHierarchy::Get()->AddParentChildRelation(scene_index, entity, child_entity);
+}
+
+void GameObjectInterface::RemoveChild(const CSMonoObject game_object, const CSMonoObject child_game_object)
+{
+    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+    const auto child_entity = GameObjectInterface::GetEntityID(child_game_object);
+
+    SceneHierarchy::Get()->RemoveParentChildRelation(scene_index, child_entity);
 }

@@ -4,6 +4,7 @@
 #include "Common/EngineTypes.h"
 #include "SceneSystem/SceneDefines.h"
 #include <thread>
+#include <mutex>
 
 class b2World;
 class b2Body;

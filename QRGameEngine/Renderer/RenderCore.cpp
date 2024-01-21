@@ -160,10 +160,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 		{
 			SpriteData sprite_data;
 			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
-			//if (render_target_texture == 0)
-			//	sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(3);
-			//else
-			//	sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(5);
+
 			Vector2 uv;
 			if (assamble_render_data_ent_man->HasComponent<AnimatableSpriteComponent>(entity))
 			{
@@ -176,7 +173,15 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 					animatable_sprite.time_since_last_split = 0.0f;
 				}
 				if (animatable_sprite.current_split_index >= animatable_sprite.max_split_index)
-					animatable_sprite.current_split_index = 0;
+				{
+					if (animatable_sprite.loop)
+						animatable_sprite.current_split_index = 0;
+					else
+					{
+						animatable_sprite.current_split_index = animatable_sprite.max_split_index;
+						animatable_sprite.finished = true;
+					}
+				}
 			}
 	
 			sprite_data.uv[0] = sprite.uv[sprite.uv_indicies[0]] + uv;
@@ -334,7 +339,7 @@ TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name)
 	return texture_view_handle;
 }
 
-AssetHandle RenderCore::GetTextureAssetHandle(TextureHandle texture_handle)
+AssetHandle RenderCore::GetTextureAssetHandle(const TextureHandle texture_handle)
 {
 	if (m_texture_to_asset.contains(texture_handle))
 	{

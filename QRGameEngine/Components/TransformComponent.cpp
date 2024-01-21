@@ -55,7 +55,7 @@ TransformComponent& TransformComponent::SetScale(const Vector3& scale)
 	DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
 
 	world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
-		DirectX::XMMatrixRotationRollPitchYawFromVector(quat) *
+		DirectX::XMMatrixRotationQuaternion(quat) *
 		DirectX::XMMatrixTranslationFromVector(pos);
 
 	return *this;

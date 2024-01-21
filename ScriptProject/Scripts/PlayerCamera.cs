@@ -16,13 +16,10 @@ namespace ScriptProject.Scripts
             player_game_object = GameObject.TempFindGameObject("Player");
             Console.WriteLine("Player Name = " + player_game_object.GetName());
             game_object.transform.SetZIndex(20);
-        }
+            game_object.transform.SetPosition(0, 0);
+            player_game_object.AddChild(game_object);
 
-        void Update()
-        {
-            //Console.WriteLine(player_game_object);
-            //Console.WriteLine(player_game_object.transform);
-            game_object.transform.SetPosition(player_game_object.transform.GetPosition());
+            game_object.RemoveComponent<Sprite>();
         }
     }
 }

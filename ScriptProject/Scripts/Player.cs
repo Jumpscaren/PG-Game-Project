@@ -14,6 +14,7 @@ namespace ScriptProject.Scripts
         DynamicBody body;
         Sprite sprite;
         AnimatableSprite anim_sprite;
+        bool attack = false;
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -42,22 +43,50 @@ namespace ScriptProject.Scripts
                 new_velocity.x -= max_speed;
                 flip_x = true;
             }
-            if (new_velocity.Length() < 0.01f)
+            if (new_velocity.Length() < 0.01f && !attack)
             {
-                sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Idle_Atlas.png"));
-                sprite.SetUV(new Vector2(0.024f, 0.220f), new Vector2(0.055f, 0.7f));
-                anim_sprite.SetSplitSize(new Vector2((960.0f / 15.0f) / 960.0f, 0));
-                anim_sprite.SetMaxSplits(15);
-                anim_sprite.SetTimeBetweenSplits(0.1f);
+                if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightIdle.anim"))
+                    AnimationManager.LoadAnimation(game_object, "Animations/KnightIdle.anim");
+                //sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Idle_Atlas.png"));
+                //sprite.SetUV(new Vector2(0.024f, 0.220f), new Vector2(0.055f, 0.7f));
+                //anim_sprite.SetSplitSize(new Vector2((960.0f / 15.0f) / 960.0f, 0));
+                //anim_sprite.SetMaxSplits(15);
+                //anim_sprite.SetTimeBetweenSplits(0.1f);
+                //anim_sprite.SetLoop(true);
+                //anim_sprite.SetId(2);
             }
-            else
+            else if (!attack && !AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightRunAnim.anim"))
             {
-                sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png"));
-                sprite.SetUV(new Vector2(0.052f, 0.220f), new Vector2(0.095f, 0.7f));
-                anim_sprite.SetSplitSize(new Vector2((768.0f / 8.0f) / 768.0f, 0));
-                anim_sprite.SetMaxSplits(7);
-                anim_sprite.SetTimeBetweenSplits(0.1f);
+                AnimationManager.LoadAnimation(game_object, "Animations/KnightRunAnim.anim");
+                //sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png"));
+                //sprite.SetUV(new Vector2(0.052f, 0.220f), new Vector2(0.095f, 0.7f));
+                //anim_sprite.SetSplitSize(new Vector2((768.0f / 8.0f) / 768.0f, 0));
+                //anim_sprite.SetMaxSplits(7);
+                //anim_sprite.SetTimeBetweenSplits(0.1f);
+                //anim_sprite.SetLoop(true);
+                //anim_sprite.SetId(2);
             }
+
+
+            if (Input.GetMouseButtonPressed(Input.MouseButton.LEFT))
+            {
+                AnimationManager.LoadAnimation(game_object, "Animations/KnightAttack.anim");
+                //sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Attack_Atlas_2.png"));
+                //sprite.SetUV(new Vector2(0.06f, 0.220f), new Vector2(0.078f, 0.7f));
+                //anim_sprite.SetSplitSize(new Vector2((3168 / 22.0f) / 3168.0f, 0));
+                //anim_sprite.SetMaxSplits(21);
+                //anim_sprite.SetTimeBetweenSplits(0.1f);
+                //anim_sprite.SetLoop(false);
+                //anim_sprite.ResetAnimation();
+                //anim_sprite.SetId(3);
+                attack = true;
+            }
+
+            if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightAttack.anim"))
+            {
+                attack = false;
+            }
+
             sprite.FlipX(flip_x);
 
             new_velocity = new_velocity.Normalize() * max_speed;

@@ -7,32 +7,20 @@
 #include "Time/Time.h"
 #include "Renderer/ImGUIMain.h"
 #include "Scripting/CSMonoCore.h"
-#include "Components/TransformComponent.h"
-#include "Components/SpriteComponent.h"
-#include "Scripting/Objects/GameObjectInterface.h"
-#include "Components/ComponentInterface.h"
 #include "Asset/AssetManager.h"
-#include "Scripting/Objects/RenderInterface.h"
-#include "Components/ScriptComponent.h"
 #include "Scripting/ScriptingManager.h"
-#include "Input/Keyboard.h"
-#include "Input/Input.h"
-#include "Input/Mouse.h"
-#include "Components/CameraComponent.h"
 #include "Editor/EditorCore.h"
 #include "SceneSystem/SceneLoader.h"
 #include "Physics/PhysicsCore.h"
 #include "Event/EventCore.h"
-#include "Scripting/Objects/SceneInterface.h"
-#include "Components/BoxColliderComponent.h"
-#include "Components/DynamicBodyComponent.h"
-#include "Components/StaticBodyComponent.h"
-#include "Components/CircleColliderComponent.h"
-#include "Scripting/Objects/Vector2Interface.h"
 #include "SceneSystem/GlobalScene.h"
-#include "Components/EntityDataComponent.h"
-#include "Scripting/Objects/TimeInterface.h"
-#include "Components/AnimatableSpriteComponent.h"
+#include "SceneSystem/SceneHierarchy.h"
+#include "Animation/AnimationManager.h"
+#include "RegisterInterfaces.h"
+#include "Input/Keyboard.h"
+#include "Input/Input.h"
+#include "Input/Mouse.h"
+#include "Components/CameraComponent.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -47,6 +35,8 @@ SceneLoader* scene_loader;
 PhysicsCore* physics_core;
 EventCore* event_core;
 GlobalScene* global_scene;
+SceneHierarchy* scene_hierarchy;
+AnimationManager* animation_manager;
 
 void QREntryPoint::EntryPoint()
 {
@@ -69,6 +59,8 @@ void QREntryPoint::EntryPoint()
 	scene_manager = new SceneManager();
 	scene_loader = new SceneLoader();
 	global_scene = new GlobalScene();
+	scene_hierarchy = new SceneHierarchy();
+	animation_manager = new AnimationManager();
 
 	main_scene = scene_manager->CreateScene();
 	scene_manager->ChangeScene(main_scene);
@@ -81,23 +73,7 @@ void QREntryPoint::EntryPoint()
 	auto entity_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "EntityManager");
 	mono_core->HookAndRegisterMonoMethodType<EntityManager::CreateEntity>(entity_manager_handle, "CreateEntity", EntityManager::CreateEntity);
 
-	TransformComponentInterface::RegisterInterface(mono_core);
-	SpriteComponentInterface::RegisterInterface(mono_core);
-	GameObjectInterface::RegisterInterface(mono_core);
-	SceneInterface::RegisterInterface(mono_core);
-	ComponentInterface::RegisterInterface(mono_core);
-	RenderInterface::RegisterInterface(mono_core);
-	ScriptComponentInterface::RegisterInterface(mono_core);
-	InputInterface::RegisterInterface(mono_core);
-	CameraComponentInterface::RegisterInterface(mono_core);
-	DynamicBodyComponentInterface::RegisterInterface(mono_core);
-	BoxColliderComponentInterface::RegisterInterface(mono_core);
-	CircleColliderComponentInterface::RegisterInterface(mono_core);
-	StaticBodyComponentInterface::RegisterInterface(mono_core);
-	Vector2Interface::RegisterInterface(mono_core);
-	EntityDataComponentInterface::RegisterInterface(mono_core);
-	AnimatableSpriteComponentInterface::RegisterInterface(mono_core);
-	TimeInterface::RegisterInterface(mono_core);
+	RegisterInterfaces::Register(mono_core);
 
 #ifdef _EDITOR
 	editor_core = new EditorCore();
@@ -106,7 +82,7 @@ void QREntryPoint::EntryPoint()
 	//Temp
 	EntityManager* global_entity_manager = scene_manager->GetEntityManager(global_scene->Get()->GetSceneIndex());
 	auto m_editor_camera_ent = global_entity_manager->NewEntity();
-	global_entity_manager->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 50.0f));
+	global_entity_manager->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 20.0f));
 	//global_entity_manager->AddComponent<CameraComponent>(m_editor_camera_ent);
 #endif // _EDITOR
 
@@ -123,12 +99,10 @@ double average_scripting_frame_time = 0.0;
 double average_physic_frame_time = 0.0;
 float average_frame_time = 0;
 int frame_count = 0;
+
 void QREntryPoint::RunTime()
 {
 	EntityManager* global_entity_manager = scene_manager->GetEntityManager(global_scene->Get()->GetSceneIndex());
-	//Entity player = global_entity_manager->NewEntity();
-	//global_entity_manager->AddComponent<TransformComponent>(player, Vector3(0.0f, 0.0f, 1.0f));
-	//global_entity_manager->AddComponent<SpriteComponent>(player).texture_handle = render_core->LoadTexture("../QRGameEngine/Textures/Temp.png");
 
 	bool window_exist = true;
 	while (window_exist)
@@ -190,6 +164,8 @@ void QREntryPoint::RunTime()
 		average_scripting_frame_time = average_scripting_frame_time * 0.9 + 0.1 * scripting_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 #endif // EDITOR
 
+		scene_hierarchy->UpdateEntityTransforms(active_scene->GetSceneIndex());
+
 		physic_timer.StartTimer();
 		PhysicsCore::Get()->DrawColliders();
 
@@ -211,9 +187,11 @@ void QREntryPoint::RunTime()
 
 		physics_core->RemoveDeferredPhysicObjects(entman);
 		scripting_manager->RemoveDeferredScripts(entman);
+		scene_hierarchy->RemoveDeferredRelations(entman);
 		entman->DestroyDeferredEntities();
 		physics_core->RemoveDeferredPhysicObjects(global_entity_manager);
 		scripting_manager->RemoveDeferredScripts(global_entity_manager);
+		scene_hierarchy->RemoveDeferredRelations(global_entity_manager);
 		global_entity_manager->DestroyDeferredEntities();
 
 		scene_manager->HandleDeferredScenes();

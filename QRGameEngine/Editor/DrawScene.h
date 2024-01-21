@@ -36,6 +36,7 @@ private:
 	const std::string m_animation_temp_save_file_name = "animation_temp_save_file_name";
 	Entity m_animation_base_entity = NULL_ENTITY;
 	std::string m_animation_texture_name;
+	std::string m_animation_file_name;
 
 	bool m_in_editor_menu;
 

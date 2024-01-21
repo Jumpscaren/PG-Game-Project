@@ -30,5 +30,8 @@ public:
 	static std::string GetName(CSMonoObject object);
 
 	static CSMonoObject TempFindGameObject(std::string name);
+
+	static void AddChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
+	static void RemoveChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
 };
 

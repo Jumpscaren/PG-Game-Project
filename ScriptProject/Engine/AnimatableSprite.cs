@@ -27,5 +27,14 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetTimeBetweenSplits(float time_between_splits);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetLoop(bool loop);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetId(UInt32 id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void ResetAnimation();
     }
 }
