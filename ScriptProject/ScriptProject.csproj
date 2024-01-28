@@ -69,6 +69,8 @@
     <Compile Include="Engine\EntityManager.cs" />
     <Compile Include="Engine\GameObject.cs" />
     <Compile Include="Engine\Input.cs" />
+    <Compile Include="Engine\PathFindingActor.cs" />
+    <Compile Include="Engine\PathFindingWorld.cs" />
     <Compile Include="Engine\PrefabSystem.cs" />
     <Compile Include="Engine\Render.cs" />
     <Compile Include="Engine\Scene.cs" />

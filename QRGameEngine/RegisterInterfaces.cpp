@@ -21,6 +21,8 @@
 #include "Components/ComponentInterface.h"
 #include "Components/ScriptComponent.h"
 #include "Animation/AnimationManager.h"
+#include "Components/PathFindingWorldComponent.h"
+#include "Components/PathFindingActorComponent.h"
 
 void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 {
@@ -42,4 +44,6 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	AnimatableSpriteComponentInterface::RegisterInterface(mono_core);
 	TimeInterface::RegisterInterface(mono_core);
 	AnimationManager::RegisterInterface(mono_core);
+	PathFindingWorldComponentInterface::RegisterInterface(mono_core);
+	PathFindingActorComponentInterface::RegisterInterface(mono_core);
 }

@@ -21,6 +21,9 @@
 #include "Input/Input.h"
 #include "Input/Mouse.h"
 #include "Components/CameraComponent.h"
+#include "PathFinding.h"
+#include "Components/PathFindingWorldComponent.h"
+#include "Scripting/Objects/GameObjectInterface.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -37,6 +40,7 @@ EventCore* event_core;
 GlobalScene* global_scene;
 SceneHierarchy* scene_hierarchy;
 AnimationManager* animation_manager;
+PathFinding* path_finding;
 
 void QREntryPoint::EntryPoint()
 {
@@ -89,6 +93,8 @@ void QREntryPoint::EntryPoint()
 	physics_core = new PhysicsCore(true);
 
 	mono_core->CallStaticMethod(main_method_handle);
+
+	path_finding = new PathFinding();
 }
 
 Timer rendering_timer;
@@ -100,6 +106,8 @@ double average_physic_frame_time = 0.0;
 float average_frame_time = 0;
 int frame_count = 0;
 
+Entity path_finder = NULL_ENTITY;
+bool change_scene = false;
 void QREntryPoint::RunTime()
 {
 	EntityManager* global_entity_manager = scene_manager->GetEntityManager(global_scene->Get()->GetSceneIndex());
@@ -132,11 +140,50 @@ void QREntryPoint::RunTime()
 		ImGui::End();
 
 #ifndef _EDITOR
+		if (path_finder != NULL_ENTITY || change_scene)
+		{
+			if (change_scene)
+			{
+				path_finding->ConstructPathFindingWorld(active_scene->GetSceneIndex());
+				path_finder = entman->NewEntity();
+				entman->AddComponent<TransformComponent>(path_finder).SetPositionZ(1);
+				entman->AddComponent<SpriteComponent>(path_finder).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png");
+				change_scene = false;
+			}
+			Entity player = GameObjectInterface::TempFindGameObjectEntity("Player");
+			std::vector<Entity> path = path_finding->PathFind(active_scene->GetSceneIndex(), path_finder, player);
+			for (int i = 0; i < path.size(); ++i)
+			{
+				const TransformComponent& trans = entman->GetComponent<TransformComponent>(path[i]);
+				if (i + 1 < path.size())
+				{
+					render_core->AddLine(Vector2(trans.GetPosition().x, trans.GetPosition().y));
+					const TransformComponent& trans_next = entman->GetComponent<TransformComponent>(path[i+1]);
+					render_core->AddLine(Vector2(trans_next.GetPosition().x, trans_next.GetPosition().y));
+				}
+			}
+			TransformComponent& path_finder_trans = entman->GetComponent<TransformComponent>(path_finder);
+			const Vector2 path_finder_pos = Vector2(path_finder_trans.GetPosition().x, path_finder_trans.GetPosition().y);
+			Vector2 dir;
+			if (path.size() > 2)
+			{
+				const TransformComponent& trans = entman->GetComponent<TransformComponent>(path[1]);
+				dir = (Vector2(trans.GetPosition().x, trans.GetPosition().y) - path_finder_pos).Normalize();
+			}
+			else
+			{
+				const TransformComponent& trans = entman->GetComponent<TransformComponent>(player);
+				dir = (Vector2(trans.GetPosition().x, trans.GetPosition().y) - path_finder_pos).Normalize();
+			}
+			Vector2 new_pos = path_finder_pos + Vector2(Time::GetDeltaTime(), Time::GetDeltaTime()) * dir;
+			path_finder_trans.SetPosition(new_pos);
+		}
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
 			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
 			SceneIndex scene = scene_manager->LoadScene("port");
 			scene_manager->ChangeScene(scene);
+			change_scene = true;
 		}
 #endif // EDITOR
 

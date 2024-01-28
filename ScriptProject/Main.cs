@@ -56,6 +56,7 @@ namespace ScriptProject
         static void Prefab2(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            game_object.AddComponent<PathFindingWorld>();
             //game_object.AddComponent<BoxCollider>();
         }
 

@@ -32,14 +32,52 @@ const Vector2 Vector2::operator+(const Vector2& vector)
 	return Vector2(x + vector.x, y + vector.y);
 }
 
+const Vector2 Vector2::operator-(const Vector2& vector)
+{
+	return Vector2(x - vector.x, y - vector.y);
+}
+
+const Vector2 Vector2::operator*(const Vector2& vector)
+{
+	return Vector2(x * vector.x, y * vector.y);
+}
+
 const Vector2 operator+(const Vector2& vector_1, const Vector2& vector_2)
 {
 	return Vector2(vector_1.x + vector_2.x, vector_1.y + vector_2.y);
 }
 
+const Vector2 operator-(const Vector2& vector_1, const Vector2& vector_2)
+{
+	return Vector2(vector_1.x - vector_2.x, vector_1.y - vector_2.y);
+}
+
+const Vector2 operator*(const Vector2& vector_1, const Vector2& vector_2)
+{
+	return Vector2(vector_1.x * vector_2.x, vector_1.y * vector_2.y);
+}
+
 const Vector2 Vector2::operator*(const uint8_t scalar)
 {
 	return Vector2(x * scalar, y * scalar);
+}
+
+const Vector2 Vector2::operator/(const float scalar)
+{
+	return Vector2(x / scalar, y / scalar);
+}
+
+Vector2 Vector2::Normalize() const
+{
+	float length = Length();
+	if (length < 0.00001f)
+		return Vector2();
+	return Vector2(x, y) / length;
+}
+
+const float Vector2::Length() const
+{
+	return std::sqrt(x*x + y*y);
 }
 
 Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z)

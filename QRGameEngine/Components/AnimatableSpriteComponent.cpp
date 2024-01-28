@@ -10,6 +10,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "IO/JsonObject.h"
 #include "Scripting/Objects/Vector2Interface.h"
+#include "Renderer/RenderTypes.h"
 
 void AnimatableSpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {

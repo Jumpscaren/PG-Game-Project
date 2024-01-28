@@ -1,9 +1,8 @@
 #pragma once
-#include "Common/EngineTypes.h"
 #include "ECS/EntityDefinition.h"
 #include "Scripting/CSMonoObject.h"
-#include "Renderer/RenderTypes.h"
-#include "SceneSystem/SceneManager.h"
+#include "SceneSystem/SceneDefines.h"
+#include "Common/EngineTypes.h"
 
 struct AnimatableSpriteComponent
 {
@@ -40,6 +39,5 @@ public:
 public:
 	static void SaveAnimatableSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void LoadAnimatableSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
-
 };
 

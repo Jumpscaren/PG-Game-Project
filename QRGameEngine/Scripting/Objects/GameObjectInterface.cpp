@@ -100,6 +100,22 @@ CSMonoObject GameObjectInterface::TempFindGameObject(std::string name)
     return NewGameObjectWithExistingEntity(found_game_object, SceneManager::GetSceneManager()->GetActiveSceneIndex());
 }
 
+Entity GameObjectInterface::TempFindGameObjectEntity(const std::string& name)
+{
+    Entity found_game_object = NULL_ENTITY;
+    SceneManager::GetSceneManager()->GetEntityManager(SceneManager::GetSceneManager()->GetActiveSceneIndex())->System<EntityDataComponent>([&](const Entity entity, const EntityDataComponent& entity_data)
+        {
+            if (found_game_object != NULL_ENTITY)
+                return;
+
+            const std::string entity_name = entity_data.entity_name.substr(0, name.length());
+
+            if (entity_name == name)
+                found_game_object = entity;
+        });
+    return found_game_object;
+}
+
 void GameObjectInterface::AddChild(const CSMonoObject game_object, const CSMonoObject child_game_object)
 {
     const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);

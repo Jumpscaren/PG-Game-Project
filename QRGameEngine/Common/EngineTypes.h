@@ -11,7 +11,15 @@ struct Vector2
 	const Vector2 operator= (const DirectX::XMVECTOR& vector);
 	const Vector2 operator+ (const Vector2& vector);
 	friend const Vector2 operator+ (const Vector2& vector_1, const Vector2& vector_2);
+	const Vector2 operator- (const Vector2& vector);
+	friend const Vector2 operator- (const Vector2& vector_1, const Vector2& vector_2);
+	const Vector2 operator* (const Vector2& vector);
+	friend const Vector2 operator* (const Vector2& vector_1, const Vector2& vector_2);
 	const Vector2 operator* (uint8_t scalar);
+	const Vector2 operator/ (float scalar);
+
+	Vector2 Normalize() const;
+	const float Length() const;
 };
 
 struct Vector2i

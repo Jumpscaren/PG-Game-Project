@@ -101,7 +101,6 @@ void SceneHierarchy::UpdateEntityTransforms(const SceneIndex scene_index)
 	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 	for (const auto& root_parent : m_root)
 	{
-
 		UpdateWorldTransforms(root_parent, entity_manager);
 	}
 }

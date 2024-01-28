@@ -264,7 +264,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
 
-#ifdef _EDITOR
+//#ifdef _EDITOR
 	m_dx12_core.GetCommandList()->SetRootSignature(&m_grid_root_signature);
 	m_dx12_core.GetCommandList()->SetPipeline(&m_grid_pipeline);
 	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
@@ -278,7 +278,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	Vector4 editor_line_color(1.0f, 1.0f, 1.0f, 1.0f);
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_line_color_buffer, &editor_line_color, sizeof(Vector4), 1);
 
-	m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
+	//m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
 
 	//Draw Debug Lines eg. Physics Debug Lines
 	if (m_debug_lines.size())
@@ -294,7 +294,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, debug_line_buffer);
 	}
-#endif
+//#endif
 
 	if (render_object_amount)
 	{
