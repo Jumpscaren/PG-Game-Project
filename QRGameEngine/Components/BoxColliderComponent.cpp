@@ -9,6 +9,7 @@
 #include "StaticBodyComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "IO/JsonObject.h"
+#include "Scripting/Objects/Vector2Interface.h"
 
 void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -19,6 +20,7 @@ void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::RemoveComponent>(box_collider_class, "RemoveComponent", BoxColliderComponentInterface::RemoveComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetTrigger>(box_collider_class, "SetTrigger", BoxColliderComponentInterface::SetTrigger);
+	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetHalfBoxSize>(box_collider_class, "SetHalfBoxSize", BoxColliderComponentInterface::SetHalfBoxSize);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<BoxColliderComponent>(SaveScriptComponent, LoadScriptComponent);
 }
@@ -51,6 +53,17 @@ void BoxColliderComponentInterface::SetTrigger(CSMonoObject object, bool trigger
 	const auto entity = GameObjectInterface::GetEntityID(game_object);
 	BoxColliderComponent& box_collider = SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity);
 	box_collider.trigger = trigger;
+	box_collider.update_box_collider = true;
+}
+
+void BoxColliderComponentInterface::SetHalfBoxSize(const CSMonoObject object, const CSMonoObject half_box_size)
+{
+	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
+	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const auto entity = GameObjectInterface::GetEntityID(game_object);
+	BoxColliderComponent& box_collider = SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity);
+
+	box_collider.half_box_size = Vector2Interface::GetVector2(half_box_size);
 	box_collider.update_box_collider = true;
 }
 

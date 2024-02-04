@@ -17,5 +17,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public override extern void RemoveComponent(UInt32 scene_index, UInt32 entity);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetEnabled(bool enabled);
     }
 }

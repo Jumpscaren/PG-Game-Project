@@ -58,7 +58,7 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 
 	m_defer_physic_calls = false;
 
-	EventCore::Get()->ListenToEvent<PhysicsCore::AwakePhysicObjectsFromLoadedScene>("SceneLoaded", PhysicsCore::AwakePhysicObjectsFromLoadedScene);
+	EventCore::Get()->ListenToEvent<PhysicsCore::AwakePhysicObjectsFromLoadedScene>("SceneLoaded", 0, PhysicsCore::AwakePhysicObjectsFromLoadedScene);
 }
 
 PhysicsCore* PhysicsCore::Get()
@@ -66,13 +66,13 @@ PhysicsCore* PhysicsCore::Get()
 	return s_physics_core;
 }
 
-void PhysicsCore::AddDeferredPhysicObjectHandle(uint64_t handle, bool is_physic_object_creation_data)
+void PhysicsCore::AddDeferredPhysicObjectHandle(const uint64_t handle, const bool is_physic_object_creation_data)
 {
 	DeferredPhysicObjectHandle deferred_physic_object_handle(is_physic_object_creation_data, handle);
 	m_deferred_physic_object_handles.push_back(deferred_physic_object_handle);
 }
 
-void PhysicsCore::AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type)
+void PhysicsCore::AddDeferredPhysicObjectCreation(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type)
 {
 	DeferredPhysicObjectCreationData physic_object_creation_data;
 	physic_object_creation_data.entity = entity;
@@ -84,7 +84,7 @@ void PhysicsCore::AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size()-1, true);
 }
 
-void PhysicsCore::AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity)
+void PhysicsCore::AddBoxColliderDeferredPhysicObjectCreation(const SceneIndex scene_index, const Entity entity)
 {
 	DeferredPhysicObjectCreationData physic_object_creation_data;
 	physic_object_creation_data.entity = entity;
@@ -96,7 +96,7 @@ void PhysicsCore::AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_in
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
 }
 
-void PhysicsCore::AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity)
+void PhysicsCore::AddCircleColliderDeferredPhysicObjectCreation(const SceneIndex scene_index, const Entity entity)
 {
 	DeferredPhysicObjectCreationData physic_object_creation_data;
 	physic_object_creation_data.entity = entity;
@@ -108,7 +108,7 @@ void PhysicsCore::AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
 }
 
-void PhysicsCore::AddDeferredPhysicObjectDestruction(SceneIndex scene_index, Entity entity, PhysicObjectHandle physic_object_handle, bool is_collider, bool is_box_collider)
+void PhysicsCore::AddDeferredPhysicObjectDestruction(const SceneIndex scene_index, const Entity entity, const PhysicObjectHandle physic_object_handle, const bool is_collider, const bool is_box_collider)
 {
 	DeferredPhysicObjectDestructionData deferred_physic_object_destruction_data;
 	deferred_physic_object_destruction_data.entity = entity;
@@ -181,7 +181,7 @@ void PhysicsCore::HandleDeferredPhysicObjectDestructionData(const DeferredPhysic
 	}
 }
 
-void PhysicsCore::AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger)
+void PhysicsCore::AddBoxFixture(const SceneIndex scene_index, const Entity entity, const Vector2& half_box_size, const bool trigger)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -202,7 +202,7 @@ void PhysicsCore::AddBoxFixture(SceneIndex scene_index, Entity entity, const Vec
 	box_collider.trigger = trigger;
 }
 
-void PhysicsCore::AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger)
+void PhysicsCore::AddCircleFixture(const SceneIndex scene_index, const Entity entity, const float circle_radius, const bool trigger)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -223,12 +223,17 @@ void PhysicsCore::AddCircleFixture(SceneIndex scene_index, Entity entity, float 
 	circle_collider.trigger = trigger;
 }
 
-void PhysicsCore::AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index)
+void PhysicsCore::AwakePhysicObjectsFromLoadedScene(const SceneIndex scene_index)
 {
-	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 	entity_manager->System<DynamicBodyComponent>([&](DynamicBodyComponent& dynamic_body)
 		{
+			dynamic_body.enabled = true;
 			dynamic_body.awake = true;
+		});
+	entity_manager->System<StaticBodyComponent>([&](StaticBodyComponent& static_body)
+		{
+			static_body.enabled = true;
 		});
 }
 
@@ -364,13 +369,22 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			physic_object.object_body->SetLinearVelocity({ dynamic_body.velocity.x, dynamic_body.velocity.y });
 			if (dynamic_body.fixed_rotation != physic_object.object_body->IsFixedRotation())
 				physic_object.object_body->SetFixedRotation(dynamic_body.fixed_rotation);
+			if (dynamic_body.enabled != physic_object.object_body->IsEnabled())
+			{
+				physic_object.object_body->SetEnabled(dynamic_body.enabled);
+			}
 		});
 
 	//Timer timer;
 	//timer.StartTimer();
 	entity_manager->System<StaticBodyComponent, TransformComponent>([&](const StaticBodyComponent& static_body, const TransformComponent& transform)
 		{
+			PhysicObjectData& physic_object = m_physic_object_data[static_body.physic_object_handle];
 			m_physic_object_data[static_body.physic_object_handle].object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+			if (static_body.enabled != physic_object.object_body->IsEnabled())
+			{
+				physic_object.object_body->SetEnabled(static_body.enabled);
+			}
 		});
 	//std::cout << "Time: " << timer.StopTimer() << "\n";
 
@@ -412,19 +426,19 @@ void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 		});
 }
 
-void PhysicsCore::AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger)
+void PhysicsCore::AddBoxPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, const bool trigger)
 {
 	AddPhysicObject(scene_index, entity, physic_object_body_type);
 	AddBoxCollider(scene_index, entity, half_box_size, trigger);
 }
 
-void PhysicsCore::AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger)
+void PhysicsCore::AddCirclePhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const float circle_radius, const bool trigger)
 {
 	AddPhysicObject(scene_index, entity, physic_object_body_type);
 	AddCircleCollider(scene_index, entity, circle_radius, trigger);
 }
 
-void PhysicsCore::RemovePhysicObject(SceneIndex scene_index, Entity entity)
+void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -455,7 +469,7 @@ void PhysicsCore::RemovePhysicObject(SceneIndex scene_index, Entity entity)
 	RemovePhysicObjectInternal(physic_object_handle);
 }
 
-b2Fixture* PhysicsCore::AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger)
+b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, const bool trigger)
 {
 	const PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 
@@ -468,7 +482,7 @@ b2Fixture* PhysicsCore::AddFixtureToPhysicObject(PhysicObjectHandle physic_objec
 	return fixture;
 }
 
-void PhysicsCore::RemovePhysicObjectInternal(PhysicObjectHandle physic_object_handle)
+void PhysicsCore::RemovePhysicObjectInternal(const PhysicObjectHandle physic_object_handle)
 {
 	assert(physic_object_handle != NULL_PHYSIC_OBJECT_HANDLE);
 	m_free_physic_object_handles.push(physic_object_handle);
@@ -481,21 +495,21 @@ void PhysicsCore::RemovePhysicObjectInternal(PhysicObjectHandle physic_object_ha
 	physic_object_data.object_entity = NULL_ENTITY;
 }
 
-void PhysicsCore::RemoveBoxColliderInternal(PhysicObjectHandle physic_object_handle)
+void PhysicsCore::RemoveBoxColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 	physic_object_data.object_body->DestroyFixture(physic_object_data.object_box_fixture);
 	physic_object_data.object_box_fixture = nullptr;
 }
 
-void PhysicsCore::RemoveCircleColliderInternal(PhysicObjectHandle physic_object_handle)
+void PhysicsCore::RemoveCircleColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 	physic_object_data.object_body->DestroyFixture(physic_object_data.object_circle_fixture);
 	physic_object_data.object_circle_fixture = nullptr;
 }
 
-void PhysicsCore::AddPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type)
+void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -550,21 +564,38 @@ void PhysicsCore::AddPhysicObject(SceneIndex scene_index, Entity entity, const P
 #ifndef _EDITOR
 		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
 		{
+			physic_object_data.object_body->SetEnabled(false);
+			dynamic_body.enabled = physic_object_data.object_body->IsEnabled();
 			physic_object_data.object_body->SetAwake(false);
+			dynamic_body.awake = physic_object_data.object_body->IsAwake();
 		}
 #endif // !_EDITOR
 #ifdef _EDITOR
+		physic_object_data.object_body->SetEnabled(false);
+		dynamic_body.enabled = physic_object_data.object_body->IsEnabled();
 		physic_object_data.object_body->SetAwake(false);
-#endif // _EDITOR
 		dynamic_body.awake = physic_object_data.object_body->IsAwake();
+#endif // _EDITOR
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::StaticBody)
 	{
-		entity_manager->GetComponent<StaticBodyComponent>(entity).physic_object_handle = new_physic_object_handle;
+		StaticBodyComponent& static_body = entity_manager->GetComponent<StaticBodyComponent>(entity);
+		static_body.physic_object_handle = new_physic_object_handle;
+#ifndef _EDITOR
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		{
+			physic_object_data.object_body->SetEnabled(false);
+			static_body.enabled = physic_object_data.object_body->IsEnabled();
+		}
+#endif // !_EDITOR
+#ifdef _EDITOR
+		physic_object_data.object_body->SetEnabled(false);
+		static_body.enabled = physic_object_data.object_body->IsEnabled();
+#endif // _EDITOR
 	}
 }
 
-void PhysicsCore::AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger)
+void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity entity, const Vector2& half_box_size, const bool trigger)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -587,7 +618,7 @@ void PhysicsCore::AddBoxCollider(SceneIndex scene_index, Entity entity, const Ve
 	AddBoxFixture(scene_index, entity, half_box_size, trigger);
 }
 
-void PhysicsCore::AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger)
+void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity entity, const float circle_radius, const bool trigger)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -610,7 +641,7 @@ void PhysicsCore::AddCircleCollider(SceneIndex scene_index, Entity entity, float
 	AddCircleFixture(scene_index, entity, circle_radius, trigger);
 }
 
-void PhysicsCore::RemoveBoxCollider(SceneIndex scene_index, Entity entity)
+void PhysicsCore::RemoveBoxCollider(const SceneIndex scene_index, const Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -629,7 +660,7 @@ void PhysicsCore::RemoveBoxCollider(SceneIndex scene_index, Entity entity)
 	}
 }
 
-void PhysicsCore::RemoveCircleCollider(SceneIndex scene_index, Entity entity)
+void PhysicsCore::RemoveCircleCollider(const SceneIndex scene_index, const Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -650,18 +681,18 @@ void PhysicsCore::RemoveCircleCollider(SceneIndex scene_index, Entity entity)
 
 void PhysicsCore::RemoveDeferredPhysicObjects(EntityManager* entity_manager)
 {
-	entity_manager->System<DeferredEntityDeletion, DynamicBodyComponent>([&](Entity entity, DeferredEntityDeletion, DynamicBodyComponent)
+	entity_manager->System<DeferredEntityDeletion, DynamicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, DynamicBodyComponent)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
 		});
 
-	entity_manager->System<DeferredEntityDeletion, StaticBodyComponent>([&](Entity entity, DeferredEntityDeletion, StaticBodyComponent)
+	entity_manager->System<DeferredEntityDeletion, StaticBodyComponent>([&](const Entity entity, DeferredEntityDeletion, StaticBodyComponent)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
 		});
 }
 
-PhysicObjectHandle PhysicsCore::GetPhysicObjectHandle(EntityManager* entity_manager, Entity entity)
+PhysicObjectHandle PhysicsCore::GetPhysicObjectHandle(EntityManager* entity_manager, const Entity entity)
 {
 	PhysicObjectHandle physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
 	if (entity_manager->HasComponent<DynamicBodyComponent>(entity))

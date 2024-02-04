@@ -7,9 +7,10 @@
 
 struct DynamicBodyComponent {
 	PhysicObjectHandle physic_object_handle;
-	bool awake;
+	bool awake = true;
 	Vector2 velocity;
 	bool fixed_rotation;
+	bool enabled = true;
 };
 
 class JsonObject;
@@ -27,6 +28,7 @@ public:
 	static void SetVelocity(CSMonoObject object, CSMonoObject velocity);
 	static CSMonoObject GetVelocity(CSMonoObject object);
 	static void SetFixedRotation(CSMonoObject object, bool fixed_rotation);
+	static void SetEnabled(const CSMonoObject object, const bool enabled);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

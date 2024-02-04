@@ -41,7 +41,7 @@ public:
 
 	static SceneLoader* Get();
 
-	void InstancePrefab(const CSMonoObject& game_object, uint32_t prefab_instance_id);
+	void InstancePrefab(const CSMonoObject& game_object, std::string prefab_name);
 
 	std::string GetTexturePath(TextureHandle texture_handle);
 	bool HasTexturePath(TextureHandle texture_handle);

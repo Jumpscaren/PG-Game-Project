@@ -1,5 +1,5 @@
 ﻿using ScriptProject.Engine;
-using ScriptProject.Math;
+using ScriptProject.EngineMath;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,11 +15,26 @@ namespace ScriptProject.Scripts
         Sprite sprite;
         AnimatableSprite anim_sprite;
         bool attack = false;
+        GameObject mid_block = null;
+        GameObject hit_box;
+        GameObject camera;
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
             anim_sprite = game_object.GetComponent<AnimatableSprite>();
+            hit_box = GameObject.CreateGameObject();
+            hit_box.SetName("Attack_Box");
+            hit_box.AddComponent<StaticBody>().SetEnabled(false);
+            BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
+            box_collider.SetTrigger(false);
+            box_collider.SetHalfBoxSize(new Vector2(0.3f, 0.5f));
+            hit_box.transform.SetPosition(1.0f, 0.0f);
+            mid_block = GameObject.CreateGameObject();
+            mid_block.AddChild(hit_box);
+            game_object.AddChild(mid_block);
+
+            camera = GameObject.TempFindGameObject("PlayerCamera");
         }
 
         void Update()
@@ -43,6 +58,7 @@ namespace ScriptProject.Scripts
                 new_velocity.x -= max_speed;
                 flip_x = true;
             }
+
             if (new_velocity.Length() < 0.01f && !attack)
             {
                 if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightIdle.anim"))
@@ -67,7 +83,6 @@ namespace ScriptProject.Scripts
                 //anim_sprite.SetId(2);
             }
 
-
             if (Input.GetMouseButtonPressed(Input.MouseButton.LEFT))
             {
                 AnimationManager.LoadAnimation(game_object, "Animations/KnightAttack.anim");
@@ -80,6 +95,7 @@ namespace ScriptProject.Scripts
                 //anim_sprite.ResetAnimation();
                 //anim_sprite.SetId(3);
                 attack = true;
+                hit_box.GetComponent<StaticBody>().SetEnabled(true);
             }
 
             if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightAttack.anim"))
@@ -87,7 +103,11 @@ namespace ScriptProject.Scripts
                 attack = false;
             }
 
-            sprite.FlipX(flip_x);
+            Vector2 mouse_position = Input.GetMousePositionInWorld(camera);
+            Vector2 mouse_dir = (mouse_position - game_object.transform.GetPosition()).Normalize();
+            Vector2 right_dir = new Vector2(1.0f, 0.0f);
+            mid_block.transform.SetLocalRotation(Vector2.Angle(mouse_dir, right_dir));
+            sprite.FlipX(mouse_dir.x < 0);
 
             new_velocity = new_velocity.Normalize() * max_speed;
             if (velocity.Length() <= max_speed && new_velocity.Length() != 0.0f)

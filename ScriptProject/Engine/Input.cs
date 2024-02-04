@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using ScriptProject.EngineMath;
 
 namespace ScriptProject.Engine
 {
@@ -57,5 +58,11 @@ namespace ScriptProject.Engine
         //When mouse button is down
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern bool GetMouseWheelSpin(MouseWheelSpin direction);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Vector2 GetMousePosition();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Vector2 GetMousePositionInWorld(GameObject camera);
     }
 }

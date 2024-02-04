@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.EngineMath;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -17,5 +18,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public override extern void RemoveComponent(UInt32 scene_index, UInt32 entity);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Vector2 PathFind(GameObject goal_game_object, UInt32 position_of_node_index = 1);
     }
 }

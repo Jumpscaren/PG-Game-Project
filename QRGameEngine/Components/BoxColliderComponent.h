@@ -27,6 +27,7 @@ public:
 
 public:
 	static void SetTrigger(CSMonoObject object, bool trigger);
+	static void SetHalfBoxSize(const CSMonoObject object, const CSMonoObject half_box_size);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

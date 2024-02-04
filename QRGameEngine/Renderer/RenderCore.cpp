@@ -278,7 +278,9 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	Vector4 editor_line_color(1.0f, 1.0f, 1.0f, 1.0f);
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_line_color_buffer, &editor_line_color, sizeof(Vector4), 1);
 
-	//m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
+#ifdef _EDITOR
+	m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
+#endif
 
 	//Draw Debug Lines eg. Physics Debug Lines
 	if (m_debug_lines.size())

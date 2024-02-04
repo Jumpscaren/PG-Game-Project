@@ -20,10 +20,12 @@ private:
 
 private:
 	void AStarPathfinding(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, std::vector<Entity>& pat);
-	uint64_t PositionToNodeIndex(const Vector2& position);
+	uint64_t PositionToNodeIndex(const Vector2& position) const;
 	float Heuristic(const Node& current_node, const Node& goal_node);
 	void ConstructPath(const std::map<Entity, Entity>& came_from, Entity current, std::vector<Entity>& path);
-	void PositionToNodePosition(Vector2& position);
+	Vector2 PositionToNodePosition(const Vector2& position) const;
+	static void ConstructPathFindingWorldEvent(const SceneIndex scene_index);
+	void ConstructPathFindingWorld(const SceneIndex scene_index);
 
 private:
 	static PathFinding* s_singleton;
@@ -37,8 +39,8 @@ private:
 
 public:
 	PathFinding();
-	void ConstructPathFindingWorld(const SceneIndex scene_index);
 	std::vector<Entity> PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity);
+	Entity GetNodeFromPosition(const Vector2& position) const;
 
 	static PathFinding* Get();
 };

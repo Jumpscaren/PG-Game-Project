@@ -77,9 +77,9 @@ ScriptingManager::ScriptingManager()
 {
 	s_scripting_manager = this;
 
-	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptBeginCollision>("BeginCollision", ScriptingManager::ScriptBeginCollision);
-	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptEndCollision>("EndCollision", ScriptingManager::ScriptEndCollision);
-	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromLoadedScene>("SceneLoaded", ScriptingManager::StartScriptsFromLoadedScene);
+	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptBeginCollision>("BeginCollision", 0, ScriptingManager::ScriptBeginCollision);
+	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptEndCollision>("EndCollision", 0, ScriptingManager::ScriptEndCollision);
+	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromLoadedScene>("SceneLoaded", 1, ScriptingManager::StartScriptsFromLoadedScene);
 }
 
 void ScriptingManager::StartScript(const ScriptComponent& script)

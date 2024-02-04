@@ -36,13 +36,14 @@ namespace ScriptProject
             //Texture texture = Render.LoadTexture(texture_path);
             //sprite.SetTexture(texture);
 
-            PrefabSystem.CreateUserPrefab(Prefab1, 1);
-            PrefabSystem.CreateUserPrefab(Prefab2, 2);
-            PrefabSystem.CreateUserPrefab(WallCollider, 2);
-            PrefabSystem.CreateUserPrefab(PlayerPrefab, 1);
-            PrefabSystem.CreateUserPrefab(PlayerCameraPrefab, 1);
-            PrefabSystem.CreateUserPrefab(BouncePrefab, 1);
-
+            PrefabSystem.CreateUserPrefab("Prefab1", Prefab1, 1);
+            PrefabSystem.CreateUserPrefab("Prefab2", Prefab2, 2);
+            PrefabSystem.CreateUserPrefab("WallCollider", WallCollider, 2);
+            PrefabSystem.CreateUserPrefab("PlayerPrefab", PlayerPrefab, 1);
+            PrefabSystem.CreateUserPrefab("PlayerCameraPrefab", PlayerCameraPrefab, 1);
+            PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1);
+            PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1);
+            
             return 0;
         }
 
@@ -89,6 +90,15 @@ namespace ScriptProject
             game_object.AddComponent<StaticBody>();
             game_object.AddComponent<BoxCollider>().SetTrigger(true);
             game_object.SetName("Bouncer");
+        }
+
+        static void BasicEnemy(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
+            game_object.AddComponent<BasicEnemy>();
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            game_object.AddComponent<CircleCollider>();
         }
     }
 }

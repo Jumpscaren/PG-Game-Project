@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.EngineMath;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -20,5 +21,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetTrigger(bool trigger);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetHalfBoxSize(Vector2 half_box_size);
     }
 }

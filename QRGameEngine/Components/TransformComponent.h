@@ -29,20 +29,19 @@ class TransformComponentInterface
 
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-
 	static void AddTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-
 	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-
 	static void RemoveTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 
 public:
 	static void SetPosition(SceneIndex scene_index, Entity entity, float x, float y);
-
 	static CSMonoObject GetPosition(CSMonoObject cs_transform);
-
 	static void SetZIndex(CSMonoObject object, float z_index);
-
 	static float GetZIndex(CSMonoObject object);
+
+	static void SetLocalPosition(const SceneIndex scene_index, const Entity entity, const float x, const float y);
+	static CSMonoObject GetLocalPosition(const CSMonoObject cs_transform);
+	static void SetLocalRotation(const CSMonoObject cs_transform, const float angle);
+	static float GetLocalRotation(const CSMonoObject cs_transform);
 };
 

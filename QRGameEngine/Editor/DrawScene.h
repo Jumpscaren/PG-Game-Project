@@ -63,5 +63,5 @@ public:
 	bool InEditorMenu() const;
 
 	static void SetAddUserPrefab();
-	static void AddUserPrefab(uint32_t prefab_instance_id, uint32_t z_index);
+	static void AddUserPrefab(std::string prefab_name, uint32_t z_index);
 };

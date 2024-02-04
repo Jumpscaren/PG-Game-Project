@@ -62,7 +62,7 @@ BlockData DrawScene::CreateBlock(const Vector3& block_transform)
 	entity_manager->GetComponent<TransformComponent>(new_block).SetPosition(block_transform);
 	entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
 
-	SceneLoader::Get()->InstancePrefab(game_object, m_prefab_selected.prefab_index);
+	SceneLoader::Get()->InstancePrefab(game_object, m_prefab_selected.prefab_name);
 
 	BlockData new_block_data;
 	new_block_data.block_entity = new_block;
@@ -468,14 +468,14 @@ void DrawScene::SetAddUserPrefab()
 	mono_core->HookAndRegisterMonoMethodType<DrawScene::AddUserPrefab>(transform_class, "AddUserPrefab", &DrawScene::AddUserPrefab);
 }
 
-void DrawScene::AddUserPrefab(uint32_t prefab_instance_id, uint32_t z_index)
+void DrawScene::AddUserPrefab(std::string prefab_name, uint32_t z_index)
 {
 #ifndef _EDITOR
 	return;
 #endif // EDITOR
 
 	PrefabData prefab_data;
-	prefab_data.prefab_index = prefab_instance_id;
+	prefab_data.prefab_name = prefab_name;
 	prefab_data.z_index = z_index;
 
 	PrefabAndTextureData prefab_and_texture_data = {};
@@ -490,7 +490,7 @@ void DrawScene::AddUserPrefab(uint32_t prefab_instance_id, uint32_t z_index)
 
 	entity_manager->AddComponent<SpriteComponent>(ent).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
 
-	SceneLoader::Get()->InstancePrefab(game_object, prefab_instance_id);
+	SceneLoader::Get()->InstancePrefab(game_object, prefab_name);
 	
 	prefab_and_texture_data.texture_handle = entity_manager->GetComponent<SpriteComponent>(ent).texture_handle;
 

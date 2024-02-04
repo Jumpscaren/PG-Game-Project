@@ -5,6 +5,7 @@
 #include <queue>
 #include "ECS/EntityManager.h"
 #include "SceneSystem/SceneManager.h"
+#include "Event/EventCore.h"
 
 PathFinding* PathFinding::s_singleton = nullptr;
 
@@ -23,10 +24,17 @@ void PathFinding::ConstructPath(const std::map<Entity, Entity>& came_from, Entit
 	}
 }
 
-void PathFinding::PositionToNodePosition(Vector2& position)
+Vector2 PathFinding::PositionToNodePosition(const Vector2& position) const
 {
-	position.x = float(int(position.x)) + (position.x < 0.0f ? -HALF_LENGTH_BETWEEN_NODES : HALF_LENGTH_BETWEEN_NODES);
-	position.y = float(int(position.y)) + (position.y < 0.0f ? -HALF_LENGTH_BETWEEN_NODES : HALF_LENGTH_BETWEEN_NODES);
+	Vector2 node_position;
+	node_position.x = float(int(position.x)) + (position.x < 0.0f ? -HALF_LENGTH_BETWEEN_NODES : HALF_LENGTH_BETWEEN_NODES);
+	node_position.y = float(int(position.y)) + (position.y < 0.0f ? -HALF_LENGTH_BETWEEN_NODES : HALF_LENGTH_BETWEEN_NODES);
+	return node_position;
+}
+
+void PathFinding::ConstructPathFindingWorldEvent(const SceneIndex scene_index)
+{
+	s_singleton->ConstructPathFindingWorld(scene_index);
 }
 
 void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
@@ -69,20 +77,21 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
 	const TransformComponent& ts = entity_manager->GetComponent<TransformComponent>(start_entity);
 	const TransformComponent& tg = entity_manager->GetComponent<TransformComponent>(goal_entity);
-	Vector2 start_position(ts.GetPosition().x, ts.GetPosition().y);
-	Vector2 goal_position(tg.GetPosition().x, tg.GetPosition().y);
-	PositionToNodePosition(start_position);
-	PositionToNodePosition(goal_position);
+	const Vector2 start_position(ts.GetPosition().x, ts.GetPosition().y);
+	const Vector2 goal_position(tg.GetPosition().x, tg.GetPosition().y);
 
-	const auto found_start_node = m_position_to_node.contains(PositionToNodeIndex(start_position));
-	const auto found_goal_node = m_position_to_node.contains(PositionToNodeIndex(goal_position));
-	if (!found_start_node || !found_goal_node)
+	const auto found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
+	const auto found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
+	if (found_start_node == m_position_to_node.end() || found_goal_node == m_position_to_node.end())
 	{
+		const auto test_found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
+		const auto test_found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
 		return;
 	}
 
-	Entity start_node_index = m_position_to_node.at(PositionToNodeIndex(start_position));
-	Entity goal_node_index = m_position_to_node.at(PositionToNodeIndex(goal_position));
+	Entity start_node_index = found_start_node->second;
+	Entity goal_node_index = found_goal_node->second;
+	std::swap(start_node_index, goal_node_index);
 
 	const auto cmp = [](const Node& left, const Node& right) { return left.f_score > right.f_score; };
 	std::priority_queue<Node, std::vector<Node>, decltype(cmp)> open_set(cmp);
@@ -108,29 +117,31 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 
 		if (current.entity == goal_node.entity)
 		{
-			ConstructPath(came_from, current.entity, path);
-			std::reverse(path.begin(), path.end());
 			path.push_back(current.entity);
+			ConstructPath(came_from, current.entity, path);
 			return;
 		}
 		previous = current.entity;
 
 		for (const auto& neighbor : current.neighbors)
 		{
-			if (!g_score.contains(neighbor))
+			auto g_score_neighbor_it = g_score.find(neighbor);
+			if (g_score_neighbor_it == g_score.end())
 			{
 				g_score.insert({neighbor, FLT_MAX});
+				g_score_neighbor_it = g_score.find(neighbor);
 			}
-			const auto tentative_g_score = g_score.at(current.entity) + WEIGHT_BETWEEN_NODES;
-			if (tentative_g_score < g_score.at(neighbor))
+			auto& neighbor_node = m_nodes.at(neighbor);
+			const Vector2 diff = neighbor_node.position - current.position;
+			const auto tentative_g_score = g_score.at(current.entity) + diff.Length();
+			if (tentative_g_score < g_score_neighbor_it->second)
 			{
 				came_from.insert({ neighbor, current.entity });
-				g_score.find(neighbor)->second = tentative_g_score;
+				g_score_neighbor_it->second = tentative_g_score;
 
 				//Neighbor not in open_set
 				if (!open_set_entities.contains(neighbor))
 				{
-					auto& neighbor_node = m_nodes.at(neighbor);
 					neighbor_node.f_score = tentative_g_score + Heuristic(neighbor_node, goal_node);
 					open_set.push(neighbor_node);
 					open_set_entities.insert(neighbor);
@@ -140,13 +151,14 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 	}
 }
 
-uint64_t PathFinding::PositionToNodeIndex(const Vector2& position)
+uint64_t PathFinding::PositionToNodeIndex(const Vector2& position) const
 {
+	Vector2 node_position = PositionToNodePosition(position);
 	uint64_t index = 0;
-	char* ptr_un = (char*)&index;
-	*((uint32_t*)(ptr_un)) = (uint32_t)(position.x / HALF_LENGTH_BETWEEN_NODES);
+	uint8_t* ptr_un = (uint8_t*)&index;
+	*((uint32_t*)(ptr_un)) = (uint32_t)(node_position.x / HALF_LENGTH_BETWEEN_NODES);
 	ptr_un += sizeof(uint32_t);
-	*((uint32_t*)(ptr_un)) = (uint32_t)(position.y / HALF_LENGTH_BETWEEN_NODES);
+	*((uint32_t*)(ptr_un)) = (uint32_t)(node_position.y / HALF_LENGTH_BETWEEN_NODES);
 
 	return index;
 }
@@ -154,6 +166,7 @@ uint64_t PathFinding::PositionToNodeIndex(const Vector2& position)
 PathFinding::PathFinding()
 {
 	s_singleton = this;
+	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneLoaded", 0, PathFinding::ConstructPathFindingWorldEvent);
 }
 
 std::vector<Entity> PathFinding::PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity)
@@ -161,6 +174,16 @@ std::vector<Entity> PathFinding::PathFind(const SceneIndex scene_index, const En
 	std::vector<Entity> path;
 	AStarPathfinding(scene_index, start_entity, goal_entity, path);
 	return path;
+}
+
+Entity PathFinding::GetNodeFromPosition(const Vector2& position) const
+{
+	const auto it = m_position_to_node.find(PositionToNodeIndex(position));
+	if (it != m_position_to_node.end())
+	{
+		return it->second;
+	}
+	return NULL_ENTITY;
 }
 
 PathFinding* PathFinding::Get()

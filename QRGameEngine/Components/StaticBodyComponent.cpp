@@ -5,14 +5,18 @@
 #include "ECS/EntityManager.h"
 #include "Physics/PhysicsCore.h"
 #include "SceneSystem/SceneLoader.h"
+#include "ComponentInterface.h"
+#include "Scripting/Objects/GameObjectInterface.h"
 
 void StaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
-	auto static_body_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "StaticBody");
+	const auto static_body_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "StaticBody");
 
 	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::InitComponent>(static_body_class, "InitComponent", StaticBodyComponentInterface::InitComponent);
 	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::HasComponent>(static_body_class, "HasComponent", StaticBodyComponentInterface::HasComponent);
 	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::RemoveComponent>(static_body_class, "RemoveComponent", StaticBodyComponentInterface::RemoveComponent);
+
+	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::SetEnabled>(static_body_class, "SetEnabled", StaticBodyComponentInterface::SetEnabled);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<StaticBodyComponent>(SaveScriptComponent, LoadScriptComponent);
 }
@@ -30,6 +34,14 @@ bool StaticBodyComponentInterface::HasComponent(CSMonoObject object, SceneIndex 
 void StaticBodyComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
+}
+
+void StaticBodyComponentInterface::SetEnabled(const CSMonoObject object, const bool enabled)
+{
+	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<StaticBodyComponent>(entity).enabled = enabled;
 }
 
 void StaticBodyComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)

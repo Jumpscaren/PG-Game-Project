@@ -7,6 +7,7 @@ private:
 	{
 		void* hooked_callback_method;
 		void* original_method_ptr;
+		uint8_t event_order;
 	};
 
 	struct EventListenerData
@@ -37,7 +38,7 @@ public:
 	void SendEvent(const std::string& event_name, const Args& ...args);
 
 	template<auto t_method, typename ...Args>
-	void ListenToEvent(const std::string& event_name, void(*)(Args...));
+	void ListenToEvent(const std::string& event_name, const uint8_t event_order, void(*)(Args...));
 };
 
 template<typename ...Args>
@@ -76,7 +77,7 @@ inline void EventCore::SendEvent(const std::string& event_name, const Args& ...a
 	if (it == m_event_listeners.end())
 	{
 		//assert(false);
-		std::cout << "NO LISTENERS FOR THIS EVENT: " << "'" << event_name << "'\n";
+		std::cout << "NO LISTENERS FOR THIS EVENT: '" << event_name << "'\n";
 	}
 	else
 	{
@@ -92,7 +93,7 @@ inline void EventCore::SendEvent(const std::string& event_name, const Args& ...a
 }
 
 template<auto t_method, typename ...Args>
-inline void EventCore::ListenToEvent(const std::string& event_name, void(*)(Args ...))
+inline void EventCore::ListenToEvent(const std::string& event_name, const uint8_t event_order, void(*)(Args ...))
 {
 	uint64_t hased_event_name = std::hash<std::string>{}(event_name);
 	auto it = m_event_listeners.find(hased_event_name);
@@ -127,5 +128,11 @@ inline void EventCore::ListenToEvent(const std::string& event_name, void(*)(Args
 	HookedEventCallbackData new_callback = {};
 	new_callback.hooked_callback_method = (void*)EventCore::HookEvent<(void*)t_method, Args...>;
 	new_callback.original_method_ptr = (void*)t_method;
-	it->second.hooked_event_callback_data.push_back(new_callback);
+	new_callback.event_order = event_order;
+	auto& callback_data = it->second.hooked_event_callback_data;
+	auto const new_pos = std::lower_bound(callback_data.begin(), callback_data.end(), new_callback, [](const HookedEventCallbackData& first, const HookedEventCallbackData& second)
+		{
+			return first.event_order < second.event_order;
+		});
+	it->second.hooked_event_callback_data.insert(new_pos, new_callback);
 }

@@ -15,7 +15,7 @@ public:
 	static void RegisterInterface(CSMonoCore* mono_core);
 
 public:
-	static CSMonoObject CreateVector2(Vector2& vector_2);
+	static CSMonoObject CreateVector2(const Vector2& vector_2);
 	static Vector2 GetVector2(const CSMonoObject& cs_vector_2);
 };
 

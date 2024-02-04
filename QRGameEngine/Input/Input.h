@@ -1,4 +1,6 @@
 #pragma once
+#include "Common/EngineTypes.h"
+#include "Scripting/CSMonoObject.h"
 
 class CSMonoCore;
 
@@ -19,4 +21,7 @@ private:
 	static bool GetMouseButtonDown(int mouse_button);
 
 	static bool GetMouseWheelSpin(int direction);
+
+	static CSMonoObject GetMousePosition();
+	static CSMonoObject GetMousePositionInWorld(const CSMonoObject camera_game_object);
 };

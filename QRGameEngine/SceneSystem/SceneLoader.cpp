@@ -128,7 +128,9 @@ void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint
 		for (auto block_it = it->second.begin(); block_it != it->second.end(); block_it++)
 		{
 			save_file.Write(block_it->first);
-			save_file.Write(block_it->second.prefab_data.prefab_index);
+			const auto& prefab_name = block_it->second.prefab_data.prefab_name;
+			save_file.Write((uint32_t)prefab_name.size());
+			save_file.Write((void*)prefab_name.c_str(), (uint32_t)prefab_name.size());
 
 			std::vector<std::string> component_name_list = entity_manager->GetComponentNameList(block_it->second.block_entity);
 
@@ -188,6 +190,7 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 
 	LoadTexturePaths(&save_file, number_texture_paths);
 
+	std::string prefab_name;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
 		uint64_t unique_number = save_file.Read<uint64_t>();
@@ -204,9 +207,12 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 			BlockData new_block_data;
 			new_block_data.block_entity = new_block;
 			new_block_data.prefab_data.z_index = save_file.Read<uint32_t>();
-			new_block_data.prefab_data.prefab_index = save_file.Read<uint32_t>();
+			uint32_t text_size = save_file.Read<uint32_t>();
+			prefab_name.resize(text_size);
+			save_file.Read((void*)prefab_name.c_str(), text_size);
+			new_block_data.prefab_data.prefab_name = prefab_name;
 			layer_block_map.insert({ new_block_data.prefab_data.z_index, new_block_data });
-			InstancePrefab(game_object, new_block_data.prefab_data.prefab_index);
+			InstancePrefab(game_object, prefab_name);
 
 			LoadComponents(&save_file, entity_manager, new_block);
 		}
@@ -240,6 +246,7 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene)
 
 	LoadTexturePaths(&save_file, number_texture_paths);
 
+	std::string prefab_name;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
 		uint64_t unique_number = save_file.Read<uint64_t>();
@@ -252,8 +259,10 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene)
 			//entity_manager->AddComponent<TransformComponent>(new_entity);
 			SpriteComponent& sprite = entity_manager->AddComponent<SpriteComponent>(new_entity);
 			save_file.Read<uint32_t>();
-			uint32_t prefab_index = save_file.Read<uint32_t>();
-			InstancePrefab(game_object, prefab_index);
+			uint32_t text_size = save_file.Read<uint32_t>();
+			prefab_name.resize(text_size);
+			save_file.Read((void*)prefab_name.c_str(), text_size);
+			InstancePrefab(game_object, prefab_name);
 
 			LoadComponents(&save_file, entity_manager, new_entity);
 		}
@@ -264,10 +273,10 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene)
 	m_texture_paths.clear();
 }
 
-void SceneLoader::InstancePrefab(const CSMonoObject& game_object, uint32_t prefab_instance_id)
+void SceneLoader::InstancePrefab(const CSMonoObject& game_object, std::string prefab_name)
 {
 	auto mono_core = CSMonoCore::Get();
-	mono_core->CallStaticMethod(m_instance_prefab_method, game_object, prefab_instance_id);
+	mono_core->CallStaticMethod(m_instance_prefab_method, game_object, prefab_name);
 }
 
 std::string SceneLoader::GetTexturePath(TextureHandle texture_handle)

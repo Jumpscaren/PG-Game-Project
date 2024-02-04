@@ -70,7 +70,7 @@ const Vector2 Vector2::operator/(const float scalar)
 Vector2 Vector2::Normalize() const
 {
 	float length = Length();
-	if (length < 0.00001f)
+	if (length < 1e-05f)
 		return Vector2();
 	return Vector2(x, y) / length;
 }

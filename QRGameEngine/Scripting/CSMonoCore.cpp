@@ -53,34 +53,34 @@ void CSMonoCore::HandleException(_MonoObject* exception)
 	mono_print_unhandled_exception(exception);
 }
 
-void* CSMonoCore::ToMethodParameter(int& number)
+void* CSMonoCore::ToMethodParameter(const int& number)
 {
-	return &number;
+	return (void*)&number;
 }
 
-void* CSMonoCore::ToMethodParameter(uint32_t& number)
+void* CSMonoCore::ToMethodParameter(const uint32_t& number)
 {
-	return &number;
+	return (void*)&number;
 }
 
-void* CSMonoCore::ToMethodParameter(uint64_t& number)
+void* CSMonoCore::ToMethodParameter(const uint64_t& number)
 {
-	return &number;
+	return (void*)&number;
 }
 
-void* CSMonoCore::ToMethodParameter(float& number)
+void* CSMonoCore::ToMethodParameter(const float& number)
 {
-	return &number;
+	return (void*)&number;
 }
 
-void* CSMonoCore::ToMethodParameter(double& number)
+void* CSMonoCore::ToMethodParameter(const double& number)
 {
-	return &number;
+	return (void*)&number;
 }
 
-void* CSMonoCore::ToMethodParameter(bool& boolean)
+void* CSMonoCore::ToMethodParameter(const bool& boolean)
 {
-	return &boolean;
+	return (void*)&boolean;
 }
 
 void* CSMonoCore::ToMethodParameter(const char* string)
@@ -421,6 +421,17 @@ std::vector<std::string> CSMonoCore::GetAllFieldNames(const CSMonoObject& mono_o
 	}
 
 	return field_names;
+}
+
+void CSMonoCore::PrintAllMethodsFromClass(const MonoClassHandle& class_handle)
+{
+	CSMonoClass* mono_class = GetMonoClass(class_handle);
+	MonoMethod* m;
+	void* iter = nullptr;
+	while ((m = mono_class_get_methods(mono_class->GetMonoClass(), &iter)))
+	{
+		std::cout << mono_method_full_name(m, true) << "\n";
+	}
 }
 
 void CSMonoCore::PrintMethod(const MonoMethodHandle& method_handle)

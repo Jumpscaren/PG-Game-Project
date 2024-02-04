@@ -4,7 +4,7 @@
 
 struct PrefabData
 {
-	uint32_t prefab_index;
+	std::string prefab_name;
 	uint32_t z_index;
 };
 

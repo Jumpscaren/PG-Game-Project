@@ -1,4 +1,4 @@
-﻿using ScriptProject.Math;
+﻿using ScriptProject.EngineMath;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,5 +27,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetFixedRotation(bool fixed_rotation);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetEnabled(bool enabled);
     }
 }

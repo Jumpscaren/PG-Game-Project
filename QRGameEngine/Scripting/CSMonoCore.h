@@ -132,12 +132,12 @@ private:
 
 	void HandleException(_MonoObject* exception);
 
-	void* ToMethodParameter(int& number);
-	void* ToMethodParameter(uint32_t& number);
-	void* ToMethodParameter(uint64_t& number);
-	void* ToMethodParameter(float& number);
-	void* ToMethodParameter(double& number);
-	void* ToMethodParameter(bool& boolean);
+	void* ToMethodParameter(const int& number);
+	void* ToMethodParameter(const uint32_t& number);
+	void* ToMethodParameter(const uint64_t& number);
+	void* ToMethodParameter(const float& number);
+	void* ToMethodParameter(const double& number);
+	void* ToMethodParameter(const bool& boolean);
 	void* ToMethodParameter(const char* string);
 	void* ToMethodParameter(const std::string& string);
 	void* ToMethodParameter(const CSMonoObject& mono_object);
@@ -204,11 +204,11 @@ public:
 	template<typename Type>
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name);
 	template<typename Type>
-	void SetValue(Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name);
+	void SetValue(const Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name);
 	template<typename Type>
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 	template<typename Type>
-	void SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
+	void SetValue(const Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 
 	std::vector<std::string> GetAllFieldNames(const CSMonoObject& mono_object);
 
@@ -247,6 +247,7 @@ public:
 
 	static CSMonoCore* Get();
 
+	void PrintAllMethodsFromClass(const MonoClassHandle& class_handle);
 	void PrintMethod(const MonoMethodHandle& method_handle);
 };
 
@@ -295,7 +296,7 @@ inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_ob
 }
 
 template<typename Type>
-inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name)
+inline void CSMonoCore::SetValue(const Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name)
 {
 	void* value = std::move(ToMethodParameter(value_to_set));
 	SetValueInternal(mono_object, field_name, value);
@@ -309,7 +310,7 @@ inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_ob
 }
 
 template<typename Type>
-inline void CSMonoCore::SetValue(Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
+inline void CSMonoCore::SetValue(const Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
 {
 	void* value = std::move(ToMethodParameter(value_to_set));
 	SetValueInternal(mono_object, mono_field_handle, value);
