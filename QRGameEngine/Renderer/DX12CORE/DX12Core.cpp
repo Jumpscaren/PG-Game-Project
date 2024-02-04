@@ -145,8 +145,9 @@ void DX12Core::InitCore(Window* window, uint32_t backbuffer_count)
 		assert(false);
 
 #ifdef _DEBUG
-	EnableDebugLayer();
-	EnableGPUBasedValidation();
+	//Leaks memory for some reason
+	//EnableDebugLayer();
+	//EnableGPUBasedValidation();
 #endif // DEBUG
 
 	CreateFactory();

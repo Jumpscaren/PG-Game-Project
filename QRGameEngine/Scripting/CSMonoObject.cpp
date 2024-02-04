@@ -8,8 +8,9 @@
 _MonoObject* CSMonoObject::GetMonoObject() const
 {
 	assert(!m_not_initialized);
-	assert(mono_gchandle_get_target(m_gchandle) != nullptr);
-	return mono_gchandle_get_target(m_gchandle);
+	_MonoObject* const mono_object = mono_gchandle_get_target(m_gchandle);
+	assert(mono_object != nullptr);
+	return mono_object;
 }
 
 void CSMonoObject::CreateLinkToMono(_MonoObject* mono_object)
@@ -21,15 +22,15 @@ void CSMonoObject::CreateLinkToMono(_MonoObject* mono_object)
 CSMonoObject::CSMonoObject(CSMonoCore* mono_core, const MonoClassHandle& class_handle) : m_class_handle(class_handle), m_mono_core_ref(mono_core)
 {
 	MonoObject* mono_object = mono_object_new(mono_core->GetDomain(), mono_core->GetMonoClass(class_handle)->GetMonoClass());
-	CreateLinkToMono(mono_object);
 	mono_runtime_object_init(mono_object);
+	CreateLinkToMono(mono_object);
 }
 
 CSMonoObject::CSMonoObject(CSMonoCore* mono_core, _MonoObject* mono_object) : m_mono_core_ref(mono_core)
 {
-	CreateLinkToMono(mono_object);
 	MonoClass* mono_class = mono_object_get_class(mono_object);
 	m_class_handle = mono_core->RegisterMonoClass(mono_class);
+	CreateLinkToMono(mono_object);
 }
 
 CSMonoObject::CSMonoObject(const CSMonoObject& obj) : m_class_handle(obj.m_class_handle), m_mono_core_ref(obj.m_mono_core_ref), m_not_initialized(obj.m_not_initialized)
@@ -57,26 +58,29 @@ CSMonoObject::~CSMonoObject()
 
 CSMonoObject& CSMonoObject::operator=(const CSMonoObject& obj)
 {
-	CreateLinkToMono(obj.GetMonoObject());
 	m_class_handle = obj.m_class_handle;
 	m_mono_core_ref = obj.m_mono_core_ref;
 	m_not_initialized = obj.m_not_initialized;
+	CreateLinkToMono(obj.GetMonoObject());
 	return *this;
 }
 
 CSMonoObject& CSMonoObject::operator=(CSMonoObject&& obj) noexcept
 {
-	CreateLinkToMono(obj.GetMonoObject());
 	m_class_handle = obj.m_class_handle;
 	m_mono_core_ref = obj.m_mono_core_ref;
 	m_not_initialized = obj.m_not_initialized;
+	CreateLinkToMono(obj.GetMonoObject());
 	return *this;
 }
 
 void CSMonoObject::RemoveLinkToMono()
 {
 	//std::cout << "Free handle: " << m_gchandle << "\n";
-	m_not_initialized = false;
-	mono_gchandle_free(m_gchandle);
-	m_gchandle = -1;
+	if (m_gchandle != -1)
+	{
+		m_not_initialized = true;
+		mono_gchandle_free(m_gchandle);
+		m_gchandle = -1;
+	}
 }

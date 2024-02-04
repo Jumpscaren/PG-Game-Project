@@ -18,6 +18,7 @@ namespace ScriptProject.Scripts
         GameObject mid_block = null;
         GameObject hit_box;
         GameObject camera;
+        float attack_timer = 0.0f;
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -27,9 +28,10 @@ namespace ScriptProject.Scripts
             hit_box.SetName("Attack_Box");
             hit_box.AddComponent<StaticBody>().SetEnabled(false);
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
-            box_collider.SetTrigger(false);
+            box_collider.SetTrigger(true);
             box_collider.SetHalfBoxSize(new Vector2(0.3f, 0.5f));
             hit_box.transform.SetPosition(1.0f, 0.0f);
+            hit_box.SetName("HitBox");
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
@@ -39,7 +41,12 @@ namespace ScriptProject.Scripts
 
         void Update()
         {
-            float max_speed = 8.1f;
+            if (attack_timer < Time.GetElapsedTime())
+            {
+                hit_box.GetComponent<StaticBody>().SetEnabled(false);
+            }
+
+            const float max_speed = 8.1f;
             Vector2 velocity = body.GetVelocity();
             Vector2 velocity_direction = velocity.Normalize();
             Vector2 new_velocity = new Vector2();
@@ -96,6 +103,7 @@ namespace ScriptProject.Scripts
                 //anim_sprite.SetId(3);
                 attack = true;
                 hit_box.GetComponent<StaticBody>().SetEnabled(true);
+                attack_timer = 1.0f + Time.GetElapsedTime();
             }
 
             if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightAttack.anim"))

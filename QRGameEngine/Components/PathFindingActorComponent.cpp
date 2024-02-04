@@ -77,7 +77,9 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject obj
 	}
 	const TransformComponent& goal_transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(goal_entity);
 	const Entity goal_node = PathFinding::Get()->GetNodeFromPosition(Vector2(goal_transform.GetPosition().x, goal_transform.GetPosition().y));
-	if (goal_node != path_finding_actor.goal_last_visited_node && goal_node != NULL_ENTITY)
+
+	const auto path_find = goal_node != path_finding_actor.goal_last_visited_node || (current_node_position - node_position).Length() > 2.0f;
+	if (path_find && goal_node != NULL_ENTITY)
 	{
 		path_finding_actor.cached_path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity);
 		path_finding_actor.goal_last_visited_node = goal_node;

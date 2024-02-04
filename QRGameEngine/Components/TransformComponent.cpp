@@ -8,8 +8,6 @@
 #include "Math/MathHelp.h"
 #include "ParentComponent.h"
 
-#include "CameraComponent.h"
-
 MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
 TransformComponent::TransformComponent(const Vector3& position, const Vector3& rotation, const Vector3& scale)

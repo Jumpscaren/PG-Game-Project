@@ -130,8 +130,10 @@ bool CSMonoCore::MonoObjectToValue(bool* mono_object)
 
 std::string CSMonoCore::MonoObjectToValue(std::string* mono_object)
 {
-	MonoString* mono_string = mono_object_to_string((MonoObject*)mono_object, nullptr);
-	std::string return_string = mono_string_to_utf8(mono_string);
+	MonoString* const mono_string = mono_object_to_string((MonoObject*)mono_object, nullptr);
+	std::string return_string = MonoStringToString(mono_string);
+	mono_string_length(mono_string); // This is necessary to notify the runtime
+	mono_free(mono_string);
 	return std::move(return_string);
 }
 
@@ -172,8 +174,7 @@ bool CSMonoCore::MonoMethodParameter(bool mono_parameter)
 
 std::string CSMonoCore::MonoMethodParameter(_MonoString* mono_parameter)
 {
-	std::string string = mono_string_to_utf8(mono_parameter);
-	return std::move(string);
+	return std::move(MonoStringToString(mono_parameter));
 }
 
 CSMonoObject CSMonoCore::MonoMethodParameter(_MonoObject* mono_parameter)
@@ -296,6 +297,15 @@ void CSMonoCore::SetValueInternal(const CSMonoObject& mono_object, const MonoFie
 	assert(field);
 
 	mono_field_set_value(mono_object.GetMonoObject(), field, value);
+}
+
+std::string CSMonoCore::MonoStringToString(_MonoString* mono_string)
+{
+	//We need to remove this data ourselves //this caused an entire day of debugging :)
+	char* char_string = mono_string_to_utf8(mono_string);
+	std::string string = char_string;
+	mono_free(char_string);
+	return std::move(string);
 }
 
 MonoClassHandle CSMonoCore::RegisterMonoClass(const std::string& class_namespace, const std::string& class_name)

@@ -8,6 +8,9 @@ struct _MonoDomain;
 struct _MonoAssembly;
 struct _MonoImage;
 
+//To force garbage collection to remove old objects
+//mono_gc_collect(mono_gc_max_generation());
+
 class CSMonoCore
 {
 	friend CSMonoObject;
@@ -180,6 +183,7 @@ private:
 	void* GetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle);
 	void SetValueInternal(const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle, void* value);
 
+	static std::string MonoStringToString(_MonoString* mono_string);
 	//bool CheckIfParameterCountIsCorrect(uint32_t parameter_count, CS);
 
 	//MonoMethodHandle FindMonoMethod();

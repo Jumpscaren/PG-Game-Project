@@ -34,11 +34,38 @@ namespace ScriptProject.Scripts
 
             DynamicBody body = game_object.GetComponent<DynamicBody>();
             Vector2 velocity = body.GetVelocity();
-            velocity += dir.Normalize() * Time.GetDeltaTime();
-            body.SetVelocity(velocity);
+            const float max_speed = 2.0f;
 
-            //Vector2 new_position = current_position + dir.Normalize() * Time.GetDeltaTime();
-            //transform.SetPosition(new_position);
+            Vector2 new_velocity = dir.Normalize() * max_speed;
+            if (velocity.Length() <= max_speed && new_velocity.Length() != 0.0f)
+                velocity = new_velocity;
+            else
+                velocity += new_velocity * Time.GetDeltaTime();
+            if (new_velocity.Length() == 0.0f && velocity.Length() <= max_speed)
+                velocity = new Vector2(0.0f, 0.0f);
+            if (velocity.Length() > max_speed)
+                velocity -= velocity.Normalize() * max_speed * 3.0f * Time.GetDeltaTime();
+            if (new_velocity.Length() > 0.0f && velocity.Length() < max_speed)
+                velocity = velocity.Normalize() * max_speed;
+
+            body.SetVelocity(velocity);
+        }
+
+        void BeginCollision(GameObject collided_game_object)
+        {
+            if (collided_game_object.GetName() == "Bouncer")
+            {
+                DynamicBody body = game_object.GetComponent<DynamicBody>();
+                Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
+                body.SetVelocity(direction.Normalize() * 20.0f);
+            }
+
+            if (collided_game_object.GetName() == "HitBox")
+            {
+                DynamicBody body = game_object.GetComponent<DynamicBody>();
+                Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
+                body.SetVelocity(direction.Normalize() * 10.0f);
+            }
         }
     }
 }
