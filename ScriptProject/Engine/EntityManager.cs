@@ -21,7 +21,15 @@ namespace ScriptProject.Engine
             return CreateEntity(m_scene.GetSceneIndex());
         }
 
+        public void RemoveEntity(GameObject gameObject)
+        {
+            DeleteEntity(m_scene.GetSceneIndex(), gameObject.GetEntityID());
+        }
+
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static private extern UInt32 CreateEntity(UInt32 scene_index);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern void DeleteEntity(UInt32 scene_index, UInt32 entity);
     }
 }

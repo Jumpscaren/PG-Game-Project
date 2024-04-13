@@ -56,8 +56,6 @@ void QREntryPoint::EntryPoint()
 
 	mouse = new Mouse();
 
-	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
-
 	render_core = new RenderCore(1920, 1080, L"2DRENDERER");
 
 	scene_manager = new SceneManager();
@@ -70,12 +68,8 @@ void QREntryPoint::EntryPoint()
 	scene_manager->ChangeScene(main_scene);
 	scene_manager->HandleDeferredScenes();
 
+	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
 	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
-
-	auto scene_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "SceneManager");
-	mono_core->HookAndRegisterMonoMethodType<SceneManager::GetActiveSceneIndex>(scene_manager_handle, "GetActiveSceneIndex", SceneManager::GetActiveSceneIndex);
-	auto entity_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "EntityManager");
-	mono_core->HookAndRegisterMonoMethodType<EntityManager::CreateEntity>(entity_manager_handle, "CreateEntity", EntityManager::CreateEntity);
 
 	RegisterInterfaces::Register(mono_core);
 
@@ -140,44 +134,6 @@ void QREntryPoint::RunTime()
 		ImGui::End();
 
 #ifndef _EDITOR
-		//if (path_finder != NULL_ENTITY || change_scene)
-		//{
-		//	if (change_scene)
-		//	{
-		//		path_finding->ConstructPathFindingWorld(active_scene->GetSceneIndex());
-		//		path_finder = entman->NewEntity();
-		//		entman->AddComponent<TransformComponent>(path_finder).SetPositionZ(1);
-		//		entman->AddComponent<SpriteComponent>(path_finder).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png");
-		//		change_scene = false;
-		//	}
-		//	Entity player = GameObjectInterface::TempFindGameObjectEntity("Player");
-		//	std::vector<Entity> path = path_finding->PathFind(active_scene->GetSceneIndex(), path_finder, player);
-		//	for (int i = 0; i < path.size(); ++i)
-		//	{
-		//		const TransformComponent& trans = entman->GetComponent<TransformComponent>(path[i]);
-		//		if (i + 1 < path.size())
-		//		{
-		//			render_core->AddLine(Vector2(trans.GetPosition().x, trans.GetPosition().y));
-		//			const TransformComponent& trans_next = entman->GetComponent<TransformComponent>(path[i+1]);
-		//			render_core->AddLine(Vector2(trans_next.GetPosition().x, trans_next.GetPosition().y));
-		//		}
-		//	}
-		//	TransformComponent& path_finder_trans = entman->GetComponent<TransformComponent>(path_finder);
-		//	const Vector2 path_finder_pos = Vector2(path_finder_trans.GetPosition().x, path_finder_trans.GetPosition().y);
-		//	Vector2 dir;
-		//	if (path.size() > 2)
-		//	{
-		//		const TransformComponent& trans = entman->GetComponent<TransformComponent>(path[1]);
-		//		dir = (Vector2(trans.GetPosition().x, trans.GetPosition().y) - path_finder_pos).Normalize();
-		//	}
-		//	else
-		//	{
-		//		const TransformComponent& trans = entman->GetComponent<TransformComponent>(player);
-		//		dir = (Vector2(trans.GetPosition().x, trans.GetPosition().y) - path_finder_pos).Normalize();
-		//	}
-		//	Vector2 new_pos = path_finder_pos + Vector2(Time::GetDeltaTime(), Time::GetDeltaTime()) * dir;
-		//	path_finder_trans.SetPosition(new_pos);
-		//}
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
 			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
@@ -232,6 +188,9 @@ void QREntryPoint::RunTime()
 			break;
 		average_rendering_frame_time = average_rendering_frame_time * 0.9 + 0.1 * rendering_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 
+		//Entities can have been created after calling for destruction of a scene
+		scene_manager->RemoveEntitiesFromDeferredDestroyedScenes();
+
 		physics_core->RemoveDeferredPhysicObjects(entman);
 		scripting_manager->RemoveDeferredScripts(entman);
 		scene_hierarchy->RemoveDeferredRelations(entman);
@@ -251,8 +210,23 @@ void QREntryPoint::RunTime()
 
 		Time::Stop();
 	}
+}
 
+void QREntryPoint::Cleanup()
+{
 	delete mono_core;
 	delete render_core;
 	delete scene_manager;
+	delete asset_manager;
+	delete scripting_manager;
+	delete keyboard;
+	delete mouse;
+	delete editor_core;
+	delete scene_loader;
+	delete physics_core;
+	delete event_core;
+	delete global_scene;
+	delete scene_hierarchy;
+	delete animation_manager;
+	delete path_finding;
 }

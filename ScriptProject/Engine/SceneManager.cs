@@ -21,5 +21,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static private extern UInt32 GetActiveSceneIndex();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern void RestartActiveScene();
     }
 }

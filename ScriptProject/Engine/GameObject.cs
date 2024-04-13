@@ -63,9 +63,11 @@ namespace ScriptProject.Engine
             return gameObject;
         }
 
-        static public void DeleteGameObject()
+        static public void DeleteGameObject(GameObject gameObject)
         {
-
+            SceneManager.GetActiveScene().GetEntityManager().RemoveEntity(gameObject);
+            gameObject.DestroyChildren();
+            gameObject = null;
         }
 
         public UInt32 GetEntityID() 
@@ -101,12 +103,12 @@ namespace ScriptProject.Engine
                 return component;
             }
 
-            Console.WriteLine("ERROR: COULDN'T FIND COMPONENT");
+            Console.WriteLine("ERROR: COULDN'T FIND COMPONENT (" + typeof(T) + ")");
 
             return null;
         }
 
-        private bool HasComponent<T>() where T : Component, new()
+        public bool HasComponent<T>() where T : Component, new()
         {
             T component = new T();
             return component.HasComponent(scene.GetSceneIndex(), entity_id);
@@ -136,5 +138,11 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void RemoveChild(GameObject child_game_object);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern bool HasChildren();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern bool DestroyChildren();
     }
 }

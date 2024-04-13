@@ -22,12 +22,15 @@ private:
 
 public:
 	SceneManager();
+	~SceneManager();
 
 	SceneIndex CreateScene();
 	Scene* GetScene(SceneIndex scene_index);
 	void ChangeScene(SceneIndex scene_index);
 	void DestroyScene(SceneIndex scene_index);
 	SceneIndex LoadScene(const std::string& scene_name);
+	SceneIndex LoadScene(SceneIndex scene_index);
+	void RemoveEntitiesFromDeferredDestroyedScenes();
 	void HandleDeferredScenes();
 	bool SceneExists(SceneIndex scene_index);
 

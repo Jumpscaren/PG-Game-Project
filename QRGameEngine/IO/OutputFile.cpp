@@ -15,7 +15,7 @@ OutputFile::OutputFile(const std::string& file_name, const FileMode& file_mode, 
 		fopen_s(&m_file.file, file_name.c_str(), file_mode_text.c_str());
 
 	if (!FileExists())
-		std::cout << "ERROR: Couldn't create/find file name requested\n";
+		std::cout << "ERROR: Couldn't create/find file name requested (" << file_name << ")\n";
 }
 
 OutputFile::~OutputFile()

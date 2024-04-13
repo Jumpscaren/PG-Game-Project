@@ -84,6 +84,7 @@ public:
 	void DestroyDeferredEntities();
 
 	static Entity CreateEntity(SceneIndex scene_index);
+	static void DeleteEntity(SceneIndex scene_index, Entity entity);
 
 	bool EntityExists(Entity entity) const;
 

@@ -8,7 +8,7 @@ SceneManager* SceneManager::s_singleton;
 
 void SceneManager::DestroyDeferredScenes()
 {
-	for (const SceneIndex& scene_index: m_deferred_scene_deletion)
+	for (const SceneIndex scene_index: m_deferred_scene_deletion)
 	{
 		delete m_scenes[scene_index];
 		m_scenes[scene_index] = nullptr;
@@ -20,10 +20,21 @@ void SceneManager::DestroyDeferredScenes()
 
 SceneManager::SceneManager()
 {
-	m_active_scene = -1;
+	m_active_scene = NULL_SCENE_INDEX;
 	s_singleton = this;
 	m_change_scene_index = NULL_SCENE_INDEX;
 	m_load_scene = false;
+	m_load_scene_index = NULL_SCENE_INDEX;
+}
+
+SceneManager::~SceneManager()
+{
+	for (const Scene* delete_scene : m_scenes)
+	{
+		delete delete_scene;
+	}
+
+	m_deferred_scene_deletion.clear();
 }
 
 SceneIndex SceneManager::CreateScene()
@@ -61,7 +72,6 @@ void SceneManager::ChangeScene(SceneIndex scene_index)
 
 void SceneManager::DestroyScene(SceneIndex scene_index)
 {
-	GetScene(scene_index)->GetEntityManager()->RemoveAllEntities();
 	m_deferred_scene_deletion.push_back(scene_index);
 }
 
@@ -71,23 +81,42 @@ SceneIndex SceneManager::LoadScene(const std::string& scene_name)
 	m_load_scene = true;
 	m_load_scene_name = scene_name;
 	m_load_scene_index = CreateScene();
+	m_scenes[m_load_scene_index]->SetSceneName(m_load_scene_name);
 	return m_load_scene_index;
+}
+
+SceneIndex SceneManager::LoadScene(const SceneIndex scene_index)
+{
+	assert(!m_load_scene && "Trying to load scenes multiple times per frame, not illegal but we want to avoid that happening!");
+	m_load_scene = true;
+	m_load_scene_name = GetScene(scene_index)->GetSceneName();
+	m_load_scene_index = CreateScene();
+	m_scenes[m_load_scene_index]->SetSceneName(m_load_scene_name);
+	return m_load_scene_index;
+}
+
+void SceneManager::RemoveEntitiesFromDeferredDestroyedScenes()
+{
+	for (const SceneIndex scene_index : m_deferred_scene_deletion)
+	{
+		GetScene(scene_index)->GetEntityManager()->RemoveAllEntities();
+	}
 }
 
 void SceneManager::HandleDeferredScenes()
 {
 	DestroyDeferredScenes();
-	if (m_change_scene_index != NULL_SCENE_INDEX)
-	{
-		m_active_scene = m_change_scene_index;
-	}
-	m_change_scene_index = NULL_SCENE_INDEX;
 	if (m_load_scene)
 	{
 		SceneLoader::Get()->LoadScene(m_load_scene_name, m_load_scene_index);
-		GetScene(m_load_scene_index)->SetSceneAsLoaded();
-		EventCore::Get()->SendEvent("SceneLoaded", m_load_scene_index);
 	}
+	if (m_change_scene_index != NULL_SCENE_INDEX)
+	{
+		m_active_scene = m_change_scene_index;
+		GetScene(m_active_scene)->SetSceneAsLoaded();
+		EventCore::Get()->SendEvent("SceneLoaded", m_active_scene);
+	}
+	m_change_scene_index = NULL_SCENE_INDEX;
 	m_load_scene = false;
 }
 

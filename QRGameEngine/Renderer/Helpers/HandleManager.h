@@ -12,12 +12,10 @@ public:
 
 private:
 	std::unordered_map<HandleType, std::vector<uint64_t>> m_handles;
-	static HandleManager s_handle_manager;
-
-private:
-	HandleManager();
+	static HandleManager* s_handle_manager;
 
 public:
+	HandleManager();
 	~HandleManager();
 	HandleManager(const HandleManager& other) = delete;
 	HandleManager& operator=(const HandleManager& other) = delete;

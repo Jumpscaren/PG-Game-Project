@@ -13,5 +13,6 @@ public:
 
 public:
 	static CSMonoObject CreateSceneWithSceneIndex(SceneIndex scene_index);
+	static void RestartActiveScene();
 };
 

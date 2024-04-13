@@ -26,6 +26,12 @@
 
 void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 {
+	const auto scene_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "SceneManager");
+	mono_core->HookAndRegisterMonoMethodType<SceneManager::GetActiveSceneIndex>(scene_manager_handle, "GetActiveSceneIndex", SceneManager::GetActiveSceneIndex);
+	const auto entity_manager_handle = mono_core->RegisterMonoClass("ScriptProject.Engine", "EntityManager");
+	mono_core->HookAndRegisterMonoMethodType<EntityManager::CreateEntity>(entity_manager_handle, "CreateEntity", EntityManager::CreateEntity);
+	mono_core->HookAndRegisterMonoMethodType<EntityManager::DeleteEntity>(entity_manager_handle, "DeleteEntity", EntityManager::DeleteEntity);
+
 	TransformComponentInterface::RegisterInterface(mono_core);
 	SpriteComponentInterface::RegisterInterface(mono_core);
 	GameObjectInterface::RegisterInterface(mono_core);

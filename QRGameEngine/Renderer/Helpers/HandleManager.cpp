@@ -1,23 +1,24 @@
 #include "pch.h"
 #include "HandleManager.h"
 
-HandleManager HandleManager::s_handle_manager;
+HandleManager* HandleManager::s_handle_manager = nullptr;
 
 HandleManager::HandleManager()
 {
+	s_handle_manager = this;
 }
 
 HandleManager::~HandleManager()
 {
+	s_handle_manager->m_handles.clear();
 }
 
 bool HandleManager::GetHandle(const HandleType& handle_type, uint64_t& handle)
 {
-	auto it = s_handle_manager.m_handles.find(handle_type);
-
-	if (it == s_handle_manager.m_handles.end())
+	auto it = s_handle_manager->m_handles.find(handle_type);
+	if (it == s_handle_manager->m_handles.end())
 	{
-		s_handle_manager.m_handles.insert({ handle_type, {} });
+		s_handle_manager->m_handles.insert({ handle_type, {} });
 		return false;
 	}
 
@@ -30,9 +31,9 @@ bool HandleManager::GetHandle(const HandleType& handle_type, uint64_t& handle)
 
 void HandleManager::FreeHandle(const HandleType& handle_type, uint64_t handle)
 {
-	auto it = s_handle_manager.m_handles.find(handle_type);
+	auto it = s_handle_manager->m_handles.find(handle_type);
 
-	if (it == s_handle_manager.m_handles.end())
+	if (it == s_handle_manager->m_handles.end())
 	{
 		assert(false);
 		return;

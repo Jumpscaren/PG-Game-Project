@@ -29,7 +29,7 @@ namespace ScriptProject.Engine
             ++m_pid;
         }
 
-        private static void InstanceUserPrefab(GameObject gameObject, string prefab_name)
+        public static void InstanceUserPrefab(GameObject gameObject, string prefab_name)
         {
             if (m_name_to_index.ContainsKey(prefab_name))
             {

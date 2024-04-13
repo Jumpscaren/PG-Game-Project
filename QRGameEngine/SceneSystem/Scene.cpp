@@ -2,7 +2,7 @@
 #include "Scene.h"
 #include "ECS/EntityManager.h"
 
-Scene::Scene(SceneIndex scene_index) : m_scene_index(scene_index)
+Scene::Scene(const SceneIndex scene_index) : m_scene_index(scene_index)
 {
 	const uint32_t max_entities = 10000;
 
@@ -13,6 +13,11 @@ Scene::Scene(SceneIndex scene_index) : m_scene_index(scene_index)
 Scene::~Scene()
 {
 	
+}
+
+void Scene::SetSceneName(const std::string& scene_name)
+{
+	m_scene_name = scene_name;
 }
 
 EntityManager* Scene::GetEntityManager()
@@ -34,4 +39,9 @@ bool Scene::IsSceneLoaded()
 SceneIndex Scene::GetSceneIndex() const
 {
 	return m_scene_index;
+}
+
+const std::string& Scene::GetSceneName() const
+{
+	return m_scene_name;
 }

@@ -40,6 +40,11 @@ CSMonoCore::CSMonoCore()
 	s_mono_core = this;
 }
 
+CSMonoCore::~CSMonoCore()
+{
+	mono_jit_cleanup(m_domain);
+}
+
 MonoImage* CSMonoCore::GetImage() const
 {
 	return m_image;
@@ -304,6 +309,7 @@ std::string CSMonoCore::MonoStringToString(_MonoString* mono_string)
 	//We need to remove this data ourselves //this caused an entire day of debugging :)
 	char* char_string = mono_string_to_utf8(mono_string);
 	std::string string = char_string;
+	mono_string_length(mono_string); // This is necessary to notify the runtime
 	mono_free(char_string);
 	return std::move(string);
 }

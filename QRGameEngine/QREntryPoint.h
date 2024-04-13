@@ -4,5 +4,6 @@ class QREntryPoint
 public:
 	void EntryPoint();
 	void RunTime();
+	void Cleanup();
 };
 

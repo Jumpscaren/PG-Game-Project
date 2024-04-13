@@ -64,6 +64,13 @@ private:
 		PhysicObjectHandle physic_object_handle;
 	};
 
+	enum class PhysicThreadState
+	{
+		Wait = 0,
+		Update = 1,
+		Close = 2
+	};
+
 private:
 	b2World* m_world;
 	PhysicsDebugDraw* m_debug_draw;
@@ -84,7 +91,7 @@ private:
 	bool m_threaded_physics;
 	std::thread* m_physic_update_thread = nullptr;
 	std::mutex m_physic_update_thread_mutex;
-	std::atomic<bool> m_update_physics;
+	std::atomic<PhysicThreadState> m_update_physics;
 	bool m_defer_physic_calls;
 
 	std::vector<DeferredPhysicObjectHandle> m_deferred_physic_object_handles;
@@ -123,6 +130,7 @@ private:
 
 public:
 	PhysicsCore(bool threaded_physics);
+	~PhysicsCore();
 
 	static PhysicsCore* Get();
 

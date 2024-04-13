@@ -117,13 +117,12 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.ResetBuffers();
-
-
 }
 
 RenderCore::~RenderCore()
 {
 	ImGUIMain::Destroy();
+	delete m_stack_allocator;
 }
 
 bool RenderCore::UpdateRender(Scene* draw_scene)

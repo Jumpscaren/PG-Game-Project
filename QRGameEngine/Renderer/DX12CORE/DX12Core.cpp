@@ -150,6 +150,7 @@ void DX12Core::InitCore(Window* window, uint32_t backbuffer_count)
 	//EnableGPUBasedValidation();
 #endif // DEBUG
 
+	m_handle_manager = std::make_unique<HandleManager>();
 	CreateFactory();
 	FindAdapter();
 	CreateDevice();

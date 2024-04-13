@@ -61,6 +61,46 @@ void SceneHierarchy::RemoveParentChildRelation(const SceneIndex scene_index, con
 	RemoveParentChildRelationInternal(parent, child, entity_manager);
 }
 
+bool SceneHierarchy::ParentHasChildren(const SceneIndex scene_index, const Entity parent) const
+{
+	const auto it_parent = m_parent_connections.find(parent);
+	if (it_parent == m_parent_connections.end())
+	{
+		return false;
+	}
+	return it_parent->second.children.size();
+}
+
+const std::set<Entity>& SceneHierarchy::GetChildren(const SceneIndex scene_index, const Entity parent) const
+{
+	const auto it_parent = m_parent_connections.find(parent);
+	assert(it_parent != m_parent_connections.end());
+	return it_parent->second.children;
+}
+
+std::set<Entity> SceneHierarchy::GetAllChildren(const SceneIndex scene_index, const Entity parent) const
+{
+	std::set<Entity> children;
+	std::vector<Entity> children_to_process;
+	children_to_process.push_back(parent);
+
+	while (!children_to_process.empty())
+	{
+		const auto it_parent = m_parent_connections.find(children_to_process.front());
+		if (it_parent != m_parent_connections.end())
+		{
+			for (const auto child : it_parent->second.children)
+			{
+				children_to_process.push_back(child);
+				children.insert(child);
+			}
+		}
+		children_to_process.erase(children_to_process.begin());
+	}
+
+	return children;
+}
+
 void SceneHierarchy::RemoveParentChildRelationInternal(const Entity parent, const Entity child, EntityManager* entity_manager)
 {
 	auto it_parent = m_parent_connections.find(parent);

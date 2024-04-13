@@ -15,7 +15,7 @@ GlobalScene* GlobalScene::Get()
 	return s_global_scene;
 }
 
-const SceneIndex& GlobalScene::GetSceneIndex()
+const SceneIndex GlobalScene::GetSceneIndex()
 {
 	return m_scene_index;
 }

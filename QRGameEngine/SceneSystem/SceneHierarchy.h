@@ -34,6 +34,9 @@ public:
 	void AddParentChildRelation(SceneIndex scene_index, Entity parent, Entity child);
 	void RemoveParentChildRelation(Entity child);
 	void RemoveParentChildRelation(SceneIndex scene_index, Entity child);
+	bool ParentHasChildren(SceneIndex scene_index, Entity parent) const;
+	const std::set<Entity>& GetChildren(SceneIndex scene_index, Entity parent) const;
+	std::set<Entity> GetAllChildren(SceneIndex scene_index, Entity parent) const;
 
 	void UpdateEntityTransforms(SceneIndex scene_index);
 

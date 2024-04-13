@@ -8,6 +8,7 @@
 #include "DX12Fence.h"
 #include "DX12ShaderCompiler.h"
 #include "DX12ResourceDestroyer.h"
+#include "../Helpers/HandleManager.h"
 
 class Window;
 
@@ -30,6 +31,7 @@ private:
 
 	std::unique_ptr<DX12TextureManager> m_texture_manager;
 	std::unique_ptr<DX12BufferManager> m_buffer_manager;
+	std::unique_ptr<HandleManager> m_handle_manager;
 
 	DX12ShaderCompiler m_shader_compiler;
 

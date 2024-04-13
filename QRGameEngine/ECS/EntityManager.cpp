@@ -126,9 +126,9 @@ void EntityManager::RemoveEntity(Entity entity)
 
 void EntityManager::RemoveAllEntities()
 {
-	for (Entity entity : m_entities)
+	for (const Entity entity : m_entities)
 	{
-		if (EntityExists(entity))
+		if (EntityExists(entity) && !HasComponent<DeferredEntityDeletion>(entity))
 			RemoveEntity(entity);
 	}
 }
@@ -141,9 +141,14 @@ void EntityManager::DestroyDeferredEntities()
 		});
 }
 
-Entity EntityManager::CreateEntity(SceneIndex scene_index)
+Entity EntityManager::CreateEntity(const SceneIndex scene_index)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->NewEntity();
+}
+
+void EntityManager::DeleteEntity(const SceneIndex scene_index, const Entity entity)
+{
+	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveEntity(entity);
 }
 
 void EntityManager::SetComponentData(Entity entity, const std::string& component_name, void* component_data)

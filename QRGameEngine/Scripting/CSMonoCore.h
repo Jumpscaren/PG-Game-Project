@@ -190,6 +190,7 @@ private:
 
 public:
 	CSMonoCore();
+	~CSMonoCore();
 
 public:
 	MonoClassHandle RegisterMonoClass(const std::string& class_namespace, const std::string& class_name);

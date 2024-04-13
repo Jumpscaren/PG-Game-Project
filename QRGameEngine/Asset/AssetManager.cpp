@@ -86,7 +86,7 @@ void AssetManager::DeleteCPUAssetDataIfGPUOnly(AssetHandle asset_handle)
 	if (asset_data->second.asset_type == AssetType::TEXTURE)
 	{
 		TextureInfo* texture_info = (TextureInfo*)asset_data->second.asset_data;
-		delete[] texture_info->texture_data;
+		free(texture_info->texture_data);
 		delete texture_info;
 	}
 }

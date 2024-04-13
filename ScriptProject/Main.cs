@@ -43,7 +43,8 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("PlayerCameraPrefab", PlayerCameraPrefab, 1);
             PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1);
             PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1);
-            
+            PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1);
+
             return 0;
         }
 
@@ -99,6 +100,15 @@ namespace ScriptProject
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             game_object.AddComponent<CircleCollider>();
+        }
+
+        static void OrcEnemy(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Orc.png"));
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            game_object.AddComponent<CircleCollider>();
+            game_object.AddComponent<OrcEnemy>();
         }
     }
 }

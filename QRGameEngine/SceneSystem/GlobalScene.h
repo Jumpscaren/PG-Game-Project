@@ -12,6 +12,6 @@ public:
 
 	static GlobalScene* Get();
 
-	const SceneIndex& GetSceneIndex();
+	const SceneIndex GetSceneIndex();
 };
 

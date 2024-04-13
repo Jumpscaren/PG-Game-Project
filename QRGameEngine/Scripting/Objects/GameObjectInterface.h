@@ -34,5 +34,7 @@ public:
 
 	static void AddChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
 	static void RemoveChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
+	static bool HasChildren(const CSMonoObject game_object);
+	static void DestroyChildren(const CSMonoObject game_object);
 };
 

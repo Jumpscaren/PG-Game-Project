@@ -53,12 +53,28 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 	}
 	m_free_physic_object_handles.push(0);
 
+	m_update_physics = PhysicThreadState::Wait;
+
 	if (m_threaded_physics)
 		m_physic_update_thread = new std::thread(&PhysicsCore::ThreadUpdatePhysic, this);
 
 	m_defer_physic_calls = false;
 
 	EventCore::Get()->ListenToEvent<PhysicsCore::AwakePhysicObjectsFromLoadedScene>("SceneLoaded", 0, PhysicsCore::AwakePhysicObjectsFromLoadedScene);
+}
+
+PhysicsCore::~PhysicsCore()
+{
+	delete m_contact_listener;
+	delete m_debug_draw;
+	delete m_destruction_listener;
+	delete m_world;
+	if (m_threaded_physics)
+	{
+		m_update_physics = PhysicThreadState::Close;
+		m_physic_update_thread->join();
+		delete m_physic_update_thread;
+	}
 }
 
 PhysicsCore* PhysicsCore::Get()
@@ -305,13 +321,18 @@ void PhysicsCore::ThreadUpdatePhysic()
 {
 	while (true)
 	{
-		if (m_update_physics)
+		if (m_update_physics == PhysicThreadState::Update)
 		{
 			//std::cout << "Update: " << PhysicsCore::update << "\n";
 			m_physic_update_thread_mutex.lock();
 			Update();
 			m_physic_update_thread_mutex.unlock();
-			m_update_physics = false;
+			m_update_physics = PhysicThreadState::Wait;
+		}
+
+		if (m_update_physics == PhysicThreadState::Close)
+		{
+			return;
 		}
 	}
 }
@@ -333,7 +354,7 @@ void PhysicsCore::UpdatePhysics()
 {
 	if (m_threaded_physics)
 	{
-		m_update_physics = true;
+		m_update_physics = PhysicThreadState::Update;
 		m_defer_physic_calls = true;
 	}
 	else
@@ -380,7 +401,7 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 	entity_manager->System<StaticBodyComponent, TransformComponent>([&](const StaticBodyComponent& static_body, const TransformComponent& transform)
 		{
 			PhysicObjectData& physic_object = m_physic_object_data[static_body.physic_object_handle];
-			m_physic_object_data[static_body.physic_object_handle].object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
 			if (static_body.enabled != physic_object.object_body->IsEnabled())
 			{
 				physic_object.object_body->SetEnabled(static_body.enabled);

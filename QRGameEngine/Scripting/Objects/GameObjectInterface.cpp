@@ -28,6 +28,8 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
 
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::AddChild>(game_object_class, "AddChild", GameObjectInterface::AddChild);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::RemoveChild>(game_object_class, "RemoveChild", GameObjectInterface::RemoveChild);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::HasChildren>(game_object_class, "HasChildren", GameObjectInterface::HasChildren);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::DestroyChildren>(game_object_class, "DestroyChildren", GameObjectInterface::DestroyChildren);
 }
 
 CSMonoObject GameObjectInterface::GetGameObjectFromComponent(const CSMonoObject& component)
@@ -131,4 +133,24 @@ void GameObjectInterface::RemoveChild(const CSMonoObject game_object, const CSMo
     const auto child_entity = GameObjectInterface::GetEntityID(child_game_object);
 
     SceneHierarchy::Get()->RemoveParentChildRelation(scene_index, child_entity);
+}
+
+bool GameObjectInterface::HasChildren(const CSMonoObject game_object)
+{
+    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+    const auto parent_entity = GameObjectInterface::GetEntityID(game_object);
+
+    return SceneHierarchy::Get()->ParentHasChildren(scene_index, parent_entity);
+}
+
+void GameObjectInterface::DestroyChildren(const CSMonoObject game_object)
+{
+    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+    const auto parent_entity = GameObjectInterface::GetEntityID(game_object);
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	const auto& children = SceneHierarchy::Get()->GetAllChildren(scene_index, parent_entity);
+	for (const auto entity : children)
+	{
+		entity_manager->RemoveEntity(entity);
+	}
 }

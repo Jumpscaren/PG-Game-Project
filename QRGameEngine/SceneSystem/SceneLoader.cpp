@@ -256,7 +256,6 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene)
 		{
 			Entity new_entity = entity_manager->NewEntity();
 			CSMonoObject game_object = GameObjectInterface::NewGameObjectWithExistingEntity(new_entity, load_scene);
-			//entity_manager->AddComponent<TransformComponent>(new_entity);
 			SpriteComponent& sprite = entity_manager->AddComponent<SpriteComponent>(new_entity);
 			save_file.Read<uint32_t>();
 			uint32_t text_size = save_file.Read<uint32_t>();

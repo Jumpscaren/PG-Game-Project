@@ -19,6 +19,8 @@ namespace ScriptProject.Scripts
         GameObject hit_box;
         GameObject camera;
         float attack_timer = 0.0f;
+        float health = 100.0f;
+
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -41,6 +43,11 @@ namespace ScriptProject.Scripts
 
         void Update()
         {
+            if (health <= 0.0f) { 
+                health = 0.0f; 
+                SceneManager.RestartActiveScene();
+            }
+
             if (attack_timer < Time.GetElapsedTime())
             {
                 hit_box.GetComponent<StaticBody>().SetEnabled(false);
@@ -138,6 +145,14 @@ namespace ScriptProject.Scripts
             {
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
                 body.SetVelocity(direction.Normalize() * 20.0f);
+            }
+
+            if (collided_game_object.GetName() == "OrcHitBox")
+            {
+                health -= 20.0f;
+                DynamicBody body = game_object.GetComponent<DynamicBody>();
+                Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
+                body.SetVelocity(direction.Normalize() * 10.0f);
             }
         }
     }
