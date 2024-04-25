@@ -3,6 +3,7 @@
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/debug-helpers.h>
+#include <mono/metadata/mono-gc.h>
 
 CSMonoCore* CSMonoCore::s_mono_core = nullptr;
 
@@ -42,6 +43,12 @@ CSMonoCore::CSMonoCore()
 
 CSMonoCore::~CSMonoCore()
 {
+	//mono_images_cleanup();
+	//mono_assemblies_cleanup();
+	//mono_domain_free(m_domain, true);
+	//mono_assembly_close(m_assembly);
+	//mono_domain_free(m_domain, true);
+	//mono_domain_free();
 	mono_jit_cleanup(m_domain);
 }
 
@@ -453,4 +460,9 @@ void CSMonoCore::PrintAllMethodsFromClass(const MonoClassHandle& class_handle)
 void CSMonoCore::PrintMethod(const MonoMethodHandle& method_handle)
 {
 	std::cout << mono_method_full_name(GetMonoMethod(method_handle)->GetMonoMethod(), true) << "\n";
+}
+
+void CSMonoCore::ForceGarbageCollection()
+{
+	mono_gc_collect(mono_gc_max_generation());
 }

@@ -254,6 +254,8 @@ public:
 
 	void PrintAllMethodsFromClass(const MonoClassHandle& class_handle);
 	void PrintMethod(const MonoMethodHandle& method_handle);
+
+	void ForceGarbageCollection();
 };
 
 template<typename T>

@@ -11,6 +11,5 @@ namespace ScriptProject.Engine
     {
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern Texture LoadTexture(string texture_name);
-        //static public extern Texture LoadTexture(int g);
     }
 }

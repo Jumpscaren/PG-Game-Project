@@ -21,6 +21,38 @@ namespace ScriptProject.Scripts
         Sprite sprite;
         float health = 20.0f;
 
+        StaticBody hit_box_body;
+
+        float charge_up = 0.0f;
+        bool charged_up = false;
+        const float charge_up_distance = 4.0f;
+        const float charge_up_increase = 0.6f;
+        const float charge_up_decrease = 0.3f;
+        bool attack_ready = false;
+        bool attacking = false;
+        const float attack_range = 1.3f;
+        const float attack_time = 0.4f;
+        float attack_timer = 0.0f;
+        const float attack_angle = (float)Math.PI / 2.0f;
+        const float delay_time = 0.1f;
+        float delay_timer = 0.0f;
+        bool delay_attack = false;
+
+        float max_speed = 2.0f;
+        const float drag_speed = 20.0f;
+
+        RandomGenerator random_generator = new RandomGenerator();
+
+        //public delegate void OrcAngryEventHandler();
+        //public static event OrcAngryEventHandler event_handler;
+        //OrcAngryEventHandler orc_angry_event;
+
+        ~OrcEnemy()
+        {
+            Console.WriteLine("Dead");
+            //event_handler -= orc_angry_event;
+        }
+    
         void Start()
         {
             player_game_object = GameObject.TempFindGameObject("Player");
@@ -30,53 +62,71 @@ namespace ScriptProject.Scripts
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
 
+            max_speed += random_generator.RandomFloat(-0.3f, 0.3f);
+
             CreateHitBox();
+
+            //orc_angry_event = new OrcAngryEventHandler(OrcAngryEvent);
+            //event_handler += orc_angry_event;
+            //event_handler();
+            Console.WriteLine();
+
+            game_object.SetName("Orc");
+
+            foreach (var scene_map in GameObject.scene_to_component_map)
+            {
+                foreach (var entity_map in scene_map.Value)
+                {
+                    //Console.WriteLine("Test: " + entity_map.Key + ", Name: " + GameObject.NewGameObjectWithExistingEntity(entity_map.Key, new Scene(scene_map.Key)).GetName());
+                }
+            }
+
         }
 
         void Update()
         {
-            if (health <= 0.0f)
-            {
-                health = 0.0f;
-                GameObject.DeleteGameObject(game_object);
-                GameObject new_game_object = GameObject.CreateGameObject();
-                new_game_object.AddComponent<Sprite>();
-                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
-                return;
-            }
-
+            Death();
             Look();
             Move();
+            Attack();
         }
 
         void BeginCollision(GameObject collided_game_object)
         {
             if (collided_game_object.GetName() == "Bouncer")
             {
-                DynamicBody body = game_object.GetComponent<DynamicBody>();
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
             if (collided_game_object.GetName() == "HitBox")
             {
-                DynamicBody body = game_object.GetComponent<DynamicBody>();
-                Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
-                body.SetVelocity(direction.Normalize() * 10.0f);
                 health -= 10.0f;
+                float rot = collided_game_object.GetParent().transform.GetLocalRotation();
+                Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
+                body.SetVelocity(dir * 15.0f);
+            }
+
+            if (collided_game_object.GetName() == "OrcHitBox" && collided_game_object != game_object)
+            {
+                health -= 5.0f;
+                float rot = collided_game_object.GetParent().transform.GetLocalRotation();
+                Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
+                body.SetVelocity(dir * 5.0f);
             }
         }
 
         void CreateHitBox()
         {
             hit_box = GameObject.CreateGameObject();
-            hit_box.SetName("Attack_Box");
-            hit_box.AddComponent<StaticBody>().SetEnabled(true);
+            hit_box_body = hit_box.AddComponent<StaticBody>();
+            hit_box_body.SetEnabled(false);
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
             box_collider.SetTrigger(true);
             box_collider.SetHalfBoxSize(new Vector2(0.3f, 0.5f));
             hit_box.transform.SetPosition(1.0f, 0.0f);
             hit_box.SetName("OrcHitBox");
+
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
@@ -87,7 +137,7 @@ namespace ScriptProject.Scripts
         {
             Vector2 player_position = player_game_object.transform.GetPosition();
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
-            mid_block.transform.SetLocalRotation(Vector2.Angle(player_dir, right_dir));
+            mid_block.transform.SetLocalRotation(GetMidBlockRotation(Vector2.Angle(player_dir, right_dir)));
             sprite.FlipX(player_dir.x < 0);
         }
 
@@ -98,21 +148,107 @@ namespace ScriptProject.Scripts
             last_position = actor.PathFind(player_game_object, 1);
 
             Vector2 velocity = body.GetVelocity();
-            const float max_speed = 2.0f;
+            float speed = max_speed;
+            if (attacking)
+            {
+                speed = 0.0f;
+            }
 
-            Vector2 new_velocity = dir.Normalize() * max_speed;
-            if (velocity.Length() <= max_speed && new_velocity.Length() != 0.0f)
+            Vector2 new_velocity = dir.Normalize() * speed;
+            if (velocity.Length() <= speed && new_velocity.Length() != 0.0f)
                 velocity = new_velocity;
-            else
-                velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity.Length() == 0.0f && velocity.Length() <= max_speed)
+            //else
+            //    velocity += new_velocity * Time.GetDeltaTime();
+            if (new_velocity.Length() == 0.0f && velocity.Length() <= speed)
                 velocity = new Vector2(0.0f, 0.0f);
-            if (velocity.Length() > max_speed)
-                velocity -= velocity.Normalize() * max_speed * 3.0f * Time.GetDeltaTime();
-            if (new_velocity.Length() > 0.0f && velocity.Length() < max_speed)
-                velocity = velocity.Normalize() * max_speed;
+            if (velocity.Length() > speed)
+                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
+            if (new_velocity.Length() > 0.0f && velocity.Length() < speed)
+                velocity = velocity.Normalize() * speed;
 
             body.SetVelocity(velocity);
+        }
+
+        void Death()
+        {
+            if (health <= 0.0f)
+            {
+                health = 0.0f;
+                GameObject.DeleteGameObject(game_object);
+                GameObject new_game_object = GameObject.CreateGameObject();
+                new_game_object.AddComponent<Sprite>();
+                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
+                return;
+            }
+        }
+
+        void Attack()
+        {
+            float distance_to_player = (game_object.transform.GetPosition() - player_game_object.transform.GetPosition()).Length();
+            if (distance_to_player < charge_up_distance)
+            {
+                if (!attack_ready && !attacking)
+                {
+                    charge_up += charge_up_increase * Time.GetDeltaTime();
+                    if (charge_up > 1.0f)
+                    {
+                        charge_up = 1.0f;
+                        charged_up = true;
+                    }
+                }
+            }
+            else
+            {
+                charge_up -= charge_up_decrease * Time.GetDeltaTime();
+                if (charge_up < 0.0f)
+                {
+                    charge_up = 0.0f;
+                }
+                charged_up = false;
+            }
+
+            if (charged_up)
+            {
+                charge_up = 0.0f;
+                charged_up = false;
+                attack_ready = true;
+            }
+
+            if (!delay_attack && attack_ready && distance_to_player <= attack_range)
+            {
+                delay_attack = true;
+                delay_timer = delay_time + Time.GetElapsedTime();
+            }
+
+            if (delay_attack && delay_timer < Time.GetElapsedTime())
+            {
+                hit_box_body.SetEnabled(true);
+                attack_timer = attack_time + Time.GetElapsedTime();
+                attack_ready = false;
+                attacking = true;
+                delay_attack = false;
+            }
+
+            if (attacking && attack_timer < Time.GetElapsedTime())
+            {
+                attacking = false;
+                hit_box_body.SetEnabled(false);
+            }
+        }
+
+        float GetMidBlockRotation(float calculated_rot)
+        {
+            float attack_time_rot = 0.0f;
+            if (attack_timer > Time.GetElapsedTime() && attacking)
+            {
+                attack_time_rot = (1.0f - (attack_timer - Time.GetElapsedTime()) / attack_time) * attack_angle;
+            }
+            return calculated_rot - attack_angle / 2.0f + attack_time_rot;
+        }
+
+        void OrcAngryEvent()
+        {
+            Console.WriteLine("Entity id: " + game_object.GetEntityID());
         }
     }
 }

@@ -168,12 +168,12 @@ void PhysicsCore::HandleDeferredPhysicObjectCreationData(const DeferredPhysicObj
 		if (creation_data.is_box_collider)
 		{
 			const BoxColliderComponent& box_collider = entity_manager->GetComponent<BoxColliderComponent>(creation_data.entity);
-			AddBoxCollider(creation_data.scene_index, creation_data.entity, box_collider.half_box_size, box_collider.trigger);
+			AddBoxCollider(creation_data.scene_index, creation_data.entity, box_collider.half_box_size, box_collider.trigger, box_collider.filter);
 		}
 		else
 		{
 			const CircleColliderComponent& circle_collider = entity_manager->GetComponent<CircleColliderComponent>(creation_data.entity);
-			AddCircleCollider(creation_data.scene_index, creation_data.entity, circle_collider.circle_radius, circle_collider.trigger);
+			AddCircleCollider(creation_data.scene_index, creation_data.entity, circle_collider.circle_radius, circle_collider.trigger, circle_collider.filter);
 		}
 	}
 }
@@ -197,7 +197,7 @@ void PhysicsCore::HandleDeferredPhysicObjectDestructionData(const DeferredPhysic
 	}
 }
 
-void PhysicsCore::AddBoxFixture(const SceneIndex scene_index, const Entity entity, const Vector2& half_box_size, const bool trigger)
+void PhysicsCore::AddBoxFixture(const SceneIndex scene_index, const Entity entity, const Vector2& half_box_size, const bool trigger, const ColliderFilter collider_filter)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -210,15 +210,16 @@ void PhysicsCore::AddBoxFixture(const SceneIndex scene_index, const Entity entit
 	PhysicObjectHandle physic_object_handle = GetPhysicObjectHandle(entity_manager, entity);
 
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	physic_object_data.object_box_fixture = AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger);
+	physic_object_data.object_box_fixture = AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter);
 
 	BoxColliderComponent& box_collider = entity_manager->GetComponent<BoxColliderComponent>(entity);
 	box_collider.physic_object_handle = physic_object_handle;
 	box_collider.half_box_size = half_box_size;
 	box_collider.trigger = trigger;
+	box_collider.filter = collider_filter;
 }
 
-void PhysicsCore::AddCircleFixture(const SceneIndex scene_index, const Entity entity, const float circle_radius, const bool trigger)
+void PhysicsCore::AddCircleFixture(const SceneIndex scene_index, const Entity entity, const float circle_radius, const bool trigger, const ColliderFilter collider_filter)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -231,12 +232,13 @@ void PhysicsCore::AddCircleFixture(const SceneIndex scene_index, const Entity en
 	PhysicObjectHandle physic_object_handle = GetPhysicObjectHandle(entity_manager, entity);
 
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	physic_object_data.object_circle_fixture = AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger);
+	physic_object_data.object_circle_fixture = AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter);
 
 	CircleColliderComponent& circle_collider = entity_manager->GetComponent<CircleColliderComponent>(entity);
 	circle_collider.physic_object_handle = physic_object_handle;
 	circle_collider.circle_radius = circle_radius;
 	circle_collider.trigger = trigger;
+	circle_collider.filter = collider_filter;
 }
 
 void PhysicsCore::AwakePhysicObjectsFromLoadedScene(const SceneIndex scene_index)
@@ -312,8 +314,11 @@ void PhysicsCore::WaitForPhysics()
 	if (m_threaded_physics)
 	{
 		m_physic_update_thread_mutex.lock();
-		m_defer_physic_calls = false;
 		m_physic_update_thread_mutex.unlock();
+		while (m_update_physics == PhysicThreadState::Update)
+		{
+		}
+		m_defer_physic_calls = false;
 	}
 }
 
@@ -323,7 +328,7 @@ void PhysicsCore::ThreadUpdatePhysic()
 	{
 		if (m_update_physics == PhysicThreadState::Update)
 		{
-			//std::cout << "Update: " << PhysicsCore::update << "\n";
+			//std::cout << "Update: " << "\n";
 			m_physic_update_thread_mutex.lock();
 			Update();
 			m_physic_update_thread_mutex.unlock();
@@ -381,8 +386,12 @@ void PhysicsCore::HandleDeferredCollisionData()
 
 void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 {
+	const bool is_locked = m_world->IsLocked();
+
 	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](const DynamicBodyComponent& dynamic_body, const TransformComponent& transform)
 		{
+			const bool is_locked = m_world->IsLocked();
+			const PhysicThreadState threat_run = m_update_physics;
 			PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
 			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
 			if (dynamic_body.awake != physic_object.object_body->IsAwake())
@@ -400,6 +409,8 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 	//timer.StartTimer();
 	entity_manager->System<StaticBodyComponent, TransformComponent>([&](const StaticBodyComponent& static_body, const TransformComponent& transform)
 		{
+			const bool is_locked = m_world->IsLocked();
+			const PhysicThreadState threat_run = m_update_physics;
 			PhysicObjectData& physic_object = m_physic_object_data[static_body.physic_object_handle];
 			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
 			if (static_body.enabled != physic_object.object_body->IsEnabled())
@@ -414,7 +425,7 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			if (box_collider.update_box_collider) [[unlikely]]
 			{
 				RemoveBoxColliderInternal(box_collider.physic_object_handle);
-				AddBoxFixture(entity_manager->GetSceneIndex(), entity, box_collider.half_box_size, box_collider.trigger);
+				AddBoxFixture(entity_manager->GetSceneIndex(), entity, box_collider.half_box_size, box_collider.trigger, box_collider.filter);
 				box_collider.update_box_collider = false;
 			}
 		});
@@ -424,7 +435,7 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			if (circle_collider.update_circle_collider) [[unlikely]]
 			{
 				RemoveCircleColliderInternal(circle_collider.physic_object_handle);
-				AddCircleFixture(entity_manager->GetSceneIndex(), entity, circle_collider.circle_radius, circle_collider.trigger);
+				AddCircleFixture(entity_manager->GetSceneIndex(), entity, circle_collider.circle_radius, circle_collider.trigger, circle_collider.filter);
 				circle_collider.update_circle_collider = false;
 			}
 		});
@@ -447,16 +458,16 @@ void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 		});
 }
 
-void PhysicsCore::AddBoxPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, const bool trigger)
+void PhysicsCore::AddBoxPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, const bool trigger, const ColliderFilter collider_filter)
 {
 	AddPhysicObject(scene_index, entity, physic_object_body_type);
-	AddBoxCollider(scene_index, entity, half_box_size, trigger);
+	AddBoxCollider(scene_index, entity, half_box_size, trigger, collider_filter);
 }
 
-void PhysicsCore::AddCirclePhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const float circle_radius, const bool trigger)
+void PhysicsCore::AddCirclePhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const float circle_radius, const bool trigger, const ColliderFilter collider_filter)
 {
 	AddPhysicObject(scene_index, entity, physic_object_body_type);
-	AddCircleCollider(scene_index, entity, circle_radius, trigger);
+	AddCircleCollider(scene_index, entity, circle_radius, trigger, collider_filter);
 }
 
 void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity entity)
@@ -490,7 +501,7 @@ void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity 
 	RemovePhysicObjectInternal(physic_object_handle);
 }
 
-b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, const bool trigger)
+b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, const bool trigger, const ColliderFilter collider_filter)
 {
 	const PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 
@@ -498,8 +509,14 @@ b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic
 	if (physic_object_body_type == PhysicObjectBodyType::StaticBody)
 		density = 0.0f;
 
+	b2Filter filter;
+	filter.categoryBits = collider_filter.category_bits;
+	filter.maskBits = collider_filter.mask_bits;
+	filter.groupIndex = collider_filter.group_index;
+
 	b2Fixture* fixture = physic_object_data.object_body->CreateFixture(physic_object_shape, density);
 	fixture->SetSensor(trigger);
+	fixture->SetFilterData(filter);
 	return fixture;
 }
 
@@ -616,7 +633,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	}
 }
 
-void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity entity, const Vector2& half_box_size, const bool trigger)
+void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity entity, const Vector2& half_box_size, const bool trigger, const ColliderFilter collider_filter)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -625,6 +642,7 @@ void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity enti
 		BoxColliderComponent& box_collider = entity_manager->AddComponent<BoxColliderComponent>(entity);
 		box_collider.physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
 		box_collider.trigger = trigger;
+		box_collider.filter = collider_filter;
 		box_collider.half_box_size = half_box_size;
 	}
 	else
@@ -636,10 +654,10 @@ void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity enti
 		return;
 	}
 
-	AddBoxFixture(scene_index, entity, half_box_size, trigger);
+	AddBoxFixture(scene_index, entity, half_box_size, trigger, collider_filter);
 }
 
-void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity entity, const float circle_radius, const bool trigger)
+void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity entity, const float circle_radius, const bool trigger, const ColliderFilter collider_filter)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -648,6 +666,7 @@ void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity e
 		CircleColliderComponent& circle_collider = entity_manager->AddComponent<CircleColliderComponent>(entity);
 		circle_collider.physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
 		circle_collider.trigger = trigger;
+		circle_collider.filter = collider_filter;
 		circle_collider.circle_radius = circle_radius;
 	}
 	else
@@ -659,7 +678,7 @@ void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity e
 		return;
 	}
 
-	AddCircleFixture(scene_index, entity, circle_radius, trigger);
+	AddCircleFixture(scene_index, entity, circle_radius, trigger, collider_filter);
 }
 
 void PhysicsCore::RemoveBoxCollider(const SceneIndex scene_index, const Entity entity)

@@ -18,7 +18,7 @@ D3D12_STATIC_SAMPLER_DESC DX12RootSignature::GetSamplerDesc(const SamplerTypes& 
 //else
 //	sampler_desc.MaxAnisotropy = 1;
 
-	D3D12_STATIC_SAMPLER_DESC sampler_desc;
+	D3D12_STATIC_SAMPLER_DESC sampler_desc{};
 
 	switch (sampler_type)
 	{
@@ -29,6 +29,16 @@ D3D12_STATIC_SAMPLER_DESC DX12RootSignature::GetSamplerDesc(const SamplerTypes& 
 		sampler_desc.MinLOD = 0;
 		sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
 		sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler_desc.AddressU = sampler_desc.AddressW = sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler_desc.MaxAnisotropy = 1;
+		break;
+	case SamplerTypes::POINT_WRAP:
+		sampler_desc.MipLODBias = 0.0f;
+		sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler_desc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		sampler_desc.MinLOD = 0;
+		sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
+		sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 		sampler_desc.AddressU = sampler_desc.AddressW = sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		sampler_desc.MaxAnisotropy = 1;
 		break;

@@ -92,7 +92,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_stack_allocator = new DX12StackAllocator(&m_dx12_core, 1'000);
 
 	m_root_signature
-		.AddStaticSampler(&m_dx12_core, SamplerTypes::LINEAR_WRAP, 0)
+		.AddStaticSampler(&m_dx12_core, SamplerTypes::POINT_WRAP, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
 		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)

@@ -3,6 +3,8 @@
 #include "SceneSystem/SceneDefines.h"
 #include "ECS/EntityDefinition.h"
 
+class EntityManager;
+
 class GameObjectInterface
 {
 private:
@@ -11,6 +13,12 @@ private:
 	static MonoClassHandle game_object_class;
 	static MonoMethodHandle create_game_object_method;
 	static MonoMethodHandle new_game_object_with_existing_entity_method;
+	static MonoMethodHandle remove_scene_from_scene_to_component_map_method;
+	static MonoMethodHandle remove_entity_from_scene_to_component_map_method;
+
+private:
+	static void RemoveSceneFromSceneToComponentMap(SceneIndex scene_index);
+	static void RemoveEntityFromSceneToComponentMap(SceneIndex scene_index, Entity entity);
 
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
@@ -36,5 +44,8 @@ public:
 	static void RemoveChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
 	static bool HasChildren(const CSMonoObject game_object);
 	static void DestroyChildren(const CSMonoObject game_object);
+	static CSMonoObject GetParent(const CSMonoObject game_object);
+
+	static void HandleDeferredEntities(EntityManager* const entity_manager);
 };
 

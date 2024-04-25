@@ -11,6 +11,16 @@ struct ComponentPool
 	std::vector<Entity> list_of_component_pool_entities;
 	std::vector<bool> has_component_entities;
 	std::string component_name;
+
+	uint16_t component_size;
+	void* free_component_data = nullptr;
+
+	template <typename Component>
+	static void FreeComponentData(void* component_memory)
+	{
+		Component* component = (Component*)component_memory;
+		component->~Component();
+	}
 };
 
 struct ComponentData
@@ -212,6 +222,8 @@ inline uint32_t EntityManager::CreateComponentPool()
 	component_pool.component_pool_data = component_pool_data;
 	component_pool.component_name = GetComponentNameFromComponent<Component>();
 	component_pool.has_component_entities.resize(m_max_entities, false);
+	component_pool.free_component_data = (void*) (& ComponentPool::FreeComponentData<Component>);
+	component_pool.component_size = sizeof(Component);
 
 	//m_component_pools.push_back(component_pool);
 	m_component_pools[component_pool_index] = component_pool;
@@ -320,6 +332,10 @@ inline void EntityManager::RemoveComponent(Entity entity)
 	ComponentPool& component_pool = GetComponentPool<Component>();
 
 	assert(HasComponent(entity, component_pool));
+
+	char* component_pool_data = (char*)component_pool.component_pool_data;
+	Component* component = (Component*)(component_pool_data + entity * sizeof(Component));
+	component->~Component();
 
 	component_pool.m_component_pool_entities.erase(entity);
 	component_pool.pool_changed = true;

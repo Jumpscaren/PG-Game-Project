@@ -94,9 +94,11 @@ void QREntryPoint::EntryPoint()
 Timer rendering_timer;
 Timer scripting_timer;
 Timer physic_timer;
+Timer deferred_timer;
 double average_rendering_frame_time = 0.0;
 double average_scripting_frame_time = 0.0;
 double average_physic_frame_time = 0.0;
+double average_deferred_frame_time = 0.0;
 float average_frame_time = 0;
 int frame_count = 0;
 
@@ -129,6 +131,7 @@ void QREntryPoint::RunTime()
 			ImGui::Text("Average Rendering Time: %f ms", average_rendering_frame_time);
 			ImGui::Text("Average Scripting Time: %f ms", average_scripting_frame_time);
 			ImGui::Text("Average Physic Time: %f ms", average_physic_frame_time);
+			ImGui::Text("Average Deferred Time: %f ms", average_deferred_frame_time);
 			//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
 		ImGui::End();
@@ -152,9 +155,9 @@ void QREntryPoint::RunTime()
 		* If the user changes the scene to another then we should wait until the next frame to change and not change during!!!
 		*/
 
+		physic_timer.StartTimer();
 		PhysicsCore::Get()->WaitForPhysics();
 		PhysicsCore::Get()->HandleDeferredPhysicData();
-		physic_timer.StartTimer();
 		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->GetWorldPhysicObjectData(global_entity_manager);
 		PhysicsCore::Get()->HandleDeferredCollisionData();
@@ -188,22 +191,29 @@ void QREntryPoint::RunTime()
 			break;
 		average_rendering_frame_time = average_rendering_frame_time * 0.9 + 0.1 * rendering_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 
+		deferred_timer.StartTimer();
 		//Entities can have been created after calling for destruction of a scene
 		scene_manager->RemoveEntitiesFromDeferredDestroyedScenes();
 
 		physics_core->RemoveDeferredPhysicObjects(entman);
 		scripting_manager->RemoveDeferredScripts(entman);
 		scene_hierarchy->RemoveDeferredRelations(entman);
+		GameObjectInterface::HandleDeferredEntities(entman);
 		entman->DestroyDeferredEntities();
 		physics_core->RemoveDeferredPhysicObjects(global_entity_manager);
 		scripting_manager->RemoveDeferredScripts(global_entity_manager);
 		scene_hierarchy->RemoveDeferredRelations(global_entity_manager);
+		GameObjectInterface::HandleDeferredEntities(global_entity_manager);
 		global_entity_manager->DestroyDeferredEntities();
 
 		scene_manager->HandleDeferredScenes();
 
+		mono_core->ForceGarbageCollection();
+
+		average_deferred_frame_time = average_deferred_frame_time * 0.9 + 0.1 * deferred_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
+
 		//double frame_time = 0.0f;
-		//while (frame_time < 1000.0/60.0)
+		//while (frame_time < 1000.0 / 100.0)
 		//{
 		//	frame_time = time.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 		//}

@@ -16,6 +16,8 @@ namespace ScriptProject.Scripts
         Transform transform;
         static int enemy_count = 0;
         Vector2 last_position;
+        DynamicBody body;
+        float drag_speed = 20.0f;
         void Start()
         {
             player_game_object = GameObject.TempFindGameObject("Player");
@@ -24,6 +26,8 @@ namespace ScriptProject.Scripts
             ++enemy_count;
             Console.WriteLine(enemy_count);
             last_position = transform.GetPosition();
+
+            body = game_object.GetComponent<DynamicBody>();
         }
 
         void Update()
@@ -44,7 +48,7 @@ namespace ScriptProject.Scripts
             if (new_velocity.Length() == 0.0f && velocity.Length() <= max_speed)
                 velocity = new Vector2(0.0f, 0.0f);
             if (velocity.Length() > max_speed)
-                velocity -= velocity.Normalize() * max_speed * 3.0f * Time.GetDeltaTime();
+                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
             if (new_velocity.Length() > 0.0f && velocity.Length() < max_speed)
                 velocity = velocity.Normalize() * max_speed;
 
@@ -55,16 +59,15 @@ namespace ScriptProject.Scripts
         {
             if (collided_game_object.GetName() == "Bouncer")
             {
-                DynamicBody body = game_object.GetComponent<DynamicBody>();
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
             if (collided_game_object.GetName() == "HitBox")
             {
-                DynamicBody body = game_object.GetComponent<DynamicBody>();
-                Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
-                body.SetVelocity(direction.Normalize() * 10.0f);
+                float rot = collided_game_object.GetParent().transform.GetLocalRotation();
+                Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
+                body.SetVelocity(dir * 15.0f);
             }
         }
     }

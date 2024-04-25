@@ -12,6 +12,7 @@ struct BoxColliderComponent
 	Vector2 half_box_size;
 	bool update_box_collider = false;
 	bool trigger;
+	ColliderFilter filter;
 };
 
 class JsonObject;

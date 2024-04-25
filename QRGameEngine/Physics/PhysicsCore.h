@@ -99,7 +99,7 @@ private:
 	std::vector<DeferredPhysicObjectDestructionData> m_deferred_physic_object_destructions;
 
 private:
-	b2Fixture* AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger);
+	b2Fixture* AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger, ColliderFilter collider_filter);
 
 	void RemovePhysicObjectInternal(PhysicObjectHandle physic_object_handle);
 	void RemoveBoxColliderInternal(PhysicObjectHandle physic_object_handle);
@@ -123,8 +123,8 @@ private:
 	void HandleDeferredPhysicObjectCreationData(const DeferredPhysicObjectCreationData& creation_data);
 	void HandleDeferredPhysicObjectDestructionData(const DeferredPhysicObjectDestructionData& destruction_data);
 
-	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false);
-	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false);
+	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 
 	static void AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index);
 
@@ -154,10 +154,10 @@ public:
 	void GetWorldPhysicObjectData(EntityManager* entity_manager);
 
 	void AddPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
-	void AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false);
-	void AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false);
-	void AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false);
-	void AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false);
+	void AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 
 	void RemovePhysicObject(SceneIndex scene_index, Entity entity);
 	void RemoveBoxCollider(SceneIndex scene_index, Entity entity);

@@ -71,8 +71,8 @@ inline void EventCore::HookEvent(const Args& ...args)
 template<typename ...Args>
 inline void EventCore::SendEvent(const std::string& event_name, const Args& ...args)
 {
-	uint64_t hased_event_name = std::hash<std::string>{}(event_name);
-	auto it = m_event_listeners.find(hased_event_name);
+	uint64_t hashed_event_name = std::hash<std::string>{}(event_name);
+	auto it = m_event_listeners.find(hashed_event_name);
 
 	if (it == m_event_listeners.end())
 	{
@@ -95,8 +95,8 @@ inline void EventCore::SendEvent(const std::string& event_name, const Args& ...a
 template<auto t_method, typename ...Args>
 inline void EventCore::ListenToEvent(const std::string& event_name, const uint8_t event_order, void(*)(Args ...))
 {
-	uint64_t hased_event_name = std::hash<std::string>{}(event_name);
-	auto it = m_event_listeners.find(hased_event_name);
+	uint64_t hashed_event_name = std::hash<std::string>{}(event_name);
+	auto it = m_event_listeners.find(hashed_event_name);
 	
 	if (it == m_event_listeners.end())
 	{
@@ -108,9 +108,9 @@ inline void EventCore::ListenToEvent(const std::string& event_name, const uint8_
 		(first_event_listener_data.argument_types.push_back(typeid(Args).name()), ...);
 #endif // _DEBUG
 
-		m_event_listeners.insert({hased_event_name, first_event_listener_data });
+		m_event_listeners.insert({ hashed_event_name, first_event_listener_data });
 
-		it = m_event_listeners.find(hased_event_name);
+		it = m_event_listeners.find(hashed_event_name);
 	}
 	else
 	{

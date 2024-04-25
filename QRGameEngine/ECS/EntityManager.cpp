@@ -53,6 +53,11 @@ void EntityManager::DestroyEntity(Entity entity)
 
 		if (component_pool.has_component_entities.size() && HasComponent(entity, component_pool))
 		{
+			char* component_pool_data = (char*)component_pool.component_pool_data;
+			void* component = component_pool_data + entity * component_pool.component_size;
+			((void(*)(void*))(component_pool.free_component_data))(component);
+
+			component_pool.pool_changed = true;
 			component_pool.m_component_pool_entities.erase(entity);
 			SetHasComponent(entity, &component_pool, false);
 		}

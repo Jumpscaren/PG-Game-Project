@@ -1,5 +1,7 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Engine.Constants;
 using ScriptProject.Scripts;
+using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,6 +46,7 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1);
             PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1);
             PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1);
+            PrefabSystem.CreateUserPrefab("Princess", Princess, 1);
 
             return 0;
         }
@@ -75,7 +78,7 @@ namespace ScriptProject
             game_object.AddComponent<AnimatableSprite>();
             game_object.AddComponent<Player>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>();
+            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
         }
 
         static void PlayerCameraPrefab(GameObject game_object)
@@ -83,6 +86,16 @@ namespace ScriptProject
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
             game_object.AddComponent<Camera>();
             game_object.AddComponent<PlayerCamera>();
+            game_object.SetName("PlayerCamera");
+        }
+
+        static void Princess(GameObject game_object)
+        {
+            game_object.SetName("Princess");
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Princess.png"));
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            game_object.AddComponent<Princess>();
         }
 
         static void BouncePrefab(GameObject game_object)
@@ -99,7 +112,7 @@ namespace ScriptProject
             game_object.AddComponent<BasicEnemy>();
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>();
+            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
         }
 
         static void OrcEnemy(GameObject game_object)
@@ -107,7 +120,7 @@ namespace ScriptProject
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Orc.png"));
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>();
+            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             game_object.AddComponent<OrcEnemy>();
         }
     }

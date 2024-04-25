@@ -6,12 +6,15 @@
 #include "ECS/EntityManager.h"
 #include "Components/EntityDataComponent.h"
 #include "SceneSystem/SceneHierarchy.h"
+#include "Components/ParentComponent.h"
 
 MonoFieldHandle GameObjectInterface::get_entity_id_field;
 MonoClassHandle GameObjectInterface::game_object_class;
 MonoMethodHandle GameObjectInterface::get_scene_index_method;
 MonoMethodHandle GameObjectInterface::create_game_object_method;
 MonoMethodHandle GameObjectInterface::new_game_object_with_existing_entity_method;
+MonoMethodHandle GameObjectInterface::remove_scene_from_scene_to_component_map_method;
+MonoMethodHandle GameObjectInterface::remove_entity_from_scene_to_component_map_method;
 
 void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -20,6 +23,8 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     get_entity_id_field = mono_core->RegisterField(game_object_class, "entity_id");
     create_game_object_method = mono_core->RegisterMonoMethod(game_object_class, "CreateGameObject");
     new_game_object_with_existing_entity_method = mono_core->RegisterMonoMethod(game_object_class, "NewGameObjectWithExistingEntity");
+    remove_scene_from_scene_to_component_map_method = mono_core->RegisterMonoMethod(game_object_class, "RemoveSceneFromSceneToComponentMap");
+    remove_entity_from_scene_to_component_map_method = mono_core->RegisterMonoMethod(game_object_class, "RemoveEntityFromSceneToComponentMap");
 
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::AddEntityData>(game_object_class, "AddEntityData", GameObjectInterface::AddEntityData);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetName>(game_object_class, "SetName", GameObjectInterface::SetName);
@@ -30,6 +35,7 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::RemoveChild>(game_object_class, "RemoveChild", GameObjectInterface::RemoveChild);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::HasChildren>(game_object_class, "HasChildren", GameObjectInterface::HasChildren);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::DestroyChildren>(game_object_class, "DestroyChildren", GameObjectInterface::DestroyChildren);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetParent>(game_object_class, "GetParent", GameObjectInterface::GetParent);
 }
 
 CSMonoObject GameObjectInterface::GetGameObjectFromComponent(const CSMonoObject& component)
@@ -153,4 +159,40 @@ void GameObjectInterface::DestroyChildren(const CSMonoObject game_object)
 	{
 		entity_manager->RemoveEntity(entity);
 	}
+}
+
+CSMonoObject GameObjectInterface::GetParent(const CSMonoObject game_object)
+{
+    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+    const auto entity = GameObjectInterface::GetEntityID(game_object);
+    EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+    if (entity_manager->HasComponent<ParentComponent>(entity))
+    {
+        const auto& parent_component = entity_manager->GetComponent<ParentComponent>(entity);
+        if (parent_component.parent != NULL_ENTITY)
+        {
+            return NewGameObjectWithExistingEntity(parent_component.parent, scene_index);
+        }
+    }
+
+    assert(false);
+    return CSMonoObject();
+}
+
+void GameObjectInterface::RemoveSceneFromSceneToComponentMap(const SceneIndex scene_index)
+{
+    CSMonoCore::Get()->CallStaticMethod(remove_scene_from_scene_to_component_map_method, scene_index);
+}
+
+void GameObjectInterface::RemoveEntityFromSceneToComponentMap(const SceneIndex scene_index, const Entity entity)
+{
+    CSMonoCore::Get()->CallStaticMethod(remove_entity_from_scene_to_component_map_method, scene_index, entity);
+}
+
+void GameObjectInterface::HandleDeferredEntities(EntityManager* const entity_manager)
+{
+    entity_manager->System<DeferredEntityDeletion>([&](const Entity entity, const DeferredEntityDeletion&)
+        {
+            RemoveEntityFromSceneToComponentMap(entity_manager->GetSceneIndex(), entity);
+        });
 }

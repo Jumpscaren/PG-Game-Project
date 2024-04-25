@@ -10,6 +10,7 @@ struct CircleColliderComponent {
 	float circle_radius;
 	bool update_circle_collider = false;
 	bool trigger;
+	ColliderFilter filter;
 };
 
 class JsonObject;
@@ -22,6 +23,10 @@ public:
 	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
 	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+
+public:
+	static void SetTrigger(CSMonoObject object, bool trigger);
+	static void SetColliderFilter(const CSMonoObject object, const uint16_t category, const uint16_t mask, const int16_t group_index);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* file);
