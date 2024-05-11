@@ -20,6 +20,8 @@ void PathFindingActorComponentInterface::RegisterInterface(CSMonoCore* mono_core
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::RemoveComponent>(path_finding_actor_class, "RemoveComponent", PathFindingActorComponentInterface::RemoveComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::PathFind>(path_finding_actor_class, "PathFind", PathFindingActorComponentInterface::PathFind);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::DebugPath>(path_finding_actor_class, "DebugPath", PathFindingActorComponentInterface::DebugPath);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::NeedNewPathFind>(path_finding_actor_class, "NeedNewPathFind", PathFindingActorComponentInterface::NeedNewPathFind);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<PathFindingActorComponent>(SavePathFindingWorldComponent, LoadPathFindingWorldComponent);
 }
@@ -54,7 +56,14 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject obj
 	auto next_path_node_index = path_finding_actor.last_path_index + position_of_node_index;
 	if (next_path_node_index >= path_finding_actor.cached_path.size())
 	{
-		next_path_node_index = (uint32_t)(path_finding_actor.cached_path.size() - 1);
+		if (path_finding_actor.cached_path.size() > 0)
+		{
+			next_path_node_index = (uint32_t)(path_finding_actor.cached_path.size() - 1);
+		}
+		else
+		{
+			next_path_node_index = 0;
+		}
 	}
 	if (next_path_node_index < path_finding_actor.cached_path.size() && current_node == path_finding_actor.cached_path[next_path_node_index])
 	{
@@ -65,28 +74,63 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject obj
 		path_finding_actor.last_visited_node = current_node;
 	}
 
-	Vector2 node_position;
-	const auto& path_position_3 = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.goal_last_visited_node).GetPosition();
-	node_position.x = path_position_3.x;
-	node_position.y = path_position_3.y;
-	if (next_path_node_index < path_finding_actor.cached_path.size())
-	{
-		const auto& path_position_3 = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.cached_path[next_path_node_index]).GetPosition();
-		node_position.x = path_position_3.x;
-		node_position.y = path_position_3.y;
-	}
+	Vector2 node_position = current_node_position;
 	const TransformComponent& goal_transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(goal_entity);
 	const Entity goal_node = PathFinding::Get()->GetNodeFromPosition(Vector2(goal_transform.GetPosition().x, goal_transform.GetPosition().y));
-
-	const auto path_find = goal_node != path_finding_actor.goal_last_visited_node || (current_node_position - node_position).Length() > 2.0f;
-	if (path_find && goal_node != NULL_ENTITY)
+	if (HasToPathFind(path_finding_actor, goal_node))
 	{
 		path_finding_actor.cached_path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity);
 		path_finding_actor.goal_last_visited_node = goal_node;
 		path_finding_actor.last_path_index = 0;
+
+		path_finding_actor.cached_mapped_path.clear();
+		for (const auto path_index : path_finding_actor.cached_path)
+		{
+			path_finding_actor.cached_mapped_path.insert(path_index);
+		}
+	}
+	else {
+		if (path_finding_actor.goal_last_visited_node != NULL_ENTITY)
+		{
+			const auto& path_position_3 = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.goal_last_visited_node).GetPosition();
+			node_position.x = path_position_3.x;
+			node_position.y = path_position_3.y;
+		}
+		if (next_path_node_index < path_finding_actor.cached_path.size())
+		{
+			const auto& path_position_3 = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.cached_path[next_path_node_index]).GetPosition();
+			node_position.x = path_position_3.x;
+			node_position.y = path_position_3.y;
+		}
 	}
 
-	for (int i = next_path_node_index > 0 ? next_path_node_index - 1 : 0; i < path_finding_actor.cached_path.size(); ++i)
+	//for (int i = next_path_node_index > 0 ? next_path_node_index - 1 : 0; i < path_finding_actor.cached_path.size(); ++i)
+	//{
+	//	const TransformComponent& trans = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.cached_path[i]);
+	//	if (i + 1 < path_finding_actor.cached_path.size())
+	//	{
+	//		RenderCore::Get()->AddLine(Vector2(trans.GetPosition().x, trans.GetPosition().y));
+	//		const TransformComponent& trans_next = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.cached_path[i + 1]);
+	//		RenderCore::Get()->AddLine(Vector2(trans_next.GetPosition().x, trans_next.GetPosition().y));
+	//	}
+	//}
+
+	return Vector2Interface::CreateVector2(node_position);
+}
+
+void PathFindingActorComponentInterface::DebugPath(const CSMonoObject object)
+{
+	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const PathFindingActorComponent& path_finding_actor = SceneManager::GetEntityManager(scene_index)->GetComponent<PathFindingActorComponent>(entity);
+
+	if (path_finding_actor.cached_path.size() == 0)
+	{
+		return;
+	}
+
+	for (int i = path_finding_actor.last_path_index; i < path_finding_actor.cached_path.size() - 1; ++i)
 	{
 		const TransformComponent& trans = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.cached_path[i]);
 		if (i + 1 < path_finding_actor.cached_path.size())
@@ -96,8 +140,50 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject obj
 			RenderCore::Get()->AddLine(Vector2(trans_next.GetPosition().x, trans_next.GetPosition().y));
 		}
 	}
+}
 
-	return Vector2Interface::CreateVector2(node_position);
+bool PathFindingActorComponentInterface::NeedNewPathFind(const CSMonoObject object, const CSMonoObject goal_game_object, const uint32_t position_of_node_index)
+{
+	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity goal_entity = GameObjectInterface::GetEntityID(goal_game_object);
+
+	const TransformComponent& transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(entity);
+	const Vector2 current_node_position(transform.GetPosition().x, transform.GetPosition().y);
+
+	Vector2 node_position = current_node_position;
+	const TransformComponent& goal_transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(goal_entity);
+	const Entity goal_node = PathFinding::Get()->GetNodeFromPosition(Vector2(goal_transform.GetPosition().x, goal_transform.GetPosition().y));
+
+	const PathFindingActorComponent& path_finding_actor = SceneManager::GetEntityManager(scene_index)->GetComponent<PathFindingActorComponent>(entity);
+
+	if (path_finding_actor.cached_path.size() == 0)
+	{
+		return true;
+	}
+
+	auto next_path_node_index = path_finding_actor.last_path_index + position_of_node_index;
+	if (next_path_node_index >= path_finding_actor.cached_path.size())
+	{
+		next_path_node_index = (uint32_t)(path_finding_actor.cached_path.size() - 1);
+	}
+	const auto current_node = PathFinding::Get()->GetNodeFromPosition(current_node_position);
+	if (path_finding_actor.last_path_index < path_finding_actor.cached_path.size() && path_finding_actor.cached_path[path_finding_actor.last_path_index] != current_node)
+	{
+		return true;
+	}
+
+	return HasToPathFind(path_finding_actor, goal_node);
+}
+
+bool PathFindingActorComponentInterface::HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity goal_node)
+{
+	const bool goal_node_differ = goal_node != path_finding_actor.goal_last_visited_node;
+	const bool is_in_cached_path = path_finding_actor.cached_mapped_path.contains(path_finding_actor.last_visited_node);
+	const bool goal_is_not_null = goal_node != NULL_ENTITY;
+
+	return (goal_node_differ || !is_in_cached_path) && goal_is_not_null;
 }
 
 //path_finding_actor.cached_path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity);

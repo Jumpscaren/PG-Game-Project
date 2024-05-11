@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,8 +13,10 @@ namespace ScriptProject.Engine
         UInt32 entity_id;
         Scene scene;
         public Transform transform;
+        bool destroyed;
 
-        public static Dictionary<UInt32, Dictionary<UInt32, Dictionary<String, Component>>> scene_to_component_map = new Dictionary<uint, Dictionary<uint, Dictionary<string, Component>>>();
+        private static Dictionary<UInt32, Dictionary<UInt32, GameObject>> game_object_database = new Dictionary<uint, Dictionary<uint, GameObject>>();
+        private static Dictionary<UInt32, Dictionary<UInt32, Dictionary<String, Component>>> scene_to_component_map = new Dictionary<uint, Dictionary<uint, Dictionary<string, Component>>>();
 
         public static bool operator ==(GameObject left, GameObject right)
         {
@@ -22,9 +25,14 @@ namespace ScriptProject.Engine
                 return true;
             }
 
-            if (left is null || right is null)
+            if (left is null && !(right is null))
             {
-                return false;
+                return right.destroyed;
+            }
+
+            if (right is null && !(left is null))
+            {
+                return left.destroyed;
             }
 
             return left.entity_id == right.entity_id && left.scene.GetSceneIndex() == right.scene.GetSceneIndex();
@@ -43,8 +51,15 @@ namespace ScriptProject.Engine
                 return true;
             }
 
-            if (this is null || other is null)
-                return false;
+            if (this is null && !(other is null))
+            {
+                return other.destroyed;
+            }
+
+            if (other is null && !(this is null))
+            {
+                return this.destroyed;
+            }
 
             return this.entity_id == other.entity_id && this.scene.GetSceneIndex() == other.scene.GetSceneIndex();
         }
@@ -56,35 +71,45 @@ namespace ScriptProject.Engine
 
         static private GameObject NewGameObjectWithExistingEntity(UInt32 entity, Scene scene)
         {
-            GameObject gameObject = new GameObject();
-            gameObject.entity_id = entity;
-            gameObject.scene = scene;
-            if (gameObject.HasComponent<Transform>())
-                gameObject.transform = gameObject.GetComponent<Transform>();
-            else
-                gameObject.transform = gameObject.AddComponent<Transform>();
-            gameObject.AddEntityData();
+            GameObject game_object = GetGameObjectFromDatabase(scene.GetSceneIndex(), entity);
 
-            return gameObject;
+            if (game_object == null)
+            {
+                game_object = new GameObject();
+                game_object.entity_id = entity;
+                game_object.scene = scene;
+                if (game_object.HasComponent<Transform>())
+                    game_object.transform = game_object.GetComponent<Transform>();
+                else
+                    game_object.transform = game_object.AddComponent<Transform>();
+                game_object.AddEntityData();
+
+                AddGameObjectToDatabase(game_object);
+            }
+
+            return game_object;
         }
 
         static public GameObject CreateGameObject()
         {
-            GameObject gameObject = new GameObject();
-            gameObject.entity_id = SceneManager.GetActiveScene().GetEntityManager().NewEntity();
-            gameObject.scene = SceneManager.GetActiveScene();
-            gameObject.AddEntityData();
+            GameObject game_object = new GameObject();
+            game_object.entity_id = SceneManager.GetActiveScene().GetEntityManager().NewEntity();
+            game_object.scene = SceneManager.GetActiveScene();
+            game_object.AddEntityData();
 
-            gameObject.transform = gameObject.AddComponent<Transform>();
-            gameObject.transform.SetZIndex(1);
-            return gameObject;
+            game_object.transform = game_object.AddComponent<Transform>();
+            game_object.transform.SetZIndex(1);
+
+            AddGameObjectToDatabase(game_object);
+
+            return game_object;
         }
 
-        static public void DeleteGameObject(GameObject gameObject)
+        static public void DeleteGameObject(GameObject game_object)
         {
-            SceneManager.GetActiveScene().GetEntityManager().RemoveEntity(gameObject);
-            gameObject.DestroyChildren();
-            gameObject = null;
+            SceneManager.GetActiveScene().GetEntityManager().RemoveEntity(game_object);
+            game_object.DestroyChildren();
+            //game_object = null;
         }
 
         public UInt32 GetEntityID() 
@@ -100,6 +125,57 @@ namespace ScriptProject.Engine
         public Scene GetScene()
         {
             return scene;
+        }
+
+        public T AddComponent<T>() where T : Component, new()
+        {
+            T component = new T();
+            component.SetGameObject(this);
+            component.InitComponent(scene.GetSceneIndex(), entity_id);
+            //Handle the case when you remove the component in c++ world and it still exists in c# world and then try to add a component in c#
+            {
+                T old_component = GetComponentFromSceneComponentMap<T>(scene.GetSceneIndex(), entity_id, false);
+                if (old_component != null)
+                {
+                    RemoveComponentFromSceneToComponentMap<T>(scene.GetSceneIndex(), entity_id);
+                }
+            }
+            AddComponentToSceneComponentMap(scene.GetSceneIndex(), entity_id, component);
+            return component;
+        }
+
+        //Slow should not be used every frame
+        public T GetComponent<T>() where T : Component, new()
+        {
+            if (HasComponent<T>())
+            {
+                T component = GetComponentFromSceneComponentMap<T>(scene.GetSceneIndex(), entity_id);
+                if (component == null)
+                {
+                    component = new T();
+                    component.SetGameObject(this);
+                    AddComponentToSceneComponentMap(scene.GetSceneIndex(), entity_id, component);
+                }
+                return component;
+            }
+
+            Console.WriteLine("ERROR: COULDN'T FIND COMPONENT (" + typeof(T) + ")");
+
+            return null;
+        }
+
+        public bool HasComponent<T>() where T : Component, new()
+        {
+            T component = new T();
+            return component.HasComponent(scene.GetSceneIndex(), entity_id);
+        }
+
+        public void RemoveComponent<T>() where T : Component, new()
+        {
+            T component = new T();
+            component.SetGameObject(this);
+            component.RemoveComponent(scene.GetSceneIndex(), entity_id);
+            RemoveComponentFromSceneToComponentMap<T>(scene.GetSceneIndex(), entity_id);
         }
 
         static private void AddComponentToSceneComponentMap<T>(UInt32 scene_index, UInt32 entity, T component) where T : Component, new()
@@ -187,55 +263,42 @@ namespace ScriptProject.Engine
             }
         }
 
-        public T AddComponent<T>() where T : Component, new()
+        static private void AddGameObjectToDatabase(GameObject game_object)
         {
-            T component = new T();
-            component.SetGameObject(this);
-            component.InitComponent(scene.GetSceneIndex(), entity_id);
-            //Handle the case when you remove the component in c++ world and it still exists in c# world and then try to add a component in c#
+            Dictionary<UInt32, GameObject> game_objects;
+            if (!game_object_database.TryGetValue(game_object.scene.GetSceneIndex(), out game_objects))
             {
-                T old_component = GetComponentFromSceneComponentMap<T>(scene.GetSceneIndex(), entity_id, false);
-                if (old_component != null)
-                {
-                    RemoveComponentFromSceneToComponentMap<T>(scene.GetSceneIndex(), entity_id);
-                }
+                game_objects = new Dictionary<UInt32, GameObject>();
+                game_object_database.Add(game_object.scene.GetSceneIndex(), game_objects);
             }
-            AddComponentToSceneComponentMap(scene.GetSceneIndex(), entity_id, component);
-            return component;
+            game_objects.Add(game_object.entity_id, game_object);
         }
 
-        //Slow should not be used every frame
-        public T GetComponent<T>() where T : Component, new()
+        static private GameObject GetGameObjectFromDatabase(UInt32 scene_index, UInt32 entity)
         {
-            if (HasComponent<T>())
+            Dictionary<UInt32, GameObject> game_objects;
+            if (game_object_database.TryGetValue(scene_index, out game_objects))
             {
-                T component = GetComponentFromSceneComponentMap<T>(scene.GetSceneIndex(), entity_id);
-                if (component == null)
+                GameObject game_object;
+                if (game_objects.TryGetValue(entity, out game_object))
                 {
-                    component = new T();
-                    component.SetGameObject(this);
-                    AddComponentToSceneComponentMap(scene.GetSceneIndex(), entity_id, component);
+                    return game_object;
                 }
-                return component;
             }
-
-            Console.WriteLine("ERROR: COULDN'T FIND COMPONENT (" + typeof(T) + ")");
-
             return null;
         }
 
-        public bool HasComponent<T>() where T : Component, new()
+        static private void RemoveGameObjectFromDatabase(UInt32 scene_index, UInt32 entity)
         {
-            T component = new T();
-            return component.HasComponent(scene.GetSceneIndex(), entity_id);
-        }
-
-        public void RemoveComponent<T>() where T : Component, new()
-        {
-            T component = new T();
-            component.SetGameObject(this);
-            component.RemoveComponent(scene.GetSceneIndex(), entity_id);
-            RemoveComponentFromSceneToComponentMap<T>(scene.GetSceneIndex(), entity_id);
+            Dictionary<UInt32, GameObject> game_objects;
+            if (game_object_database.TryGetValue(scene_index, out game_objects))
+            {
+                if (game_objects.ContainsKey(entity))
+                {
+                    game_objects[entity].destroyed = true;
+                    game_objects.Remove(entity);
+                }
+            }
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

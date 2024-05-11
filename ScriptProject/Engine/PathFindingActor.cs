@@ -21,5 +21,11 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern Vector2 PathFind(GameObject goal_game_object, UInt32 position_of_node_index = 1);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void DebugPath();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern bool NeedNewPathFind(GameObject goal_game_object, UInt32 position_of_node_index = 1);
     }
 }

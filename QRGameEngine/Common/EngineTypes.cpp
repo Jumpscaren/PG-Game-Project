@@ -57,6 +57,11 @@ const Vector2 operator*(const Vector2& vector_1, const Vector2& vector_2)
 	return Vector2(vector_1.x * vector_2.x, vector_1.y * vector_2.y);
 }
 
+const Vector2 Vector2::operator*=(const Vector2& vector)
+{
+	return Vector2(x * vector.x, y * vector.y);
+}
+
 const Vector2 Vector2::operator*(const uint8_t scalar)
 {
 	return Vector2(x * scalar, y * scalar);

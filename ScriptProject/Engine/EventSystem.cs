@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,58 +10,44 @@ namespace ScriptProject.Engine
 {
     internal class EventSystem
     {
-
-
-        //public delegate void Callback();
-        public delegate void Callback<T>(T g);
-        //public delegate void Callback<T, Y>(T g, Y f);
-        //public delegate void Callback<T, Y, U>(T g, Y f);
-        //public delegate void Callback<T, Y, U, I>(T g, Y f);
-        //public delegate void Callback<T, Y, U, I, O>(T g, Y f);
-
-        public class EventThing
+        public class BaseEventData
         {
 
         }
 
-        public class OrcEvent : EventThing
+        public delegate void BaseEventHandler(BaseEventData event_data);
+        static Dictionary<string, Dictionary<UInt32, BaseEventHandler>> events = new Dictionary<string, Dictionary<UInt32, BaseEventHandler>>();
+
+        public static void ListenToEvent(string event_name, GameObject game_object, BaseEventHandler event_hook)
         {
-            Callback<int> callback;
+            Dictionary<UInt32, BaseEventHandler> listen_hooks;
+            if (!events.TryGetValue(event_name, out listen_hooks))
+            {
+                listen_hooks = new Dictionary<UInt32, BaseEventHandler>();
+                events.Add(event_name, listen_hooks);
+            }
+            listen_hooks.Add(game_object.GetEntityID(), event_hook);
         }
 
-        public class OrcEventSender
+        public static void StopListeningToEvent(string event_name, GameObject game_object, BaseEventHandler event_hook)
         {
-
+            Dictionary<UInt32, BaseEventHandler> listen_hooks;
+            if (events.TryGetValue(event_name, out listen_hooks))
+            {
+                listen_hooks.Remove(game_object.GetEntityID());
+            }
         }
 
-        public class EventData
+        public static void SendEvent(string event_name, BaseEventData event_data)
         {
-            public event EventHandler event_handler;
-            //public Callback callback = null;
-            //public Callback<T> callback_1 = null;
-            public Dictionary<UInt32, Dictionary<UInt32, ScriptingBehaviour>> scene_entity_to_scripting_behaviour = new Dictionary<uint, Dictionary<uint, ScriptingBehaviour>>();
-            public HashSet<ScriptingBehaviour> event_recievers = new HashSet<ScriptingBehaviour>();
-        }
-
-        static private Dictionary<string, EventData> events = new Dictionary<string, EventData>();
-
-        public static EventData HookEvent(string name, EventHandler hook_event)
-        {
-            EventData event_data = new EventData();
-            event_data.event_handler += hook_event;
-            events.Add(name, event_data);
-
-            return event_data;
-        }
-
-        public static void m()
-        {
-            HookEvent("name", sdf).event_handler += sdf;
-        }
-
-        public static void sdf(object sender, EventArgs e)
-        {
-            
+            Dictionary<UInt32, BaseEventHandler> listen_hooks;
+            if (events.TryGetValue(event_name, out listen_hooks))
+            {
+                foreach (var hooks in listen_hooks)
+                {
+                    hooks.Value(event_data);
+                }
+            }
         }
     }
 }

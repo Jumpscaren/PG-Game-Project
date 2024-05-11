@@ -47,6 +47,7 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1);
             PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1);
             PrefabSystem.CreateUserPrefab("Princess", Princess, 1);
+            PrefabSystem.CreateUserPrefab("EmptyCollider", EmptyCollider, 0);
 
             return 0;
         }
@@ -54,7 +55,7 @@ namespace ScriptProject
         static void Prefab1(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
-            game_object.AddComponent<DynamicBody>();
+            //game_object.AddComponent<DynamicBody>();
             game_object.AddComponent<BoxCollider>();
         }
 
@@ -120,8 +121,16 @@ namespace ScriptProject
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Orc.png"));
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            var collider = game_object.AddComponent<CircleCollider>();
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            collider.SetRadius(0.49f);
             game_object.AddComponent<OrcEnemy>();
+        }
+
+        static void EmptyCollider(GameObject game_object)
+        {
+            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<BoxCollider>();
         }
     }
 }

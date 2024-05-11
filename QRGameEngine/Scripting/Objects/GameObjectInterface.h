@@ -15,10 +15,12 @@ private:
 	static MonoMethodHandle new_game_object_with_existing_entity_method;
 	static MonoMethodHandle remove_scene_from_scene_to_component_map_method;
 	static MonoMethodHandle remove_entity_from_scene_to_component_map_method;
+	static MonoMethodHandle remove_game_object_from_database_method;
 
 private:
 	static void RemoveSceneFromSceneToComponentMap(SceneIndex scene_index);
 	static void RemoveEntityFromSceneToComponentMap(SceneIndex scene_index, Entity entity);
+	static void RemoveGameObjectFromDatabase(SceneIndex scene_index, Entity entity);
 
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);

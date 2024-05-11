@@ -27,6 +27,7 @@ public:
 public:
 	static void SetTrigger(CSMonoObject object, bool trigger);
 	static void SetColliderFilter(const CSMonoObject object, const uint16_t category, const uint16_t mask, const int16_t group_index);
+	static void SetRadius(const CSMonoObject object, float radius);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* file);

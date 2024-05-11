@@ -2,6 +2,7 @@
 using ScriptProject.EngineMath;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Policy;
 using System.Text;
@@ -43,14 +44,11 @@ namespace ScriptProject.Scripts
 
         RandomGenerator random_generator = new RandomGenerator();
 
-        //public delegate void OrcAngryEventHandler();
-        //public static event OrcAngryEventHandler event_handler;
-        //OrcAngryEventHandler orc_angry_event;
+        GameObject target = null;
 
-        ~OrcEnemy()
+        public class OrcAngryEventData : EventSystem.BaseEventData
         {
-            Console.WriteLine("Dead");
-            //event_handler -= orc_angry_event;
+            public GameObject orc_to_target;
         }
     
         void Start()
@@ -58,7 +56,6 @@ namespace ScriptProject.Scripts
             player_game_object = GameObject.TempFindGameObject("Player");
             actor = game_object.GetComponent<PathFindingActor>();
             transform = game_object.transform;
-            last_position = transform.GetPosition();
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
 
@@ -66,29 +63,41 @@ namespace ScriptProject.Scripts
 
             CreateHitBox();
 
-            //orc_angry_event = new OrcAngryEventHandler(OrcAngryEvent);
-            //event_handler += orc_angry_event;
-            //event_handler();
-            Console.WriteLine();
+            EventSystem.ListenToEvent("OrcAngry", game_object, OrcAngryEvent);
 
             game_object.SetName("Orc");
 
-            foreach (var scene_map in GameObject.scene_to_component_map)
-            {
-                foreach (var entity_map in scene_map.Value)
-                {
-                    //Console.WriteLine("Test: " + entity_map.Key + ", Name: " + GameObject.NewGameObjectWithExistingEntity(entity_map.Key, new Scene(scene_map.Key)).GetName());
-                }
-            }
+            target = player_game_object;
 
+            last_position = actor.PathFind(target, 1);
+
+            //if (only != null)
+            //{
+            //    //GameObject.DeleteGameObject(game_object);
+            //}
+            //else
+            //{
+            //    only = game_object;
+            //}
         }
 
         void Update()
         {
+            if (target == null)
+            {
+                target = player_game_object;
+            }
+
             Death();
             Look();
             Move();
             Attack();
+        }
+
+        void Remove()
+        {
+            Console.WriteLine("Remove Event");
+            EventSystem.StopListeningToEvent("OrcAngry", game_object, OrcAngryEvent);
         }
 
         void BeginCollision(GameObject collided_game_object)
@@ -104,15 +113,15 @@ namespace ScriptProject.Scripts
                 health -= 10.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-                body.SetVelocity(dir * 15.0f);
+                body.SetVelocity(dir * 10.3f);
             }
 
-            if (collided_game_object.GetName() == "OrcHitBox" && collided_game_object != game_object)
+            if (collided_game_object.GetName() == "OrcHitBox" && collided_game_object != hit_box)
             {
                 health -= 5.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-                body.SetVelocity(dir * 5.0f);
+                body.SetVelocity(dir * 10.3f);
             }
         }
 
@@ -123,8 +132,8 @@ namespace ScriptProject.Scripts
             hit_box_body.SetEnabled(false);
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
             box_collider.SetTrigger(true);
-            box_collider.SetHalfBoxSize(new Vector2(0.3f, 0.5f));
-            hit_box.transform.SetPosition(1.0f, 0.0f);
+            box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
+            hit_box.transform.SetPosition(0.7f, 0.0f);
             hit_box.SetName("OrcHitBox");
 
             mid_block = GameObject.CreateGameObject();
@@ -135,17 +144,31 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
-            Vector2 player_position = player_game_object.transform.GetPosition();
+            Vector2 player_position = target.transform.GetPosition();
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(Vector2.Angle(player_dir, right_dir)));
             sprite.FlipX(player_dir.x < 0);
         }
 
+        int times = 0;
         void Move()
         {
             Vector2 current_position = transform.GetPosition();
             Vector2 dir = last_position - current_position;
-            last_position = actor.PathFind(player_game_object, 1);
+            Vector2 target_dir = target.transform.GetPosition() - current_position;
+            if (dir.Length() < 0.1f || actor.NeedNewPathFind(target, 1))
+            {
+                //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
+                last_position = actor.PathFind(target, 1);
+                dir = last_position - current_position;
+            }
+            //Console.WriteLine("Dir: " + dir);
+            //last_position = actor.PathFind(target, 1);
+            actor.DebugPath();
+            if (target_dir.Length() < 1.01f)
+            {
+                dir = new Vector2();
+            }
 
             Vector2 velocity = body.GetVelocity();
             float speed = max_speed;
@@ -184,7 +207,7 @@ namespace ScriptProject.Scripts
 
         void Attack()
         {
-            float distance_to_player = (game_object.transform.GetPosition() - player_game_object.transform.GetPosition()).Length();
+            float distance_to_player = (game_object.transform.GetPosition() - target.transform.GetPosition()).Length();
             if (distance_to_player < charge_up_distance)
             {
                 if (!attack_ready && !attacking)
@@ -246,9 +269,16 @@ namespace ScriptProject.Scripts
             return calculated_rot - attack_angle / 2.0f + attack_time_rot;
         }
 
-        void OrcAngryEvent()
+        void OrcAngryEvent(EventSystem.BaseEventData data)
         {
-            Console.WriteLine("Entity id: " + game_object.GetEntityID());
+            OrcAngryEventData orc_event_data = (OrcAngryEventData)data;
+            //Console.WriteLine("Entity id: " + game_object.GetEntityID());
+            //Console.WriteLine("Orc Angry Entity Id: " + orc_event_data.orc_to_target.GetEntityID());
+
+            if (orc_event_data.orc_to_target != game_object)
+            {
+                target = orc_event_data.orc_to_target;
+            }
         }
     }
 }

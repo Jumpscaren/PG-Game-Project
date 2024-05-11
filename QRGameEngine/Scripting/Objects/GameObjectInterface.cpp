@@ -15,6 +15,7 @@ MonoMethodHandle GameObjectInterface::create_game_object_method;
 MonoMethodHandle GameObjectInterface::new_game_object_with_existing_entity_method;
 MonoMethodHandle GameObjectInterface::remove_scene_from_scene_to_component_map_method;
 MonoMethodHandle GameObjectInterface::remove_entity_from_scene_to_component_map_method;
+MonoMethodHandle GameObjectInterface::remove_game_object_from_database_method;
 
 void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -25,6 +26,7 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     new_game_object_with_existing_entity_method = mono_core->RegisterMonoMethod(game_object_class, "NewGameObjectWithExistingEntity");
     remove_scene_from_scene_to_component_map_method = mono_core->RegisterMonoMethod(game_object_class, "RemoveSceneFromSceneToComponentMap");
     remove_entity_from_scene_to_component_map_method = mono_core->RegisterMonoMethod(game_object_class, "RemoveEntityFromSceneToComponentMap");
+    remove_game_object_from_database_method = mono_core->RegisterMonoMethod(game_object_class, "RemoveGameObjectFromDatabase");
 
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::AddEntityData>(game_object_class, "AddEntityData", GameObjectInterface::AddEntityData);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetName>(game_object_class, "SetName", GameObjectInterface::SetName);
@@ -189,10 +191,16 @@ void GameObjectInterface::RemoveEntityFromSceneToComponentMap(const SceneIndex s
     CSMonoCore::Get()->CallStaticMethod(remove_entity_from_scene_to_component_map_method, scene_index, entity);
 }
 
+void GameObjectInterface::RemoveGameObjectFromDatabase(const SceneIndex scene_index, const Entity entity)
+{
+    CSMonoCore::Get()->CallStaticMethod(remove_game_object_from_database_method, scene_index, entity);
+}
+
 void GameObjectInterface::HandleDeferredEntities(EntityManager* const entity_manager)
 {
     entity_manager->System<DeferredEntityDeletion>([&](const Entity entity, const DeferredEntityDeletion&)
         {
             RemoveEntityFromSceneToComponentMap(entity_manager->GetSceneIndex(), entity);
+            RemoveGameObjectFromDatabase(entity_manager->GetSceneIndex(), entity);
         });
 }

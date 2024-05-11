@@ -127,31 +127,7 @@ RenderCore::~RenderCore()
 
 bool RenderCore::UpdateRender(Scene* draw_scene)
 {
-	m_dx12_core.GetCommandList()->Wait(&m_dx12_core);
-	
-	m_dx12_core.GetCommandList()->Reset();
-
-	m_dx12_core.GetResourceDestroyer()->FreeResources(&m_dx12_core);
-
-	//Set up render
-	m_dx12_core.GetCommandList()->SetShaderBindableDescriptorHeap(&m_dx12_core);
-	m_dx12_core.GetCommandList()->SetRootSignature(&m_root_signature);
-	m_dx12_core.GetCommandList()->SetPipeline(&m_pipeline);
-
-	DX12TextureHandle render_target_texture = m_dx12_core.GetSwapChain()->GetBackbufferTexture();
-	DX12TextureViewHandle render_target_view_handle = m_dx12_core.GetSwapChain()->GetBackbufferView();
-
-	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::RENDER_TARGET, ResourceState::PRESENT);
-
-	m_dx12_core.GetCommandList()->ClearRenderTargetView(&m_dx12_core, m_dx12_core.GetSwapChain()->GetBackbufferView());
-	m_dx12_core.GetCommandList()->ClearDepthStencilView(&m_dx12_core, m_depthstencil_view);
-
-	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_dx12_core.GetCommandList()->SetOMRenderTargets(&m_dx12_core, m_dx12_core.GetSwapChain()->GetBackbufferView(), m_depthstencil_view);
-
-	m_dx12_core.GetCommandList()->SetViewport((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
-	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
-
+	//Set up data
 	uint32_t render_object_amount = 0;
 
 	EntityManager* assamble_render_data_ent_man = draw_scene->GetEntityManager();
@@ -182,7 +158,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 					}
 				}
 			}
-	
+
 			sprite_data.uv[0] = sprite.uv[sprite.uv_indicies[0]] + uv;
 			sprite_data.uv[1] = sprite.uv[sprite.uv_indicies[1]] + uv;
 			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]] + uv;
@@ -208,6 +184,56 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	Scene* draw_global_scene = SceneManager::GetSceneManager()->GetScene(GlobalScene::Get()->GetSceneIndex());
 	assamble_render_data_ent_man = draw_global_scene->GetEntityManager();
 	draw_global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>(assamble_render_data);
+
+
+	CameraComponent active_camera = {};
+	float view_size = 0.0f;
+	const auto assamble_camera_data = [&](CameraComponent& camera, const TransformComponent& transform)
+		{
+			Vector3 pos = transform.GetPosition();
+			//Hardcoded camera position to 0
+			float fake_camera_z_position = 0.0f;
+			active_camera.view_matrix = DirectX::XMMatrixLookAtLH({ pos.x,pos.y, fake_camera_z_position }, { pos.x,pos.y, fake_camera_z_position + 1.0f }, { 0,1,0 });
+			//active_camera.proj_matrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, m_window->GetWindowHeight() / m_window->GetWindowWidth(), 0.1f, 800.0f);
+
+			float screen_width = m_window->GetWindowWidth();
+			float screen_height = m_window->GetWindowHeight();
+			view_size = pos.z;
+			if (view_size < 1.0f)
+				view_size = 1.0f;
+			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
+
+			camera = active_camera;
+
+		};
+	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
+	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
+	//
+
+	m_dx12_core.GetCommandList()->Wait(&m_dx12_core);
+	
+	m_dx12_core.GetCommandList()->Reset();
+
+	m_dx12_core.GetResourceDestroyer()->FreeResources(&m_dx12_core);
+
+	//Set up render
+	m_dx12_core.GetCommandList()->SetShaderBindableDescriptorHeap(&m_dx12_core);
+	m_dx12_core.GetCommandList()->SetRootSignature(&m_root_signature);
+	m_dx12_core.GetCommandList()->SetPipeline(&m_pipeline);
+
+	DX12TextureHandle render_target_texture = m_dx12_core.GetSwapChain()->GetBackbufferTexture();
+	DX12TextureViewHandle render_target_view_handle = m_dx12_core.GetSwapChain()->GetBackbufferView();
+
+	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::RENDER_TARGET, ResourceState::PRESENT);
+
+	m_dx12_core.GetCommandList()->ClearRenderTargetView(&m_dx12_core, m_dx12_core.GetSwapChain()->GetBackbufferView());
+	m_dx12_core.GetCommandList()->ClearDepthStencilView(&m_dx12_core, m_depthstencil_view);
+
+	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_dx12_core.GetCommandList()->SetOMRenderTargets(&m_dx12_core, m_dx12_core.GetSwapChain()->GetBackbufferView(), m_depthstencil_view);
+
+	m_dx12_core.GetCommandList()->SetViewport((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
+	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 
 	//std::sort(draw_entities.begin(), draw_entities.end(), [&](uint32_t i, uint32_t j){
 	//	return (m_transform_data_vector[i].GetPosition().z < m_transform_data_vector[j].GetPosition().z);
@@ -236,29 +262,6 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 
 	//Camera
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 3);
-
-	CameraComponent active_camera = {};
-	float view_size = 0.0f;
-	const auto assamble_camera_data = [&](CameraComponent& camera, const TransformComponent& transform)
-		{
-			Vector3 pos = transform.GetPosition();
-			//Hardcoded camera position to 0
-			float fake_camera_z_position = 0.0f;
-			active_camera.view_matrix = DirectX::XMMatrixLookAtLH({ pos.x,pos.y, fake_camera_z_position }, { pos.x,pos.y, fake_camera_z_position + 1.0f }, { 0,1,0 });
-			//active_camera.proj_matrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, m_window->GetWindowHeight() / m_window->GetWindowWidth(), 0.1f, 800.0f);
-
-			float screen_width = m_window->GetWindowWidth();
-			float screen_height = m_window->GetWindowHeight();
-			view_size = pos.z;
-			if (view_size < 1.0f)
-				view_size = 1.0f;
-			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
-
-			camera = active_camera;
-
-		};
-	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
-	draw_global_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_camera_buffer, &active_camera, sizeof(CameraComponent), 1);
 
 	m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);

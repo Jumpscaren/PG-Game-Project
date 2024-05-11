@@ -37,8 +37,20 @@ namespace ScriptProject.EngineMath
         //https://stackoverflow.com/questions/7785601/detecting-if-angle-is-more-than-180-degrees
         static public float Angle(Vector2 v1, Vector2 v2)
         {
+            float v1_length = v1.Length();
+            float v2_length = v2.Length();
+
+            if (v1_length < 1e-05)
+            {
+                v1_length = 1.0f;
+            }
+            if (v2_length < 1e-05)
+            {
+                v2_length = 1.0f;
+            }
+
             float dot_product = v1.x * v2.x + v1.y * v2.y;
-            float angle = (float)Math.Acos(dot_product / (v1.Length() * v2.Length()));
+            float angle = (float)Math.Acos(dot_product / (v1_length * v2_length));
 
             float z_cross_product = v1.x * v2.y - v1.y * v2.x;
             if (z_cross_product > 0)

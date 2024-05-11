@@ -21,14 +21,15 @@ namespace ScriptProject.Scripts
         const float attack_time = 0.1f;
         float attack_timer = 0.0f;
         const float attack_angle = (float)Math.PI / 2.0f;
-        const float between_attack_time = 0.3f;
+        const float between_attack_time = 0.45f;
         float between_attack_timer = 0.0f;
 
         float health = 100.0f;
 
-        const float max_speed = 8.1f;
+        const float max_speed = 4.0f;//8.1f;
         const float princess_speed = max_speed * 0.7f;
         const float drag_speed = 20.0f;
+        const float attack_speed = max_speed / 2.0f;
 
         GameObject princess;
         bool holding_princess = false;
@@ -44,12 +45,24 @@ namespace ScriptProject.Scripts
             hit_box.AddComponent<StaticBody>().SetEnabled(false);
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
             box_collider.SetTrigger(true);
-            box_collider.SetHalfBoxSize(new Vector2(0.3f, 0.5f));
-            hit_box.transform.SetPosition(1.0f, 0.0f);
+            box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
+            hit_box.transform.SetPosition(0.7f, 0.0f);
             hit_box.SetName("HitBox");
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
+
+            //{
+            //    GameObject hit_box1 = GameObject.CreateGameObject();
+            //    hit_box1.SetName("Attack_Box");
+            //    hit_box1.AddComponent<StaticBody>().SetEnabled(false);
+            //    box_collider = hit_box1.AddComponent<BoxCollider>();
+            //    box_collider.SetTrigger(true);
+            //    box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
+            //    hit_box1.transform.SetPosition(0.7f, 0.0f);
+            //    hit_box1.SetName("HitBox1");
+            //    mid_block.AddChild(hit_box1);
+            //}
 
             camera = GameObject.TempFindGameObject("PlayerCamera");
 
@@ -60,8 +73,19 @@ namespace ScriptProject.Scripts
         void Update()
         {
             if (health <= 0.0f) { 
-                health = 0.0f; 
+                health = 0.0f;
+                Console.WriteLine("Player Restart");
                 SceneManager.RestartActiveScene();
+            }
+
+            float current_speed = max_speed;
+            if (holding_princess)
+            {
+                current_speed = princess_speed;
+            }
+            if (between_attack_timer >= Time.GetElapsedTime())
+            {
+                current_speed = attack_speed;
             }
 
             if (attack_timer < Time.GetElapsedTime())
@@ -88,37 +112,15 @@ namespace ScriptProject.Scripts
             {
                 if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightIdle.anim"))
                     AnimationManager.LoadAnimation(game_object, "Animations/KnightIdle.anim");
-                //sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Idle_Atlas.png"));
-                //sprite.SetUV(new Vector2(0.024f, 0.220f), new Vector2(0.055f, 0.7f));
-                //anim_sprite.SetSplitSize(new Vector2((960.0f / 15.0f) / 960.0f, 0));
-                //anim_sprite.SetMaxSplits(15);
-                //anim_sprite.SetTimeBetweenSplits(0.1f);
-                //anim_sprite.SetLoop(true);
-                //anim_sprite.SetId(2);
             }
             else if (!attack && !AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightRunAnim.anim"))
             {
                 AnimationManager.LoadAnimation(game_object, "Animations/KnightRunAnim.anim");
-                //sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png"));
-                //sprite.SetUV(new Vector2(0.052f, 0.220f), new Vector2(0.095f, 0.7f));
-                //anim_sprite.SetSplitSize(new Vector2((768.0f / 8.0f) / 768.0f, 0));
-                //anim_sprite.SetMaxSplits(7);
-                //anim_sprite.SetTimeBetweenSplits(0.1f);
-                //anim_sprite.SetLoop(true);
-                //anim_sprite.SetId(2);
             }
 
             if (!holding_princess && Input.GetMouseButtonPressed(Input.MouseButton.LEFT) && between_attack_timer < Time.GetElapsedTime())
             {
                 AnimationManager.LoadAnimation(game_object, "Animations/KnightAttack.anim");
-                //sprite.SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Attack_Atlas_2.png"));
-                //sprite.SetUV(new Vector2(0.06f, 0.220f), new Vector2(0.078f, 0.7f));
-                //anim_sprite.SetSplitSize(new Vector2((3168 / 22.0f) / 3168.0f, 0));
-                //anim_sprite.SetMaxSplits(21);
-                //anim_sprite.SetTimeBetweenSplits(0.1f);
-                //anim_sprite.SetLoop(false);
-                //anim_sprite.ResetAnimation();
-                //anim_sprite.SetId(3);
                 attack = true;
                 hit_box.GetComponent<StaticBody>().SetEnabled(true);
                 attack_timer = attack_time + Time.GetElapsedTime();
@@ -137,12 +139,6 @@ namespace ScriptProject.Scripts
 
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(calculated_rot));
             sprite.FlipX(mouse_dir.x < 0);
-
-            float current_speed = max_speed;
-            if (holding_princess)
-            {
-                current_speed = princess_speed;
-            }
 
             new_velocity = new_velocity.Normalize() * current_speed;
             if (velocity.Length() <= current_speed && new_velocity.Length() != 0.0f)
@@ -174,7 +170,7 @@ namespace ScriptProject.Scripts
                 health -= 20.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-                body.SetVelocity(dir * 15.0f);
+                body.SetVelocity(dir * 11.0f);
 
                 PrincessStopFollowPlayer();
             }

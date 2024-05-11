@@ -79,7 +79,7 @@ private:
 
 	static PhysicsCore* s_physics_core;
 
-	static constexpr uint64_t MAX_PHYSIC_OBJECTS = 2000;
+	static constexpr uint64_t MAX_PHYSIC_OBJECTS = 2000 * 4;
 	std::vector<PhysicObjectData> m_physic_object_data;
 	std::stack<PhysicObjectHandle> m_free_physic_object_handles;
 

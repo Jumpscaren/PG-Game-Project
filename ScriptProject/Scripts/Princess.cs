@@ -45,6 +45,13 @@ namespace ScriptProject.Scripts
 
         void Update() 
         {
+            if (health <= 1e-05)
+            {
+                health = 0.0f;
+                Console.WriteLine("Princess Restart");
+                SceneManager.RestartActiveScene();
+            }
+
             if (follow_player)
             {
                 start_to_move_timer = Time.GetElapsedTime() + start_to_move_time;
@@ -108,10 +115,12 @@ namespace ScriptProject.Scripts
                 health -= 20.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-                body.SetVelocity(dir * 15.0f);
+                body.SetVelocity(dir * 10.3f);
                 follow_player = false;
                 player_script.PrincessStopFollowPlayer();
-                //OrcEnemy.event_handler();
+                OrcEnemy.OrcAngryEventData event_data = new OrcEnemy.OrcAngryEventData();
+                event_data.orc_to_target = collided_game_object.GetParent().GetParent();
+                EventSystem.SendEvent("OrcAngry", event_data);
             }
         }
 

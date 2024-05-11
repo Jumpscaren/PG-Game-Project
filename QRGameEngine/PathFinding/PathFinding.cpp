@@ -9,10 +9,21 @@
 
 PathFinding* PathFinding::s_singleton = nullptr;
 
-float PathFinding::Heuristic(const Node& current_node, const Node& goal_node)
+float PathFinding::Heuristic(const Node& neighbor_node, const Node& goal_node)
 {
-	Vector2 diff = current_node.position - goal_node.position;
-	return diff.Length() / LENGTH_BETWEEN_NODES;
+	//return 0;
+	const Vector2 diff = goal_node.position - neighbor_node.position;
+	Vector2 dir = diff.Normalize();
+	if (dir.x < 0)
+	{
+		dir.x *= -2.0f;
+	}
+	if (dir.y < 0)
+	{
+		dir.y *= -2.0f;
+	}
+	return dir.Length();
+	//return std::roundf(diff.Length() / LENGTH_BETWEEN_NODES);
 }
 
 void PathFinding::ConstructPath(const std::map<Entity, Entity>& came_from, Entity current, std::vector<Entity>& path)
@@ -58,15 +69,68 @@ void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
 	{
 		for (const auto& potential_neighbor : m_nodes)
 		{
-			Vector2 diff = node.second.position - potential_neighbor.second.position;
+			const Vector2 diff = node.second.position - potential_neighbor.second.position;
 			if (std::lround(diff.Length()) == length_between_nodes)
 			{
-				node.second.neighbors.push_back(potential_neighbor.second.entity);
+				//if (!(std::abs(diff.x) > 1e-05f && std::abs(diff.y) > 1e-05f))
+				{
+					node.second.neighbors.push_back(potential_neighbor.second.entity);
+				}
 			}
 
 			if (node.second.neighbors.size() == MAX_NEIGHBORS)
 			{
 				break;
+			}
+		}
+
+		//We want to avoid the case when a path goes between a empty place and a node
+		/*
+		* Example
+		* A B
+		* C D E
+		* The most optimal path from B to E is a diagonal path, but in this case we want to avoid that the enemies get stuck on walls so we want them to go B-D-E.
+		*/
+		for (size_t i{0}; i < node.second.neighbors.size(); ++i)
+		{
+			const auto neighbor = node.second.neighbors[i];
+			const Vector3 neighbor_position_v3 = entity_manager->GetComponent<TransformComponent>(neighbor).GetPosition();
+			const Vector2 neighbor_position(neighbor_position_v3.x, neighbor_position_v3.y);
+			const Vector2 diff = node.second.position - neighbor_position;
+			if (std::abs(diff.x) > 1e-05f && std::abs(diff.y) > 1e-05f)
+			{
+				char found_neighbors = 0;
+				for (const auto compare_node : node.second.neighbors)
+				{
+					const Vector3 compare_node_position_v3 = entity_manager->GetComponent<TransformComponent>(compare_node).GetPosition();
+					const Vector2 compare_node_position(compare_node_position_v3.x, compare_node_position_v3.y);
+					const Vector2 compare_diff = node.second.position - compare_node_position;
+					if ((std::abs(compare_diff.x) > 1e-05f && std::abs(compare_diff.y) < 1e-05f) || (std::abs(compare_diff.x) < 1e-05f && std::abs(compare_diff.y) > 1e-05f))
+					{
+						const Vector2 compare_neighbor_diff = neighbor_position - compare_node_position;
+						if (std::lround(compare_neighbor_diff.Length()) != length_between_nodes)
+						{
+							continue;
+						}
+						if (std::abs(compare_neighbor_diff.x) > 1e-05f)
+						{
+							++found_neighbors;
+						}
+						else if (std::abs(compare_neighbor_diff.y) > 1e-05f)
+						{
+							++found_neighbors;
+						}
+					}
+					if (found_neighbors == 2)
+					{
+						break;
+					}
+				}
+				if (found_neighbors != 2)
+				{
+					node.second.neighbors.erase(node.second.neighbors.begin() + i);
+					--i;
+				}
 			}
 		}
 	}
@@ -93,19 +157,19 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 	Entity goal_node_index = found_goal_node->second;
 	std::swap(start_node_index, goal_node_index);
 
-	const auto cmp = [](const Node& left, const Node& right) { return left.f_score > right.f_score; };
-	std::priority_queue<Node, std::vector<Node>, decltype(cmp)> open_set(cmp);
+	std::map<Entity, float> f_score;
+	const auto cmp = [&](Node* left, Node* right) { f_score.at(left->entity) > f_score.at(right->entity); };
+	std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> open_set(cmp);
 	std::set<Entity> open_set_entities;
 
-	auto start_node = m_nodes.at(start_node_index);
+	auto& start_node = m_nodes.at(start_node_index);
 	const auto& goal_node = m_nodes.at(goal_node_index);
-	start_node.f_score = Heuristic(start_node, goal_node);
-	open_set.emplace(m_nodes.at(start_node_index));
-	open_set_entities.insert(start_node_index);
+	open_set.emplace(&(m_nodes.at(start_node_index)));
 	std::map<Entity, Entity> came_from;
 	std::map<Entity, float> g_score;
 
 	g_score.insert({ start_node_index, 0.0f });
+	f_score.insert({ start_node_index, Heuristic(start_node, goal_node) });
 
 
 	Entity previous = 0;
@@ -113,17 +177,17 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 	{
 		const auto current = open_set.top();
 		open_set.pop();
-		open_set_entities.erase(current.entity);
+		open_set_entities.erase(current->entity);
 
-		if (current.entity == goal_node.entity)
+		if (current->entity == goal_node.entity)
 		{
-			path.push_back(current.entity);
-			ConstructPath(came_from, current.entity, path);
+			path.push_back(current->entity);
+			ConstructPath(came_from, current->entity, path);
 			return;
 		}
-		previous = current.entity;
+		previous = current->entity;
 
-		for (const auto& neighbor : current.neighbors)
+		for (const auto& neighbor : current->neighbors)
 		{
 			auto g_score_neighbor_it = g_score.find(neighbor);
 			if (g_score_neighbor_it == g_score.end())
@@ -132,18 +196,24 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 				g_score_neighbor_it = g_score.find(neighbor);
 			}
 			auto& neighbor_node = m_nodes.at(neighbor);
-			const Vector2 diff = neighbor_node.position - current.position;
-			const auto tentative_g_score = g_score.at(current.entity) + diff.Length();
+			const Vector2 diff = neighbor_node.position - current->position;
+			const auto tentative_g_score = g_score.at(current->entity) + diff.Length();
 			if (tentative_g_score < g_score_neighbor_it->second)
 			{
-				came_from.insert({ neighbor, current.entity });
+				came_from.insert({ neighbor, current->entity });
 				g_score_neighbor_it->second = tentative_g_score;
+				auto f_score_neighbor_it = f_score.find(neighbor);
+				if (f_score_neighbor_it == f_score.end())
+				{
+					f_score.insert({ neighbor, FLT_MAX });
+					f_score_neighbor_it = f_score.find(neighbor);
+				}
+				f_score_neighbor_it->second = tentative_g_score + Heuristic(neighbor_node, goal_node);
 
 				//Neighbor not in open_set
 				if (!open_set_entities.contains(neighbor))
 				{
-					neighbor_node.f_score = tentative_g_score + Heuristic(neighbor_node, goal_node);
-					open_set.push(neighbor_node);
+					open_set.push(&neighbor_node);
 					open_set_entities.insert(neighbor);
 				}
 			}
@@ -167,6 +237,10 @@ PathFinding::PathFinding()
 {
 	s_singleton = this;
 	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneLoaded", 0, PathFinding::ConstructPathFindingWorldEvent);
+}
+
+void PathFinding::RequestPathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity)
+{
 }
 
 std::vector<Entity> PathFinding::PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity)

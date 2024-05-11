@@ -92,7 +92,7 @@ void ScriptingManager::StartScript(const ScriptComponent& script)
 void ScriptingManager::UpdateScripts(EntityManager* entity_manager)
 {
 	CSMonoCore* mono_core = CSMonoCore::Get();
-	entity_manager->System<ScriptComponent>([&](Entity e, ScriptComponent script)
+	entity_manager->System<ScriptComponent>([&](const ScriptComponent& script)
 		{
 			if (mono_core->CheckIfMonoMethodExists(script.script_update))
 				mono_core->CallMethod(script.script_update, script.script_object);
@@ -103,8 +103,24 @@ void ScriptingManager::RemoveDeferredScripts(EntityManager* entity_manager)
 {
 	entity_manager->System<DeferredEntityDeletion, ScriptComponent>([&](DeferredEntityDeletion, ScriptComponent& script)
 		{
-			ScriptComponentInterface::RemoveComponentData(script);
+			RemoveScript(script);
 		});
+}
+
+void ScriptingManager::RemoveScript(ScriptComponent& script)
+{
+	const auto script_remove = CSMonoCore::Get()->TryRegisterMonoMethod(script.script_object, "Remove");
+	CSMonoCore* mono_core = CSMonoCore::Get();
+	if (mono_core->CheckIfMonoMethodExists(script_remove))
+	{
+		mono_core->CallMethod(script_remove, script.script_object);
+	}
+
+	script.script_object.RemoveLinkToMono();
+	script.script_start = CSMonoCore::NULL_METHOD;
+	script.script_update = CSMonoCore::NULL_METHOD;
+	script.script_begin_collision = CSMonoCore::NULL_METHOD;
+	script.script_end_collision = CSMonoCore::NULL_METHOD;
 }
 
 ScriptingManager* ScriptingManager::Get()

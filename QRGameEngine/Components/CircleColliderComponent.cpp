@@ -20,6 +20,7 @@ void CircleColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 
 	mono_core->HookAndRegisterMonoMethodType<CircleColliderComponentInterface::SetTrigger>(circle_collider_class, "SetTrigger", CircleColliderComponentInterface::SetTrigger);
 	mono_core->HookAndRegisterMonoMethodType<CircleColliderComponentInterface::SetColliderFilter>(circle_collider_class, "SetColliderFilter", CircleColliderComponentInterface::SetColliderFilter);
+	mono_core->HookAndRegisterMonoMethodType<CircleColliderComponentInterface::SetRadius>(circle_collider_class, "SetRadius", CircleColliderComponentInterface::SetRadius);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<CircleColliderComponent>(SaveScriptComponent, LoadScriptComponent);
 }
@@ -64,6 +65,16 @@ void CircleColliderComponentInterface::SetColliderFilter(const CSMonoObject obje
 	circle_collider.filter.category_bits = category;
 	circle_collider.filter.mask_bits = mask;
 	circle_collider.filter.group_index = group_index;
+	circle_collider.update_circle_collider = true;
+}
+
+void CircleColliderComponentInterface::SetRadius(const CSMonoObject object, float radius)
+{
+	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
+	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const auto entity = GameObjectInterface::GetEntityID(game_object);
+	CircleColliderComponent& circle_collider = SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<CircleColliderComponent>(entity);
+	circle_collider.circle_radius = radius;
 	circle_collider.update_circle_collider = true;
 }
 

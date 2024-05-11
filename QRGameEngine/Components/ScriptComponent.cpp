@@ -42,7 +42,7 @@ void ScriptComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex s
 {
 	ScriptComponent& script_component = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->GetComponent<ScriptComponent>(entity);
 
-	RemoveComponentData(script_component);
+	ScriptingManager::Get()->RemoveScript(script_component);
 
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<ScriptComponent>(entity);
 }
@@ -123,9 +123,5 @@ void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* en
 
 void ScriptComponentInterface::RemoveComponentData(ScriptComponent& script_component)
 {
-	script_component.script_object.RemoveLinkToMono();
-	script_component.script_start = CSMonoCore::NULL_METHOD;
-	script_component.script_update = CSMonoCore::NULL_METHOD;
-	script_component.script_begin_collision = CSMonoCore::NULL_METHOD;
-	script_component.script_end_collision = CSMonoCore::NULL_METHOD;
+
 }

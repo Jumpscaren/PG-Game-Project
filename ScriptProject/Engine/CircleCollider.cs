@@ -23,5 +23,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetColliderFilter(UInt16 category, UInt16 mask, Int16 group);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetRadius(float radius);
     }
 }
