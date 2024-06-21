@@ -1,5 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,7 +111,7 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (collided_game_object.GetName() == "OrcHitBox")
+            if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
             {
                 health -= 20.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();

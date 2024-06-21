@@ -20,15 +20,15 @@ class DynamicBodyComponentInterface
 {
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SetVelocity(CSMonoObject object, CSMonoObject velocity);
-	static CSMonoObject GetVelocity(CSMonoObject object);
-	static void SetFixedRotation(CSMonoObject object, bool fixed_rotation);
-	static void SetEnabled(const CSMonoObject object, const bool enabled);
+	static void SetVelocity(const CSMonoObject& object, const CSMonoObject& velocity);
+	static CSMonoObject GetVelocity(const CSMonoObject& object);
+	static void SetFixedRotation(const CSMonoObject& object, bool fixed_rotation);
+	static void SetEnabled(const CSMonoObject& object, const bool enabled);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

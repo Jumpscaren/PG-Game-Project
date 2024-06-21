@@ -104,7 +104,7 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::RemoveTransformComponent>(transform_class, "RemoveComponent", TransformComponentInterface::RemoveTransformComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetPosition>(transform_class, "SetPosition_Extern", TransformComponentInterface::SetPosition);
-	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetPosition>(transform_class, "GetPosition", TransformComponentInterface::GetPosition);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetPosition>(transform_class, "GetPosition_Extern", TransformComponentInterface::GetPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetZIndex>(transform_class, "SetZIndex", TransformComponentInterface::SetZIndex);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetZIndex>(transform_class, "GetZIndex", TransformComponentInterface::GetZIndex);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalPosition>(transform_class, "SetLocalPosition_Extern", TransformComponentInterface::SetLocalPosition);
@@ -113,17 +113,17 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalRotation>(transform_class, "GetLocalRotation", TransformComponentInterface::GetLocalRotation);
 }
 
-void TransformComponentInterface::AddTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void TransformComponentInterface::AddTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<TransformComponent>(entity);
 }
 
-bool TransformComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool TransformComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<TransformComponent>(entity);
 }
 
-void TransformComponentInterface::RemoveTransformComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void TransformComponentInterface::RemoveTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<TransformComponent>(entity);
 }
@@ -134,12 +134,13 @@ void TransformComponentInterface::SetPosition(SceneIndex scene_index, Entity ent
 	entity_manager->GetComponent<TransformComponent>(entity).SetPosition(Vector2(x,y));
 }
 
-CSMonoObject TransformComponentInterface::GetPosition(CSMonoObject cs_transform)
+CSMonoObject TransformComponentInterface::GetPosition(SceneIndex scene_index, Entity entity)//const CSMonoObject& cs_transform)
 {
-	CSMonoObject game_object;
-	CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
+	//CSMonoObject game_object;
+	//CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
 
-	Vector3 position = SceneManager::GetSceneManager()->GetScene(GameObjectInterface::GetSceneIndex(game_object))->GetEntityManager()->GetComponent<TransformComponent>(GameObjectInterface::GetEntityID(game_object)).GetPosition();
+	//Vector3 position = SceneManager::GetSceneManager()->GetScene(GameObjectInterface::GetSceneIndex(game_object))->GetEntityManager()->GetComponent<TransformComponent>(GameObjectInterface::GetEntityID(game_object)).GetPosition();
+	const Vector3 position = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->GetComponent<TransformComponent>(entity).GetPosition();
 
 	CSMonoObject vector2_position(CSMonoCore::Get(), vector2_class_handle);
 	CSMonoCore::Get()->SetValue(position.x, vector2_position, "x");
@@ -148,7 +149,7 @@ CSMonoObject TransformComponentInterface::GetPosition(CSMonoObject cs_transform)
 	return vector2_position;
 }
 
-void TransformComponentInterface::SetZIndex(CSMonoObject object, float z_index)
+void TransformComponentInterface::SetZIndex(const CSMonoObject& object, float z_index)
 {
 	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -161,7 +162,7 @@ void TransformComponentInterface::SetZIndex(CSMonoObject object, float z_index)
 	transform.SetPosition(pos);
 }
 
-float TransformComponentInterface::GetZIndex(CSMonoObject object)
+float TransformComponentInterface::GetZIndex(const CSMonoObject& object)
 {
 	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -182,7 +183,7 @@ void TransformComponentInterface::SetLocalPosition(const SceneIndex scene_index,
 	entity_manager->GetComponent<TransformComponent>(entity).SetPosition(Vector2(x, y));
 }
 
-CSMonoObject TransformComponentInterface::GetLocalPosition(const CSMonoObject cs_transform)
+CSMonoObject TransformComponentInterface::GetLocalPosition(const CSMonoObject& cs_transform)
 {
 	CSMonoObject game_object;
 	CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
@@ -206,7 +207,7 @@ CSMonoObject TransformComponentInterface::GetLocalPosition(const CSMonoObject cs
 	return vector2_position;
 }
 
-void TransformComponentInterface::SetLocalRotation(const CSMonoObject cs_transform, const float angle)
+void TransformComponentInterface::SetLocalRotation(const CSMonoObject& cs_transform, const float angle)
 {
 	CSMonoObject game_object;
 	CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
@@ -223,7 +224,7 @@ void TransformComponentInterface::SetLocalRotation(const CSMonoObject cs_transfo
 	transform.SetRotation(Vector3(0, 0, angle));
 }
 
-float TransformComponentInterface::GetLocalRotation(const CSMonoObject cs_transform)
+float TransformComponentInterface::GetLocalRotation(const CSMonoObject& cs_transform)
 {
 	CSMonoObject game_object;
 	CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");

@@ -24,7 +24,7 @@ public:
 	const std::string& GetMonoNamespace() const;
 	_MonoClass* GetMonoClass() const;
 
-	MonoFieldHandle AddField(const std::string& field_name);
-	uint32_t GetFieldToken(const MonoFieldHandle& field_handle);
+	//MonoFieldHandle AddField(const std::string& field_name);
+	//uint32_t GetFieldToken(const MonoFieldHandle& field_handle);
 };
 

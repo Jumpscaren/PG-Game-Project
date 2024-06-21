@@ -10,6 +10,6 @@ public:
 	static void RegisterInterface(CSMonoCore* mono_core);
 
 public:
-	static CSMonoObject LoadTexture(std::string texture_name);
+	static CSMonoObject LoadTexture(const std::string& texture_name);
 };
 

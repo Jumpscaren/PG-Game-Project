@@ -33,20 +33,23 @@ public:
 	static CSMonoObject CreateGameObject();
 	static CSMonoObject NewGameObjectWithExistingEntity(Entity entity, SceneIndex scene_index);
 
-	static void AddEntityData(CSMonoObject object);
+	static void AddEntityData(const CSMonoObject& object);
 
 public:
-	static void SetName(CSMonoObject object, std::string name);
-	static std::string GetName(CSMonoObject object);
+	static void SetName(const CSMonoObject& object, const std::string& name);
+	static std::string GetName(const CSMonoObject& object);
 
-	static CSMonoObject TempFindGameObject(std::string name);
+	static CSMonoObject TempFindGameObject(const std::string& name);
 	static Entity TempFindGameObjectEntity(const std::string& name);
 
-	static void AddChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
-	static void RemoveChild(const CSMonoObject game_object, const CSMonoObject child_game_object);
-	static bool HasChildren(const CSMonoObject game_object);
-	static void DestroyChildren(const CSMonoObject game_object);
-	static CSMonoObject GetParent(const CSMonoObject game_object);
+	static void AddChild(const CSMonoObject& game_object, const CSMonoObject& child_game_object);
+	static void RemoveChild(const CSMonoObject& game_object, const CSMonoObject& child_game_object);
+	static bool HasChildren(const CSMonoObject& game_object);
+	static void DestroyChildren(const CSMonoObject& game_object);
+	static CSMonoObject GetParent(const SceneIndex scene_index, const Entity entity);
+	
+	static void SetTag(const CSMonoObject& game_object, const uint8_t tag);
+	static uint8_t GetTag(const CSMonoObject& game_object);
 
 	static void HandleDeferredEntities(EntityManager* const entity_manager);
 };

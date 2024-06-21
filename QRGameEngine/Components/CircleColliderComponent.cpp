@@ -25,7 +25,7 @@ void CircleColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	SceneLoader::Get()->OverrideSaveComponentMethod<CircleColliderComponent>(SaveScriptComponent, LoadScriptComponent);
 }
 
-void CircleColliderComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void CircleColliderComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -36,17 +36,17 @@ void CircleColliderComponentInterface::InitComponent(CSMonoObject object, SceneI
 	PhysicsCore::Get()->AddCircleCollider(scene_index, entity, 0.5f);
 }
 
-bool CircleColliderComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool CircleColliderComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->HasComponent<CircleColliderComponent>(entity);
 }
 
-void CircleColliderComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void CircleColliderComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->RemoveCircleCollider(scene_index, entity);
 }
 
-void CircleColliderComponentInterface::SetTrigger(const CSMonoObject object, const bool trigger)
+void CircleColliderComponentInterface::SetTrigger(const CSMonoObject& object, const bool trigger)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -56,7 +56,7 @@ void CircleColliderComponentInterface::SetTrigger(const CSMonoObject object, con
 	circle_collider.update_circle_collider = true;
 }
 
-void CircleColliderComponentInterface::SetColliderFilter(const CSMonoObject object, const uint16_t category, const uint16_t mask, const int16_t group_index)
+void CircleColliderComponentInterface::SetColliderFilter(const CSMonoObject& object, const uint16_t category, const uint16_t mask, const int16_t group_index)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -68,7 +68,7 @@ void CircleColliderComponentInterface::SetColliderFilter(const CSMonoObject obje
 	circle_collider.update_circle_collider = true;
 }
 
-void CircleColliderComponentInterface::SetRadius(const CSMonoObject object, float radius)
+void CircleColliderComponentInterface::SetRadius(const CSMonoObject& object, float radius)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);

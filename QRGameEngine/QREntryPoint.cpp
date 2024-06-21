@@ -21,9 +21,10 @@
 #include "Input/Input.h"
 #include "Input/Mouse.h"
 #include "Components/CameraComponent.h"
-#include "PathFinding.h"
+#include "PathFinding/PathFinding.h"
 #include "Components/PathFindingWorldComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
+#include "Scripting/Objects/TimeInterface.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -41,6 +42,21 @@ GlobalScene* global_scene;
 SceneHierarchy* scene_hierarchy;
 AnimationManager* animation_manager;
 PathFinding* path_finding;
+
+float f = 0.0;
+int i = 0;
+void cpptest()
+{
+	f += ++i;
+}
+void cpptestint(const int i)
+{
+	f += i;
+}
+void cpptestmany(const CSMonoObject& object)
+{
+	
+}
 
 void QREntryPoint::EntryPoint()
 {
@@ -89,15 +105,45 @@ void QREntryPoint::EntryPoint()
 	mono_core->CallStaticMethod(main_method_handle);
 
 	path_finding = new PathFinding();
+
+	auto test1 = mono_core->RegisterMonoMethod(main_class_handle, "test1");
+	auto test2 = mono_core->RegisterMonoMethod(main_class_handle, "test2");
+	auto test3 = mono_core->RegisterMonoMethod(main_class_handle, "test3");
+	auto test4 = mono_core->RegisterMonoMethod(main_class_handle, "test4");
+	mono_core->HookAndRegisterMonoMethodType<cpptest>(main_class_handle, "cpptest", cpptest);
+	mono_core->HookAndRegisterMonoMethodType<cpptestint>(main_class_handle, "cpptestint", cpptestint);
+	mono_core->HookAndRegisterMonoMethodType<cpptestmany>(main_class_handle, "cpptestmany", cpptestmany);
+
+	Timer time;
+	mono_core->CallStaticMethod(test1);
+	auto testTime1 = time.StopTimer();
+
+	time.StartTimer();
+	mono_core->CallStaticMethod(test2);
+	auto testTime2 = time.StopTimer();
+
+	time.StartTimer();
+	mono_core->CallStaticMethod(test3);
+	auto testTime3 = time.StopTimer();
+
+	mono_core->CallStaticMethod(test4);
+	time.StartTimer();
+	mono_core->CallStaticMethod(test4);
+	auto testTime4 = time.StopTimer();
+
+	std::cout << "Time 1: " << testTime1 / (double)Timer::TimeTypes::Milliseconds << "\nTime 2: " << testTime2 / (double)Timer::TimeTypes::Milliseconds << "\nTime 3: " 
+		<< testTime3 / (double)Timer::TimeTypes::Milliseconds << "\nTime 4: " << testTime4 / (double)Timer::TimeTypes::Milliseconds << "\n";
 }
 
 Timer rendering_timer;
 Timer scripting_timer;
 Timer physic_timer;
+Timer physic_deferred_collision_timer;
 Timer deferred_timer;
 double average_rendering_frame_time = 0.0;
 double average_scripting_frame_time = 0.0;
 double average_physic_frame_time = 0.0;
+double average_physics_deferred_collision_time = 0.0;
 double average_deferred_frame_time = 0.0;
 float average_frame_time = 0;
 int frame_count = 0;
@@ -107,6 +153,17 @@ bool change_scene = false;
 void QREntryPoint::RunTime()
 {
 	EntityManager* global_entity_manager = scene_manager->GetEntityManager(global_scene->Get()->GetSceneIndex());
+
+	const auto orc_enemy_class_handle = mono_core->RegisterMonoClass("ScriptProject.Scripts", "OrcEnemy");
+	const auto orc_enemy_get_count_method_handle = mono_core->RegisterMonoMethod(orc_enemy_class_handle, "GetCount");
+
+	//auto trace = std::stacktrace::current();
+	//for (const auto& entry : trace) {
+	//	std::cout << "Description: " << entry.description() << std::endl;
+	//	std::cout << "file: " << entry.source_file() << std::endl;
+	//	std::cout << "line: " << entry.source_line() << std::endl;
+	//	std::cout << "------------------------------------" << std::endl;
+	//}
 
 	bool window_exist = true;
 	while (window_exist)
@@ -124,6 +181,8 @@ void QREntryPoint::RunTime()
 		average_frame_time = average_frame_time * 0.9f + 0.1f * (float)Time::GetDeltaTime(Timer::TimeTypes::Milliseconds);
 		float average_fps = 1000.0f / average_frame_time;
 
+		int orc_count = 0;
+		mono_core->CallStaticMethod(orc_count, orc_enemy_get_count_method_handle);
 		ImGui::Begin("App Statistics");
 		{
 			ImGui::Text("Average Frame Time: %f ms", average_frame_time);
@@ -131,7 +190,9 @@ void QREntryPoint::RunTime()
 			ImGui::Text("Average Rendering Time: %f ms", average_rendering_frame_time);
 			ImGui::Text("Average Scripting Time: %f ms", average_scripting_frame_time);
 			ImGui::Text("Average Physic Time: %f ms", average_physic_frame_time);
+			ImGui::Text("Average Physics Deferred Time Time: %f ms", average_physics_deferred_collision_time);
 			ImGui::Text("Average Deferred Time: %f ms", average_deferred_frame_time);
+			ImGui::Text("Orcs Count: %i", orc_count);
 			//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
 		ImGui::End();
@@ -161,7 +222,9 @@ void QREntryPoint::RunTime()
 		PhysicsCore::Get()->HandleDeferredPhysicData();
 		PhysicsCore::Get()->GetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->GetWorldPhysicObjectData(global_entity_manager);
+		physic_deferred_collision_timer.StartTimer();
 		PhysicsCore::Get()->HandleDeferredCollisionData();
+		average_physics_deferred_collision_time = average_physics_deferred_collision_time * 0.9 + 0.1 * physic_deferred_collision_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 		double physic_time_1 = physic_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 		//Update scripts
 #ifndef _EDITOR
@@ -209,6 +272,12 @@ void QREntryPoint::RunTime()
 
 		scene_manager->HandleDeferredScenes();
 
+		//for (const auto g : CSMonoObject::test)
+		//{
+		//	std::cout << "Not removed: " << CSMonoObject::GetName(g) << "\n";
+		//}
+		//std::cout << "Size = " << CSMonoObject::test.size() << "\n";
+
 		mono_core->ForceGarbageCollection();
 
 		average_deferred_frame_time = average_deferred_frame_time * 0.9 + 0.1 * deferred_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
@@ -220,6 +289,8 @@ void QREntryPoint::RunTime()
 		//}
 
 		Time::Stop();
+		TimeInterface::SetDeltaTime(mono_core);
+		TimeInterface::SetElapsedTime(mono_core);
 	}
 }
 

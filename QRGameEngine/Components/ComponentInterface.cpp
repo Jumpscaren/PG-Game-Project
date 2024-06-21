@@ -10,5 +10,5 @@ CSMonoObject ComponentInterface::GetGameObject(const CSMonoObject& component)
 {
 	CSMonoObject game_object;
 	CSMonoCore::Get()->GetValue(game_object, component, "game_object");
-	return std::move(game_object);
+	return game_object;
 }

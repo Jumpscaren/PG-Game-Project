@@ -20,14 +20,14 @@ class PathFindingActorComponentInterface
 {
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
-	static CSMonoObject PathFind(const CSMonoObject object, const CSMonoObject goal_game_object, uint32_t position_of_node_index);
-	static void DebugPath(const CSMonoObject object);
-	static bool NeedNewPathFind(const CSMonoObject object, const CSMonoObject goal_game_object, const uint32_t position_of_node_index);
+	static CSMonoObject PathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index);
+	static void DebugPath(const CSMonoObject& object);
+	static bool NeedNewPathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index);
 
 private:
 	static bool HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity goal_node);

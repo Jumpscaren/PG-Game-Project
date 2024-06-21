@@ -22,13 +22,13 @@ class BoxColliderComponentInterface
 {
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SetTrigger(CSMonoObject object, bool trigger);
-	static void SetHalfBoxSize(const CSMonoObject object, const CSMonoObject half_box_size);
+	static void SetTrigger(const CSMonoObject& object, bool trigger);
+	static void SetHalfBoxSize(const CSMonoObject& object, const CSMonoObject& half_box_size);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

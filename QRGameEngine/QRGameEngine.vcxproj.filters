@@ -255,13 +255,16 @@
     <ClCompile Include="RegisterInterfaces.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PathFinding.cpp">
+    <ClCompile Include="PathFinding\PathFinding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Components\PathFindingWorldComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Components\PathFindingActorComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\CSMonoList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -692,13 +695,16 @@
     <ClInclude Include="RegisterInterfaces.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PathFinding.h">
+    <ClInclude Include="PathFinding\PathFinding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Components\PathFindingWorldComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Components\PathFindingActorComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\CSMonoList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

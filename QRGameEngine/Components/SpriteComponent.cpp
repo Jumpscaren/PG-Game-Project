@@ -29,22 +29,22 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	SceneLoader::Get()->OverrideSaveComponentMethod<SpriteComponent>(SaveSpriteComponent, LoadSpriteComponent);
 }
 
-void SpriteComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void SpriteComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<SpriteComponent>(entity);
 }
 
-bool SpriteComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool SpriteComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<SpriteComponent>(entity);
 }
 
-void SpriteComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void SpriteComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<SpriteComponent>(entity);
 }
 
-void SpriteComponentInterface::SetTexture(CSMonoObject object, CSMonoObject texture)
+void SpriteComponentInterface::SetTexture(const CSMonoObject& object, const CSMonoObject& texture)
 {
 	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -57,7 +57,7 @@ void SpriteComponentInterface::SetTexture(CSMonoObject object, CSMonoObject text
 	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).texture_handle = texture_handle;
 }
 
-void SpriteComponentInterface::FlipX(CSMonoObject object, bool flip_x)
+void SpriteComponentInterface::FlipX(const CSMonoObject& object, bool flip_x)
 {
 	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -76,7 +76,7 @@ void SpriteComponentInterface::FlipX(CSMonoObject object, bool flip_x)
 	sprite_component.flip_x = flip_x;
 }
 
-void SpriteComponentInterface::FlipY(CSMonoObject object, bool flip_y)
+void SpriteComponentInterface::FlipY(const CSMonoObject& object, bool flip_y)
 {
 	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -95,7 +95,7 @@ void SpriteComponentInterface::FlipY(CSMonoObject object, bool flip_y)
 	sprite_component.flip_y = flip_y;
 }
 
-bool SpriteComponentInterface::GetFlipX(CSMonoObject object)
+bool SpriteComponentInterface::GetFlipX(const CSMonoObject& object)
 {
 	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -105,7 +105,7 @@ bool SpriteComponentInterface::GetFlipX(CSMonoObject object)
 	return SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).flip_x;
 }
 
-bool SpriteComponentInterface::GetFlipY(CSMonoObject object)
+bool SpriteComponentInterface::GetFlipY(const CSMonoObject& object)
 {
 	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 
@@ -115,7 +115,7 @@ bool SpriteComponentInterface::GetFlipY(CSMonoObject object)
 	return SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).flip_y;
 }
 
-void SpriteComponentInterface::SetUV(CSMonoObject object, CSMonoObject uv_1_position, CSMonoObject uv_4_position)
+void SpriteComponentInterface::SetUV(const CSMonoObject& object, const CSMonoObject& uv_1_position, const CSMonoObject& uv_4_position)
 {
 	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 

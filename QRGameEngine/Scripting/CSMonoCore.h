@@ -11,6 +11,12 @@ struct _MonoImage;
 //To force garbage collection to remove old objects
 //mono_gc_collect(mono_gc_max_generation());
 
+namespace MonoCore
+{ 
+	template <typename T>
+	concept IsOfBaseTypes = std::is_same_v <T, int> || std::is_same_v <T, uint8_t> || std::is_same_v <T, uint16_t> || std::is_same_v <T, uint32_t> || std::is_same_v <T, uint64_t> || std::is_same_v <T, float> || std::is_same_v <T, double> || std::is_same_v <T, bool>;
+}
+
 class CSMonoCore
 {
 	friend CSMonoObject;
@@ -66,8 +72,10 @@ private:
 	_MonoAssembly* m_assembly;
 	_MonoImage* m_image;
 
+	std::unordered_map<_MonoClass*, MonoClassHandle> m_mono_class_ptr_to_mono_class_handle;
 	std::vector<CSMonoClass> m_mono_classes;
 	std::vector<CSMonoMethod> m_mono_methods;
+	std::vector<uint32_t> m_mono_field_tokens;
 
 	std::unordered_map<std::string, MonoClassHandle> m_mono_class_name_to_mono_class_handle;
 	std::unordered_map<std::string, MonoMethodHandle> m_mono_method_name_to_mono_method_handle;
@@ -85,6 +93,9 @@ private:
 	* This is also much cleaner ;).
 	*/
 
+	struct ConstMonoString {};
+	struct ConstMonoObject {};
+
 	//Base struct
 	template <char h, class T = void>
 	struct TypeChange {};
@@ -96,11 +107,25 @@ private:
 		using type = _MonoString*;
 	};
 
+	//If the type is a string then we want a _MonoString*
+	template<>
+	struct TypeChange<0, const std::string&>
+	{
+		using type = ConstMonoString*;
+	};
+
 	//If the type is a CSMonoObject then we want a _MonoObject*
 	template<>
 	struct TypeChange<0, CSMonoObject>
 	{
 		using type = _MonoObject*;
+	};
+
+	//If the type is a CSMonoObject then we want a _MonoObject*
+	template<>
+	struct TypeChange<0, const CSMonoObject&>
+	{
+		using type = ConstMonoObject*;
 	};
 
 	//If the type is a _MonoString* then we want a string
@@ -110,12 +135,27 @@ private:
 		using type = std::string;
 	};
 
+	//If the type is a _MonoString* then we want a string
+	template<>
+	struct TypeChange<0, ConstMonoString*>
+	{
+		using type = const std::string&;
+	};
+
 	//If the type is a _MonoObject* then we want a CSMonoObject
 	template<>
 	struct TypeChange<0, _MonoObject*>
 	{
 		using type = CSMonoObject;
 	};
+
+	//If the type is a _MonoObject* then we want a CSMonoObject
+	template<>
+	struct TypeChange<0, ConstMonoObject*>
+	{
+		using type = const CSMonoObject&;
+	};
+
 
 	//This is for types which we do not need to change
 	template <class T>
@@ -128,47 +168,51 @@ private:
 	using ChangeType = typename TypeChange<0, T>::type;
 
 private:
-	CSMonoClass* GetMonoClass(const MonoClassHandle& class_handle);
-	CSMonoMethod* GetMonoMethod(const MonoMethodHandle& method_handle);
+	CSMonoClass* GetMonoClass(const MonoClassHandle class_handle);
+	CSMonoMethod* GetMonoMethod(const MonoMethodHandle method_handle);
 	_MonoDomain* GetDomain() const;
 	_MonoImage* GetImage() const;
 
 	void HandleException(_MonoObject* exception);
 
-	void* ToMethodParameter(const int& number);
-	void* ToMethodParameter(const uint32_t& number);
-	void* ToMethodParameter(const uint64_t& number);
-	void* ToMethodParameter(const float& number);
-	void* ToMethodParameter(const double& number);
-	void* ToMethodParameter(const bool& boolean);
+	template<typename T>
+	requires MonoCore::IsOfBaseTypes<T>
+	void* ToMethodParameter(const T& data)
+	{
+		return (void*)&data;
+	}
 	void* ToMethodParameter(const char* string);
 	void* ToMethodParameter(const std::string& string);
 	void* ToMethodParameter(const CSMonoObject& mono_object);
 
-	int MonoObjectToValue(int* mono_object);
-	uint32_t MonoObjectToValue(uint32_t* mono_object);
-	uint64_t MonoObjectToValue(uint64_t* mono_object);
-	float MonoObjectToValue(float* mono_object);
-	double MonoObjectToValue(double* mono_object);
-	bool MonoObjectToValue(bool* mono_object);
+	void* UnboxMonoObject(_MonoObject* mono_object);
+	template<typename T>
+	requires MonoCore::IsOfBaseTypes<T>
+	T MonoObjectToValue(T* mono_object)
+	{
+		return *(T*)(UnboxMonoObject((_MonoObject*)mono_object));
+	}
 	std::string MonoObjectToValue(std::string* mono_object);
 	CSMonoObject MonoObjectToValue(CSMonoObject* mono_object);
 
-	static int MonoMethodParameter(int mono_parameter);
-	static uint32_t MonoMethodParameter(uint32_t mono_parameter);
-	static uint64_t MonoMethodParameter(uint64_t mono_parameter);
-	static float MonoMethodParameter(float mono_parameter);
-	static double MonoMethodParameter(double mono_parameter);
-	static bool MonoMethodParameter(bool mono_parameter);
+	template<typename T>
+	requires MonoCore::IsOfBaseTypes<T>
+	static T MonoMethodParameter(T mono_parameter)
+	{
+		return mono_parameter;
+	}
+	static int MonoMethodParameter(int mono_parameter) { return mono_parameter; }
 	static std::string MonoMethodParameter(_MonoString* mono_parameter);
+	static std::string MonoMethodParameter(ConstMonoString* mono_parameter);
 	static CSMonoObject MonoMethodParameter(_MonoObject* mono_parameter);
+	static CSMonoObject MonoMethodParameter(ConstMonoObject* mono_parameter);
 
-	static int MonoMethodReturn(int mono_return);
-	static uint32_t MonoMethodReturn(uint32_t mono_return);
-	static uint64_t MonoMethodReturn(uint64_t mono_return);
-	static float MonoMethodReturn(float mono_return);
-	static double MonoMethodReturn(double mono_return);
-	static bool MonoMethodReturn(bool mono_return);
+	template<typename T>
+	requires MonoCore::IsOfBaseTypes<T>
+	static T MonoMethodReturn(T mono_return)
+	{
+		return mono_return;
+	}
 	static _MonoString* MonoMethodReturn(const std::string& mono_return);
 	static _MonoObject* MonoMethodReturn(const CSMonoObject& mono_return);
 
@@ -217,8 +261,8 @@ public:
 
 	std::vector<std::string> GetAllFieldNames(const CSMonoObject& mono_object);
 
-	void CallStaticMethod(const MonoMethodHandle& method_handle);
-	void CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object);
+	void CallStaticMethod(const MonoMethodHandle method_handle);
+	void CallMethod(const MonoMethodHandle method_handle, const CSMonoObject& mono_object);
 
 	template<typename...Args>
 	void CallStaticMethod(const MonoMethodHandle& method_handle, Args&& ...args);
@@ -235,7 +279,7 @@ public:
 	template<typename Type, typename...Args>
 	void CallMethod(Type& return_value, const MonoMethodHandle& method_handle, const CSMonoObject& mono_object, Args&& ...args);
 
-	void HookMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
+	void HookMethod(const MonoClassHandle class_handle, const std::string& method_name, const void* method);
 	MonoMethodHandle HookAndRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name, const void* method);
 
 	template<auto t_method, typename Type, typename...Args>
@@ -299,13 +343,13 @@ template<typename Type>
 inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name)
 {
 	void* value = GetValueInternal(mono_object, field_name);
-	return_value = std::move(MonoObjectToValue((Type*)value));
+	return_value = MonoObjectToValue((Type*)value);
 }
 
 template<typename Type>
 inline void CSMonoCore::SetValue(const Type& value_to_set, const CSMonoObject& mono_object, const std::string& field_name)
 {
-	void* value = std::move(ToMethodParameter(value_to_set));
+	void* value = ToMethodParameter(value_to_set);
 	SetValueInternal(mono_object, field_name, value);
 }
 
@@ -313,26 +357,26 @@ template<typename Type>
 inline void CSMonoCore::GetValue(Type& return_value, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
 {
 	void* value = GetValueInternal(mono_object, mono_field_handle);
-	return_value = std::move(MonoObjectToValue((Type*)value));
+	return_value = MonoObjectToValue((Type*)value);
 }
 
 template<typename Type>
 inline void CSMonoCore::SetValue(const Type& value_to_set, const CSMonoObject& mono_object, const MonoFieldHandle& mono_field_handle)
 {
-	void* value = std::move(ToMethodParameter(value_to_set));
+	void* value = ToMethodParameter(value_to_set);
 	SetValueInternal(mono_object, mono_field_handle, value);
 }
 
 template<typename ...Args>
 inline void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle, Args && ...args)
 {
-	const int argument_size = sizeof...(Args);
+	constexpr int argument_size = sizeof...(Args);
 
 	void* parameters[argument_size];
 
 	int index = 0;
 
-	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
+	((parameters[index++] = ToMethodParameter(args)), ...);
 
 	CallMethodInternal(method_handle, nullptr, parameters, index);
 }
@@ -340,13 +384,13 @@ inline void CSMonoCore::CallStaticMethod(const MonoMethodHandle& method_handle, 
 template<typename ...Args>
 inline void CSMonoCore::CallMethod(const MonoMethodHandle& method_handle, const CSMonoObject& mono_object, Args && ...args)
 {
-	const int argument_size = sizeof...(Args);
+	constexpr int argument_size = sizeof...(Args);
 
 	void* parameters[argument_size];
 	
 	int index = 0;
 
-	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
+	((parameters[index++] = ToMethodParameter(args)), ...);
 
 	CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, index);
 }
@@ -358,7 +402,7 @@ inline void CSMonoCore::CallStaticMethod(Type& return_value, const MonoMethodHan
 
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, nullptr, parameters, 0);
 
-	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+	return_value = MonoObjectToValue((Type*)method_return_value);
 }
 
 template<typename Type>
@@ -368,7 +412,7 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, 0);
 
-	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+	return_value = MonoObjectToValue((Type*)method_return_value);
 }
 
 template<typename Type, typename ...Args>
@@ -380,11 +424,11 @@ inline void CSMonoCore::CallStaticMethod(Type& return_value, const MonoMethodHan
 
 	int index = 0;
 
-	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
+	((parameters[index++] = ToMethodParameter(args)), ...);
 
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, nullptr, parameters, index);
 
-	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+	return_value = MonoObjectToValue((Type*)method_return_value);
 }
 
 template<typename Type, typename ...Args>
@@ -396,11 +440,11 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 
 	int index = 0;
 
-	((parameters[index++] = std::move(ToMethodParameter(args))), ...);
+	((parameters[index++] = ToMethodParameter(args)), ...);
 
 	_MonoObject* method_return_value = CallMethodInternal(method_handle, mono_object.GetMonoObject(), parameters, index);
 
-	return_value = std::move(MonoObjectToValue((Type*)method_return_value));
+	return_value = MonoObjectToValue((Type*)method_return_value);
 }
 
 template<auto t_method, typename Type, typename ...Args>
@@ -420,11 +464,11 @@ inline Type CSMonoCore::HookedMethod(Args ...args)
 {
 	sizeof...(Args);
 
-	return MonoMethodReturn(((ChangeType<Type>(*)(ChangeType<Args>...))(method))(std::move(MonoMethodParameter(args))...));
+	return MonoMethodReturn(((ChangeType<Type>(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...));
 }
 
 template<void* method, typename...Args>
 inline void CSMonoCore::HookedMethodVoid(Args... args)
 {
-	((void(*)(ChangeType<Args>...))(method))(std::move(MonoMethodParameter(args))...);
+	((void(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...);
 }

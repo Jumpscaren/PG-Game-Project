@@ -51,7 +51,7 @@ CSMonoObject InputInterface::GetMousePosition()
     return Vector2Interface::CreateVector2(Vector2((float)mouse_position.x, (float)mouse_position.y));
 }
 
-CSMonoObject InputInterface::GetMousePositionInWorld(const CSMonoObject camera_game_object)
+CSMonoObject InputInterface::GetMousePositionInWorld(const CSMonoObject& camera_game_object)
 {
     const auto mouse_position = Mouse::Get()->GetMouseCoords();
     const auto camera_entity = GameObjectInterface::GetEntityID(camera_game_object);

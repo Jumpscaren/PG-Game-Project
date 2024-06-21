@@ -1,5 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -46,11 +47,20 @@ namespace ScriptProject.Scripts
 
         GameObject target = null;
 
+        static GameObject only = null;
+
         public class OrcAngryEventData : EventSystem.BaseEventData
         {
             public GameObject orc_to_target;
         }
-    
+
+        public static int count = 0;
+
+        public static int GetCount()
+        {
+            return count; 
+        }
+
         void Start()
         {
             player_game_object = GameObject.TempFindGameObject("Player");
@@ -71,18 +81,28 @@ namespace ScriptProject.Scripts
 
             last_position = actor.PathFind(target, 1);
 
-            //if (only != null)
-            //{
-            //    //GameObject.DeleteGameObject(game_object);
-            //}
-            //else
-            //{
-            //    only = game_object;
-            //}
+            if (only != null)
+            {
+                //GameObject.DeleteGameObject(game_object);
+            }
+            else
+            {
+                only = game_object;
+                for (int i = 0; i < 10; ++i)
+                {
+                    GameObject new_game_object = GameObject.CreateGameObject();
+                    new_game_object.AddComponent<Sprite>();
+                    PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
+                }
+            }
+
+            ++count;
         }
 
         void Update()
         {
+
+
             if (target == null)
             {
                 target = player_game_object;
@@ -98,17 +118,20 @@ namespace ScriptProject.Scripts
         {
             Console.WriteLine("Remove Event");
             EventSystem.StopListeningToEvent("OrcAngry", game_object, OrcAngryEvent);
+
+            --count;
         }
 
         void BeginCollision(GameObject collided_game_object)
         {
+
             if (collided_game_object.GetName() == "Bouncer")
             {
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (collided_game_object.GetName() == "HitBox")
+            if (collided_game_object.GetTag() == UserTags.PlayerHitbox)
             {
                 health -= 10.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
@@ -116,7 +139,7 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(dir * 10.3f);
             }
 
-            if (collided_game_object.GetName() == "OrcHitBox" && collided_game_object != hit_box)
+            if (collided_game_object.GetTag() == UserTags.EnemyHitbox && collided_game_object != hit_box)
             {
                 health -= 5.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
@@ -133,8 +156,9 @@ namespace ScriptProject.Scripts
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
             box_collider.SetTrigger(true);
             box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
-            hit_box.transform.SetPosition(0.7f, 0.0f);
+            hit_box.transform.SetPosition(new Vector2(0.7f, 0.0f));
             hit_box.SetName("OrcHitBox");
+            hit_box.SetTag(UserTags.EnemyHitbox);
 
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
@@ -178,15 +202,16 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            if (velocity.Length() <= speed && new_velocity.Length() != 0.0f)
+            float new_velocity_length = new_velocity.Length();
+            if (velocity.Length() <= speed && new_velocity_length != 0.0f)
                 velocity = new_velocity;
             //else
             //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity.Length() == 0.0f && velocity.Length() <= speed)
+            if (new_velocity_length == 0.0f && velocity.Length() <= speed)
                 velocity = new Vector2(0.0f, 0.0f);
             if (velocity.Length() > speed)
                 velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            if (new_velocity.Length() > 0.0f && velocity.Length() < speed)
+            if (new_velocity_length > 0.0f && velocity.Length() < speed)
                 velocity = velocity.Normalize() * speed;
 
             body.SetVelocity(velocity);

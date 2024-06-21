@@ -22,9 +22,9 @@ private:
 
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-	static void SaveAnimationMono(const CSMonoObject game_object, const std::string animation_file_name);
-	static void LoadAnimationMono(const CSMonoObject game_object, const std::string animation_file_name);
-	static bool IsAnimationPlaying(const CSMonoObject game_object, const std::string animation_file_name);
+	static void SaveAnimationMono(const CSMonoObject& game_object, const std::string& animation_file_name);
+	static void LoadAnimationMono(const CSMonoObject& game_object, const std::string& animation_file_name);
+	static bool IsAnimationPlaying(const CSMonoObject& game_object, const std::string& animation_file_name);
 
 public:
 	AnimationManager();

@@ -23,5 +23,5 @@ private:
 	static bool GetMouseWheelSpin(int direction);
 
 	static CSMonoObject GetMousePosition();
-	static CSMonoObject GetMousePositionInWorld(const CSMonoObject camera_game_object);
+	static CSMonoObject GetMousePositionInWorld(const CSMonoObject& camera_game_object);
 };

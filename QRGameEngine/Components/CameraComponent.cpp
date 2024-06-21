@@ -14,17 +14,17 @@ void CameraComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<CameraComponentInterface::RemoveCameraComponent>(camera_class, "RemoveComponent", CameraComponentInterface::RemoveCameraComponent);
 }
 
-void CameraComponentInterface::AddCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void CameraComponentInterface::AddCameraComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<CameraComponent>(entity);
 }
 
-bool CameraComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool CameraComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<CameraComponent>(entity);
 }
 
-void CameraComponentInterface::RemoveCameraComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void CameraComponentInterface::RemoveCameraComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<CameraComponent>(entity);
 }

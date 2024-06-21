@@ -52,6 +52,15 @@ void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
 {
 	m_nodes.clear();
 	m_position_to_node.clear();
+	
+	m_thread_state = ThreadState::Clear;
+	m_clear_data_mutex.lock();
+	m_calculated_paths.clear();
+	m_entity_ongoing_pathfinds.clear();
+	m_paths_calculating.clear();
+	m_paths_wait_list.clear();
+	m_clear_data_mutex.unlock();
+	m_thread_state = ThreadState::Run;
 
 	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
 	entity_manager->System<TransformComponent, PathFindingWorldComponent>([&](const Entity entity, const TransformComponent& transform, const PathFindingWorldComponent& path_finding_world)
@@ -136,29 +145,66 @@ void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
 	}
 }
 
-void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, std::vector<Entity>& path)
+void PathFinding::CalculatePath(const PathFindData& path_find_data, std::vector<Entity>& path)
 {
-	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
-	const TransformComponent& ts = entity_manager->GetComponent<TransformComponent>(start_entity);
-	const TransformComponent& tg = entity_manager->GetComponent<TransformComponent>(goal_entity);
-	const Vector2 start_position(ts.GetPosition().x, ts.GetPosition().y);
-	const Vector2 goal_position(tg.GetPosition().x, tg.GetPosition().y);
+	AStarPathfinding(path_find_data, path);
+}
 
-	const auto found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
-	const auto found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
-	if (found_start_node == m_position_to_node.end() || found_goal_node == m_position_to_node.end())
+void PathFinding::ThreadHandleRequests()
+{
+	m_clear_data_mutex.lock();
+	while (true)
 	{
-		const auto test_found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
-		const auto test_found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
-		return;
-	}
+		if (m_thread_state == ThreadState::Close)
+		{
+			break;
+		}
 
-	Entity start_node_index = found_start_node->second;
-	Entity goal_node_index = found_goal_node->second;
-	std::swap(start_node_index, goal_node_index);
+		if (m_thread_state == ThreadState::Clear)
+		{
+			m_clear_data_mutex.unlock();
+			while (m_thread_state != ThreadState::Run)
+			{
+
+			}
+			m_clear_data_mutex.lock();
+		}
+
+		Entity remove_from_ongoing_entity = NULL_ENTITY;
+		std::vector<Entity> path;
+		if (m_paths_calculating.size() > 0)
+		{
+			const auto path_find_data = m_paths_calculating.front();
+			m_paths_calculating.erase(m_paths_calculating.begin());
+			AStarPathfinding(path_find_data, path);
+			remove_from_ongoing_entity = path_find_data.entity;
+		}
+
+		m_calculate_paths_mutex.lock();
+		for (const auto& data : m_paths_wait_list)
+		{
+			m_paths_calculating.push_back(data);
+		}
+		m_paths_wait_list.clear();
+		if (remove_from_ongoing_entity != NULL_ENTITY)
+		{
+			m_entity_ongoing_pathfinds.erase(remove_from_ongoing_entity);
+			auto it = m_calculated_paths.find(remove_from_ongoing_entity);
+			it->second.path = path;
+			it->second.new_path = true;
+		}
+		m_calculate_paths_mutex.unlock();
+	}
+	m_clear_data_mutex.unlock();
+}
+
+void PathFinding::AStarPathfinding(const PathFindData& path_find_data, std::vector<Entity>& path)
+{
+	const auto start_node_index = path_find_data.start_node_index;
+	const auto goal_node_index = path_find_data.goal_node_index;
 
 	std::map<Entity, float> f_score;
-	const auto cmp = [&](Node* left, Node* right) { f_score.at(left->entity) > f_score.at(right->entity); };
+	const auto cmp = [&](Node* left, Node* right) { return f_score.at(left->entity) > f_score.at(right->entity); };
 	std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> open_set(cmp);
 	std::set<Entity> open_set_entities;
 
@@ -170,7 +216,6 @@ void PathFinding::AStarPathfinding(const SceneIndex scene_index, const Entity st
 
 	g_score.insert({ start_node_index, 0.0f });
 	f_score.insert({ start_node_index, Heuristic(start_node, goal_node) });
-
 
 	Entity previous = 0;
 	while (open_set.size() > 0)
@@ -237,16 +282,59 @@ PathFinding::PathFinding()
 {
 	s_singleton = this;
 	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneLoaded", 0, PathFinding::ConstructPathFindingWorldEvent);
+
+	m_thread_state = ThreadState::Run;
+	m_calculate_paths_thread = new std::thread(&PathFinding::ThreadHandleRequests, this);
+}
+
+PathFinding::~PathFinding()
+{
+	m_thread_state = ThreadState::Close;
+	m_calculate_paths_thread->join();
+	delete m_calculate_paths_thread;
 }
 
 void PathFinding::RequestPathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity)
 {
+	if (m_entity_ongoing_pathfinds.contains(start_entity))
+	{
+		return;
+	}
+
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	const TransformComponent& ts = entity_manager->GetComponent<TransformComponent>(start_entity);
+	const TransformComponent& tg = entity_manager->GetComponent<TransformComponent>(goal_entity);
+	const Vector2 start_position(ts.GetPosition().x, ts.GetPosition().y);
+	const Vector2 goal_position(tg.GetPosition().x, tg.GetPosition().y);
+
+	const auto found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
+	const auto found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
+	if (found_start_node == m_position_to_node.end() || found_goal_node == m_position_to_node.end())
+	{
+		const auto test_found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
+		const auto test_found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
+		return;
+	}
+
+	Entity start_node_index = found_start_node->second;
+	Entity goal_node_index = found_goal_node->second;
+	std::swap(start_node_index, goal_node_index);
+
+	m_paths_wait_list.push_back(PathFindData{.scene_index = scene_index, .entity = start_entity, .start_node_index = start_node_index, .goal_node_index = goal_node_index});
+	m_entity_ongoing_pathfinds.insert(start_entity);
+	m_calculated_paths.insert({ start_entity, CalculatedPath{.path = {}, .new_path = false} });
 }
 
-std::vector<Entity> PathFinding::PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity)
+std::vector<Entity> PathFinding::PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, bool& new_path)
 {
 	std::vector<Entity> path;
-	AStarPathfinding(scene_index, start_entity, goal_entity, path);
+	m_calculate_paths_mutex.lock();
+	RequestPathFind(scene_index, start_entity, goal_entity);
+	auto it = m_calculated_paths.find(start_entity);
+	new_path = it->second.new_path;
+	it->second.new_path = false;
+	path = it->second.path;
+	m_calculate_paths_mutex.unlock();
 	return path;
 }
 

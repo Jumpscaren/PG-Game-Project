@@ -23,17 +23,17 @@ class AnimatableSpriteComponentInterface
 {
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SetSplitSize(CSMonoObject object, CSMonoObject split_size);
-	static void SetMaxSplits(CSMonoObject object, uint32_t max_splits);
-	static void SetTimeBetweenSplits(CSMonoObject object, float time_between_splits);
-	static void SetLoop(CSMonoObject object, bool loop);
-	static void SetId(CSMonoObject object, uint32_t id);
-	static void ResetAnimation(CSMonoObject object);
+	static void SetSplitSize(const CSMonoObject& object, const CSMonoObject& split_size);
+	static void SetMaxSplits(const CSMonoObject& object, uint32_t max_splits);
+	static void SetTimeBetweenSplits(const CSMonoObject& object, float time_between_splits);
+	static void SetLoop(const CSMonoObject& object, bool loop);
+	static void SetId(const CSMonoObject& object, uint32_t id);
+	static void ResetAnimation(const CSMonoObject& object);
 	static bool IsAnimationPlaying(const CSMonoObject& game_object, uint32_t id);
 
 public:

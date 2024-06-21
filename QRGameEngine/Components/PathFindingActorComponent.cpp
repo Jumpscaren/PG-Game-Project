@@ -6,7 +6,7 @@
 #include "ComponentInterface.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "Scripting/Objects/Vector2Interface.h"
-#include "PathFinding.h"
+#include "PathFinding/PathFinding.h"
 #include "TransformComponent.h"
 #include "SceneSystem/SceneManager.h"
 #include "Renderer/RenderCore.h"
@@ -19,34 +19,32 @@ void PathFindingActorComponentInterface::RegisterInterface(CSMonoCore* mono_core
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::HasComponent>(path_finding_actor_class, "HasComponent", PathFindingActorComponentInterface::HasComponent);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::RemoveComponent>(path_finding_actor_class, "RemoveComponent", PathFindingActorComponentInterface::RemoveComponent);
 
-	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::PathFind>(path_finding_actor_class, "PathFind", PathFindingActorComponentInterface::PathFind);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::PathFind>(path_finding_actor_class, "PathFind_Extern", PathFindingActorComponentInterface::PathFind);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::DebugPath>(path_finding_actor_class, "DebugPath", PathFindingActorComponentInterface::DebugPath);
-	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::NeedNewPathFind>(path_finding_actor_class, "NeedNewPathFind", PathFindingActorComponentInterface::NeedNewPathFind);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::NeedNewPathFind>(path_finding_actor_class, "NeedNewPathFind_Extern", PathFindingActorComponentInterface::NeedNewPathFind);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<PathFindingActorComponent>(SavePathFindingWorldComponent, LoadPathFindingWorldComponent);
 }
 
-void PathFindingActorComponentInterface::InitComponent(const CSMonoObject, const SceneIndex scene_index, const Entity entity)
+void PathFindingActorComponentInterface::InitComponent(const CSMonoObject&, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->AddComponent<PathFindingActorComponent>(entity);
 }
 
-bool PathFindingActorComponentInterface::HasComponent(const CSMonoObject object, const SceneIndex scene_index, const Entity entity)
+bool PathFindingActorComponentInterface::HasComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
 {
 	return SceneManager::GetEntityManager(scene_index)->HasComponent<PathFindingActorComponent>(entity);
 }
 
-void PathFindingActorComponentInterface::RemoveComponent(const CSMonoObject object, const SceneIndex scene_index, const Entity entity)
+void PathFindingActorComponentInterface::RemoveComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->RemoveComponent<PathFindingActorComponent>(entity);
 }
 
-CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject object, const CSMonoObject goal_game_object, const uint32_t position_of_node_index)
+CSMonoObject PathFindingActorComponentInterface::PathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
-	const Entity entity = GameObjectInterface::GetEntityID(game_object);
-	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
-	const Entity goal_entity = GameObjectInterface::GetEntityID(goal_game_object);
+	const Entity entity = actor_entity;
+	const SceneIndex scene_index = actor_scene_index;
 
 	PathFindingActorComponent& path_finding_actor = SceneManager::GetEntityManager(scene_index)->GetComponent<PathFindingActorComponent>(entity);
 
@@ -77,19 +75,36 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject obj
 	Vector2 node_position = current_node_position;
 	const TransformComponent& goal_transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(goal_entity);
 	const Entity goal_node = PathFinding::Get()->GetNodeFromPosition(Vector2(goal_transform.GetPosition().x, goal_transform.GetPosition().y));
-	if (HasToPathFind(path_finding_actor, goal_node))
-	{
-		path_finding_actor.cached_path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity);
-		path_finding_actor.goal_last_visited_node = goal_node;
-		path_finding_actor.last_path_index = 0;
 
-		path_finding_actor.cached_mapped_path.clear();
-		for (const auto path_index : path_finding_actor.cached_path)
+	auto has_to_path_find = HasToPathFind(path_finding_actor, goal_node);
+	if (has_to_path_find)
+	{
+		bool new_path;
+		std::vector<Entity> path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity, new_path);
+		if (new_path)
 		{
-			path_finding_actor.cached_mapped_path.insert(path_index);
+			path_finding_actor.cached_path = path;
+			path_finding_actor.goal_last_visited_node = goal_node;
+			path_finding_actor.last_path_index = 0;
+
+			path_finding_actor.cached_mapped_path.clear();
+			uint32_t path_index = 0;
+			for (const auto node_entity : path_finding_actor.cached_path)
+			{
+				path_finding_actor.cached_mapped_path.insert(node_entity);
+				if (current_node == node_entity)
+				{
+					path_finding_actor.last_path_index = path_index;
+				}
+				++path_index;
+			}
+		}
+		else
+		{
+			has_to_path_find = false;
 		}
 	}
-	else {
+	if (!has_to_path_find) {
 		if (path_finding_actor.goal_last_visited_node != NULL_ENTITY)
 		{
 			const auto& path_position_3 = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(path_finding_actor.goal_last_visited_node).GetPosition();
@@ -118,9 +133,9 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const CSMonoObject obj
 	return Vector2Interface::CreateVector2(node_position);
 }
 
-void PathFindingActorComponentInterface::DebugPath(const CSMonoObject object)
+void PathFindingActorComponentInterface::DebugPath(const CSMonoObject& object)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 	const Entity entity = GameObjectInterface::GetEntityID(game_object);
 	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	const PathFindingActorComponent& path_finding_actor = SceneManager::GetEntityManager(scene_index)->GetComponent<PathFindingActorComponent>(entity);
@@ -142,12 +157,10 @@ void PathFindingActorComponentInterface::DebugPath(const CSMonoObject object)
 	}
 }
 
-bool PathFindingActorComponentInterface::NeedNewPathFind(const CSMonoObject object, const CSMonoObject goal_game_object, const uint32_t position_of_node_index)
+bool PathFindingActorComponentInterface::NeedNewPathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
-	const Entity entity = GameObjectInterface::GetEntityID(game_object);
-	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
-	const Entity goal_entity = GameObjectInterface::GetEntityID(goal_game_object);
+	const Entity entity = actor_entity;
+	const SceneIndex scene_index = actor_scene_index;
 
 	const TransformComponent& transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(entity);
 	const Vector2 current_node_position(transform.GetPosition().x, transform.GetPosition().y);

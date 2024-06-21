@@ -25,20 +25,20 @@ class SpriteComponentInterface
 {
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
-	static void InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static bool HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
-	static void RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity);
+	static void InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
 	static void SaveSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void LoadSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 
 public:
-	static void SetTexture(CSMonoObject object, CSMonoObject texture);
-	static void FlipX(CSMonoObject object, bool flip_x);
-	static void FlipY(CSMonoObject object, bool flip_y);
-	static bool GetFlipX(CSMonoObject object);
-	static bool GetFlipY(CSMonoObject object);
-	static void SetUV(CSMonoObject object, CSMonoObject uv_1_position, CSMonoObject uv_4_position);
+	static void SetTexture(const CSMonoObject& object, const CSMonoObject& texture);
+	static void FlipX(const CSMonoObject& object, bool flip_x);
+	static void FlipY(const CSMonoObject& object, bool flip_y);
+	static bool GetFlipX(const CSMonoObject& object);
+	static bool GetFlipY(const CSMonoObject& object);
+	static void SetUV(const CSMonoObject& object, const CSMonoObject& uv_1_position, const CSMonoObject& uv_4_position);
 };
 

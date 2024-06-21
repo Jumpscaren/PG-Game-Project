@@ -468,7 +468,7 @@ void DrawScene::SetAddUserPrefab()
 	mono_core->HookAndRegisterMonoMethodType<DrawScene::AddUserPrefab>(transform_class, "AddUserPrefab", &DrawScene::AddUserPrefab);
 }
 
-void DrawScene::AddUserPrefab(std::string prefab_name, uint32_t z_index)
+void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index)
 {
 #ifndef _EDITOR
 	return;

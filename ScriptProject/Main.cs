@@ -13,6 +13,9 @@ using System.Xml;
 
 namespace ScriptProject
 {
+    public class M
+    { public int x; public int y; public int z; }
+
     public class Main
     {
         public int num = 3;
@@ -21,6 +24,53 @@ namespace ScriptProject
         public Main()
         {
             i = this;
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern static void cpptest();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern static void cpptestint(int i);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern static void cpptestmany(M f);
+
+        static int loop = 10000;
+
+        public static void test1()
+        {
+            for (int i = 0; i < loop; ++i)
+            {
+                cpptest();
+            }
+        }
+
+        public static void test2()
+        {
+            float f = 0;
+            for (int i = 0; i < loop; ++i)
+            {
+                f += i;
+            }
+        }
+
+        public static void test3()
+        {
+            for (int i = 0; i < loop; ++i)
+            {
+                cpptestint(i);
+            }
+        }
+
+        public static void test4()
+        {
+            M f = new M();
+            M t = new M();
+            string text = "fggggfd";
+            for (int i = 0; i < loop; ++i)
+            {
+                cpptestmany(f);
+            }
         }
 
         public static int main()

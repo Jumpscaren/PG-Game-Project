@@ -30,25 +30,25 @@ _MonoClass* CSMonoClass::GetMonoClass() const
 	return m_mono_class;
 }
 
-MonoFieldHandle CSMonoClass::AddField(const std::string& field_name)
-{
-	MonoFieldHandle field_handle = {};
-	field_handle.handle = m_field_handles.size();
-
-	MonoClassField* field = mono_class_get_field_from_name(m_mono_class, field_name.c_str());
-	assert(field);
-
-	uint32_t token = mono_class_get_field_token(field);
-	m_field_handles.push_back(token);
-
-	return field_handle;
-}
-
-uint32_t CSMonoClass::GetFieldToken(const MonoFieldHandle& field_handle)
-{
-	assert(field_handle.handle < m_field_handles.size());
-	return m_field_handles[field_handle.handle];
-}
+//MonoFieldHandle CSMonoClass::AddField(const std::string& field_name)
+//{
+//	MonoFieldHandle field_handle = {};
+//	field_handle.handle = m_field_handles.size();
+//
+//	MonoClassField* field = mono_class_get_field_from_name(m_mono_class, field_name.c_str());
+//	assert(field);
+//
+//	uint32_t token = mono_class_get_field_token(field);
+//	m_field_handles.push_back(token);
+//
+//	return field_handle;
+//}
+//
+//uint32_t CSMonoClass::GetFieldToken(const MonoFieldHandle& field_handle)
+//{
+//	assert(field_handle.handle < m_field_handles.size());
+//	return m_field_handles[field_handle.handle];
+//}
 
 CSMonoClass::CSMonoClass(CSMonoCore* mono_core, const std::string& mono_namespace, const std::string& mono_class) : m_mono_namespace(mono_namespace), m_mono_class_name(mono_class)
 {

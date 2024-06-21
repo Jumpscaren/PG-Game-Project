@@ -15,17 +15,17 @@ void PathFindingWorldComponentInterface::RegisterInterface(CSMonoCore* mono_core
 	SceneLoader::Get()->OverrideSaveComponentMethod<PathFindingWorldComponent>(SavePathFindingWorldComponent, LoadPathFindingWorldComponent);
 }
 
-void PathFindingWorldComponentInterface::InitComponent(const CSMonoObject, const SceneIndex scene_index, const Entity entity)
+void PathFindingWorldComponentInterface::InitComponent(const CSMonoObject&, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->AddComponent<PathFindingWorldComponent>(entity);
 }
 
-bool PathFindingWorldComponentInterface::HasComponent(const CSMonoObject object, const SceneIndex scene_index, const Entity entity)
+bool PathFindingWorldComponentInterface::HasComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
 {
 	return SceneManager::GetEntityManager(scene_index)->HasComponent<PathFindingWorldComponent>(entity);
 }
 
-void PathFindingWorldComponentInterface::RemoveComponent(const CSMonoObject object, const SceneIndex scene_index, const Entity entity)
+void PathFindingWorldComponentInterface::RemoveComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->RemoveComponent<PathFindingWorldComponent>(entity);
 }

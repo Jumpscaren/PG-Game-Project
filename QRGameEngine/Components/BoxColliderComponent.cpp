@@ -25,7 +25,7 @@ void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	SceneLoader::Get()->OverrideSaveComponentMethod<BoxColliderComponent>(SaveScriptComponent, LoadScriptComponent);
 }
 
-void BoxColliderComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void BoxColliderComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -36,17 +36,17 @@ void BoxColliderComponentInterface::InitComponent(CSMonoObject object, SceneInde
 	PhysicsCore::Get()->AddBoxCollider(scene_index, entity, Vector2(0.5f, 0.5f));
 }
 
-bool BoxColliderComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool BoxColliderComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->HasComponent<BoxColliderComponent>(entity);
 }
 
-void BoxColliderComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void BoxColliderComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->RemoveBoxCollider(scene_index, entity);
 }
 
-void BoxColliderComponentInterface::SetTrigger(CSMonoObject object, bool trigger)
+void BoxColliderComponentInterface::SetTrigger(const CSMonoObject& object, bool trigger)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -56,7 +56,7 @@ void BoxColliderComponentInterface::SetTrigger(CSMonoObject object, bool trigger
 	box_collider.update_box_collider = true;
 }
 
-void BoxColliderComponentInterface::SetHalfBoxSize(const CSMonoObject object, const CSMonoObject half_box_size)
+void BoxColliderComponentInterface::SetHalfBoxSize(const CSMonoObject& object, const CSMonoObject& half_box_size)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);

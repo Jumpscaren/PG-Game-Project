@@ -30,22 +30,22 @@ void AnimatableSpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core
 	SceneLoader::Get()->OverrideSaveComponentMethod<AnimatableSpriteComponent>(SaveAnimatableSpriteComponent, LoadAnimatableSpriteComponent);
 }
 
-void AnimatableSpriteComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void AnimatableSpriteComponentInterface::InitComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<AnimatableSpriteComponent>(entity);
 }
 
-bool AnimatableSpriteComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool AnimatableSpriteComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<AnimatableSpriteComponent>(entity);;
 }
 
-void AnimatableSpriteComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void AnimatableSpriteComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<AnimatableSpriteComponent>(entity);
 }
 
-void AnimatableSpriteComponentInterface::SetSplitSize(CSMonoObject object, CSMonoObject split_size)
+void AnimatableSpriteComponentInterface::SetSplitSize(const CSMonoObject& object, const CSMonoObject& split_size)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -54,7 +54,7 @@ void AnimatableSpriteComponentInterface::SetSplitSize(CSMonoObject object, CSMon
 	anim_sprite.split_size = Vector2Interface::GetVector2(split_size);
 }
 
-void AnimatableSpriteComponentInterface::SetMaxSplits(CSMonoObject object, uint32_t max_splits)
+void AnimatableSpriteComponentInterface::SetMaxSplits(const CSMonoObject& object, uint32_t max_splits)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -63,7 +63,7 @@ void AnimatableSpriteComponentInterface::SetMaxSplits(CSMonoObject object, uint3
 	anim_sprite.max_split_index = max_splits;
 }
 
-void AnimatableSpriteComponentInterface::SetTimeBetweenSplits(CSMonoObject object, float time_between_splits)
+void AnimatableSpriteComponentInterface::SetTimeBetweenSplits(const CSMonoObject& object, float time_between_splits)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -72,7 +72,7 @@ void AnimatableSpriteComponentInterface::SetTimeBetweenSplits(CSMonoObject objec
 	anim_sprite.time_between_splits = time_between_splits;
 }
 
-void AnimatableSpriteComponentInterface::SetLoop(CSMonoObject object, bool loop)
+void AnimatableSpriteComponentInterface::SetLoop(const CSMonoObject& object, bool loop)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -81,7 +81,7 @@ void AnimatableSpriteComponentInterface::SetLoop(CSMonoObject object, bool loop)
 	anim_sprite.loop = loop;
 }
 
-void AnimatableSpriteComponentInterface::SetId(CSMonoObject object, uint32_t id)
+void AnimatableSpriteComponentInterface::SetId(const CSMonoObject& object, uint32_t id)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
@@ -90,7 +90,7 @@ void AnimatableSpriteComponentInterface::SetId(CSMonoObject object, uint32_t id)
 	anim_sprite.id = id;
 }
 
-void AnimatableSpriteComponentInterface::ResetAnimation(CSMonoObject object)
+void AnimatableSpriteComponentInterface::ResetAnimation(const CSMonoObject& object)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);

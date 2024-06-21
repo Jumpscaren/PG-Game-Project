@@ -106,21 +106,21 @@ void AnimationManager::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<AnimationManager::IsAnimationPlaying>(animation_manager_class, "IsAnimationPlaying", AnimationManager::IsAnimationPlaying);
 }
 
-void AnimationManager::SaveAnimationMono(const CSMonoObject game_object, const std::string animation_file_name)
+void AnimationManager::SaveAnimationMono(const CSMonoObject& game_object, const std::string& animation_file_name)
 {
 	const auto entity = GameObjectInterface::GetEntityID(game_object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	AnimationManager::Get()->SaveAnimation(scene_index, entity, animation_file_name);
 }
 
-void AnimationManager::LoadAnimationMono(const CSMonoObject game_object, const std::string animation_file_name)
+void AnimationManager::LoadAnimationMono(const CSMonoObject& game_object, const std::string& animation_file_name)
 {
 	const auto entity = GameObjectInterface::GetEntityID(game_object);
 	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	AnimationManager::Get()->LoadAnimation(scene_index, entity, animation_file_name);
 }
 
-bool AnimationManager::IsAnimationPlaying(const CSMonoObject game_object, const std::string animation_file_name)
+bool AnimationManager::IsAnimationPlaying(const CSMonoObject& game_object, const std::string& animation_file_name)
 {
 	const uint64_t animation_file_name_hash = std::hash<std::string>{}(animation_file_name);
 	const AnimationManager* anim_manager = AnimationManager::Get();

@@ -9,10 +9,30 @@ namespace ScriptProject.Engine
 {
     internal class Time
     {
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static public extern float GetDeltaTime();
+        static private float m_delta_time = 0;
+        static private float m_elapsed_time = 0;
+
+        static private void SetDeltaTime(float delta_time)
+        {
+            m_delta_time = delta_time;
+        }
+
+        static private void SetElapsedTime(float elapsed_time)
+        {
+            m_elapsed_time = elapsed_time;
+        }
+
+        static public float GetDeltaTime() 
+        {
+            return m_delta_time;
+        }
+
+        static public float GetElapsedTime()
+        {
+            return m_elapsed_time;
+        }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static public extern float GetElapsedTime();
+        static public extern float GetPreciseElapsedTime();
     }
 }

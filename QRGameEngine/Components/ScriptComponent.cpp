@@ -17,11 +17,12 @@ void ScriptComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	SceneLoader::Get()->OverrideSaveComponentMethod<ScriptComponent>(SaveScriptComponent, LoadScriptComponent);
 }
 
-void ScriptComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void ScriptComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	ScriptComponent& script_component = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->AddComponent<ScriptComponent>(entity);
 
 	script_component.script_object = object;
+	//script_component.script_object.test.erase(script_component.script_object.m_gchandle);
 	script_component.script_start = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Start");
 	script_component.script_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Update");
 	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "BeginCollision");
@@ -33,12 +34,12 @@ void ScriptComponentInterface::InitComponent(CSMonoObject object, SceneIndex sce
 #endif // _EDITOR
 }
 
-bool ScriptComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool ScriptComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->HasComponent<ScriptComponent>(entity);
 }
 
-void ScriptComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void ScriptComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	ScriptComponent& script_component = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->GetComponent<ScriptComponent>(entity);
 

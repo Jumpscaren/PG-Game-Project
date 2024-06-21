@@ -37,7 +37,10 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::RemoveChild>(game_object_class, "RemoveChild", GameObjectInterface::RemoveChild);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::HasChildren>(game_object_class, "HasChildren", GameObjectInterface::HasChildren);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::DestroyChildren>(game_object_class, "DestroyChildren", GameObjectInterface::DestroyChildren);
-    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetParent>(game_object_class, "GetParent", GameObjectInterface::GetParent);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetParent>(game_object_class, "GetParent_Extern", GameObjectInterface::GetParent);
+
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetTag>(game_object_class, "SetTag", GameObjectInterface::SetTag);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetTag>(game_object_class, "GetTag", GameObjectInterface::GetTag);
 }
 
 CSMonoObject GameObjectInterface::GetGameObjectFromComponent(const CSMonoObject& component)
@@ -78,23 +81,23 @@ CSMonoObject GameObjectInterface::NewGameObjectWithExistingEntity(Entity entity,
     return game_object;
 }
 
-void GameObjectInterface::AddEntityData(CSMonoObject object)
+void GameObjectInterface::AddEntityData(const CSMonoObject& object)
 {
     if (!SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->HasComponent<EntityDataComponent>(GetEntityID(object)))
         SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->AddComponent<EntityDataComponent>(GetEntityID(object));
 }
 
-void GameObjectInterface::SetName(CSMonoObject object, std::string name)
+void GameObjectInterface::SetName(const CSMonoObject& object, const std::string& name)
 {
     SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->GetComponent<EntityDataComponent>(GetEntityID(object)).entity_name = name;
 }
 
-std::string GameObjectInterface::GetName(CSMonoObject object)
+std::string GameObjectInterface::GetName(const CSMonoObject& object)
 {
     return SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->GetComponent<EntityDataComponent>(GetEntityID(object)).entity_name;
 }
 
-CSMonoObject GameObjectInterface::TempFindGameObject(std::string name)
+CSMonoObject GameObjectInterface::TempFindGameObject(const std::string& name)
 {
     Entity found_game_object = NULL_ENTITY;
     SceneManager::GetSceneManager()->GetEntityManager(SceneManager::GetSceneManager()->GetActiveSceneIndex())->System<EntityDataComponent>([&](const Entity entity, const EntityDataComponent& entity_data)
@@ -126,7 +129,7 @@ Entity GameObjectInterface::TempFindGameObjectEntity(const std::string& name)
     return found_game_object;
 }
 
-void GameObjectInterface::AddChild(const CSMonoObject game_object, const CSMonoObject child_game_object)
+void GameObjectInterface::AddChild(const CSMonoObject& game_object, const CSMonoObject& child_game_object)
 {
     const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
     const auto entity = GameObjectInterface::GetEntityID(game_object);
@@ -135,7 +138,7 @@ void GameObjectInterface::AddChild(const CSMonoObject game_object, const CSMonoO
     SceneHierarchy::Get()->AddParentChildRelation(scene_index, entity, child_entity);
 }
 
-void GameObjectInterface::RemoveChild(const CSMonoObject game_object, const CSMonoObject child_game_object)
+void GameObjectInterface::RemoveChild(const CSMonoObject& game_object, const CSMonoObject& child_game_object)
 {
     const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
     const auto child_entity = GameObjectInterface::GetEntityID(child_game_object);
@@ -143,7 +146,7 @@ void GameObjectInterface::RemoveChild(const CSMonoObject game_object, const CSMo
     SceneHierarchy::Get()->RemoveParentChildRelation(scene_index, child_entity);
 }
 
-bool GameObjectInterface::HasChildren(const CSMonoObject game_object)
+bool GameObjectInterface::HasChildren(const CSMonoObject& game_object)
 {
     const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
     const auto parent_entity = GameObjectInterface::GetEntityID(game_object);
@@ -151,7 +154,7 @@ bool GameObjectInterface::HasChildren(const CSMonoObject game_object)
     return SceneHierarchy::Get()->ParentHasChildren(scene_index, parent_entity);
 }
 
-void GameObjectInterface::DestroyChildren(const CSMonoObject game_object)
+void GameObjectInterface::DestroyChildren(const CSMonoObject& game_object)
 {
     const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
     const auto parent_entity = GameObjectInterface::GetEntityID(game_object);
@@ -163,10 +166,8 @@ void GameObjectInterface::DestroyChildren(const CSMonoObject game_object)
 	}
 }
 
-CSMonoObject GameObjectInterface::GetParent(const CSMonoObject game_object)
+CSMonoObject GameObjectInterface::GetParent(const SceneIndex scene_index, const Entity entity)
 {
-    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
-    const auto entity = GameObjectInterface::GetEntityID(game_object);
     EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
     if (entity_manager->HasComponent<ParentComponent>(entity))
     {
@@ -179,6 +180,16 @@ CSMonoObject GameObjectInterface::GetParent(const CSMonoObject game_object)
 
     assert(false);
     return CSMonoObject();
+}
+
+void GameObjectInterface::SetTag(const CSMonoObject& game_object, const uint8_t tag)
+{
+    SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(game_object))->GetComponent<EntityDataComponent>(GetEntityID(game_object)).entity_tag = tag;
+}
+
+uint8_t GameObjectInterface::GetTag(const CSMonoObject& game_object)
+{
+    return SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(game_object))->GetComponent<EntityDataComponent>(GetEntityID(game_object)).entity_tag;
 }
 
 void GameObjectInterface::RemoveSceneFromSceneToComponentMap(const SceneIndex scene_index)

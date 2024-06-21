@@ -21,24 +21,24 @@ void StaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	SceneLoader::Get()->OverrideSaveComponentMethod<StaticBodyComponent>(SaveScriptComponent, LoadScriptComponent);
 }
 
-void StaticBodyComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void StaticBodyComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
 }
 
-bool StaticBodyComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool StaticBodyComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->HasComponent<StaticBodyComponent>(entity);
 }
 
-void StaticBodyComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void StaticBodyComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
 }
 
-void StaticBodyComponentInterface::SetEnabled(const CSMonoObject object, const bool enabled)
+void StaticBodyComponentInterface::SetEnabled(const CSMonoObject& object, const bool enabled)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 	const Entity entity = GameObjectInterface::GetEntityID(game_object);
 	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<StaticBodyComponent>(entity).enabled = enabled;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.UserDefined;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,6 +15,8 @@ namespace ScriptProject.Engine
         Scene scene;
         public Transform transform;
         bool destroyed;
+
+        private Cache<GameObject> cache_parent = new Cache<GameObject>();
 
         private static Dictionary<UInt32, Dictionary<UInt32, GameObject>> game_object_database = new Dictionary<uint, Dictionary<uint, GameObject>>();
         private static Dictionary<UInt32, Dictionary<UInt32, Dictionary<String, Component>>> scene_to_component_map = new Dictionary<uint, Dictionary<uint, Dictionary<string, Component>>>();
@@ -314,6 +317,9 @@ namespace ScriptProject.Engine
         static public extern GameObject TempFindGameObject(string name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern List<GameObject> FindGameObjectsWithTag(Byte tag);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void AddChild(GameObject child_game_object);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -326,6 +332,22 @@ namespace ScriptProject.Engine
         public extern bool DestroyChildren();
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern GameObject GetParent();
+        private static extern GameObject GetParent_Extern(UInt32 scene_index, UInt32 entity);
+
+        public GameObject GetParent()
+        {
+            if (cache_parent.IsDataOld())
+            {
+                cache_parent.CacheData(GetParent_Extern(scene.GetSceneIndex(), entity_id));
+            }
+
+            return cache_parent.GetData();
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetTag(Byte tag);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Byte GetTag();
     }
 }

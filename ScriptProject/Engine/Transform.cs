@@ -11,24 +11,32 @@ namespace ScriptProject.Engine
 {
     internal class Transform : Component
     {
+        Cache<Vector2> cached_position = new Cache<Vector2>();
+
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static private extern void SetPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static private extern void SetLocalPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y);
 
-        public void SetPosition(float x, float y)
-        {
-            SetPosition_Extern(game_object.GetSceneIndex(), game_object.GetEntityID(), x, y);
-        }
-
         public void SetPosition(Vector2 position)
         {
-            SetPosition(position.x, position.y);
+            cached_position.CacheData(position);
+            SetPosition_Extern(game_object.GetSceneIndex(), game_object.GetEntityID(), position.x, position.y);
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern Vector2 GetPosition();
+        static private extern Vector2 GetPosition_Extern(UInt32 scene_index, UInt32 entity);
+
+        public Vector2 GetPosition()
+        { 
+            if (cached_position.IsDataOld())
+            {
+                cached_position.CacheData(GetPosition_Extern(game_object.GetSceneIndex(), game_object.GetEntityID()));
+            }
+
+            return cached_position.GetData();
+        }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern Vector2 GetLocalPosition();

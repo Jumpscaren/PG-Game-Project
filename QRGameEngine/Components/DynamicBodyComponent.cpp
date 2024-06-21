@@ -25,48 +25,48 @@ void DynamicBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	SceneLoader::Get()->OverrideSaveComponentMethod<DynamicBodyComponent>(SaveScriptComponent, LoadScriptComponent);
 }
 
-void DynamicBodyComponentInterface::InitComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void DynamicBodyComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::DynamicBody);
 }
 
-bool DynamicBodyComponentInterface::HasComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+bool DynamicBodyComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->HasComponent<DynamicBodyComponent>(entity);
 }
 
-void DynamicBodyComponentInterface::RemoveComponent(CSMonoObject object, SceneIndex scene_index, Entity entity)
+void DynamicBodyComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
 }
 
-void DynamicBodyComponentInterface::SetVelocity(CSMonoObject object, CSMonoObject velocity)
+void DynamicBodyComponentInterface::SetVelocity(const CSMonoObject& object, const CSMonoObject& velocity)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<DynamicBodyComponent>(entity).velocity = Vector2Interface::GetVector2(velocity);
 }
 
-CSMonoObject DynamicBodyComponentInterface::GetVelocity(CSMonoObject object)
+CSMonoObject DynamicBodyComponentInterface::GetVelocity(const CSMonoObject& object)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	return Vector2Interface::CreateVector2(SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<DynamicBodyComponent>(entity).velocity);
 }
 
-void DynamicBodyComponentInterface::SetFixedRotation(CSMonoObject object, bool fixed_rotation)
+void DynamicBodyComponentInterface::SetFixedRotation(const CSMonoObject& object, bool fixed_rotation)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<DynamicBodyComponent>(entity).fixed_rotation = fixed_rotation;
 }
 
-void DynamicBodyComponentInterface::SetEnabled(const CSMonoObject object, const bool enabled)
+void DynamicBodyComponentInterface::SetEnabled(const CSMonoObject& object, const bool enabled)
 {
-	const CSMonoObject& game_object = ComponentInterface::GetGameObject(object);
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<DynamicBodyComponent>(entity).enabled = enabled;

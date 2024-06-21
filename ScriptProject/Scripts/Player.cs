@@ -1,5 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,8 +47,9 @@ namespace ScriptProject.Scripts
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
             box_collider.SetTrigger(true);
             box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
-            hit_box.transform.SetPosition(0.7f, 0.0f);
+            hit_box.transform.SetPosition(new Vector2(0.7f, 0.0f));
             hit_box.SetName("HitBox");
+            hit_box.SetTag(UserTags.PlayerHitbox);
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
@@ -72,11 +74,11 @@ namespace ScriptProject.Scripts
 
         void Update()
         {
-            if (health <= 0.0f) { 
-                health = 0.0f;
-                Console.WriteLine("Player Restart");
-                SceneManager.RestartActiveScene();
-            }
+            //if (health <= 0.0f) { 
+            //    health = 0.0f;
+            //    Console.WriteLine("Player Restart");
+            //    SceneManager.RestartActiveScene();
+            //}
 
             float current_speed = max_speed;
             if (holding_princess)
@@ -165,7 +167,7 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (collided_game_object.GetName() == "OrcHitBox")
+            if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
             {
                 health -= 20.0f;
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
