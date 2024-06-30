@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ScriptProject.Scripts
 {
-    internal class Princess : ScriptingBehaviour
+    internal class Princess : InteractiveCharacterInterface
     {
         DynamicBody body;
         Sprite sprite;
@@ -31,6 +31,13 @@ namespace ScriptProject.Scripts
 
         float health = 100.0f;
 
+        GameObject grabbed_by_orc = null;
+        DynamicBody grabbed_body = null;
+
+        bool rescue_state = false;
+        float rescue_time = 10.0f;
+        float rescue_timer;
+
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -44,8 +51,37 @@ namespace ScriptProject.Scripts
             player_script = player.GetComponent<Player>();
         }
 
+        Vector2 grabbed_position_change = new Vector2(0.0f, 0.4f);
         void Update() 
         {
+            if (rescue_state)
+            {
+                if (rescue_timer <= Time.GetElapsedTime())
+                {
+                    Console.WriteLine("Princess Rescue Restart");
+                    SceneManager.RestartActiveScene();
+                }
+
+                return;
+            }
+
+            body.SetEnabled(grabbed_by_orc == null);
+            if (grabbed_by_orc != null)
+            {
+                Vector2 direction = grabbed_by_orc.transform.GetPosition() - game_object.transform.GetPosition();
+                float distance = direction.Length();
+                const float max_distance_to_orc = 0.0f;
+                if (distance > max_distance_to_orc)
+                {
+                    game_object.transform.SetPosition(grabbed_position_change + grabbed_by_orc.transform.GetPosition() - direction.Normalize() * max_distance_to_orc);
+                }
+
+                var player_velocity = grabbed_body.GetVelocity();
+                //body.SetVelocity(player_velocity);
+                sprite.FlipX(player_velocity.x < 0);
+                return;
+            }
+
             if (health <= 1e-05)
             {
                 health = 0.0f;
@@ -55,11 +91,17 @@ namespace ScriptProject.Scripts
 
             if (follow_player)
             {
+                Vector2 direction_to_player = player.transform.GetPosition() - game_object.transform.GetPosition();
+                float distance_to_player = direction_to_player.Length();
+                if (distance_to_player > 0.8f)
+                {
+                    follow_player = false;
+                    player_script.PrincessStopFollowPlayer();
+                }
+
                 start_to_move_timer = Time.GetElapsedTime() + start_to_move_time;
                 new_random_direction_timer = start_to_move_timer + new_random_direction_time;
 
-                Vector2 direction_to_player = player.transform.GetPosition() - game_object.transform.GetPosition();
-                float distance_to_player = direction_to_player.Length();
                 if (distance_to_player > max_distance_to_player)
                 {
                     game_object.transform.SetPosition(player.transform.GetPosition() - direction_to_player.Normalize() * max_distance_to_player);
@@ -102,6 +144,15 @@ namespace ScriptProject.Scripts
             body.SetVelocity(velocity);
         }
 
+        public override void TakeDamage(float damage)
+        {
+            health -= damage;
+        }
+
+        public override void Knockback(Vector2 dir, float knockback)
+        {
+            body.SetVelocity(dir * knockback);
+        }
 
         void BeginCollision(GameObject collided_game_object)
         {
@@ -109,6 +160,11 @@ namespace ScriptProject.Scripts
             {
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
                 body.SetVelocity(direction.Normalize() * 20.0f);
+            }
+
+            if (grabbed_by_orc != null)
+            {
+                return;
             }
 
             if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
@@ -128,6 +184,44 @@ namespace ScriptProject.Scripts
         public void KnightHoldingPrincess(bool holding)
         {            
             follow_player = holding;
+
+            if (holding && rescue_state)
+            {
+                rescue_state = false;
+                sprite.FlipY(false);
+                rescue_time = rescue_timer - Time.GetElapsedTime();
+                if (rescue_time < 3.0f)
+                {
+                    rescue_time = 3.0f;
+                }
+                Console.WriteLine(rescue_time);
+            }
+        }
+
+        public void GrabbedByOrc(GameObject orc)
+        {
+            grabbed_by_orc = orc;
+            grabbed_body = orc.GetComponent<DynamicBody>();
+            follow_player = false;
+            player_script.PrincessStopFollowPlayer();
+        }
+
+        public GameObject GetGrabbedByOrc()
+        {
+            return grabbed_by_orc;
+        }
+
+        public void SetRescueState()
+        {
+            grabbed_by_orc = null;
+            rescue_state = true;
+            rescue_timer = Time.GetElapsedTime() + rescue_time;
+            sprite.FlipY(true);
+        }
+
+        public bool GetRescueState()
+        {
+            return rescue_state;
         }
     }
 }

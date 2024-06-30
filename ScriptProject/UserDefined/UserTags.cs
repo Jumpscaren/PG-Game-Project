@@ -13,5 +13,7 @@ namespace ScriptProject.UserDefined
         public const Byte PlayerHitbox = 2;
         public const Byte EnemyHitbox = 3;
         public const Byte PuzzleBoxes = 4;
+        public const Byte StartDoor = 5;
+        public const Byte Hole = 6;
     }
 }

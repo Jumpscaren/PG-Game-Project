@@ -36,5 +36,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetUV(Vector2 uv_1_position, Vector2 uv_4_position);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetShow(bool show);
     }
 }

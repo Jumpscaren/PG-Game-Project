@@ -30,7 +30,7 @@ public:
 	static bool NeedNewPathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index);
 
 private:
-	static bool HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity goal_node);
+	static bool HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity own_node, const Entity goal_node);
 
 public:
 	static void SavePathFindingWorldComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

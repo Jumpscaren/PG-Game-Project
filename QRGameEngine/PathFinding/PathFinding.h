@@ -55,6 +55,9 @@ private:
 
 	void ThreadHandleRequests();
 
+	Node* AddNeighbor(Node& node, const Vector2& neighbor_position);
+	void RemoveImpossibleCornerPaths(Node& node, EntityManager* entity_manager);
+
 public:
 	static constexpr float LENGTH_BETWEEN_NODES = 1.0f;
 
@@ -82,6 +85,11 @@ public:
 	void RequestPathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity);
 	std::vector<Entity> PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, bool& new_path);
 	Entity GetNodeFromPosition(const Vector2& position) const;
+	bool IsWorldConstructed() const;
+	void AddNewNode(const SceneIndex scene_index, const Entity entity);
+	void RemoveNode(const SceneIndex scene_index, const Entity entity);
+
+	void HandleDeferredRemovedNodes(EntityManager* entity_manager);
 
 	static PathFinding* Get();
 };

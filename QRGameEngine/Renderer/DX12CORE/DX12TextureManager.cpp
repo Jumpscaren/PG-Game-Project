@@ -18,7 +18,18 @@ void DX12TextureManager::FreeTexture(DX12TextureHandle& texture_handle)
 		DX12TextureView* view = GetTextureView(it->second[i]);
 
 		//Clear view
-		m_shader_bindable_view.RemoveDescriptor(view->texture_descriptor_handle);
+		switch (view->texture_view_type)
+		{
+		case ViewType::SHADER_RESOURCE_VIEW:
+			m_shader_bindable_view.RemoveDescriptor(view->texture_descriptor_handle);
+			break;
+		case ViewType::RENDER_TARGET_VIEW:
+			m_rendertarget_view.RemoveDescriptor(view->texture_descriptor_handle);
+			break;
+		case ViewType::DEPTH_STENCIL_VIEW:
+			m_depthstencil_view.RemoveDescriptor(view->texture_descriptor_handle);
+			break;
+		}
 		m_texture_views[it->second[i]] = {};
 		HandleManager::FreeHandle(HandleManager::HandleType::TEXTURE_VIEW, it->second[i]);
 
@@ -47,7 +58,18 @@ void DX12TextureManager::FreeView(DX12TextureViewHandle& view_handle)
 			it->second.erase(it->second.begin() + i);
 
 			//Clear view
-			m_shader_bindable_view.RemoveDescriptor(view->texture_descriptor_handle);
+			switch (view->texture_view_type)
+			{
+			case ViewType::SHADER_RESOURCE_VIEW:
+				m_shader_bindable_view.RemoveDescriptor(view->texture_descriptor_handle);
+				break;
+			case ViewType::RENDER_TARGET_VIEW:
+				m_rendertarget_view.RemoveDescriptor(view->texture_descriptor_handle);
+				break;
+			case ViewType::DEPTH_STENCIL_VIEW:
+				m_depthstencil_view.RemoveDescriptor(view->texture_descriptor_handle);
+				break;
+			}
 			m_texture_views[view_handle] = {};
 			HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, view_handle);
 			return;
@@ -162,7 +184,8 @@ void DX12TextureManager::UploadTextureData(DX12Core* dx12_core, DX12TextureHandl
 	dx12_core->GetCommandList()->TransitionResource(texture_resource, ResourceState::COMMON, ResourceState::COPY_DEST);
 
 	//Throttle the GPU to upload texture data (which requires less memory for CPU buffer)
-	dx12_core->GetCommandList()->Throttle(dx12_core);
+	dx12_core->GetCommandList()->Execute(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	dx12_core->GetCommandList()->Signal(dx12_core, dx12_core->GetGraphicsCommandQueue());
 
 	//m_upload_current_offset = destination_offset;
 }

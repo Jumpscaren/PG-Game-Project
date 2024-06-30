@@ -16,6 +16,7 @@ struct SpriteComponent
 	uint8_t uv_indicies[4] = { 0, 1, 2, 3 };
 	bool flip_x = false;
 	bool flip_y = false;
+	bool show = true;
 };
 
 class JsonObject;
@@ -40,5 +41,6 @@ public:
 	static bool GetFlipX(const CSMonoObject& object);
 	static bool GetFlipY(const CSMonoObject& object);
 	static void SetUV(const CSMonoObject& object, const CSMonoObject& uv_1_position, const CSMonoObject& uv_4_position);
+	static void SetShow(const CSMonoObject& object, const bool show);
 };
 

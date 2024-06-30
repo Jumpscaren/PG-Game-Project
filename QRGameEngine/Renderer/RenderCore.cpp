@@ -164,6 +164,11 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]] + uv;
 			sprite_data.uv[3] = sprite.uv[sprite.uv_indicies[3]] + uv;
 
+			if (!sprite.show)
+			{
+				return;
+			}
+
 			if (render_object_amount < m_transform_data_vector.size())
 			{
 				m_transform_data_vector[render_object_amount] = transform;
@@ -361,6 +366,34 @@ void RenderCore::AddLine(const Vector2& line)
 	vertex_line.position[1] = line.y;
 	vertex_line.position[2] = 0.1f;
 	m_debug_lines.push_back(vertex_line);
+}
+
+void RenderCore::Resize(const UINT window_width, const UINT window_height)
+{
+	const auto command_lists = m_dx12_core.GetAllCommandLists();
+	for (DX12CommandList* command_list : command_lists)
+	{
+		command_list->Wait(&m_dx12_core);
+	}
+
+	m_dx12_core.GetCommandList()->Reset();
+
+	m_window->SetWindowWidth(window_width);
+	m_window->SetWindowHeight(window_height);
+
+	m_dx12_core.GetSwapChain()->Resize(&m_dx12_core);
+
+	m_dx12_core.GetResourceDestroyer()->FreeTexture(&m_dx12_core, m_depthstencil);
+
+	m_dx12_core.GetResourceDestroyer()->FreeResources(&m_dx12_core);
+
+	//Depht stencil
+	m_depthstencil = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, window_width, window_height, TextureFlags::DEPTSTENCIL_DENYSHADER_FLAG);
+	m_depthstencil_view = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, m_depthstencil, ViewType::DEPTH_STENCIL_VIEW);
+	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, m_depthstencil, ResourceState::DEPTH_WRITE, ResourceState::COMMON);
+
+	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
+	m_dx12_core.GetCommandList()->Signal(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 }
 
 RenderCore* RenderCore::Get()

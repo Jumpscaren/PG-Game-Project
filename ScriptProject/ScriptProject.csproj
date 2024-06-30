@@ -76,6 +76,7 @@
     <Compile Include="Engine\EventSystem.cs" />
     <Compile Include="Engine\GameObject.cs" />
     <Compile Include="Engine\Input.cs" />
+    <Compile Include="Engine\ListSet.cs" />
     <Compile Include="Engine\PathFindingActor.cs" />
     <Compile Include="Engine\PathFindingWorld.cs" />
     <Compile Include="Engine\PrefabSystem.cs" />
@@ -95,6 +96,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scripts\BasicEnemy.cs" />
     <Compile Include="Scripts\HitBox.cs" />
+    <Compile Include="Scripts\InteractiveCharacterInterface.cs" />
+    <Compile Include="Scripts\OrcCarrier.cs" />
     <Compile Include="Scripts\OrcEnemy.cs" />
     <Compile Include="Scripts\Player.cs" />
     <Compile Include="Scripts\PlayerCamera.cs" />

@@ -1,4 +1,5 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.EngineMath;
 using ScriptProject.Engine.Constants;
 using ScriptProject.Scripts;
 using ScriptProject.UserDefined;
@@ -98,6 +99,9 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1);
             PrefabSystem.CreateUserPrefab("Princess", Princess, 1);
             PrefabSystem.CreateUserPrefab("EmptyCollider", EmptyCollider, 0);
+            PrefabSystem.CreateUserPrefab("Hole", Hole, 0);
+            PrefabSystem.CreateUserPrefab("OrcCarrier", OrcCarrier, 1);
+            PrefabSystem.CreateUserPrefab("PrincessBlocker", PrincessBlocker, 0);
 
             return 0;
         }
@@ -129,7 +133,9 @@ namespace ScriptProject
             game_object.AddComponent<AnimatableSprite>();
             game_object.AddComponent<Player>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            var circle_collider = game_object.AddComponent<CircleCollider>();
+            circle_collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            circle_collider.SetRadius(0.49f);
         }
 
         static void PlayerCameraPrefab(GameObject game_object)
@@ -145,7 +151,7 @@ namespace ScriptProject
             game_object.SetName("Princess");
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Princess.png"));
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.PrincessCharacter, UserCollisionCategories.FilterForPrincess, 0);
             game_object.AddComponent<Princess>();
         }
 
@@ -181,6 +187,41 @@ namespace ScriptProject
         {
             game_object.AddComponent<StaticBody>();
             game_object.AddComponent<BoxCollider>();
+            game_object.GetComponent<Sprite>();
+            game_object.RemoveComponent<Sprite>();
+            //game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.Holes, UserCollisionCategories.AllExceptMovingCharacter, 0);
+        }
+
+        static void Hole(GameObject game_object)
+        {
+            game_object.AddComponent<StaticBody>();
+            game_object.SetTag(UserTags.Hole);
+
+            var box_collider = game_object.AddComponent<BoxCollider>();
+            box_collider.SetTrigger(true);
+            box_collider.SetHalfBoxSize(new Vector2(0.8f, 0.8f));
+
+            game_object.GetComponent<Sprite>();
+            game_object.RemoveComponent<Sprite>();
+        }
+
+        static void PrincessBlocker(GameObject game_object)
+        {
+            game_object.AddComponent<StaticBody>();
+            game_object.GetComponent<Sprite>();
+            game_object.RemoveComponent<Sprite>();
+            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.PrincessBlocker, UserCollisionCategories.FilterForPrincess, 0);
+        }
+
+        static void OrcCarrier(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/OrcCarrier.png"));
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            var collider = game_object.AddComponent<CircleCollider>();
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            collider.SetRadius(0.49f);
+            game_object.AddComponent<OrcCarrier>();
         }
     }
 }

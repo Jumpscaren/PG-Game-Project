@@ -73,12 +73,15 @@ void QREntryPoint::EntryPoint()
 	mouse = new Mouse();
 
 	render_core = new RenderCore(1920, 1080, L"2DRENDERER");
+	//render_core = new RenderCore(480, 360, L"2DRENDERER");
 
 	scene_manager = new SceneManager();
 	scene_loader = new SceneLoader();
 	global_scene = new GlobalScene();
 	scene_hierarchy = new SceneHierarchy();
 	animation_manager = new AnimationManager();
+
+	path_finding = new PathFinding();
 
 	main_scene = scene_manager->CreateScene();
 	scene_manager->ChangeScene(main_scene);
@@ -103,8 +106,6 @@ void QREntryPoint::EntryPoint()
 	physics_core = new PhysicsCore(true);
 
 	mono_core->CallStaticMethod(main_method_handle);
-
-	path_finding = new PathFinding();
 
 	auto test1 = mono_core->RegisterMonoMethod(main_class_handle, "test1");
 	auto test2 = mono_core->RegisterMonoMethod(main_class_handle, "test2");
@@ -192,6 +193,7 @@ void QREntryPoint::RunTime()
 			ImGui::Text("Average Physic Time: %f ms", average_physic_frame_time);
 			ImGui::Text("Average Physics Deferred Time Time: %f ms", average_physics_deferred_collision_time);
 			ImGui::Text("Average Deferred Time: %f ms", average_deferred_frame_time);
+			ImGui::Text("Window Width: %f, Window Height: %f", render_core->GetWindow()->GetWindowWidth(), render_core->GetWindow()->GetWindowHeight());
 			ImGui::Text("Orcs Count: %i", orc_count);
 			//ImGui::Text("Camera Position: x = %f, y = %f, z = %f", editor_camera_position.x, editor_camera_position.y, editor_camera_position.z);
 		}
@@ -262,11 +264,13 @@ void QREntryPoint::RunTime()
 		physics_core->RemoveDeferredPhysicObjects(entman);
 		scripting_manager->RemoveDeferredScripts(entman);
 		scene_hierarchy->RemoveDeferredRelations(entman);
+		path_finding->HandleDeferredRemovedNodes(entman);
 		GameObjectInterface::HandleDeferredEntities(entman);
 		entman->DestroyDeferredEntities();
 		physics_core->RemoveDeferredPhysicObjects(global_entity_manager);
 		scripting_manager->RemoveDeferredScripts(global_entity_manager);
 		scene_hierarchy->RemoveDeferredRelations(global_entity_manager);
+		path_finding->HandleDeferredRemovedNodes(global_entity_manager);
 		GameObjectInterface::HandleDeferredEntities(global_entity_manager);
 		global_entity_manager->DestroyDeferredEntities();
 

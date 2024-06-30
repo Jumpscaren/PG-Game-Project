@@ -7,10 +7,11 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using static ScriptProject.Scripts.OrcCarrier;
 
 namespace ScriptProject.Scripts
 {
-    internal class Player : ScriptingBehaviour
+    internal class Player : InteractiveCharacterInterface
     {
         DynamicBody body;
         Sprite sprite;
@@ -18,6 +19,7 @@ namespace ScriptProject.Scripts
         bool attack = false;
         GameObject mid_block = null;
         GameObject hit_box;
+        StaticBody hit_box_body;
         GameObject camera;
         const float attack_time = 0.1f;
         float attack_timer = 0.0f;
@@ -36,6 +38,18 @@ namespace ScriptProject.Scripts
         bool holding_princess = false;
         Princess princess_script = null;
 
+        List<GameObject> game_objects;
+        List<GameObject> remove_path = new List<GameObject>();
+
+        Vector2 saved_position;
+        float save_position_timer = 0.0f;
+        float save_position_time = 5.0f;
+
+        bool invincible_switch = false;
+        bool is_invincble = false;
+        float invincible_timer = 0.0f;
+        float invincible_time = 1.0f;
+
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -43,13 +57,17 @@ namespace ScriptProject.Scripts
             anim_sprite = game_object.GetComponent<AnimatableSprite>();
             hit_box = GameObject.CreateGameObject();
             hit_box.SetName("Attack_Box");
-            hit_box.AddComponent<StaticBody>().SetEnabled(false);
+            hit_box_body = hit_box.AddComponent<StaticBody>();
+            hit_box_body.SetEnabled(false);
             BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
             box_collider.SetTrigger(true);
             box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
             hit_box.transform.SetPosition(new Vector2(0.7f, 0.0f));
             hit_box.SetName("HitBox");
             hit_box.SetTag(UserTags.PlayerHitbox);
+            HitBox hit_box_script = hit_box.AddComponent<HitBox>();
+            hit_box_script.SetHitBoxAction(new HitBoxPlayer());
+            hit_box_script.SetAvoidGameObject(game_object);
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
@@ -70,15 +88,40 @@ namespace ScriptProject.Scripts
 
             princess = GameObject.TempFindGameObject("Princess");
             princess_script = princess.GetComponent<Princess>();
+
+            game_objects = GameObject.FindGameObjectsWithTag(UserTags.PuzzleBoxes);
+            foreach (GameObject obj in game_objects)
+            {
+                Console.WriteLine(obj.GetTag());
+            }
         }
 
         void Update()
         {
-            //if (health <= 0.0f) { 
-            //    health = 0.0f;
-            //    Console.WriteLine("Player Restart");
-            //    SceneManager.RestartActiveScene();
-            //}
+            if (health <= 0.0f)
+            {
+                health = 0.0f;
+                Console.WriteLine("Player Restart");
+                SceneManager.RestartActiveScene();
+            }
+
+            if (save_position_timer < Time.GetElapsedTime())
+            {
+                save_position_timer = Time.GetElapsedTime() + save_position_time;
+                saved_position = game_object.transform.GetPosition();
+            }
+
+            bool show_sprite = true;
+            if (invincible_timer > Time.GetElapsedTime())
+            {
+                invincible_switch = !invincible_switch;
+                show_sprite = invincible_switch;
+            }
+            else
+            {
+                is_invincble = false;
+            }
+            sprite.SetShow(show_sprite);
 
             float current_speed = max_speed;
             if (holding_princess)
@@ -92,7 +135,7 @@ namespace ScriptProject.Scripts
 
             if (attack_timer < Time.GetElapsedTime())
             {
-                hit_box.GetComponent<StaticBody>().SetEnabled(false);
+                hit_box_body.SetEnabled(false);
             }
 
             Vector2 velocity = body.GetVelocity();
@@ -124,7 +167,7 @@ namespace ScriptProject.Scripts
             {
                 AnimationManager.LoadAnimation(game_object, "Animations/KnightAttack.anim");
                 attack = true;
-                hit_box.GetComponent<StaticBody>().SetEnabled(true);
+                hit_box_body.SetEnabled(true);
                 attack_timer = attack_time + Time.GetElapsedTime();
                 between_attack_timer = attack_timer + between_attack_time;
             }
@@ -159,23 +202,61 @@ namespace ScriptProject.Scripts
             PrincessLogic();
         }
 
+        public override void TakeDamage(float damage)
+        {
+            health -= damage;
+            invincible_timer = invincible_time + Time.GetElapsedTime();
+            is_invincble = true;
+        }
+
+        public override void Knockback(Vector2 dir, float knockback)
+        {
+            body.SetVelocity(dir * knockback);
+        }
+
         void BeginCollision(GameObject collided_game_object)
         {
             if (collided_game_object.GetName() == "Bouncer")
             {
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
                 body.SetVelocity(direction.Normalize() * 20.0f);
+
+                foreach (GameObject obj in remove_path)
+                {
+                    GameObject.DeleteGameObject(obj);
+                }
+                remove_path.Clear();
+
+                foreach (GameObject obj in game_objects)
+                {
+                    GameObject.DeleteGameObject(obj);
+                    GameObject new_game_object = GameObject.CreateGameObject();
+                    new_game_object.AddComponent<Sprite>();
+                    new_game_object.transform.SetPosition(obj.transform.GetPosition());
+                    new_game_object.transform.SetZIndex(2);
+                    PrefabSystem.InstanceUserPrefab(new_game_object, "Prefab2");
+                    remove_path.Add(new_game_object);
+                }
+                game_objects.Clear();
             }
 
-            if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
+            Console.WriteLine(collided_game_object.GetTag());
+
+            if (collided_game_object.GetTag() == UserTags.Hole)
             {
-                health -= 20.0f;
-                float rot = collided_game_object.GetParent().transform.GetLocalRotation();
-                Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-                body.SetVelocity(dir * 11.0f);
-
-                PrincessStopFollowPlayer();
+                TakeDamage(20.0f);
+                game_object.transform.SetPosition(saved_position);
             }
+
+            //if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
+            //{
+            //    health -= 20.0f;
+            //    float rot = collided_game_object.GetParent().transform.GetLocalRotation();
+            //    Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
+            //    body.SetVelocity(dir * 11.0f);
+
+            //    PrincessStopFollowPlayer();
+            //}
         }
 
         float GetMidBlockRotation(float calculated_rot)
@@ -215,6 +296,27 @@ namespace ScriptProject.Scripts
         {
             holding_princess = false;
             princess_script.KnightHoldingPrincess(holding_princess);
+        }
+
+        public class HitBoxPlayer : HitBoxAction
+        {
+            float damage = 10.0f;
+            float knockback = 10.3f;
+
+            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
+            {
+                if (hit_object_script is Princess)
+                {
+                    return;
+                }
+
+                hit_object_script.TakeDamage(damage);
+
+                float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
+                Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
+
+                hit_object_script.Knockback(dir, knockback);
+            }
         }
     }
 }

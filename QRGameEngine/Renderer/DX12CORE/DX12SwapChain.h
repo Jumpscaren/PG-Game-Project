@@ -17,6 +17,7 @@ private:
 
 private:
 	uint32_t GetCurrentBackBufferIndex() const;
+	void AddBackbuffers(DX12Core* dx12_core);
 
 public:
 	DX12SwapChain() = default;
@@ -24,5 +25,6 @@ public:
 	void Present();
 	DX12TextureHandle GetBackbufferTexture();
 	DX12TextureViewHandle GetBackbufferView();
+	void Resize(DX12Core* dx12_core);
 };
 

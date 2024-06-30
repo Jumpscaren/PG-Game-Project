@@ -50,7 +50,7 @@ void SceneLoader::LoadComponents(OutputFile* save_file, EntityManager* entity_ma
 	JsonObject components_json(json_text);
 	for (uint32_t i = 0; i < component_list_size; ++i)
 	{
-		if (components_json.ObjectExist(component_names[i]))
+		if (entity_manager->HasComponentName(entity, component_names[i]) && components_json.ObjectExist(component_names[i]))
 		{
 			JsonObject component = components_json.GetSubJsonObject(component_names[i]);
 			const auto override_method = m_override_methods.find(component_names[i]);
@@ -102,6 +102,11 @@ void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint
 	{
 		for (auto block_it = it->second.begin(); block_it != it->second.end(); block_it++)
 		{
+			if (!entity_manager->HasComponent<SpriteComponent>(block_it->second.block_entity))
+			{
+				continue;
+			}
+
 			TextureHandle texture_handle = entity_manager->GetComponent<SpriteComponent>(block_it->second.block_entity).texture_handle;
 
 			if (texture_paths.find(texture_handle) == texture_paths.end())

@@ -61,6 +61,7 @@ public:
 	DX12BufferManager* GetBufferManager();
 	DX12DescriptorManager* GetDescriptorManager();
 	DX12CommandList* GetCommandList();
+	std::vector<DX12CommandList*> GetAllCommandLists();
 	DX12SwapChain* GetSwapChain();
 	IDXGIAdapter1* GetAdapter();
 	void ResetBuffers();

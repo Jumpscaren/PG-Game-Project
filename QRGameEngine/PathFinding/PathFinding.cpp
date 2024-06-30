@@ -11,7 +11,7 @@ PathFinding* PathFinding::s_singleton = nullptr;
 
 float PathFinding::Heuristic(const Node& neighbor_node, const Node& goal_node)
 {
-	//return 0;
+	return 0;
 	const Vector2 diff = goal_node.position - neighbor_node.position;
 	Vector2 dir = diff.Normalize();
 	if (dir.x < 0)
@@ -49,16 +49,17 @@ void PathFinding::ConstructPathFindingWorldEvent(const SceneIndex scene_index)
 }
 
 void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
-{
-	m_nodes.clear();
-	m_position_to_node.clear();
-	
+{	
 	m_thread_state = ThreadState::Clear;
 	m_clear_data_mutex.lock();
+
+	m_nodes.clear();
+	m_position_to_node.clear();
 	m_calculated_paths.clear();
 	m_entity_ongoing_pathfinds.clear();
 	m_paths_calculating.clear();
 	m_paths_wait_list.clear();
+
 	m_clear_data_mutex.unlock();
 	m_thread_state = ThreadState::Run;
 
@@ -93,55 +94,7 @@ void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
 			}
 		}
 
-		//We want to avoid the case when a path goes between a empty place and a node
-		/*
-		* Example
-		* A B
-		* C D E
-		* The most optimal path from B to E is a diagonal path, but in this case we want to avoid that the enemies get stuck on walls so we want them to go B-D-E.
-		*/
-		for (size_t i{0}; i < node.second.neighbors.size(); ++i)
-		{
-			const auto neighbor = node.second.neighbors[i];
-			const Vector3 neighbor_position_v3 = entity_manager->GetComponent<TransformComponent>(neighbor).GetPosition();
-			const Vector2 neighbor_position(neighbor_position_v3.x, neighbor_position_v3.y);
-			const Vector2 diff = node.second.position - neighbor_position;
-			if (std::abs(diff.x) > 1e-05f && std::abs(diff.y) > 1e-05f)
-			{
-				char found_neighbors = 0;
-				for (const auto compare_node : node.second.neighbors)
-				{
-					const Vector3 compare_node_position_v3 = entity_manager->GetComponent<TransformComponent>(compare_node).GetPosition();
-					const Vector2 compare_node_position(compare_node_position_v3.x, compare_node_position_v3.y);
-					const Vector2 compare_diff = node.second.position - compare_node_position;
-					if ((std::abs(compare_diff.x) > 1e-05f && std::abs(compare_diff.y) < 1e-05f) || (std::abs(compare_diff.x) < 1e-05f && std::abs(compare_diff.y) > 1e-05f))
-					{
-						const Vector2 compare_neighbor_diff = neighbor_position - compare_node_position;
-						if (std::lround(compare_neighbor_diff.Length()) != length_between_nodes)
-						{
-							continue;
-						}
-						if (std::abs(compare_neighbor_diff.x) > 1e-05f)
-						{
-							++found_neighbors;
-						}
-						else if (std::abs(compare_neighbor_diff.y) > 1e-05f)
-						{
-							++found_neighbors;
-						}
-					}
-					if (found_neighbors == 2)
-					{
-						break;
-					}
-				}
-				if (found_neighbors != 2)
-				{
-					node.second.neighbors.erase(node.second.neighbors.begin() + i);
-					--i;
-				}
-			}
-		}
+		RemoveImpossibleCornerPaths(node.second, entity_manager);
 	}
 }
 
@@ -196,6 +149,72 @@ void PathFinding::ThreadHandleRequests()
 		m_calculate_paths_mutex.unlock();
 	}
 	m_clear_data_mutex.unlock();
+}
+
+PathFinding::Node* PathFinding::AddNeighbor(Node& node, const Vector2& neighbor_position)
+{
+	const auto neighbor_node = GetNodeFromPosition(neighbor_position);
+	if (auto it = m_nodes.find(neighbor_node); it != m_nodes.end())
+	{
+		it->second.neighbors.push_back(node.entity);
+		node.neighbors.push_back(it->first);
+		return &(it->second);
+	}
+	return nullptr;
+}
+
+void PathFinding::RemoveImpossibleCornerPaths(Node& node, EntityManager* entity_manager)
+{
+	//We want to avoid the case when a path goes between a empty place and a node
+		/*
+		* Example
+		* A B
+		* C D E
+		* The most optimal path from B to E is a diagonal path, but in this case we want to avoid that the enemies get stuck on walls so we want them to go B-D-E.
+		*/
+	const auto length_between_nodes = std::lround(LENGTH_BETWEEN_NODES);
+	for (size_t i{ 0 }; i < node.neighbors.size(); ++i)
+	{
+		const auto neighbor = node.neighbors[i];
+		const Vector3 neighbor_position_v3 = entity_manager->GetComponent<TransformComponent>(neighbor).GetPosition();
+		const Vector2 neighbor_position(neighbor_position_v3.x, neighbor_position_v3.y);
+		const Vector2 diff = node.position - neighbor_position;
+		if (std::abs(diff.x) > 1e-05f && std::abs(diff.y) > 1e-05f)
+		{
+			char found_neighbors = 0;
+			for (const auto compare_node : node.neighbors)
+			{
+				const Vector3 compare_node_position_v3 = entity_manager->GetComponent<TransformComponent>(compare_node).GetPosition();
+				const Vector2 compare_node_position(compare_node_position_v3.x, compare_node_position_v3.y);
+				const Vector2 compare_diff = node.position - compare_node_position;
+				if ((std::abs(compare_diff.x) > 1e-05f && std::abs(compare_diff.y) < 1e-05f) || (std::abs(compare_diff.x) < 1e-05f && std::abs(compare_diff.y) > 1e-05f))
+				{
+					const Vector2 compare_neighbor_diff = neighbor_position - compare_node_position;
+					if (std::lround(compare_neighbor_diff.Length()) != length_between_nodes)
+					{
+						continue;
+					}
+					if (std::abs(compare_neighbor_diff.x) > 1e-05f)
+					{
+						++found_neighbors;
+					}
+					else if (std::abs(compare_neighbor_diff.y) > 1e-05f)
+					{
+						++found_neighbors;
+					}
+				}
+				if (found_neighbors == 2)
+				{
+					break;
+				}
+			}
+			if (found_neighbors != 2)
+			{
+				node.neighbors.erase(node.neighbors.begin() + i);
+				--i;
+			}
+		}
+	}
 }
 
 void PathFinding::AStarPathfinding(const PathFindData& path_find_data, std::vector<Entity>& path)
@@ -307,22 +326,22 @@ void PathFinding::RequestPathFind(const SceneIndex scene_index, const Entity sta
 	const Vector2 start_position(ts.GetPosition().x, ts.GetPosition().y);
 	const Vector2 goal_position(tg.GetPosition().x, tg.GetPosition().y);
 
-	const auto found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
-	const auto found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
-	if (found_start_node == m_position_to_node.end() || found_goal_node == m_position_to_node.end())
-	{
-		const auto test_found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
-		const auto test_found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
-		return;
-	}
+const auto found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
+const auto found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
+if (found_start_node == m_position_to_node.end() || found_goal_node == m_position_to_node.end())
+{
+	const auto test_found_start_node = m_position_to_node.find(PositionToNodeIndex(start_position));
+	const auto test_found_goal_node = m_position_to_node.find(PositionToNodeIndex(goal_position));
+	return;
+}
 
-	Entity start_node_index = found_start_node->second;
-	Entity goal_node_index = found_goal_node->second;
-	std::swap(start_node_index, goal_node_index);
+Entity start_node_index = found_start_node->second;
+Entity goal_node_index = found_goal_node->second;
+std::swap(start_node_index, goal_node_index);
 
-	m_paths_wait_list.push_back(PathFindData{.scene_index = scene_index, .entity = start_entity, .start_node_index = start_node_index, .goal_node_index = goal_node_index});
-	m_entity_ongoing_pathfinds.insert(start_entity);
-	m_calculated_paths.insert({ start_entity, CalculatedPath{.path = {}, .new_path = false} });
+m_paths_wait_list.push_back(PathFindData{ .scene_index = scene_index, .entity = start_entity, .start_node_index = start_node_index, .goal_node_index = goal_node_index });
+m_entity_ongoing_pathfinds.insert(start_entity);
+m_calculated_paths.insert({ start_entity, CalculatedPath{.path = {}, .new_path = false} });
 }
 
 std::vector<Entity> PathFinding::PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, bool& new_path)
@@ -346,6 +365,106 @@ Entity PathFinding::GetNodeFromPosition(const Vector2& position) const
 		return it->second;
 	}
 	return NULL_ENTITY;
+}
+
+bool PathFinding::IsWorldConstructed() const
+{
+	return m_nodes.size() > 0;
+}
+
+void PathFinding::AddNewNode(const SceneIndex scene_index, const Entity entity)
+{
+	m_thread_state = ThreadState::Clear;
+	m_clear_data_mutex.lock();
+
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	const auto& transform_component = entity_manager->GetComponent<TransformComponent>(entity);
+	const auto& path_finding_world = entity_manager->GetComponent<PathFindingWorldComponent>(entity);
+
+	const Vector2 position(transform_component.GetPosition().x, transform_component.GetPosition().y);
+
+	const Vector2 left_position(position.x - WEIGHT_BETWEEN_NODES, position.y);
+	const Vector2 right_position(position.x + WEIGHT_BETWEEN_NODES, position.y);
+	const Vector2 up_position(position.x, position.y + WEIGHT_BETWEEN_NODES);
+	const Vector2 down_position(position.x, position.y - WEIGHT_BETWEEN_NODES);
+
+	const Vector2 left_up_corner(position.x - WEIGHT_BETWEEN_NODES, position.y + WEIGHT_BETWEEN_NODES);
+	const Vector2 left_down_corner(position.x - WEIGHT_BETWEEN_NODES, position.y - WEIGHT_BETWEEN_NODES);
+	const Vector2 right_up_corner(position.x + WEIGHT_BETWEEN_NODES, position.y + WEIGHT_BETWEEN_NODES);
+	const Vector2 right_down_corner(position.x + WEIGHT_BETWEEN_NODES, position.y - WEIGHT_BETWEEN_NODES);
+
+	m_position_to_node.insert({ PositionToNodeIndex(position), entity });
+	auto new_node = m_nodes.insert({ entity, Node(entity, path_finding_world, position) });
+
+	std::vector<Node*> changed_nodes = { &(new_node.first->second) };
+
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, left_position));
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, right_position));
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, up_position));
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, down_position));
+
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, left_up_corner));
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, left_down_corner));
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, right_up_corner));
+	changed_nodes.push_back(AddNeighbor(new_node.first->second, right_down_corner));
+
+	for (Node* node : changed_nodes)
+	{
+		if (node)
+		{
+			RemoveImpossibleCornerPaths(*node, entity_manager);
+		}
+	}
+
+	m_clear_data_mutex.unlock();
+	m_thread_state = ThreadState::Run;
+}
+
+void PathFinding::RemoveNode(const SceneIndex scene_index, const Entity entity)
+{
+	m_thread_state = ThreadState::Clear;
+	m_clear_data_mutex.lock();
+
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	const auto& transform_component = entity_manager->GetComponent<TransformComponent>(entity);
+	const auto& path_finding_world = entity_manager->GetComponent<PathFindingWorldComponent>(entity);
+
+	const Vector2 position(transform_component.GetPosition().x, transform_component.GetPosition().y);
+
+	m_position_to_node.erase(PositionToNodeIndex(position));
+
+	const Node& remove_node = m_nodes.at(entity);
+	for (const Entity remove_node_neighbor_entity : remove_node.neighbors)
+	{
+		Node& remove_node_neighbor_node = m_nodes.at(remove_node_neighbor_entity);
+		for (int i = 0; i < remove_node_neighbor_node.neighbors.size(); ++i)
+		{
+			if (remove_node_neighbor_node.neighbors[i] == entity)
+			{
+				remove_node_neighbor_node.neighbors.erase(remove_node_neighbor_node.neighbors.begin() + i);
+				break;
+			}
+		}
+		RemoveImpossibleCornerPaths(remove_node_neighbor_node, entity_manager);
+	}
+
+	m_nodes.erase(entity);
+
+	m_clear_data_mutex.unlock();
+	m_thread_state = ThreadState::Run;
+}
+
+void PathFinding::HandleDeferredRemovedNodes(EntityManager* entity_manager)
+{
+	if (!IsWorldConstructed())
+	{
+		return;
+	}
+
+	entity_manager->System<DeferredEntityDeletion, PathFindingWorldComponent>([&](const Entity entity, DeferredEntityDeletion, PathFindingWorldComponent)
+		{
+			RemoveNode(entity_manager->GetSceneIndex(), entity);
+		});
 }
 
 PathFinding* PathFinding::Get()

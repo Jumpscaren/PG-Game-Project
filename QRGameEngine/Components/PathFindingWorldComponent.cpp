@@ -3,6 +3,7 @@
 #include "Scripting/CSMonoCore.h"
 #include "SceneSystem/SceneLoader.h"
 #include "SceneSystem/SceneManager.h"
+#include "PathFinding/PathFinding.h"
 
 void PathFindingWorldComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -18,6 +19,10 @@ void PathFindingWorldComponentInterface::RegisterInterface(CSMonoCore* mono_core
 void PathFindingWorldComponentInterface::InitComponent(const CSMonoObject&, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->AddComponent<PathFindingWorldComponent>(entity);
+	if (PathFinding::Get()->IsWorldConstructed())
+	{
+		PathFinding::Get()->AddNewNode(scene_index, entity);
+	}
 }
 
 bool PathFindingWorldComponentInterface::HasComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
@@ -28,6 +33,10 @@ bool PathFindingWorldComponentInterface::HasComponent(const CSMonoObject& object
 void PathFindingWorldComponentInterface::RemoveComponent(const CSMonoObject& object, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->RemoveComponent<PathFindingWorldComponent>(entity);
+	if (PathFinding::Get()->IsWorldConstructed())
+	{
+		PathFinding::Get()->RemoveNode(scene_index, entity);
+	}
 }
 
 void PathFindingWorldComponentInterface::SavePathFindingWorldComponent(const Entity ent, EntityManager* entman, JsonObject* json_object)

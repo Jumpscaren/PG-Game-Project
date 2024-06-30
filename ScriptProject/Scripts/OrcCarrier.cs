@@ -3,19 +3,18 @@ using ScriptProject.EngineMath;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Security.Policy;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using static ScriptProject.Scripts.OrcCarrier;
-using static ScriptProject.Scripts.Player;
+using static ScriptProject.Scripts.OrcEnemy;
 
 namespace ScriptProject.Scripts
 {
-    internal class OrcEnemy : InteractiveCharacterInterface
+    internal class OrcCarrier : InteractiveCharacterInterface
     {
         GameObject player_game_object;
+        GameObject princess_game_object;
         PathFindingActor actor;
         Transform transform;
         Vector2 last_position;
@@ -30,7 +29,7 @@ namespace ScriptProject.Scripts
         float charge_up = 0.0f;
         bool charged_up = false;
         const float charge_up_distance = 4.0f;
-        const float charge_up_increase = 0.6f;
+        const float charge_up_increase = 1.0f;
         const float charge_up_decrease = 0.3f;
         bool attack_ready = false;
         bool attacking = false;
@@ -42,7 +41,7 @@ namespace ScriptProject.Scripts
         float delay_timer = 0.0f;
         bool delay_attack = false;
 
-        float max_speed = 2.0f;
+        float max_speed = 4.0f;
         const float drag_speed = 20.0f;
 
         RandomGenerator random_generator = new RandomGenerator();
@@ -51,35 +50,42 @@ namespace ScriptProject.Scripts
 
         static GameObject only = null;
 
-        public class OrcAngryEventData : EventSystem.BaseEventData
-        {
-            public GameObject orc_to_target;
-        }
-
         public static int count = 0;
+
+        bool grabbed_princess = false;
+        Princess princess_script = null;
+
+        GameObject door_game_object;
+
+        GameObject old_target = null;
 
         public static int GetCount()
         {
-            return count; 
+            return count;
         }
 
         void Start()
         {
             player_game_object = GameObject.TempFindGameObject("Player");
+            princess_game_object = GameObject.TempFindGameObject("Princess");
+            princess_script = princess_game_object.GetComponent<Princess>();
+
+            door_game_object = GameObject.FindGameObjectWithTag(UserTags.StartDoor);
+            Console.WriteLine(door_game_object);
+
             actor = game_object.GetComponent<PathFindingActor>();
             transform = game_object.transform;
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
-
             max_speed += random_generator.RandomFloat(-0.3f, 0.3f);
 
             CreateHitBox();
 
             EventSystem.ListenToEvent("OrcAngry", game_object, OrcAngryEvent);
 
-            game_object.SetName("Orc");
+            game_object.SetName("OrcCarrier");
 
-            target = player_game_object;
+            target = princess_game_object;
 
             last_position = actor.PathFind(target, 1);
 
@@ -105,13 +111,38 @@ namespace ScriptProject.Scripts
         {
             if (target == null)
             {
+                target = princess_game_object;
+            }
+
+            GameObject grabbed_by_orc = princess_script.GetGrabbedByOrc();
+            if (grabbed_by_orc == game_object)
+            {
+                target = door_game_object;
+            }
+            else if ((grabbed_by_orc != game_object && grabbed_by_orc != null) || princess_script.GetRescueState())
+            {
                 target = player_game_object;
+            }
+            else
+            {
+                target = princess_game_object;
             }
 
             Death();
             Look();
             Move();
             Attack();
+            PrincessLogic();
+
+            Vector2 target_dir = target.transform.GetPosition() - transform.GetPosition();
+            if (target == door_game_object && target_dir.Length() < 0.1f)
+            {
+                GameObject.DeleteGameObject(game_object);
+                princess_script.SetRescueState();
+                GameObject new_game_object = GameObject.CreateGameObject();
+                new_game_object.AddComponent<Sprite>();
+                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
+            }
         }
 
         void Remove()
@@ -145,22 +176,6 @@ namespace ScriptProject.Scripts
             {
                 health = -1.0f;
             }
-
-            //if (collided_game_object.GetTag() == UserTags.PlayerHitbox)
-            //{
-            //    health -= 10.0f;
-            //    float rot = collided_game_object.GetParent().transform.GetLocalRotation();
-            //    Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-            //    body.SetVelocity(dir * 10.3f);
-            //}
-
-            //if (collided_game_object.GetTag() == UserTags.EnemyHitbox && collided_game_object != hit_box)
-            //{
-            //    health -= 5.0f;
-            //    float rot = collided_game_object.GetParent().transform.GetLocalRotation();
-            //    Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-            //    body.SetVelocity(dir * 10.3f);
-            //}
         }
 
         void CreateHitBox()
@@ -176,7 +191,7 @@ namespace ScriptProject.Scripts
             hit_box.SetTag(UserTags.EnemyHitbox);
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxOrcEnemy());
+            hit_box_script.SetHitBoxAction(new HitBoxOrcCarrier());
             hit_box_script.SetAvoidGameObject(game_object);
 
             mid_block = GameObject.CreateGameObject();
@@ -193,22 +208,26 @@ namespace ScriptProject.Scripts
             sprite.FlipX(player_dir.x < 0);
         }
 
-        int times = 0;
         void Move()
         {
             Vector2 current_position = transform.GetPosition();
             Vector2 dir = last_position - current_position;
             Vector2 target_dir = target.transform.GetPosition() - current_position;
-            if (dir.Length() < 0.1f || actor.NeedNewPathFind(target, 1))
+
+            //Console.WriteLine(target != old_target);
+
+            if (target != old_target || dir.Length() < 0.1f || actor.NeedNewPathFind(target, 1))
             {
                 //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
                 last_position = actor.PathFind(target, 1);
+                //Console.WriteLine(last_position);
                 dir = last_position - current_position;
+                old_target = target;
             }
             //Console.WriteLine("Dir: " + dir);
             //last_position = actor.PathFind(target, 1);
             actor.DebugPath();
-            if (target_dir.Length() < 1.01f)
+            if (!(target != princess_game_object || target != door_game_object) && target_dir.Length() < 1.01f)
             {
                 dir = new Vector2();
             }
@@ -244,13 +263,18 @@ namespace ScriptProject.Scripts
                 GameObject.DeleteGameObject(game_object);
                 GameObject new_game_object = GameObject.CreateGameObject();
                 new_game_object.AddComponent<Sprite>();
-                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
+                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
                 return;
             }
         }
 
         void Attack()
         {
+            if (target == princess_game_object || target == door_game_object)
+            {
+                return;
+            }
+
             float distance_to_player = (game_object.transform.GetPosition() - target.transform.GetPosition()).Length();
             if (distance_to_player < charge_up_distance)
             {
@@ -303,6 +327,24 @@ namespace ScriptProject.Scripts
             }
         }
 
+        void PrincessLogic()
+        {
+            if (target != princess_game_object)
+            {
+                return;
+            }
+
+            float distance_to_princess = (game_object.transform.GetPosition() - princess_game_object.transform.GetPosition()).Length();
+
+            if (distance_to_princess > 1.3f || grabbed_princess)
+            {
+                return;
+            }
+
+            grabbed_princess = true;
+            princess_game_object.GetComponent<Princess>().GrabbedByOrc(game_object);
+        }
+
         float GetMidBlockRotation(float calculated_rot)
         {
             float attack_time_rot = 0.0f;
@@ -315,19 +357,22 @@ namespace ScriptProject.Scripts
 
         void OrcAngryEvent(EventSystem.BaseEventData data)
         {
-            OrcAngryEventData orc_event_data = (OrcAngryEventData)data;
+            OrcEnemy.OrcAngryEventData orc_event_data = (OrcEnemy.OrcAngryEventData)data;
             //Console.WriteLine("Entity id: " + game_object.GetEntityID());
             //Console.WriteLine("Orc Angry Entity Id: " + orc_event_data.orc_to_target.GetEntityID());
 
-            if (orc_event_data.orc_to_target != game_object)
+            float distance_to_new_target = (orc_event_data.orc_to_target.transform.GetPosition() - game_object.transform.GetPosition()).Length();
+            float distance_to_princess = (orc_event_data.orc_to_target.transform.GetPosition() - princess_game_object.transform.GetPosition()).Length();
+
+            if (orc_event_data.orc_to_target != game_object && distance_to_new_target * 1.5f < distance_to_princess)
             {
                 target = orc_event_data.orc_to_target;
             }
         }
 
-        public class HitBoxOrcEnemy : HitBoxAction
+        public class HitBoxOrcCarrier : HitBoxAction
         {
-            float damage = 20.0f;
+            float damage = 5.0f;
             float knockback = 10.3f;
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)

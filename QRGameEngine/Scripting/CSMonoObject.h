@@ -37,4 +37,6 @@ public:
 	void RemoveLinkToMono();
 
 	static std::string GetName(const uint32_t gchandle);
+	std::string GetName() const;
+	std::string GetNamespace() const;
 };

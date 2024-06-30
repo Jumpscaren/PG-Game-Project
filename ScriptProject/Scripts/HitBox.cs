@@ -7,39 +7,48 @@ using System.Threading.Tasks;
 
 namespace ScriptProject.Scripts
 {
+    internal abstract class HitBoxAction
+    {
+        public abstract void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script);
+    }
+
     internal class HitBox : ScriptingBehaviour
     {
-        string hit_name = "";
-        bool hit_specified = false;
+        HitBoxAction hit_box_action = null;
+        GameObject avoid_game_object = null;
 
-        public void SetHitName(string name)
+        public void SetHitBoxAction(HitBoxAction in_hit_box_action)
         {
-            hit_name = name;
+            hit_box_action = in_hit_box_action;
         }
 
-        public void ResetHit()
+        public void SetAvoidGameObject(GameObject avoid)
         {
-            hit_specified = false;
+            avoid_game_object = avoid;
         }
 
-        public bool HasHitSpecified()
+        public void OnHit(InteractiveCharacterInterface hit_script)
         {
-            return hit_specified;
-        }
-
-        void BeginCollision(GameObject collided_game_object)
-        {
-            if (hit_name == collided_game_object.GetName())
+            if (hit_box_action == null)
             {
-                hit_specified = true;
+                Console.WriteLine("No Hit Box Action!");
+                return;
             }
+
+            hit_box_action.OnHit(this, hit_script);
         }
 
-        void EndCollision(GameObject collided_game_object)
+        public void BeginCollision(GameObject collided_game_object)
         {
-            if (hit_name == collided_game_object.GetName())
+            if (collided_game_object == avoid_game_object || !collided_game_object.HasComponent<ScriptingBehaviour>())
             {
-                hit_specified = false;
+                return;
+            }
+
+            ScriptingBehaviour script = collided_game_object.GetComponent<ScriptingBehaviour>();
+            if (typeof(InteractiveCharacterInterface).IsAssignableFrom(script.GetType()))
+            {
+                OnHit((InteractiveCharacterInterface)script);
             }
         }
     }

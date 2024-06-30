@@ -103,3 +103,13 @@ std::string CSMonoObject::GetName(const uint32_t gchandle)
 {
 	return mono_class_get_name(mono_object_get_class(mono_gchandle_get_target(gchandle)));
 }
+
+std::string CSMonoObject::GetName() const
+{
+	return mono_class_get_name(m_mono_class);
+}
+
+std::string CSMonoObject::GetNamespace() const
+{
+	return mono_class_get_namespace(m_mono_class);
+}

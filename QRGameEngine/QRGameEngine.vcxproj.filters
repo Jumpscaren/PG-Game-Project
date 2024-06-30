@@ -264,7 +264,7 @@
     <ClCompile Include="Components\PathFindingActorComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scripting\CSMonoList.cpp">
+    <ClCompile Include="Scripting\Objects\ListSetInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -704,7 +704,7 @@
     <ClInclude Include="Components\PathFindingActorComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scripting\CSMonoList.h">
+    <ClInclude Include="Scripting\Objects\ListSetInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

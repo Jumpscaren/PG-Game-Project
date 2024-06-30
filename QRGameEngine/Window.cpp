@@ -5,6 +5,7 @@
 #include "Vendor/Include/ImGUI/backends/imgui_impl_dx12.h"
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
+#include "Renderer/RenderCore.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -49,6 +50,20 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
         //if (IsMinimized(Window::GetHandle())) return 0;
 		Mouse::Get()->UpdateMouseButtons(false);
 		Keyboard::Get()->UpdateKeys(false);
+
+		UINT width = LOWORD(lParam);
+		UINT height = HIWORD(lParam);
+
+		if (!RenderCore::Get() || !RenderCore::Get()->GetWindow())
+		{
+			return 0;
+		}
+
+		if (RenderCore::Get()->GetWindow()->GetWindowWidth() != width || RenderCore::Get()->GetWindow()->GetWindowHeight() != height)
+		{
+			RenderCore::Get()->Resize(width, height);
+		}
+
         //s_windowData.dimensions.x = LOWORD(lParam);
         //s_windowData.dimensions.y = HIWORD(lParam);
 
@@ -245,4 +260,14 @@ float Window::GetWindowHeight() const
 float Window::GetWindowWidth() const
 {
     return (float)m_window_width;
+}
+
+void Window::SetWindowHeight(const UINT height)
+{
+	m_window_height = height;
+}
+
+void Window::SetWindowWidth(const UINT width)
+{
+	m_window_width = width;
 }

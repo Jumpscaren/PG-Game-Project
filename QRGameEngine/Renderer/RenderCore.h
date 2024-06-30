@@ -86,6 +86,8 @@ public:
 	
 	void AddLine(const Vector2& line);
 
+	void Resize(UINT window_width, UINT window_height);
+
 	static RenderCore* Get();
 
 	Window* GetWindow();

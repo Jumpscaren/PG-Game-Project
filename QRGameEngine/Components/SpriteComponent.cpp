@@ -25,6 +25,7 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::GetFlipX>(sprite_class, "GetFlipX", SpriteComponentInterface::GetFlipX);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::GetFlipY>(sprite_class, "GetFlipY", SpriteComponentInterface::GetFlipY);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetUV>(sprite_class, "SetUV", SpriteComponentInterface::SetUV);
+	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetShow>(sprite_class, "SetShow", SpriteComponentInterface::SetShow);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<SpriteComponent>(SaveSpriteComponent, LoadSpriteComponent);
 }
@@ -131,6 +132,16 @@ void SpriteComponentInterface::SetUV(const CSMonoObject& object, const CSMonoObj
 	sprite.uv[1] = Vector2(uv_4.x, uv_1.y);
 	sprite.uv[2] = Vector2(uv_1.x, uv_4.y);
 	sprite.uv[3] = uv_4;
+}
+
+void SpriteComponentInterface::SetShow(const CSMonoObject& object, const bool show)
+{
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).show = show;
 }
 
 void SpriteComponentInterface::SaveSpriteComponent(const Entity ent, EntityManager* entman, JsonObject* json_object)

@@ -8,6 +8,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
 	static constexpr uint64_t c_initial_value = 0;
 	uint64_t m_fence_value;
+	bool m_succeded;
 
 public:
 	DX12Fence();

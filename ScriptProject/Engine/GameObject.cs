@@ -181,6 +181,15 @@ namespace ScriptProject.Engine
             RemoveComponentFromSceneToComponentMap<T>(scene.GetSceneIndex(), entity_id);
         }
 
+        private static string GetComponentName<T>()
+        {
+            if (typeof(ScriptingBehaviour).IsAssignableFrom(typeof(T)))
+            {
+                return typeof(ScriptingBehaviour).Name;
+            }
+            return typeof(T).Name;
+        }
+
         static private void AddComponentToSceneComponentMap<T>(UInt32 scene_index, UInt32 entity, T component) where T : Component, new()
         {
             Dictionary<UInt32, Dictionary<String, Component>> entity_to_component;
@@ -195,7 +204,7 @@ namespace ScriptProject.Engine
                 name_to_component = new Dictionary<String, Component>();
                 entity_to_component.Add(entity, name_to_component);
             }
-            name_to_component.Add(component.GetType().Name, component);
+            name_to_component.Add(GetComponentName<T>(), component);
         }
 
         static private T GetComponentFromSceneComponentMap<T>(UInt32 scene_index, UInt32 entity, bool warn = true) where T : Component, new()
@@ -219,7 +228,7 @@ namespace ScriptProject.Engine
                 return null;
             }
             Component return_component;
-            if (!name_to_component.TryGetValue(typeof(T).Name, out return_component))
+            if (!name_to_component.TryGetValue(GetComponentName<T>(), out return_component))
             {
                 //Console.WriteLine("Name Doesn't Exist In Name To Component Map: " + typeof(T).Name);
                 return null;
@@ -260,9 +269,9 @@ namespace ScriptProject.Engine
             {
                 Console.WriteLine("RemoveComponentFromSceneToComponentMap: Entity Doesn't Exist In Entity To Component Map: " + entity);
             }
-            if (!name_to_component.Remove(typeof(T).Name))
+            if (!name_to_component.Remove(GetComponentName<T>()))
             {
-                Console.WriteLine("RemoveComponentFromSceneToComponentMap: Name Doesn't Exist In Name To Component Map: " + typeof(T).Name);
+                Console.WriteLine("RemoveComponentFromSceneToComponentMap: Name Doesn't Exist In Name To Component Map: " + GetComponentName<T>());
             }
         }
 
@@ -317,7 +326,17 @@ namespace ScriptProject.Engine
         static public extern GameObject TempFindGameObject(string name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static public extern List<GameObject> FindGameObjectsWithTag(Byte tag);
+        static public extern GameObject FindGameObjectWithTag(Byte tag);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern void FindGameObjectsWithTag_Extern(ListSetGameObject list, Byte tag);
+
+        static public List<GameObject> FindGameObjectsWithTag(Byte tag)
+        {
+            ListSetGameObject list = new ListSetGameObject();
+            FindGameObjectsWithTag_Extern(list, tag);
+            return list.GetData();
+        }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void AddChild(GameObject child_game_object);

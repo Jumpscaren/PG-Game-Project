@@ -148,6 +148,7 @@ public:
 		const auto& entities = smallest_component_pool->list_of_component_pool_entities;
 		int has_index = 0;
 		size_t get_index = 0;
+		const size_t last_get_index = pools.size() - 1;
 		for (const Entity& entity : entities)
 		{
 			if (!EntityExists(entity))
@@ -155,7 +156,7 @@ public:
 
 			has_index = 0;
 			const bool has_all_components = (HasComponent<Component>(entity, pools[has_index++]) &&...);
-			get_index = pools.size() - 1;
+			get_index = last_get_index;
 			if (has_all_components)
 			{
 				func(GetComponent<Component>(entity, pools[get_index--])...);
@@ -187,6 +188,7 @@ public:
 		const auto& entities = smallest_component_pool->list_of_component_pool_entities;
 		int has_index = 0;
 		size_t get_index = 0;
+		const size_t last_get_index = pools.size() - 1;
 		for (const Entity& entity : entities)
 		{
 			if (!EntityExists(entity))
@@ -194,7 +196,7 @@ public:
 
 			has_index = 0;
 			const bool has_all_components = (HasComponent<Component>(entity, pools[has_index++]) &&...);
-			get_index = pools.size() - 1;
+			get_index = last_get_index;
 			if (has_all_components)
 			{
 				func(entity, GetComponent<Component>(entity, pools[get_index--])...);

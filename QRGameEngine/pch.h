@@ -14,6 +14,10 @@
 #include <concepts>
 #include <algorithm>
 #include <set>
+#include <array>
+#include <list>
+#include <ranges>
+#include <tuple>
 
 //Windows
 #include <Windows.h>

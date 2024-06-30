@@ -94,6 +94,7 @@ void DX12CommandList::Wait(DX12Core* dx12_core)
 void DX12CommandList::Throttle(DX12Core* dx12_core)
 {
 	Execute(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	Signal(dx12_core, dx12_core->GetGraphicsCommandQueue());
 	//Wait(dx12_core);
 	//Reset();
 }

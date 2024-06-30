@@ -76,7 +76,7 @@ CSMonoObject PathFindingActorComponentInterface::PathFind(const SceneIndex actor
 	const TransformComponent& goal_transform = SceneManager::GetEntityManager(scene_index)->GetComponent<TransformComponent>(goal_entity);
 	const Entity goal_node = PathFinding::Get()->GetNodeFromPosition(Vector2(goal_transform.GetPosition().x, goal_transform.GetPosition().y));
 
-	auto has_to_path_find = HasToPathFind(path_finding_actor, goal_node);
+	auto has_to_path_find = HasToPathFind(path_finding_actor, current_node, goal_node);
 	if (has_to_path_find)
 	{
 		bool new_path;
@@ -187,16 +187,16 @@ bool PathFindingActorComponentInterface::NeedNewPathFind(const SceneIndex actor_
 		return true;
 	}
 
-	return HasToPathFind(path_finding_actor, goal_node);
+	return HasToPathFind(path_finding_actor, current_node, goal_node);
 }
 
-bool PathFindingActorComponentInterface::HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity goal_node)
+bool PathFindingActorComponentInterface::HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity own_node, const Entity goal_node)
 {
 	const bool goal_node_differ = goal_node != path_finding_actor.goal_last_visited_node;
-	const bool is_in_cached_path = path_finding_actor.cached_mapped_path.contains(path_finding_actor.last_visited_node);
+	const bool is_in_cached_path = path_finding_actor.cached_mapped_path.contains(own_node) && path_finding_actor.cached_mapped_path.contains(path_finding_actor.last_visited_node) && path_finding_actor.cached_mapped_path.contains(goal_node);
 	const bool goal_is_not_null = goal_node != NULL_ENTITY;
 
-	return (goal_node_differ || !is_in_cached_path) && goal_is_not_null;
+	return (goal_node_differ || !is_in_cached_path) && goal_is_not_null && own_node != NULL_ENTITY;
 }
 
 //path_finding_actor.cached_path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity);

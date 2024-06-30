@@ -10,6 +10,20 @@ uint32_t DX12SwapChain::GetCurrentBackBufferIndex() const
 	return (uint32_t)m_swapchain->GetCurrentBackBufferIndex();
 }
 
+void DX12SwapChain::AddBackbuffers(DX12Core* dx12_core)
+{
+	for (uint32_t i = 0; i < m_backbuffer_count; ++i)
+	{
+		ComPtr<ID3D12Resource> backbuffer = nullptr;
+		HRESULT hr = m_swapchain->GetBuffer(i, IID_PPV_ARGS(backbuffer.GetAddressOf()));
+		assert(SUCCEEDED(hr));
+
+		m_backbuffers.push_back(dx12_core->GetTextureManager()->AddSwapchainTexture(backbuffer));
+
+		m_rtv_views.push_back(dx12_core->GetTextureManager()->AddView(dx12_core, m_backbuffers[m_backbuffers.size() - 1], ViewType::RENDER_TARGET_VIEW));
+	}
+}
+
 void DX12SwapChain::InitSwapChain(DX12Core* dx12_core, uint32_t backbuffer_count)
 {
 	m_backbuffer_count = backbuffer_count;
@@ -44,16 +58,7 @@ void DX12SwapChain::InitSwapChain(DX12Core* dx12_core, uint32_t backbuffer_count
 	m_backbuffer_height = desc.Height;
 
 	//Get the backbuffers
-	for (uint32_t i = 0; i < backbuffer_count; ++i)
-	{
-		ComPtr<ID3D12Resource> backbuffer = nullptr;
-		HRESULT hr = m_swapchain->GetBuffer(i, IID_PPV_ARGS(backbuffer.GetAddressOf()));
-		assert(SUCCEEDED(hr));
-		
-		m_backbuffers.push_back(dx12_core->GetTextureManager()->AddSwapchainTexture(backbuffer));
-
-		m_rtv_views.push_back(dx12_core->GetTextureManager()->AddView(dx12_core, m_backbuffers[m_backbuffers.size()-1], ViewType::RENDER_TARGET_VIEW));
-	}
+	AddBackbuffers(dx12_core);
 }
 
 void DX12SwapChain::Present()
@@ -71,4 +76,29 @@ DX12TextureViewHandle DX12SwapChain::GetBackbufferView()
 {
 	uint64_t current_backbuffer_index = m_swapchain->GetCurrentBackBufferIndex();
 	return m_rtv_views[current_backbuffer_index];
+}
+
+void DX12SwapChain::Resize(DX12Core* dx12_core)
+{
+	//m_device->Flush();
+
+	HRESULT hr{ S_OK };
+	DXGI_SWAP_CHAIN_DESC1 swapDesc;
+	hr = m_swapchain->GetDesc1(&swapDesc);
+	assert(SUCCEEDED(hr));
+
+	for (const auto texture_handle : m_backbuffers)
+	{
+		dx12_core->GetResourceDestroyer()->FreeTexture(dx12_core, texture_handle);
+	}
+	dx12_core->GetResourceDestroyer()->FreeResources(dx12_core);
+
+	m_backbuffers.clear();
+	m_rtv_views.clear();
+
+	hr = m_swapchain->ResizeBuffers(0, dx12_core->GetWindow()->GetWindowWidth(), dx12_core->GetWindow()->GetWindowHeight(), swapDesc.Format, swapDesc.Flags);
+	assert(SUCCEEDED(hr));
+
+	//Get the backbuffers
+	AddBackbuffers(dx12_core);
 }

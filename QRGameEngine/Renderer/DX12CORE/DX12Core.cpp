@@ -146,8 +146,8 @@ void DX12Core::InitCore(Window* window, uint32_t backbuffer_count)
 
 #ifdef _DEBUG
 	//Leaks memory for some reason
-	//EnableDebugLayer();
-	//EnableGPUBasedValidation();
+	EnableDebugLayer();
+	EnableGPUBasedValidation();
 #endif // DEBUG
 
 	m_handle_manager = std::make_unique<HandleManager>();
@@ -200,6 +200,18 @@ DX12DescriptorManager* DX12Core::GetDescriptorManager()
 DX12CommandList* DX12Core::GetCommandList()
 {
 	return &(m_graphics_command_lists[m_commandlist_index]);
+}
+
+std::vector<DX12CommandList*> DX12Core::GetAllCommandLists()
+{
+	std::vector<DX12CommandList*> command_lists;
+
+	for (int i = 0; i < c_frames_in_flight; ++i)
+	{
+		command_lists.push_back(&m_graphics_command_lists[i]);
+	}
+
+	return command_lists;
 }
 
 DX12SwapChain* DX12Core::GetSwapChain()

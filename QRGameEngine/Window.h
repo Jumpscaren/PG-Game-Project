@@ -35,5 +35,7 @@ public:
 	HWND GetWindowHandle() const;
 	float GetWindowHeight() const;
 	float GetWindowWidth() const;
+	void SetWindowHeight(UINT height);
+	void SetWindowWidth(UINT width);
 };
 

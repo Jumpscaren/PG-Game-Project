@@ -492,7 +492,10 @@ void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index)
 
 	SceneLoader::Get()->InstancePrefab(game_object, prefab_name);
 	
-	prefab_and_texture_data.texture_handle = entity_manager->GetComponent<SpriteComponent>(ent).texture_handle;
+	if (entity_manager->HasComponent<SpriteComponent>(ent))
+	{
+		prefab_and_texture_data.texture_handle = entity_manager->GetComponent<SpriteComponent>(ent).texture_handle;
+	}
 
 	entity_manager->RemoveEntity(ent);
 

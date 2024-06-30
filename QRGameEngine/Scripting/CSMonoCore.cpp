@@ -41,12 +41,45 @@ CSMonoCore::CSMonoCore()
 
 	s_mono_core = this;
 
-	//MonoClass* listClass = mono_class_from_name(m_image, "System.Collections.Generic", "List`1");
-	//// Create a MonoClass for List<int> by instantiating the generic type
-	//MonoType* intType = mono_class_get_type(mono_class_from_name(m_image, "System", "Int32"));
+	//MonoClass* listGenericClass = mono_class_from_name(m_image, "System.Collections.Generic", "List");
+	//if (!listGenericClass) {
+	//	std::cerr << "Failed to find List<T> class" << std::endl;
+	//	//return 1;
+	//}
 
-	//MonoClass* listIntClass = mono_class_get_generic_class(listGenericClass);
-	//MonoGenericContainer* container = mono_class_get_generic_container(listGenericClass);
+	//// Get the MonoClass for System.Int32
+	//MonoClass* intClass = mono_class_from_name(m_image, "System", "Int32");
+	//if (!intClass) {
+	//	std::cerr << "Failed to find System.Int32 class" << std::endl;
+	//	//return 1;
+	//}
+
+	//MonoReflectionType* intType = mono_type_get_object(m_domain, mono_class_get_type(intClass));
+	//MonoArray* typeArgs = mono_array_new(m_domain, mono_get_object_class(), 1);
+	//mono_array_set(typeArgs, MonoReflectionType*, 0, intType);
+
+	//MonoClass* genericListClass = mono_class_from_name(m_image, "System.Collections.Generic", "List`1");
+	//MonoReflectionType* listGenericType = mono_type_get_object(m_domain, mono_class_get_type(genericListClass));
+	//MonoObject* listType = mono_runtime_invoke(mono_class_get_method_from_name(listGenericClass, "MakeGenericType", 1), listGenericType, (void**)&typeArgs, NULL);
+
+	//// Create an instance of List<int>
+	//MonoObject* listInstance = mono_object_new(m_domain, mono_type_get_class(mono_reflection_type_get_type((MonoReflectionType*)listType)));
+	//mono_runtime_object_init(listInstance);
+
+	//// Get the method for List<int>.Add(int)
+	//MonoMethodDesc* addMethodDesc = mono_method_desc_new("System.Collections.Generic.List`1:Add(System.Int32)", false);
+	//MonoMethod* addMethod = mono_method_desc_search_in_class(addMethodDesc, mono_object_get_class(listInstance));
+	//if (!addMethod) {
+	//	std::cerr << "Failed to get Add method" << std::endl;
+	//	//return 1;
+	//}
+
+	//// Add elements to the list
+	//for (int i = 0; i < 10; ++i) {
+	//	void* args[1];
+	//	args[0] = &i;
+	//	mono_runtime_invoke(addMethod, listInstance, args, NULL);
+	//}
 }
 
 CSMonoCore::~CSMonoCore()
