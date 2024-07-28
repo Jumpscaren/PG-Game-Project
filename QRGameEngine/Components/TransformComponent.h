@@ -43,5 +43,8 @@ public:
 	static CSMonoObject GetLocalPosition(const CSMonoObject& cs_transform);
 	static void SetLocalRotation(const CSMonoObject& cs_transform, const float angle);
 	static float GetLocalRotation(const CSMonoObject& cs_transform);
+
+	static void SetScale(const CSMonoObject& cs_transform, const CSMonoObject& scale);
+	static CSMonoObject GetScale(const CSMonoObject& cs_transform);
 };
 

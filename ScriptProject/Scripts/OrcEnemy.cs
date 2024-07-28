@@ -51,6 +51,10 @@ namespace ScriptProject.Scripts
 
         static GameObject only = null;
 
+        bool dead = false;
+        bool falling = false;
+        float falling_speed = 1.0f;
+
         public class OrcAngryEventData : EventSystem.BaseEventData
         {
             public GameObject orc_to_target;
@@ -109,9 +113,12 @@ namespace ScriptProject.Scripts
             }
 
             Death();
-            Look();
-            Move();
-            Attack();
+            if (!dead)
+            {
+                Look();
+                Move();
+                Attack();
+            }
         }
 
         void Remove()
@@ -125,6 +132,10 @@ namespace ScriptProject.Scripts
         public override void TakeDamage(float damage)
         {
             health -= damage;
+            if (health <= 0.0f)
+            {
+                dead = true;
+            }
         }
 
         public override void Knockback(Vector2 dir, float knockback)
@@ -141,9 +152,13 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (collided_game_object.GetTag() == UserTags.Hole)
+            if (!dead && collided_game_object.GetTag() == UserTags.Hole)
             {
-                health = -1.0f;
+                TakeDamage(100.0f);
+                body.SetVelocity(new Vector2());
+                falling = true;
+                GameObject.DeleteGameObject(mid_block);
+                game_object.RemoveComponent<CircleCollider>();
             }
 
             //if (collided_game_object.GetTag() == UserTags.PlayerHitbox)
@@ -226,7 +241,7 @@ namespace ScriptProject.Scripts
                 velocity = new_velocity;
             //else
             //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity_length == 0.0f && velocity.Length() <= speed)
+            if (new_velocity_length == 0.0f && velocity.Length() <= speed)  
                 velocity = new Vector2(0.0f, 0.0f);
             if (velocity.Length() > speed)
                 velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
@@ -238,14 +253,28 @@ namespace ScriptProject.Scripts
 
         void Death()
         {
-            if (health <= 0.0f)
+            if (health <= 0.0f && !falling)
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
-                GameObject new_game_object = GameObject.CreateGameObject();
-                new_game_object.AddComponent<Sprite>();
-                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
+                //GameObject new_game_object = GameObject.CreateGameObject();
+                //new_game_object.AddComponent<Sprite>();
+                //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
                 return;
+            }
+
+            if (dead && falling)
+            {
+                var scale = transform.GetScale();
+                Console.WriteLine("Scale: " + scale);
+                scale.x -= falling_speed * Time.GetDeltaTime();
+                scale.y -= falling_speed * Time.GetDeltaTime();
+                falling_speed += 1.5f * Time.GetDeltaTime();
+                transform.SetScale(scale);
+                if (scale.x < 0.01f)
+                {
+                    GameObject.DeleteGameObject(game_object);
+                }
             }
         }
 

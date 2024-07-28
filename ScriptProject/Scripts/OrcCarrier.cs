@@ -261,9 +261,9 @@ namespace ScriptProject.Scripts
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
-                GameObject new_game_object = GameObject.CreateGameObject();
-                new_game_object.AddComponent<Sprite>();
-                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
+                //GameObject new_game_object = GameObject.CreateGameObject();
+                //new_game_object.AddComponent<Sprite>();
+                //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
                 return;
             }
         }

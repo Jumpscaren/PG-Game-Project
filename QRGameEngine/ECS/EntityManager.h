@@ -65,6 +65,7 @@ private:
 private:
 	template <typename Component>
 	uint32_t CreateComponentPool();
+	void CreateComponentPool(const std::string& component_name, const uint64_t component_size, const uint64_t component_index);
 
 	template <typename Component>
 	ComponentPool& GetComponentPool();

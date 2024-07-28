@@ -204,9 +204,12 @@ namespace ScriptProject.Scripts
 
         public override void TakeDamage(float damage)
         {
-            health -= damage;
-            invincible_timer = invincible_time + Time.GetElapsedTime();
-            is_invincble = true;
+            if (!is_invincble)
+            {
+                health -= damage;
+                invincible_timer = invincible_time + Time.GetElapsedTime();
+                is_invincble = true;
+            }
         }
 
         public override void Knockback(Vector2 dir, float knockback)
@@ -240,12 +243,17 @@ namespace ScriptProject.Scripts
                 game_objects.Clear();
             }
 
-            Console.WriteLine(collided_game_object.GetTag());
-
             if (collided_game_object.GetTag() == UserTags.Hole)
             {
                 TakeDamage(20.0f);
                 game_object.transform.SetPosition(saved_position);
+                body.SetVelocity(new Vector2());
+            }
+
+            if (holding_princess && collided_game_object.GetTag() == UserTags.Finish)
+            {
+                Console.WriteLine("Finished Level");
+                SceneManager.RestartActiveScene();
             }
 
             //if (collided_game_object.GetTag() == UserTags.EnemyHitbox)

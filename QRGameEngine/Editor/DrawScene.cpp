@@ -25,7 +25,8 @@
 #include <filesystem>
 #include "Animation/AnimationManager.h"
 
-std::vector<PrefabAndTextureData> DrawScene::m_user_prefabs;
+std::unordered_map<std::string, std::vector<PrefabAndTextureData>> DrawScene::m_user_prefabs;
+std::string DrawScene::m_category_in_use;
 
 uint64_t DrawScene::GetNumberFromPosition(const Vector3& position)
 {
@@ -90,40 +91,154 @@ void DrawScene::Update()
 	bool select_pressed = false;
 	bool animation_pressed = false;
 	bool hovering_window = false;
-	Vector2 window_position;
-	float window_height, window_width;
+
+	struct WindowGUIData
+	{
+		Vector2 window_position;
+		float window_height, window_width;
+	};
+
+	std::vector<WindowGUIData> window_data;
 
 	ImGui::Begin("Draw Blocks");
 	{
 		ImGui::InputText("Scene Name", (char*)m_scene_name.c_str(), m_scene_name.size());
 		save_pressed = ImGui::Button("Save", { 0,0 });
+		if (ImGui::BeginCombo("##Scenes", m_scene_name.c_str()))
+		{
+			auto path = std::filesystem::current_path();
+			for (const auto& entry : std::filesystem::directory_iterator(path))
+			{
+				if (entry.path().extension() == ".scene")
+				{
+					const auto filename = entry.path().filename().replace_extension().string();
+					const bool is_selected = (m_scene_name == filename);
+					if (ImGui::Selectable(filename.c_str(), is_selected))
+					{
+						m_scene_name = filename;
+					}
+					if (is_selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+			}
+			ImGui::EndCombo();
+		}
+
 		load_pressed = ImGui::Button("Load", { 0,0 });
 		clear_pressed = ImGui::Button("Clear");
-		window_position = Vector2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
-		window_height = ImGui::GetWindowHeight();
-		window_width = ImGui::GetWindowWidth();
+
+		WindowGUIData new_window_data;
+		new_window_data.window_position = Vector2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
+		new_window_data.window_height = ImGui::GetWindowHeight();
+		new_window_data.window_width = ImGui::GetWindowWidth();
+		window_data.push_back(new_window_data);
 
 		select_pressed = ImGui::Button("Select");
 		animation_pressed = ImGui::Button("Animation");
-
-		for (int i = 0; i < m_user_prefabs.size(); ++i)
-		{
-			if (ImGUIMain::ImageButton("Prefab Click" + std::to_string(i), m_user_prefabs[i].texture_handle))
-			{
-				m_prefab_selected = m_user_prefabs[i].prefab_data;
-				m_select = false;
-			}
-		}
 	}
 	ImGui::End();
 
-	Vector2 window_x_min_max(window_position.x, window_position.x + window_width);
-	Vector2 window_y_min_max(window_position.y, window_position.y + window_height);
-
-	if (mouse_coords.x >= window_x_min_max.x && mouse_coords.x <= window_x_min_max.y
-		&& mouse_coords.y >= window_y_min_max.x && mouse_coords.y <= window_y_min_max.y)
+	ImGui::Begin("Prefabs");
 	{
-		hovering_window = true;
+		for (const auto& category : m_user_prefabs)
+		{
+			ImGui::SameLine();
+			if (ImGui::Button(category.first.c_str()))
+			{
+				m_category_in_use = category.first;
+			}
+		}
+
+		const auto& it = m_user_prefabs.find(m_category_in_use);
+
+		for (int i = 0; i < it->second.size(); ++i)
+		{
+			if (i % 3 == 0)
+			{
+				ImGui::Text(it->second[i].prefab_data.prefab_name.c_str());
+				if (i + 1 < it->second.size())
+				{
+					ImGui::SameLine();
+					ImGui::Text(it->second[i + 1].prefab_data.prefab_name.c_str());
+				}
+				if (i + 2 < it->second.size())
+				{
+					ImGui::SameLine();
+					ImGui::Text(it->second[i + 2].prefab_data.prefab_name.c_str());
+				}
+			}
+
+			if (it->second[i].texture_handle != -1 && ImGUIMain::ImageButton("Prefab Click" + std::to_string(i), it->second[i].texture_handle))
+			{
+				m_prefab_selected = it->second[i].prefab_data;
+				m_select = false;
+			}
+			else if (it->second[i].texture_handle == -1 && ImGui::Button(it->second[i].prefab_data.prefab_name.c_str(), ImVec2(108.0f, 108.0f)))
+			{
+				m_prefab_selected = it->second[i].prefab_data;
+				m_select = false;
+			}
+
+			if (i % 3 != 2)
+			{
+				ImGui::SameLine();
+			}
+		}
+
+		WindowGUIData new_window_data;
+		new_window_data.window_position = Vector2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
+		new_window_data.window_height = ImGui::GetWindowHeight();
+		new_window_data.window_width = ImGui::GetWindowWidth();
+		window_data.push_back(new_window_data);
+
+		//for (int i = 0; i < m_user_prefabs.size(); ++i)
+		//{
+		//	if (i % 3 == 0)
+		//	{
+		//		ImGui::Text(m_user_prefabs[i].prefab_data.prefab_name.c_str());
+		//		if (i + 1 < m_user_prefabs.size())
+		//		{
+		//			ImGui::SameLine();
+		//			ImGui::Text(m_user_prefabs[i + 1].prefab_data.prefab_name.c_str());
+		//		}
+		//		if (i + 2 < m_user_prefabs.size())
+		//		{
+		//			ImGui::SameLine();
+		//			ImGui::Text(m_user_prefabs[i + 2].prefab_data.prefab_name.c_str());
+		//		}
+		//	}
+
+		//	if (m_user_prefabs[i].texture_handle != -1 && ImGUIMain::ImageButton("Prefab Click" + std::to_string(i), m_user_prefabs[i].texture_handle))
+		//	{
+		//		m_prefab_selected = m_user_prefabs[i].prefab_data;
+		//		m_select = false;
+		//	}
+		//	else if (m_user_prefabs[i].texture_handle == -1 && ImGui::Button(m_user_prefabs[i].prefab_data.prefab_name.c_str(), ImVec2(108.0f, 108.0f)))
+		//	{
+		//		m_prefab_selected = m_user_prefabs[i].prefab_data;
+		//		m_select = false;
+		//	}
+
+		//	if (i % 3 != 2)
+		//	{
+		//		ImGui::SameLine();
+		//	}
+		//}
+	}
+	ImGui::End();
+
+	for (const auto& gui_window_data : window_data)
+	{
+		Vector2 window_x_min_max(gui_window_data.window_position.x, gui_window_data.window_position.x + gui_window_data.window_width);
+		Vector2 window_y_min_max(gui_window_data.window_position.y, gui_window_data.window_position.y + gui_window_data.window_height);
+
+		if (mouse_coords.x >= window_x_min_max.x && mouse_coords.x <= window_x_min_max.y
+			&& mouse_coords.y >= window_y_min_max.x && mouse_coords.y <= window_y_min_max.y)
+		{
+			hovering_window = true;
+		}
 	}
 	m_in_editor_menu = hovering_window;
 
@@ -399,6 +514,27 @@ void DrawScene::Animation()
 	{
 		back_pressed = ImGui::Button("Back");
 		ImGui::InputText("Animation Name", (char*)m_animation_file_name.c_str(), m_animation_file_name.size());
+		if (ImGui::BeginCombo("##Animations", m_animation_file_name.c_str()))
+		{
+			auto path = std::filesystem::current_path() / std::filesystem::path("Animations");
+			for (const auto& entry : std::filesystem::directory_iterator(path))
+			{
+				if (entry.path().extension() == ".anim")
+				{
+					const auto filename = entry.path().filename().replace_extension().string();
+					const bool is_selected = (m_animation_file_name == filename);
+					if (ImGui::Selectable(filename.c_str(), is_selected))
+					{
+						m_animation_file_name = filename;
+					}
+					if (is_selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+			}
+			ImGui::EndCombo();
+		}
 		save_animation_pressed = ImGui::Button("Save Animation");
 		load_animation_pressed = ImGui::Button("Load Animation");
 		ImGui::InputText("Texture Name", (char*)m_animation_texture_name.c_str(), m_animation_texture_name.size());
@@ -468,7 +604,7 @@ void DrawScene::SetAddUserPrefab()
 	mono_core->HookAndRegisterMonoMethodType<DrawScene::AddUserPrefab>(transform_class, "AddUserPrefab", &DrawScene::AddUserPrefab);
 }
 
-void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index)
+void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index, const std::string& category)
 {
 #ifndef _EDITOR
 	return;
@@ -496,8 +632,25 @@ void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index)
 	{
 		prefab_and_texture_data.texture_handle = entity_manager->GetComponent<SpriteComponent>(ent).texture_handle;
 	}
+	else
+	{
+		prefab_and_texture_data.texture_handle = -1;
+	}
 
 	entity_manager->RemoveEntity(ent);
 
-	m_user_prefabs.push_back(prefab_and_texture_data);
+	if (m_user_prefabs.size() == 0)
+	{
+		m_category_in_use = category;
+	}
+
+	auto it = m_user_prefabs.find(category);
+	if (it == m_user_prefabs.end())
+	{
+		m_user_prefabs.insert({category, {prefab_and_texture_data}});
+	}
+	else
+	{
+		it->second.push_back(prefab_and_texture_data);
+	}
 }

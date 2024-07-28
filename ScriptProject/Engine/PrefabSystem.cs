@@ -17,15 +17,15 @@ namespace ScriptProject.Engine
         static Dictionary<string, UInt32> m_name_to_index = new Dictionary<string, uint>(); 
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern void AddUserPrefab(string prefab_name, UInt32 z_index);
+        private static extern void AddUserPrefab(string prefab_name, UInt32 z_index, string category_name);
 
-        public static void CreateUserPrefab(string prefab_name, Action<GameObject> prefab_instance_method, UInt32 z_index)
+        public static void CreateUserPrefab(string prefab_name, Action<GameObject> prefab_instance_method, UInt32 z_index, string category_name)
         {
             //Need to be changed later maybe
             m_prefab_actions.Add(prefab_instance_method);
 
             m_name_to_index.Add(prefab_name, m_pid);
-            AddUserPrefab(prefab_name, z_index);
+            AddUserPrefab(prefab_name, z_index, category_name);
             ++m_pid;
         }
 

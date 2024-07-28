@@ -30,7 +30,7 @@ void DX12Fence::Signal(DX12Core* dx12_core, DX12CommandQueue* command_queue)
 
 void DX12Fence::Wait(DX12Core* dx12_core)
 {
-	std::cout << "Succeded: " << m_succeded << "\n";
+	//std::cout << "Succeded: " << m_succeded << "\n";
 
 	if (!m_succeded && m_fence->GetCompletedValue() < m_fence_value)
 	{

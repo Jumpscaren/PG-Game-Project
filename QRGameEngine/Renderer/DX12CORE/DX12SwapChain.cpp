@@ -96,7 +96,7 @@ void DX12SwapChain::Resize(DX12Core* dx12_core)
 	m_backbuffers.clear();
 	m_rtv_views.clear();
 
-	hr = m_swapchain->ResizeBuffers(0, dx12_core->GetWindow()->GetWindowWidth(), dx12_core->GetWindow()->GetWindowHeight(), swapDesc.Format, swapDesc.Flags);
+	hr = m_swapchain->ResizeBuffers(0, (UINT)dx12_core->GetWindow()->GetWindowWidth(), (UINT)dx12_core->GetWindow()->GetWindowHeight(), swapDesc.Format, swapDesc.Flags);
 	assert(SUCCEEDED(hr));
 
 	//Get the backbuffers

@@ -66,8 +66,6 @@ namespace ScriptProject
         public static void test4()
         {
             M f = new M();
-            M t = new M();
-            string text = "fggggfd";
             for (int i = 0; i < loop; ++i)
             {
                 cpptestmany(f);
@@ -89,19 +87,22 @@ namespace ScriptProject
             //Texture texture = Render.LoadTexture(texture_path);
             //sprite.SetTexture(texture);
 
-            PrefabSystem.CreateUserPrefab("Prefab1", Prefab1, 1);
-            PrefabSystem.CreateUserPrefab("Prefab2", Prefab2, 2);
-            PrefabSystem.CreateUserPrefab("WallCollider", WallCollider, 2);
-            PrefabSystem.CreateUserPrefab("PlayerPrefab", PlayerPrefab, 1);
-            PrefabSystem.CreateUserPrefab("PlayerCameraPrefab", PlayerCameraPrefab, 1);
-            PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1);
-            PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1);
-            PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1);
-            PrefabSystem.CreateUserPrefab("Princess", Princess, 1);
-            PrefabSystem.CreateUserPrefab("EmptyCollider", EmptyCollider, 0);
-            PrefabSystem.CreateUserPrefab("Hole", Hole, 0);
-            PrefabSystem.CreateUserPrefab("OrcCarrier", OrcCarrier, 1);
-            PrefabSystem.CreateUserPrefab("PrincessBlocker", PrincessBlocker, 0);
+            PrefabSystem.CreateUserPrefab("Prefab1", Prefab1, 1, "Block");
+            PrefabSystem.CreateUserPrefab("Prefab2", Prefab2, 2, "Path");
+            PrefabSystem.CreateUserPrefab("WallCollider", WallCollider, 2, "Block");
+            PrefabSystem.CreateUserPrefab("PlayerPrefab", PlayerPrefab, 1, "Character");
+            PrefabSystem.CreateUserPrefab("PlayerCameraPrefab", PlayerCameraPrefab, 1, "Misc");
+            PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1, "Misc");
+            PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1, "Character");
+            PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1, "Character");
+            PrefabSystem.CreateUserPrefab("Princess", Princess, 1, "Character");
+            PrefabSystem.CreateUserPrefab("EmptyCollider", EmptyCollider, 0, "Block");
+            PrefabSystem.CreateUserPrefab("Hole", Hole, 0, "Block");
+            PrefabSystem.CreateUserPrefab("OrcCarrier", OrcCarrier, 1, "Character");
+            PrefabSystem.CreateUserPrefab("PrincessBlocker", PrincessBlocker, 0, "Block");
+            PrefabSystem.CreateUserPrefab("Finish", Finish, 0, "Block");
+            PrefabSystem.CreateUserPrefab("ReplaceBlock", ReplaceBlock, 1, "Block");
+            PrefabSystem.CreateUserPrefab("Switch", Switch, 1, "Interactive");
 
             return 0;
         }
@@ -110,6 +111,7 @@ namespace ScriptProject
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
             //game_object.AddComponent<DynamicBody>();
+            game_object.AddComponent<PureStaticBody>();
             game_object.AddComponent<BoxCollider>();
         }
 
@@ -123,6 +125,7 @@ namespace ScriptProject
         static void WallCollider(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            game_object.AddComponent<PureStaticBody>();
             game_object.AddComponent<BoxCollider>();
         }
 
@@ -185,7 +188,7 @@ namespace ScriptProject
 
         static void EmptyCollider(GameObject game_object)
         {
-            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<PureStaticBody>();
             game_object.AddComponent<BoxCollider>();
             game_object.GetComponent<Sprite>();
             game_object.RemoveComponent<Sprite>();
@@ -194,7 +197,7 @@ namespace ScriptProject
 
         static void Hole(GameObject game_object)
         {
-            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<PureStaticBody>();
             game_object.SetTag(UserTags.Hole);
 
             var box_collider = game_object.AddComponent<BoxCollider>();
@@ -207,7 +210,7 @@ namespace ScriptProject
 
         static void PrincessBlocker(GameObject game_object)
         {
-            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<PureStaticBody>();
             game_object.GetComponent<Sprite>();
             game_object.RemoveComponent<Sprite>();
             game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.PrincessBlocker, UserCollisionCategories.FilterForPrincess, 0);
@@ -222,6 +225,27 @@ namespace ScriptProject
             collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             collider.SetRadius(0.49f);
             game_object.AddComponent<OrcCarrier>();
+        }
+
+        static void Finish(GameObject game_object)
+        {
+            game_object.AddComponent<PureStaticBody>();
+            game_object.RemoveComponent<Sprite>();
+            game_object.AddComponent<BoxCollider>().SetTrigger(true);
+        }
+
+        static void ReplaceBlock(GameObject game_object)
+        {
+            game_object.AddComponent<PureStaticBody>();
+            game_object.RemoveComponent<Sprite>();
+            game_object.AddComponent<BoxCollider>();
+            game_object.AddComponent<ReplaceBlockScript>();
+        }
+
+        static void Switch(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/UglySwitchOff.png"));
+            game_object.AddComponent<SwitchScript>();
         }
     }
 }

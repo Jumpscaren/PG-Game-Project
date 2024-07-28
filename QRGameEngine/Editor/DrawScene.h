@@ -25,7 +25,7 @@ private:
 
 	PrefabData m_prefab_selected = {};
 
-	static std::vector<PrefabAndTextureData> m_user_prefabs;
+	static std::unordered_map<std::string, std::vector<PrefabAndTextureData>> m_user_prefabs;
 
 	std::string m_scene_name;
 
@@ -41,6 +41,8 @@ private:
 	bool m_in_editor_menu;
 
 	std::unordered_map<std::string, uint8_t> m_names_already_in_use;
+
+	static std::string m_category_in_use;
 
 private:
 	uint64_t GetNumberFromPosition(const Vector3& position);
@@ -63,5 +65,5 @@ public:
 	bool InEditorMenu() const;
 
 	static void SetAddUserPrefab();
-	static void AddUserPrefab(const std::string& prefab_name, uint32_t z_index);
+	static void AddUserPrefab(const std::string& prefab_name, uint32_t z_index, const std::string& category);
 };

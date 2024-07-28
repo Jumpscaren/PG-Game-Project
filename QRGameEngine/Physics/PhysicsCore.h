@@ -25,6 +25,7 @@ public:
 		StaticBody = 0,
 		KinematicBody,
 		DynamicBody,
+		PureStaticBody = 5,
 		EmptyBody = 10
 	};
 
@@ -98,6 +99,13 @@ private:
 	std::vector<DeferredPhysicObjectCreationData> m_deferred_physic_object_creations;
 	std::vector<DeferredPhysicObjectDestructionData> m_deferred_physic_object_destructions;
 
+	struct DeferredEnablePureStaticBody
+	{
+		SceneIndex scene_index;
+		Entity entity;
+	};
+	std::vector<DeferredEnablePureStaticBody> m_deferred_enable_pure_static_bodies;
+
 private:
 	b2Fixture* AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger, ColliderFilter collider_filter);
 
@@ -127,6 +135,8 @@ private:
 	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 
 	static void AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index);
+
+	void AwakePureStaticBody(SceneIndex scene_index, Entity entity);
 
 public:
 	PhysicsCore(bool threaded_physics);

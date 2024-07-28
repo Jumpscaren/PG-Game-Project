@@ -7,6 +7,7 @@
 #include "ComponentInterface.h"
 #include "Math/MathHelp.h"
 #include "ParentComponent.h"
+#include "Scripting/Objects/Vector2Interface.h"
 
 MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
@@ -111,6 +112,9 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalPosition>(transform_class, "GetLocalPosition", TransformComponentInterface::GetLocalPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalRotation>(transform_class, "SetLocalRotation", TransformComponentInterface::SetLocalRotation);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalRotation>(transform_class, "GetLocalRotation", TransformComponentInterface::GetLocalRotation);
+
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetScale>(transform_class, "SetScale", TransformComponentInterface::SetScale);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetScale>(transform_class, "GetScale", TransformComponentInterface::GetScale);
 }
 
 void TransformComponentInterface::AddTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -236,4 +240,33 @@ float TransformComponentInterface::GetLocalRotation(const CSMonoObject& cs_trans
 		return entity_manager->GetComponent<ParentComponent>(entity).GetRotationEuler().z;
 	}
 	return entity_manager->GetComponent<TransformComponent>(entity).GetRotationEuler().z;
+}
+
+void TransformComponentInterface::SetScale(const CSMonoObject& cs_transform, const CSMonoObject& scale)
+{
+	const auto game_object = ComponentInterface::GetGameObject(cs_transform);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const auto new_scale = Vector2Interface::GetVector2(scale);
+
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
+	const auto old_scale = entity_manager->GetComponent<TransformComponent>(entity).GetScale();
+	entity_manager->GetComponent<TransformComponent>(entity).SetScale(Vector3(new_scale.x, new_scale.y, old_scale.z));
+}
+
+CSMonoObject TransformComponentInterface::GetScale(const CSMonoObject& cs_transform)
+{
+	const auto game_object = ComponentInterface::GetGameObject(cs_transform);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
+	const auto scale = entity_manager->GetComponent<TransformComponent>(entity).GetScale();
+
+	CSMonoObject vector2_scale(CSMonoCore::Get(), vector2_class_handle);
+	CSMonoCore::Get()->SetValue(scale.x, vector2_scale, "x");
+	CSMonoCore::Get()->SetValue(scale.y, vector2_scale, "y");
+	return vector2_scale;
 }

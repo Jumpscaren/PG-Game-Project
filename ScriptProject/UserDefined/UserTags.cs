@@ -15,5 +15,7 @@ namespace ScriptProject.UserDefined
         public const Byte PuzzleBoxes = 4;
         public const Byte StartDoor = 5;
         public const Byte Hole = 6;
+        public const Byte Finish = 7;
+        public const Byte Replace = 8;
     }
 }

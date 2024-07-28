@@ -80,6 +80,12 @@ void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* en
 			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
 			json_object->SetData(value, field_name);
 		}
+		else if (CSMonoCore::Get()->IsValueType<std::string>(script_component.script_object, field_name))
+		{
+			std::string value;
+			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+			json_object->SetData(value, field_name);
+		}
 		//else if (CSMonoCore::Get()->IsValueType<CSMonoObject>(script_component.script_object, field_name))
 		//{
 		//	CSMonoObject value;
@@ -110,6 +116,12 @@ void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* en
 		else if (CSMonoCore::Get()->IsValueType<double>(script_component.script_object, field_name))
 		{
 			double value;
+			json_object->LoadData(value, field_name);
+			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<std::string>(script_component.script_object, field_name))
+		{
+			std::string value;
 			json_object->LoadData(value, field_name);
 			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
 		}

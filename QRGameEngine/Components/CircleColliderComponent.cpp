@@ -7,6 +7,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "DynamicBodyComponent.h"
 #include "StaticBodyComponent.h"
+#include "PureStaticBodyComponent.h"
 #include "IO/JsonObject.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 
@@ -30,7 +31,7 @@ void CircleColliderComponentInterface::InitComponent(const CSMonoObject& object,
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
 	//So that we do not need add staticbody when adding a circlecollider if we do not use a dynamic body
-	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity))
+	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity))
 		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
 
 	PhysicsCore::Get()->AddCircleCollider(scene_index, entity, 0.5f);

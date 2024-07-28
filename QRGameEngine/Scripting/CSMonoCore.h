@@ -334,6 +334,12 @@ inline bool CSMonoCore::IsValueType<bool>(const CSMonoObject& mono_object, const
 }
 
 template<>
+inline bool CSMonoCore::IsValueType<std::string>(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	return IsValueTypeInternal(CSMonoType::MONO_TYPE_STRING, mono_object, field_name);
+}
+
+template<>
 inline bool CSMonoCore::IsValueType<CSMonoObject>(const CSMonoObject& mono_object, const std::string& field_name)
 {
 	return IsValueTypeInternal(CSMonoType::MONO_TYPE_CLASS, mono_object, field_name);

@@ -2,6 +2,7 @@
 #include "EntityManager.h"
 #include "SceneSystem/SceneManager.h"
 #include "SceneSystem/Scene.h"
+#include "ComponentMap.h"
 
 bool EntityManager::EntityExists(Entity entity) const
 {
@@ -18,6 +19,10 @@ bool EntityManager::HasComponentName(Entity entity, const std::string& component
 bool EntityManager::ComponentExists(const std::string& component_name)
 {
 	return m_component_name_to_pool.contains(component_name);
+}
+
+void EntityManager::CreateComponentPool(const std::string& component_name, const uint64_t component_size, const uint64_t component_index)
+{
 }
 
 bool EntityManager::HasComponent(Entity entity, const ComponentPool& component_pool)
@@ -93,6 +98,9 @@ EntityManager::EntityManager(uint32_t max_entities, SceneIndex scene_index) : m_
 		m_entities[i] = NULL_ENTITY;
 		m_free_entities[i] = max_ent - i;
 	}
+
+	ComponentMap::AddComponentsToEntityManager(this);
+	DestroyDeferredEntities();
 
 	//m_data_pool = new char[DATA_POOL_SIZE];
 }

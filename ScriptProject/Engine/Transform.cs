@@ -61,5 +61,11 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern float GetZIndex();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetScale(Vector2 scale);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Vector2 GetScale();
     }
 }

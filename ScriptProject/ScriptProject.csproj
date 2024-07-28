@@ -80,6 +80,7 @@
     <Compile Include="Engine\PathFindingActor.cs" />
     <Compile Include="Engine\PathFindingWorld.cs" />
     <Compile Include="Engine\PrefabSystem.cs" />
+    <Compile Include="Engine\PureStaticBody.cs" />
     <Compile Include="Engine\RandomGenerator.cs" />
     <Compile Include="Engine\Render.cs" />
     <Compile Include="Engine\Scene.cs" />
@@ -102,6 +103,8 @@
     <Compile Include="Scripts\Player.cs" />
     <Compile Include="Scripts\PlayerCamera.cs" />
     <Compile Include="Scripts\Princess.cs" />
+    <Compile Include="Scripts\ReplaceBlockScript.cs" />
+    <Compile Include="Scripts\SwitchScript.cs" />
     <Compile Include="TestScript.cs" />
     <Compile Include="UserDefined\UserCollisionCategories.cs" />
     <Compile Include="UserDefined\UserTags.cs" />

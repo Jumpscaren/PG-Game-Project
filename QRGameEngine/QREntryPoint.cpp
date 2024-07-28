@@ -25,6 +25,7 @@
 #include "Components/PathFindingWorldComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "Scripting/Objects/TimeInterface.h"
+#include "ECS/ComponentMap.h"
 
 RenderCore* render_core;
 SceneManager* scene_manager;
@@ -60,6 +61,8 @@ void cpptestmany(const CSMonoObject& object)
 
 void QREntryPoint::EntryPoint()
 {
+	ComponentMap::AddAllComponents();
+
 	event_core = new EventCore();
 
 	asset_manager = new AssetManager();

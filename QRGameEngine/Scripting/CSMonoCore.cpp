@@ -130,8 +130,8 @@ std::string CSMonoCore::MonoObjectToValue(std::string* mono_object)
 {
 	MonoString* const mono_string = mono_object_to_string((MonoObject*)mono_object, nullptr);
 	std::string return_string = MonoStringToString(mono_string);
-	mono_string_length(mono_string); // This is necessary to notify the runtime
-	mono_free(mono_string);
+	//mono_string_length(mono_string); // This is necessary to notify the runtime
+	//mono_free(mono_string);
 	return return_string;
 }
 
