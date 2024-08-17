@@ -207,7 +207,8 @@ void QREntryPoint::RunTime()
 		{
 			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
 			//SceneIndex scene = scene_manager->LoadScene("port"); //"port_path_test_2"
-			SceneIndex scene = scene_manager->LoadScene("test_area_1");
+			//SceneIndex scene = scene_manager->LoadScene("test_area_1");
+			SceneIndex scene = scene_manager->LoadScene("temp");
 			scene_manager->ChangeScene(scene);
 			change_scene = false;
 		}

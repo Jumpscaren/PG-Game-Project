@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\PolygonCollider.cs" />
     <Compile Include="Engine\Cache.cs" />
     <Compile Include="Engine\AnimationManager.cs" />
     <Compile Include="Engine\BoxCollider.cs" />
@@ -99,10 +100,12 @@
     <Compile Include="Scripts\HitBox.cs" />
     <Compile Include="Scripts\InteractiveCharacterInterface.cs" />
     <Compile Include="Scripts\OrcCarrier.cs" />
+    <Compile Include="Scripts\OrcDistracter.cs" />
     <Compile Include="Scripts\OrcEnemy.cs" />
     <Compile Include="Scripts\Player.cs" />
     <Compile Include="Scripts\PlayerCamera.cs" />
     <Compile Include="Scripts\Princess.cs" />
+    <Compile Include="Scripts\ProjectileScript.cs" />
     <Compile Include="Scripts\ReplaceBlockScript.cs" />
     <Compile Include="Scripts\SwitchScript.cs" />
     <Compile Include="TestScript.cs" />

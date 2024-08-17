@@ -217,7 +217,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object)
+        void BeginCollision(GameObject collided_game_object, Vector2 normal)
         {
             if (collided_game_object.GetName() == "Bouncer")
             {
@@ -245,15 +245,23 @@ namespace ScriptProject.Scripts
 
             if (collided_game_object.GetTag() == UserTags.Hole)
             {
-                TakeDamage(20.0f);
-                game_object.transform.SetPosition(saved_position);
-                body.SetVelocity(new Vector2());
+                //TakeDamage(20.0f);
+                //game_object.transform.SetPosition(saved_position);
+                //body.SetVelocity(new Vector2());
+                Console.WriteLine("Enter - Hole");
+                Console.WriteLine("ETag - " + (int)collided_game_object.GetTag());
             }
 
             if (holding_princess && collided_game_object.GetTag() == UserTags.Finish)
             {
                 Console.WriteLine("Finished Level");
                 SceneManager.RestartActiveScene();
+            }
+
+            if (collided_game_object.GetTag() == UserTags.Player)
+            {
+                //Console.WriteLine("Enter");
+                //Console.WriteLine(normal);
             }
 
             //if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
@@ -265,6 +273,19 @@ namespace ScriptProject.Scripts
 
             //    PrincessStopFollowPlayer();
             //}
+        }
+
+        void EndCollision(GameObject collided_game_object)
+        {
+            if (collided_game_object.GetTag() == UserTags.Player)
+            {
+                //Console.WriteLine("Exit");
+            }
+
+            if (collided_game_object.GetTag() == UserTags.Hole)
+            {
+                Console.WriteLine("Exit - Hole");
+            }
         }
 
         float GetMidBlockRotation(float calculated_rot)
@@ -308,7 +329,7 @@ namespace ScriptProject.Scripts
 
         public class HitBoxPlayer : HitBoxAction
         {
-            float damage = 10.0f;
+            float damage = 0.0f;//10.0f;
             float knockback = 10.3f;
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)

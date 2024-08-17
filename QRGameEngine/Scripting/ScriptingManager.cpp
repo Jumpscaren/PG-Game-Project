@@ -5,6 +5,7 @@
 #include "SceneSystem/SceneManager.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "ECS/EntityManager.h"
+#include "Scripting/Objects/Vector2Interface.h"
 
 ScriptingManager* ScriptingManager::s_scripting_manager = nullptr;
 
@@ -15,13 +16,15 @@ void ScriptingManager::ScriptBeginCollision(Entity entity_1, SceneIndex scene_in
 
 	CSMonoCore* mono_core = CSMonoCore::Get();
 
+	const auto normal_object = Vector2Interface::CreateVector2(Vector2());
+
 	if (entity_manager_1->HasComponent<ScriptComponent>(entity_1))
 	{
 		const ScriptComponent& script = entity_manager_1->GetComponent<ScriptComponent>(entity_1);
 
 		if (mono_core->CheckIfMonoMethodExists(script.script_begin_collision))
 		{
-			mono_core->CallMethod(script.script_begin_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_2, scene_index_2));
+			mono_core->CallMethod(script.script_begin_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_2, scene_index_2), normal_object);
 		}
 	}
 
@@ -31,7 +34,7 @@ void ScriptingManager::ScriptBeginCollision(Entity entity_1, SceneIndex scene_in
 
 		if (mono_core->CheckIfMonoMethodExists(script.script_begin_collision))
 		{
-			mono_core->CallMethod(script.script_begin_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_1, scene_index_1));
+			mono_core->CallMethod(script.script_begin_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_1, scene_index_1), normal_object);
 		}
 	}
 }
@@ -49,7 +52,7 @@ void ScriptingManager::ScriptEndCollision(Entity entity_1, SceneIndex scene_inde
 
 		if (mono_core->CheckIfMonoMethodExists(script.script_end_collision))
 		{
-			mono_core->CallMethod(script.script_end_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_1, scene_index_1));
+			mono_core->CallMethod(script.script_end_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_2, scene_index_2));
 		}
 	}
 
@@ -59,7 +62,7 @@ void ScriptingManager::ScriptEndCollision(Entity entity_1, SceneIndex scene_inde
 
 		if (mono_core->CheckIfMonoMethodExists(script.script_end_collision))
 		{
-			mono_core->CallMethod(script.script_end_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_2, scene_index_2));
+			mono_core->CallMethod(script.script_end_collision, script.script_object, GameObjectInterface::NewGameObjectWithExistingEntity(entity_1, scene_index_1));
 		}
 	}
 }

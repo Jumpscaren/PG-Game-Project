@@ -59,6 +59,11 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 			return 0;
 		}
 
+		if (width == 0 || height == 0)
+		{
+			return 0;
+		}
+
 		if (RenderCore::Get()->GetWindow()->GetWindowWidth() != width || RenderCore::Get()->GetWindow()->GetWindowHeight() != height)
 		{
 			RenderCore::Get()->Resize(width, height);

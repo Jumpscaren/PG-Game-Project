@@ -16,11 +16,12 @@ struct Vector2
 	const Vector2 operator* (const Vector2& vector);
 	friend const Vector2 operator* (const Vector2& vector_1, const Vector2& vector_2);
 	const Vector2 operator*= (const Vector2& vector);
-	const Vector2 operator* (uint8_t scalar);
+	const Vector2 operator* (float scalar);
 	const Vector2 operator/ (float scalar);
 
 	Vector2 Normalize() const;
 	const float Length() const;
+	static float Cross(const Vector2& a, const Vector2& b);
 };
 
 struct Vector2i
@@ -46,7 +47,19 @@ struct Vector3
 
 	operator DirectX::XMVECTOR() const;
 	const Vector3 operator= (const DirectX::XMVECTOR& vector);
+	const Vector3 operator+ (const Vector3& vector);
+	friend const Vector3 operator+ (const Vector3& vector_1, const Vector3& vector_2);
+	const Vector3 operator- (const Vector3& vector);
+	friend const Vector3 operator- (const Vector3& vector_1, const Vector3& vector_2);
 	const Vector3 operator* (float scalar);
+
+	Vector3 Normalize() const;
+	const float Length() const;
+
+	static float Dot(const Vector3& a, const Vector3& b);
+	static Vector3 Cross(const Vector3& a, const Vector3& b);
+
+	static Vector3 ToVector3(const Vector2& vector);
 };
 
 struct Vector4

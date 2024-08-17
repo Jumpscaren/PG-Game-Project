@@ -38,12 +38,21 @@ private:
 
 		b2Fixture* object_box_fixture = nullptr;
 		b2Fixture* object_circle_fixture = nullptr;
+		std::vector<b2Fixture*> object_polygon_fixtures;
 	};
 
 	struct DeferredPhysicObjectHandle
 	{
 		bool is_physic_object_creation_data;
 		uint64_t index_to_physic_object_data;
+	};
+
+	enum class ColliderType
+	{
+		Box,
+		Circle,
+		Polygon,
+		None
 	};
 
 	struct DeferredPhysicObjectCreationData
@@ -53,7 +62,7 @@ private:
 		PhysicObjectBodyType physic_object_body_type;
 
 		bool has_collider_data;
-		bool is_box_collider;
+		ColliderType collider_type;
 	};
 
 	struct DeferredPhysicObjectDestructionData
@@ -61,7 +70,7 @@ private:
 		Entity entity;
 		SceneIndex scene_index;
 		bool is_collider;
-		bool is_box_collider;
+		ColliderType collider_type;
 		PhysicObjectHandle physic_object_handle;
 	};
 
@@ -112,6 +121,7 @@ private:
 	void RemovePhysicObjectInternal(PhysicObjectHandle physic_object_handle);
 	void RemoveBoxColliderInternal(PhysicObjectHandle physic_object_handle);
 	void RemoveCircleColliderInternal(PhysicObjectHandle physic_object_handle);
+	void RemovePolygonColliderInternal(PhysicObjectHandle physic_object_handle);
 
 	PhysicObjectHandle GetPhysicObjectHandle(EntityManager* entity_manager, Entity entity);
 
@@ -124,8 +134,9 @@ private:
 	void AddDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
 	void AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
 	void AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
+	void AddPolygonColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
 
-	void AddDeferredPhysicObjectDestruction(SceneIndex scene_index, Entity entity, PhysicObjectHandle physic_object_handle, bool is_collider, bool is_box_collider);
+	void AddDeferredPhysicObjectDestruction(const SceneIndex scene_index, const Entity entity, const PhysicObjectHandle physic_object_handle, const bool is_collider, const ColliderType collider_type);
 
 	void HandleDeferredPhysicObjectHandleData();
 	void HandleDeferredPhysicObjectCreationData(const DeferredPhysicObjectCreationData& creation_data);
@@ -133,6 +144,7 @@ private:
 
 	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddPolygonFixture(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool trigger = false, ColliderFilter collider_filter = {});
 
 	static void AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index);
 
@@ -166,12 +178,14 @@ public:
 	void AddPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
 	void AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddPolygonCollider(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 
 	void RemovePhysicObject(SceneIndex scene_index, Entity entity);
 	void RemoveBoxCollider(SceneIndex scene_index, Entity entity);
 	void RemoveCircleCollider(SceneIndex scene_index, Entity entity);
+	void RemovePolygonCollider(SceneIndex scene_index, Entity entity);
 
 	void RemoveDeferredPhysicObjects(EntityManager* entity_manager);
 };

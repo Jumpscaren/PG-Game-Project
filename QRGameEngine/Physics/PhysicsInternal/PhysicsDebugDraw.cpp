@@ -84,7 +84,8 @@ void PhysicsDebugDraw::DrawSolidCircle(const b2Vec2& center, float radius, const
 /// Draw a line segment.
 void PhysicsDebugDraw::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color)
 {
-
+	RenderCore::Get()->AddLine(Vector2(p1.x, p1.y));
+	RenderCore::Get()->AddLine(Vector2(p2.x, p2.y));
 }
 
 /// Draw a transform. Choose your own length scale.

@@ -18,6 +18,12 @@ struct PrefabAndTextureData
 	TextureHandle texture_handle;
 };
 
+struct PolygonEntity
+{
+	Entity ent;
+	uint32_t vertex_index;
+};
+
 class DrawScene
 {
 private:
@@ -31,6 +37,11 @@ private:
 
 	bool m_select;
 	Entity m_select_entity;
+	bool m_in_polygon_builder;
+
+	std::vector<PolygonEntity> m_polygon_vertices;
+	PolygonEntity m_polygon_vertex;
+	bool m_switch_between;
 
 	bool m_in_animation;
 	const std::string m_animation_temp_save_file_name = "animation_temp_save_file_name";
@@ -49,6 +60,10 @@ private:
 	Vector3 GetWorldPositionFromMouse(const CameraComponent& editor_camera_component);
 	BlockData CreateBlock(const Vector3& block_transform);
 	void WriteData(JsonObject& json, const std::string& object_name);
+	void ClearPolygonShaper();
+	void AddPolygonEntity(const Vector2& point, const Vector3& select_position, const uint32_t index);
+
+	void printtriangle(int i, int j);
 
 public:
 	DrawScene();
@@ -61,6 +76,7 @@ public:
 	void Clear();
 	void Select();
 	void Animation();
+	void PolygonShaper();
 
 	bool InEditorMenu() const;
 

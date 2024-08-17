@@ -154,7 +154,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object)
+        void BeginCollision(GameObject collided_game_object, Vector2 normal)
         {
             if (collided_game_object.GetName() == "Bouncer")
             {

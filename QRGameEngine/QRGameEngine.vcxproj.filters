@@ -273,6 +273,9 @@
     <ClCompile Include="ECS\ComponentMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Components\PolygonColliderComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -717,6 +720,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ECS\ComponentMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\PolygonColliderComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,4 +1,5 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.EngineMath;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace ScriptProject.Scripts
             hit_box_action.OnHit(this, hit_script);
         }
 
-        public void BeginCollision(GameObject collided_game_object)
+        public void BeginCollision(GameObject collided_game_object, Vector2 normal)
         {
             if (collided_game_object == avoid_game_object || !collided_game_object.HasComponent<ScriptingBehaviour>())
             {

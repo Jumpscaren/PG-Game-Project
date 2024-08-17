@@ -103,6 +103,9 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("Finish", Finish, 0, "Block");
             PrefabSystem.CreateUserPrefab("ReplaceBlock", ReplaceBlock, 1, "Block");
             PrefabSystem.CreateUserPrefab("Switch", Switch, 1, "Interactive");
+            PrefabSystem.CreateUserPrefab("OrcDistracter", OrcDistracter, 1, "Character");
+            PrefabSystem.CreateUserPrefab("Fireball", Fireball, 0, "Misc");
+            PrefabSystem.CreateUserPrefab("HolePolygon", HolePolygon, 0, "Block");
 
             return 0;
         }
@@ -246,6 +249,37 @@ namespace ScriptProject
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/UglySwitchOff.png"));
             game_object.AddComponent<SwitchScript>();
+        }
+
+        static void OrcDistracter(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/OrcDistracter.png"));
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            var collider = game_object.AddComponent<CircleCollider>();
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            collider.SetRadius(0.49f);
+            game_object.AddComponent<OrcDistracter>();
+        }
+
+        static void Fireball(GameObject game_object)
+        {
+            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Fireball.png"));
+            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<CircleCollider>().SetTrigger(true);
+            game_object.SetName("Fireball");
+        }
+
+        static void HolePolygon(GameObject game_object)
+        {
+            game_object.AddComponent<PureStaticBody>();
+            game_object.SetTag(UserTags.Hole);
+
+            var polygon_collider = game_object.AddComponent<PolygonCollider>();
+            polygon_collider.SetTrigger(true);
+
+            game_object.GetComponent<Sprite>();
+            game_object.RemoveComponent<Sprite>();
         }
     }
 }

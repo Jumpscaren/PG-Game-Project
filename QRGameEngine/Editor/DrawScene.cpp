@@ -24,6 +24,8 @@
 #include "Components/AnimatableSpriteComponent.h"
 #include <filesystem>
 #include "Animation/AnimationManager.h"
+#include "Components/PolygonColliderComponent.h"
+#include "Input/Keyboard.h"
 
 std::unordered_map<std::string, std::vector<PrefabAndTextureData>> DrawScene::m_user_prefabs;
 std::string DrawScene::m_category_in_use;
@@ -116,6 +118,7 @@ void DrawScene::Update()
 					if (ImGui::Selectable(filename.c_str(), is_selected))
 					{
 						m_scene_name = filename;
+						m_scene_name.resize(50);
 					}
 					if (is_selected)
 					{
@@ -245,6 +248,11 @@ void DrawScene::Update()
 	if (m_select)
 	{
 		Select();
+		PolygonShaper();
+	}
+	else
+	{
+		ClearPolygonShaper();
 	}
 	if (m_in_animation)
 	{
@@ -413,8 +421,40 @@ void DrawScene::WriteData(JsonObject& json, const std::string& object_name)
 	}
 }
 
+void DrawScene::ClearPolygonShaper()
+{
+	SceneManager* scene_manager = SceneManager::GetSceneManager();
+	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+
+	m_in_polygon_builder = false;
+
+	for (const auto pol_ent : m_polygon_vertices)
+	{
+		entity_manager->RemoveEntity(pol_ent.ent);
+	}
+	m_polygon_vertices.clear();
+	m_polygon_vertex.ent = NULL_ENTITY;
+}
+
+void DrawScene::AddPolygonEntity(const Vector2& point, const Vector3& select_position, const uint32_t index)
+{
+	SceneManager* scene_manager = SceneManager::GetSceneManager();
+	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+
+	Entity ent = entity_manager->NewEntity();
+	entity_manager->AddComponent<TransformComponent>(ent).SetPosition(Vector3(point.x + select_position.x, point.y + select_position.y, 0.1f)).SetScale(Vector3(0.075f, 0.075f, 1.0f));
+	entity_manager->AddComponent<SpriteComponent>(ent).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png");
+
+	m_polygon_vertices.push_back(PolygonEntity{ .ent = ent, .vertex_index = index });
+}
+
 void DrawScene::Select()
 {
+	if (m_in_polygon_builder)
+	{
+		return;
+	}
+
 	Entity editor_camera = EditorCore::Get()->GetEditorCameraEntity();
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 
@@ -467,7 +507,7 @@ void DrawScene::Select()
 		ImGui::End();
 	}
 
-	if (!InEditorMenu() && Mouse::Get()->GetMouseButtonPressed(Mouse::MouseButton::LEFT))
+	if (!InEditorMenu() && !entity_manager->EntityExists(m_polygon_vertex.ent) && Mouse::Get()->GetMouseButtonPressed(Mouse::MouseButton::LEFT))
 	{
 		const Vector3 world_mouse_position = GetWorldPositionFromMouse(editor_camera_component);
 
@@ -587,6 +627,490 @@ void DrawScene::Animation()
 			const auto& sprite_texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
 			m_animation_texture_name = sprite_texture_path.substr(folder_path.length(), sprite_texture_path.length() - folder_path.length());
 		}
+	}
+}
+
+std::vector<PolygonEntity> polygons;
+
+//enum Turn
+//{
+//	Right,
+//	Left,
+//	NoTurn
+//} turn;
+//
+//Turn GetTurn(const Vector3& p, const Vector3& u, const Vector3& n, const Vector3& q)
+//{
+//	const auto v = Vector3::Cross(q - p, u);
+//	const auto d = Vector3::Dot(v, n);
+//
+//	const auto epsilon = 1e-6;
+//	if (d > epsilon)
+//	{
+//		turn = Right;
+//	}
+//	if (d < -epsilon)
+//	{
+//		turn = Left;
+//	}
+//	return NoTurn;
+//}
+//
+//bool isInsideTriangle(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& q)
+//{
+//	const auto v0 = c - a;
+//	const auto v1 = b - a;
+//	const auto v2 = q - a;
+//
+//	const auto dot00 = Vector3::Dot(v0, v0);
+//	const auto dot01 = Vector3::Dot(v0, v1);
+//	const auto dot02 = Vector3::Dot(v0, v2);
+//	const auto dot11 = Vector3::Dot(v1, v1);
+//	const auto dot12 = Vector3::Dot(v1, v2);
+//
+//	const auto denom = dot00 * dot11 - dot01 * dot01;
+//
+//	const auto zero = 1e-15;
+//	if (std::abs(denom) < zero)
+//	{
+//		return false;
+//	}
+//
+//	const auto invDenom = 1.0 / denom;
+//
+//	const auto ux = (dot11 * dot02 - dot01 * dot12) * invDenom;
+//	const auto vx = (dot00 * dot12 - dot01 * dot02) * invDenom;
+//
+//	return (ux >= 0.0 && vx >= 0.0 && ux + vx < 1.0);
+//}
+//
+//bool IsEar(int index, const Vector3& normal)
+//{
+//	SceneManager* scene_manager = SceneManager::GetSceneManager();
+//	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+//
+//	const auto n = polygons.size();
+//	if (n < 3)
+//	{
+//		return false;
+//	}
+//	if (n == 3)
+//	{
+//		return true;
+//	}
+//
+//	const auto prev_index = (index - 1 + n) % n;
+//	const auto next_index = (index + 1) % n;
+//
+//	const auto prev = polygons[prev_index];
+//	const auto item = polygons[index];
+//	const auto next = polygons[next_index];
+//
+//	const Vector3 p1 = entity_manager->GetComponent<TransformComponent>(prev.ent).GetPosition();
+//	const Vector3 i2 = entity_manager->GetComponent<TransformComponent>(item.ent).GetPosition();
+//	const Vector3 n3 = entity_manager->GetComponent<TransformComponent>(next.ent).GetPosition();
+//
+//	const auto u = (i2 - p1).Normalize();
+//
+//	if (GetTurn(p1, u, normal, n3) != Turn::Right)
+//	{
+//		return false;
+//	}
+//
+//	for (int j = 0; j < n; ++j)
+//	{
+//		if (j == index || j == prev_index || j == next_index)
+//		{
+//			continue;
+//		}
+//
+//		const auto polygon_vertex = polygons[j];
+//		const Vector3 poly4 = entity_manager->GetComponent<TransformComponent>(polygon_vertex.ent).GetPosition();
+//
+//		const auto inside = isInsideTriangle(p1, i2, n3, poly4);
+//
+//		if (inside)
+//		{
+//			return false;
+//		}
+//	}
+//	return true;
+//}
+//
+//int GetBiggestEar(const Vector3& normal)
+//{
+//	SceneManager* scene_manager = SceneManager::GetSceneManager();
+//	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+//
+//	const auto n = polygons.size();
+//	if (n == 3)
+//	{
+//		return 0;
+//	}
+//	if (n == 0)
+//	{
+//		return -1;
+//	}
+//
+//	int max_index = -1;
+//	float max_area = -10000000000000000000000.0f;
+//
+//	for (int i = 0; i < n; ++i)
+//	{
+//		if (IsEar(i, normal))
+//		{
+//			const auto prev_index = (i - 1 + n) % n;
+//			const auto next_index = (i + 1) % n;
+//
+//			const auto prev = polygons[prev_index];
+//			const auto item = polygons[i];
+//			const auto next = polygons[next_index];
+//
+//			const Vector3 p1 = entity_manager->GetComponent<TransformComponent>(prev.ent).GetPosition();
+//			const Vector3 i2 = entity_manager->GetComponent<TransformComponent>(item.ent).GetPosition();
+//			const Vector3 n3 = entity_manager->GetComponent<TransformComponent>(next.ent).GetPosition();
+//
+//			const auto c = Vector3::Cross(i2 - p1, n3 - p1);
+//			const auto area = c.Length() * c.Length() / 4.0f;
+//
+//			if (area > max_area)
+//			{
+//				max_index = i;
+//				max_area = area;
+//			}
+//		}
+//	}
+//
+//	return max_index;
+//}
+//
+//int GetOverlappingEar(const Vector3& normal)
+//{
+//	SceneManager* scene_manager = SceneManager::GetSceneManager();
+//	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+//
+//	const auto n = polygons.size();
+//	if (n == 0)
+//	{
+//		return -1;
+//	}
+//	if (n == 3)
+//	{
+//		return 0;
+//	}
+//
+//	for (int k = 0; k <n; ++k)
+//	{
+//		const auto prev_index = (k - 1 + n) % n;
+//		const auto next_index = (k + 1) % n;
+//
+//		const auto prev = polygons[prev_index];
+//		const auto item = polygons[k];
+//		const auto next = polygons[next_index];
+//
+//		const Vector3 p1 = entity_manager->GetComponent<TransformComponent>(prev.ent).GetPosition();
+//		const Vector3 i2 = entity_manager->GetComponent<TransformComponent>(item.ent).GetPosition();
+//		const Vector3 n3 = entity_manager->GetComponent<TransformComponent>(next.ent).GetPosition();
+//
+//		const auto u = (i2 - p1).Normalize();
+//
+//		if (GetTurn(p1, u, normal, n3) != Turn::NoTurn)
+//		{
+//			continue;
+//		}
+//
+//		const auto v = (n3 - i2).Normalize();
+//
+//		if (Vector3::Dot(u, v) < 0.0f)
+//		{
+//			return k;
+//		}
+//	}
+//
+//	return -1;
+//}
+//
+//struct Triangle
+//{
+//	uint32_t prev_index;
+//	uint32_t item_index;
+//	uint32_t next_index;
+//};
+//std::vector<Triangle> CutTriangulation(const Vector3& normal)
+//{
+//	std::vector<Triangle> triangles;
+//
+//	for (int i = 0; i < polygons.size();)
+//	{
+//		auto index = GetBiggestEar(normal);
+//
+//		if (index == -1)
+//		{
+//			index = GetOverlappingEar(normal);
+//		}
+//
+//		if (index == -1)
+//		{
+//			//++i;
+//			//if (i >= 0)
+//			//{
+//			//	i = i % polygons.size();
+//			//}
+//			//continue;
+//			index = 0;
+//			//return {};
+//		}
+//
+//		const auto n = polygons.size();
+//		const auto prev_index = (index - 1 + n) % n;
+//		const auto next_index = (index + 1) % n;
+//
+//		const auto prev = polygons[prev_index];
+//		const auto item = polygons[index % n];
+//		const auto next = polygons[next_index];
+//
+//		triangles.push_back(Triangle{ .prev_index = prev.vertex_index, .item_index = item.vertex_index, .next_index = next.vertex_index });
+//
+//		polygons.erase(polygons.begin() + index);
+//		if (index <= i)
+//		{
+//			--i;
+//		}
+//		if (polygons.size() < 3)
+//		{
+//			break;
+//		}
+//		++i;
+//		if (i >= 0)
+//		{
+//			i = i % polygons.size();
+//		}
+//	}
+//
+//	return triangles;
+//}
+
+bool show_triangles = false;
+void DrawScene::PolygonShaper()
+{
+	Entity editor_camera = EditorCore::Get()->GetEditorCameraEntity();
+	SceneManager* scene_manager = SceneManager::GetSceneManager();
+
+	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
+	CameraComponent editor_camera_component = scene_manager->GetEntityManager(GlobalScene::Get()->GetSceneIndex())->GetComponent<CameraComponent>(editor_camera);
+
+	if (entity_manager->EntityExists(m_select_entity))
+	{
+		if (!entity_manager->HasComponent<PolygonColliderComponent>(m_select_entity))
+		{
+			ClearPolygonShaper();
+			m_switch_between = false;
+			return;
+		}
+
+		bool add = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM1);
+		bool remove = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM2);
+		bool switch_between = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM3);
+		bool stop = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM4);
+		bool show = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM5);
+
+		ImGui::Begin("Polygon Editor");
+		{
+			ImGui::Text("Add Vertex - Press 1");
+			ImGui::Text("Remove Current Vertex - Press 2");
+			ImGui::Text("Switch - Press 3");
+			ImGui::Text("Exit - Press 4");
+			ImGui::Text("Show - Press 5");
+		}
+		ImGui::End();
+
+		if (switch_between)
+		{
+			m_switch_between = !m_switch_between;
+			if (m_switch_between)
+			{
+				ClearPolygonShaper();
+				return;
+			}
+		}
+
+		if (stop)
+		{
+			ClearPolygonShaper();
+			m_select_entity = NULL_ENTITY;
+			m_select = false;
+
+			return;
+		}
+
+		if (show)
+		{
+			show_triangles = !show_triangles;
+		}
+
+		if (m_switch_between)
+		{
+			return;
+		}
+
+		const TransformComponent& select_transform = entity_manager->GetComponent<TransformComponent>(m_select_entity);
+		PolygonColliderComponent& polygon = entity_manager->GetComponent<PolygonColliderComponent>(m_select_entity);
+		const Vector3 select_position = select_transform.GetPosition();
+
+		if (!m_in_polygon_builder)
+		{
+			uint32_t index = 0;
+			for (Vector2& point : polygon.points)
+			{
+				AddPolygonEntity(point, select_position, index);
+				++index;
+			}
+			m_in_polygon_builder = true;
+		}
+
+		bool selected_vertex = false;
+		Vector3 world_mouse_position = CameraComponentInterface::ScreenToWorld(editor_camera_component, Vector2((float)Mouse::Get()->GetMouseCoords().x, (float)Mouse::Get()->GetMouseCoords().y));
+		if (!entity_manager->EntityExists(m_polygon_vertex.ent))
+		{
+			for (const auto pol_ent : m_polygon_vertices)
+			{
+				const TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(pol_ent.ent);
+				const Vector3 pol_ent_pos = transform.GetPosition();
+				if (transform.GetPosition().x - transform.GetScale().x <= world_mouse_position.x && transform.GetPosition().x + transform.GetScale().x >= world_mouse_position.x &&
+					transform.GetPosition().y - transform.GetScale().y <= world_mouse_position.y && transform.GetPosition().y + transform.GetScale().y >= world_mouse_position.y &&
+					Mouse::Get()->GetMouseButtonPressed(Mouse::MouseButton::LEFT))
+				{
+					m_polygon_vertex = pol_ent;
+					selected_vertex = true;
+				}
+
+				//	float smallest_t = 0.0f;
+				//	for (int i = 0; i < m_polygon_vertices.size(); ++i)
+				//	{
+				//		auto next = i + 1;
+				//		if (next >= m_polygon_vertices.size())
+				//		{
+				//			next = 0;
+				//		}
+
+				//		const Vector3 v1 = entity_manager->GetComponent<TransformComponent>(m_polygon_vertices[i].ent).GetPosition();
+				//		const Vector3 v2 = entity_manager->GetComponent<TransformComponent>(m_polygon_vertices[next].ent).GetPosition();
+
+				//		const Vector3 diff = v2 - v1;
+				//		Vector2 dir(diff.x, diff.y);
+				//		dir = dir.Normalize();
+
+				//		float u = 0.0f;
+				//		float small_change = 0.0f;
+				//		if (std::abs(dir.x) > 0.000001f)
+				//		{
+				//			u = (pol_ent_pos.x - small_change - v1.x) / dir.x;
+				//		}
+				//		if (std::abs(dir.x) < 0.000001f || std::abs(dir.y) < 0.000001f)
+				//		{
+				//			continue;
+				//		}
+				//		if (u < 0.0f)
+				//		{
+				//			continue;
+				//		}
+				//		const float mx = diff.x / dir.x;
+				//		if (u > mx)
+				//		{
+				//			continue;
+				//		}
+
+				//		float t = pol_ent_pos.y - small_change - v1.y - dir.y * u;
+				//		if (std::abs(t) > std::abs(smallest_t))
+				//		{
+				//			smallest_t = t;
+				//		}
+				//	}
+				//	lines.push_back({ Vector2(pol_ent_pos.x, pol_ent_pos.y), smallest_t, pol_ent.vertex_index });
+				//	RenderCore::Get()->AddLine(Vector2(pol_ent_pos.x, pol_ent_pos.y));
+				//	RenderCore::Get()->AddLine(Vector2(pol_ent_pos.x, pol_ent_pos.y) + Vector2(0.0f, -1.0f) * smallest_t);
+				//}
+			}
+
+			Vector3 normal;
+			for (int i = 0; i < m_polygon_vertices.size(); ++i)
+			{
+				const auto item = m_polygon_vertices[i];
+				const auto next = m_polygon_vertices[(i + 1) % m_polygon_vertices.size()];
+
+				const Vector3 v1 = entity_manager->GetComponent<TransformComponent>(item.ent).GetPosition();
+				const Vector3 v2 = entity_manager->GetComponent<TransformComponent>(next.ent).GetPosition();
+
+				normal.x += (v2.y - v1.y) * (v2.z + v1.z);
+				normal.y += (v2.z - v1.z) * (v2.x + v1.x);
+				normal.z += (v2.x - v1.x) * (v2.y + v1.y);
+			}
+			normal = normal.Normalize();
+
+			polygons = m_polygon_vertices;
+			std::ranges::reverse(polygons);
+
+			if (show_triangles)
+			{
+				const auto triangles = PolygonColliderComponentInterface::CreatePolygonTriangulation(m_select_entity, entity_manager);//CutTriangulation(normal);
+				for (const auto& triangle : triangles)
+				{
+					const Vector3 p1 = Vector3(triangle.prev_point.x + select_position.x, triangle.prev_point.y + select_position.y, 0.1f);
+					const Vector3 i2 = Vector3(triangle.point.x + select_position.x, triangle.point.y + select_position.y, 0.1f);
+					const Vector3 n3 = Vector3(triangle.next_point.x + select_position.x, triangle.next_point.y + select_position.y, 0.1f);
+
+					RenderCore::Get()->AddLine(Vector2(p1.x, p1.y));
+					RenderCore::Get()->AddLine(Vector2(i2.x, i2.y));
+
+					RenderCore::Get()->AddLine(Vector2(p1.x, p1.y));
+					RenderCore::Get()->AddLine(Vector2(n3.x, n3.y));
+
+					RenderCore::Get()->AddLine(Vector2(i2.x, i2.y));
+					RenderCore::Get()->AddLine(Vector2(n3.x, n3.y));
+				}
+			}
+		}
+
+		if (add) //&& m_polygon_vertices.size() < 8)
+		{
+			Vector2 new_point = Vector2();
+			AddPolygonEntity(new_point, select_position, (uint32_t)m_polygon_vertices.size());
+			polygon.points.push_back(new_point);
+		}
+
+		if (remove && entity_manager->EntityExists(m_polygon_vertex.ent) && m_polygon_vertices.size() > 3)
+		{
+			const auto index = m_polygon_vertex.vertex_index;
+			for (int i = index; i < m_polygon_vertices.size(); ++i)
+			{
+				m_polygon_vertices[i].vertex_index = i - 1;
+			}
+
+			entity_manager->RemoveEntity(m_polygon_vertex.ent);
+			m_polygon_vertices.erase(m_polygon_vertices.begin() + index);
+			polygon.points.erase(polygon.points.begin() + index);
+
+			m_polygon_vertex.ent = NULL_ENTITY;
+		}
+
+		if (entity_manager->EntityExists(m_polygon_vertex.ent))
+		{
+			TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(m_polygon_vertex.ent);
+
+			Vector3 position = transform.GetPosition();
+
+			Vector2& point = polygon.points[m_polygon_vertex.vertex_index];
+			Vector3 diff = world_mouse_position - position;
+			transform.SetPosition(Vector3(world_mouse_position.x, world_mouse_position.y, 0.1f));
+
+			point = point + Vector2(diff.x, diff.y);
+			if (!selected_vertex && Mouse::Get()->GetMouseButtonPressed(Mouse::MouseButton::LEFT))
+			{
+				m_polygon_vertex.ent = NULL_ENTITY;
+			}
+		}
+
+		polygon.update_polygon_collider = true;
 	}
 }
 

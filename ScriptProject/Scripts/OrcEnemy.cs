@@ -55,6 +55,8 @@ namespace ScriptProject.Scripts
         bool falling = false;
         float falling_speed = 1.0f;
 
+        List<GameObject> holes = new List<GameObject>();
+
         public class OrcAngryEventData : EventSystem.BaseEventData
         {
             public GameObject orc_to_target;
@@ -143,7 +145,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object)
+        void BeginCollision(GameObject collided_game_object, Vector2 normal)
         {
 
             if (collided_game_object.GetName() == "Bouncer")
@@ -154,28 +156,30 @@ namespace ScriptProject.Scripts
 
             if (!dead && collided_game_object.GetTag() == UserTags.Hole)
             {
-                TakeDamage(100.0f);
-                body.SetVelocity(new Vector2());
-                falling = true;
-                GameObject.DeleteGameObject(mid_block);
-                game_object.RemoveComponent<CircleCollider>();
+                if (body.GetVelocity().Length() > max_speed)
+                {
+                    holes.Add(collided_game_object);
+                }
+                else
+                {
+                    DieByFalling();
+                }
             }
+        }
 
-            //if (collided_game_object.GetTag() == UserTags.PlayerHitbox)
-            //{
-            //    health -= 10.0f;
-            //    float rot = collided_game_object.GetParent().transform.GetLocalRotation();
-            //    Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-            //    body.SetVelocity(dir * 10.3f);
-            //}
-
-            //if (collided_game_object.GetTag() == UserTags.EnemyHitbox && collided_game_object != hit_box)
-            //{
-            //    health -= 5.0f;
-            //    float rot = collided_game_object.GetParent().transform.GetLocalRotation();
-            //    Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-            //    body.SetVelocity(dir * 10.3f);
-            //}
+        void EndCollision(GameObject collided_game_object)
+        {
+            if (collided_game_object.GetTag() == UserTags.Hole)
+            {
+                foreach (var hole in holes)
+                {
+                    if (hole == collided_game_object)
+                    {
+                        holes.Remove(collided_game_object);
+                        break;
+                    }
+                }
+            }
         }
 
         void CreateHitBox()
@@ -253,6 +257,11 @@ namespace ScriptProject.Scripts
 
         void Death()
         {
+            if (holes.Count > 0 && body.GetVelocity().Length() - 0.1001f <= max_speed)
+            {
+                DieByFalling();
+            }
+
             if (health <= 0.0f && !falling)
             {
                 health = 0.0f;
@@ -266,11 +275,13 @@ namespace ScriptProject.Scripts
             if (dead && falling)
             {
                 var scale = transform.GetScale();
-                Console.WriteLine("Scale: " + scale);
+                var rotation = transform.GetLocalRotation();
                 scale.x -= falling_speed * Time.GetDeltaTime();
                 scale.y -= falling_speed * Time.GetDeltaTime();
+                rotation += falling_speed * Time.GetDeltaTime();
                 falling_speed += 1.5f * Time.GetDeltaTime();
                 transform.SetScale(scale);
+                transform.SetLocalRotation(rotation);
                 if (scale.x < 0.01f)
                 {
                     GameObject.DeleteGameObject(game_object);
@@ -330,6 +341,20 @@ namespace ScriptProject.Scripts
                 attacking = false;
                 hit_box_body.SetEnabled(false);
             }
+        }
+
+        void DieByFalling()
+        {
+            if (dead)
+            {
+                return;
+            }
+
+            TakeDamage(100.0f);
+            body.SetVelocity(new Vector2());
+            falling = true;
+            GameObject.DeleteGameObject(mid_block);
+            game_object.RemoveComponent<CircleCollider>();
         }
 
         float GetMidBlockRotation(float calculated_rot)

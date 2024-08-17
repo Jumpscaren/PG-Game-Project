@@ -25,6 +25,7 @@
 #include "Components/PathFindingActorComponent.h"
 #include "Components/PureStaticBodyComponent.h"
 #include "Scripting/Objects/ListSetInterface.h"
+#include "Components/PolygonColliderComponent.h"
 
 void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 {
@@ -56,4 +57,5 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	PathFindingActorComponentInterface::RegisterInterface(mono_core);
 	ListSetInterface::RegisterInterface(mono_core);
 	PureStaticBodyComponentInterface::RegisterInterface(mono_core);
+	PolygonColliderComponentInterface::RegisterInterface(mono_core);
 }

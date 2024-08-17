@@ -59,6 +59,10 @@ namespace ScriptProject.Scripts
 
         GameObject old_target = null;
 
+        bool dead = false;
+        bool falling = false;
+        float falling_speed = 1.0f;
+
         public static int GetCount()
         {
             return count;
@@ -129,19 +133,22 @@ namespace ScriptProject.Scripts
             }
 
             Death();
-            Look();
-            Move();
-            Attack();
-            PrincessLogic();
-
-            Vector2 target_dir = target.transform.GetPosition() - transform.GetPosition();
-            if (target == door_game_object && target_dir.Length() < 0.1f)
+            if (!dead)
             {
-                GameObject.DeleteGameObject(game_object);
-                princess_script.SetRescueState();
-                GameObject new_game_object = GameObject.CreateGameObject();
-                new_game_object.AddComponent<Sprite>();
-                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
+                Look();
+                Move();
+                Attack();
+                PrincessLogic();
+
+                Vector2 target_dir = target.transform.GetPosition() - transform.GetPosition();
+                if (target == door_game_object && target_dir.Length() < 0.1f)
+                {
+                    GameObject.DeleteGameObject(game_object);
+                    princess_script.SetRescueState();
+                    GameObject new_game_object = GameObject.CreateGameObject();
+                    new_game_object.AddComponent<Sprite>();
+                    PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
+                }
             }
         }
 
@@ -156,6 +163,10 @@ namespace ScriptProject.Scripts
         public override void TakeDamage(float damage)
         {
             health -= damage;
+            if (health <= 0.0f)
+            {
+                dead = true;
+            }
         }
 
         public override void Knockback(Vector2 dir, float knockback)
@@ -163,7 +174,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object)
+        void BeginCollision(GameObject collided_game_object, Vector2 normal)
         {
 
             if (collided_game_object.GetName() == "Bouncer")
@@ -172,9 +183,13 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (collided_game_object.GetTag() == UserTags.Hole)
+            if (!dead && collided_game_object.GetTag() == UserTags.Hole)
             {
-                health = -1.0f;
+                TakeDamage(100.0f);
+                body.SetVelocity(new Vector2());
+                falling = true;
+                GameObject.DeleteGameObject(mid_block);
+                game_object.RemoveComponent<CircleCollider>();
             }
         }
 
@@ -257,7 +272,7 @@ namespace ScriptProject.Scripts
 
         void Death()
         {
-            if (health <= 0.0f)
+            if (health <= 0.0f && !falling)
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
@@ -265,6 +280,22 @@ namespace ScriptProject.Scripts
                 //new_game_object.AddComponent<Sprite>();
                 //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
                 return;
+            }
+
+            if (dead && falling)
+            {
+                var scale = transform.GetScale();
+                var rotation = transform.GetLocalRotation();
+                scale.x -= falling_speed * Time.GetDeltaTime();
+                scale.y -= falling_speed * Time.GetDeltaTime();
+                rotation += falling_speed * Time.GetDeltaTime();
+                falling_speed += 1.5f * Time.GetDeltaTime();
+                transform.SetScale(scale);
+                transform.SetLocalRotation(rotation);
+                if (scale.x < 0.01f)
+                {
+                    GameObject.DeleteGameObject(game_object);
+                }
             }
         }
 
