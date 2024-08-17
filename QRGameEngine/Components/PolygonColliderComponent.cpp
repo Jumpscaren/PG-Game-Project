@@ -46,31 +46,7 @@ void PolygonColliderComponentInterface::RemoveComponent(const CSMonoObject& obje
 	PhysicsCore::Get()->RemovePolygonCollider(scene_index, entity);
 }
 
-enum Turn
-{
-	Right,
-	Left,
-	NoTurn
-} turn;
-
-Turn GetTurn(const Vector3& p, const Vector3& u, const Vector3& n, const Vector3& q)
-{
-	const auto v = Vector3::Cross(q - p, u);
-	const auto d = Vector3::Dot(v, n);
-
-	const auto epsilon = 1e-6;
-	if (d > epsilon)
-	{
-		turn = Right;
-	}
-	if (d < -epsilon)
-	{
-		turn = Left;
-	}
-	return NoTurn;
-}
-
-bool isInsideTriangle(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& q)
+bool IsInsideTriangle(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& q)
 {
 	const auto v0 = c - a;
 	const auto v1 = b - a;
@@ -98,147 +74,40 @@ bool isInsideTriangle(const Vector3& a, const Vector3& b, const Vector3& c, cons
 	return (ux >= 0.0 && vx >= 0.0 && ux + vx < 1.0);
 }
 
-bool IsEar(const std::vector<Vector2>& polygons, int index, const Vector3& normal)
+bool IsAnEar(const std::vector<Vector2>& polygons, const size_t prev_index, const size_t index, const size_t next_index)
 {
-	SceneManager* scene_manager = SceneManager::GetSceneManager();
-	EntityManager* entity_manager = scene_manager->GetEntityManager(scene_manager->GetActiveSceneIndex());
-
 	const auto n = polygons.size();
-	if (n < 3)
-	{
-		return false;
-	}
-	if (n == 3)
-	{
-		return true;
-	}
-
-	const auto prev_index = (index - 1 + n) % n;
-	const auto next_index = (index + 1) % n;
 
 	const auto prev = polygons[prev_index];
-	const auto item = polygons[index];
+	const auto item = polygons[index % n];
 	const auto next = polygons[next_index];
 
-	const Vector3 p1 = Vector3(prev.x, prev.y, 0.0f);
-	const Vector3 i2 = Vector3(item.x, item.y, 0.0f);
-	const Vector3 n3 = Vector3(next.x, next.y, 0.0f);
-
-	const auto u = (i2 - p1).Normalize();
-
-	if (GetTurn(p1, u, normal, n3) != Turn::Right)
+	if (!(Vector2::Cross(item - prev, next - item) > 0.0f))
 	{
 		return false;
 	}
 
-	for (int j = 0; j < n; ++j)
+	bool vertexInsideTriangle = false;
+	int vertex_count = -1;
+	for (const auto& vertex : polygons)
 	{
-		if (j == index || j == prev_index || j == next_index)
+		++vertex_count;
+		if (vertex_count == index || vertex_count == prev_index || vertex_count == next_index)
 		{
 			continue;
 		}
 
-		const auto polygon_vertex = polygons[j];
-		const Vector3 poly4 = Vector3(polygon_vertex.x, polygon_vertex.y);
-
-		const auto inside = isInsideTriangle(p1, i2, n3, poly4);
-
-		if (inside)
+		if (IsInsideTriangle(Vector3::ToVector3(prev), Vector3::ToVector3(item), Vector3::ToVector3(next), Vector3::ToVector3(vertex)))
 		{
-			return false;
+			vertexInsideTriangle = true;
+			break;
 		}
 	}
-	return true;
+
+	return !vertexInsideTriangle;
 }
 
-int GetBiggestEar(const std::vector<Vector2>& polygons, const Vector3& normal)
-{
-	const auto n = polygons.size();
-	if (n == 3)
-	{
-		return 0;
-	}
-	if (n == 0)
-	{
-		return -1;
-	}
-
-	int max_index = -1;
-	float max_area = -10000000000000000000000.0f;
-
-	for (int i = 0; i < n; ++i)
-	{
-		if (IsEar(polygons, i, normal))
-		{
-			const auto prev_index = (i - 1 + n) % n;
-			const auto next_index = (i + 1) % n;
-
-			const auto prev = polygons[prev_index];
-			const auto item = polygons[i];
-			const auto next = polygons[next_index];
-
-			const Vector3 p1 = Vector3(prev.x, prev.y, 0.0f);
-			const Vector3 i2 = Vector3(item.x, item.y, 0.0f);
-			const Vector3 n3 = Vector3(next.x, next.y, 0.0f);
-
-			const auto c = Vector3::Cross(i2 - p1, n3 - p1);
-			const auto area = c.Length() * c.Length() / 4.0f;
-
-			if (area > max_area)
-			{
-				max_index = i;
-				max_area = area;
-			}
-		}
-	}
-
-	return max_index;
-}
-
-int GetOverlappingEar(const std::vector<Vector2>& polygons, const Vector3& normal)
-{
-	const auto n = polygons.size();
-	if (n == 0)
-	{
-		return -1;
-	}
-	if (n == 3)
-	{
-		return 0;
-	}
-
-	for (int k = 0; k < n; ++k)
-	{
-		const auto prev_index = (k - 1 + n) % n;
-		const auto next_index = (k + 1) % n;
-
-		const auto prev = polygons[prev_index];
-		const auto item = polygons[k];
-		const auto next = polygons[next_index];
-
-		const Vector3 p1 = Vector3(prev.x, prev.y, 0.0f);
-		const Vector3 i2 = Vector3(item.x, item.y, 0.0f);
-		const Vector3 n3 = Vector3(next.x, next.y, 0.0f);
-
-		const auto u = (i2 - p1).Normalize();
-
-		if (GetTurn(p1, u, normal, n3) != Turn::NoTurn)
-		{
-			continue;
-		}
-
-		const auto v = (n3 - i2).Normalize();
-
-		if (Vector3::Dot(u, v) < 0.0f)
-		{
-			return k;
-		}
-	}
-
-	return -1;
-}
-
-std::vector<Triangle> CutTriangulation(std::vector<Vector2> polygons, const Vector3& normal)
+std::vector<Triangle> Triangulation(std::vector<Vector2> polygons)
 {
 	std::vector<Triangle> triangles;
 
@@ -246,71 +115,42 @@ std::vector<Triangle> CutTriangulation(std::vector<Vector2> polygons, const Vect
 	{
 		const auto n = polygons.size();
 
-		auto index = GetBiggestEar(polygons, normal);
+		const auto prev_index = (i - 1 + n) % n;
+		const auto next_index = (i + 1) % n;
 
-		if (index == -1)
+		if (!IsAnEar(polygons, prev_index, i, next_index))
 		{
-			index = GetOverlappingEar(polygons, normal);
+			++i;
+			i = i % polygons.size();
+			continue;
 		}
-
-		if (index == -1)
-		{
-			index = 0;
-		}
-
-		const auto prev_index = (index - 1 + n) % n;
-		const auto next_index = (index + 1) % n;
 
 		const auto prev = polygons[prev_index];
-		const auto item = polygons[index % n];
+		const auto item = polygons[i % n];
 		const auto next = polygons[next_index];
 
 		triangles.push_back(Triangle{ .prev_point = prev, .point = item, .next_point = next });
 
-		polygons.erase(polygons.begin() + index);
-		if (index <= i)
-		{
-			--i;
-		}
+		polygons.erase(polygons.begin() + i);
 		if (polygons.size() < 3)
 		{
 			break;
 		}
-		++i;
-		if (i >= 0)
-		{
-			i = i % polygons.size();
-		}
+		i = i % polygons.size();
 	}
 
 	return triangles;
 }
 
-//https://github.com/StefanJohnsen/pyTriangulate/tree/main
 std::vector<Triangle> PolygonColliderComponentInterface::CreatePolygonTriangulation(Entity ent, EntityManager* entman)
 {
 	const PolygonColliderComponent& polygon_collider = entman->GetComponent<PolygonColliderComponent>(ent);
 
-	Vector3 normal;
-	for (int i = 0; i < polygon_collider.points.size(); ++i)
-	{
-		const auto item = polygon_collider.points[i];
-		const auto next = polygon_collider.points[(i + 1) % polygon_collider.points.size()];
-
-		const Vector3 v1 = Vector3(item.x, item.y, 0.0f);
-		const Vector3 v2 = Vector3(next.x, next.y, 0.0f);
-
-		normal.x += (v2.y - v1.y) * (v2.z + v1.z);
-		normal.y += (v2.z - v1.z) * (v2.x + v1.x);
-		normal.z += (v2.x - v1.x) * (v2.y + v1.y);
-	}
-	normal = normal.Normalize();
-
 	std::vector<Vector2> polygons = polygon_collider.points;
-	std::ranges::reverse(polygons);
-
-	return CutTriangulation(polygons, normal);
+	return Triangulation(polygons);
 }
+
+
 
 void PolygonColliderComponentInterface::SetTrigger(const CSMonoObject& object, bool trigger)
 {
