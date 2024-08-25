@@ -364,6 +364,9 @@ namespace ScriptProject.Engine
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern bool HasParent();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetTag(Byte tag);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

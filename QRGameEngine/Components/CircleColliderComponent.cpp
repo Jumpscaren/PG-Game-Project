@@ -84,6 +84,10 @@ void CircleColliderComponentInterface::SaveScriptComponent(Entity ent, EntityMan
 	const CircleColliderComponent& circle_collider = entman->GetComponent<CircleColliderComponent>(ent);
 	json_object->SetData(circle_collider.trigger, "trigger");
 	json_object->SetData(circle_collider.circle_radius, "circle_radius");
+
+	json_object->SetData(circle_collider.filter.category_bits, "filter.category_bits");
+	json_object->SetData(circle_collider.filter.mask_bits, "filter.mask_bits");
+	json_object->SetData(circle_collider.filter.group_index, "filter.group_index");
 }
 
 void CircleColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
@@ -91,5 +95,10 @@ void CircleColliderComponentInterface::LoadScriptComponent(Entity ent, EntityMan
 	CircleColliderComponent& circle_collider = entman->GetComponent<CircleColliderComponent>(ent);
 	json_object->LoadData(circle_collider.trigger, "trigger");
 	json_object->LoadData(circle_collider.circle_radius, "circle_radius");
+
+	json_object->LoadData(circle_collider.filter.category_bits, "filter.category_bits");
+	json_object->LoadData(circle_collider.filter.mask_bits, "filter.mask_bits");
+	json_object->LoadData(circle_collider.filter.group_index, "filter.group_index");
+
 	circle_collider.update_circle_collider = true;
 }

@@ -50,6 +50,8 @@ namespace ScriptProject.Scripts
         float invincible_timer = 0.0f;
         float invincible_time = 1.0f;
 
+        HoleManager holes = new HoleManager();
+
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -105,10 +107,20 @@ namespace ScriptProject.Scripts
                 SceneManager.RestartActiveScene();
             }
 
+            if(holes.ShouldDieInHole(body.GetVelocity().Length(), max_speed))
+            {
+                TakeDamage(null, 20.0f);
+                game_object.transform.SetPosition(saved_position);
+                body.SetVelocity(new Vector2());
+            }
+
             if (save_position_timer < Time.GetElapsedTime())
             {
                 save_position_timer = Time.GetElapsedTime() + save_position_time;
-                saved_position = game_object.transform.GetPosition();
+                if (!holes.InHoles())
+                {
+                    saved_position = game_object.transform.GetPosition();
+                }
             }
 
             bool show_sprite = true;
@@ -202,7 +214,7 @@ namespace ScriptProject.Scripts
             PrincessLogic();
         }
 
-        public override void TakeDamage(float damage)
+        public override void TakeDamage(GameObject hit_object, float damage)
         {
             if (!is_invincble)
             {
@@ -217,7 +229,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object, Vector2 normal)
+        void BeginCollision(GameObject collided_game_object)
         {
             if (collided_game_object.GetName() == "Bouncer")
             {
@@ -243,11 +255,11 @@ namespace ScriptProject.Scripts
                 game_objects.Clear();
             }
 
-            if (collided_game_object.GetTag() == UserTags.Hole)
+            if (holes.AddHole(collided_game_object, false, max_speed, body.GetVelocity().Length()) == null)
             {
-                //TakeDamage(20.0f);
-                //game_object.transform.SetPosition(saved_position);
-                //body.SetVelocity(new Vector2());
+                TakeDamage(null, 20.0f);
+                game_object.transform.SetPosition(saved_position);
+                body.SetVelocity(new Vector2());
                 Console.WriteLine("Enter - Hole");
                 Console.WriteLine("ETag - " + (int)collided_game_object.GetTag());
             }
@@ -282,10 +294,7 @@ namespace ScriptProject.Scripts
                 //Console.WriteLine("Exit");
             }
 
-            if (collided_game_object.GetTag() == UserTags.Hole)
-            {
-                Console.WriteLine("Exit - Hole");
-            }
+            holes.RemoveHole(collided_game_object);
         }
 
         float GetMidBlockRotation(float calculated_rot)
@@ -339,7 +348,7 @@ namespace ScriptProject.Scripts
                     return;
                 }
 
-                hit_object_script.TakeDamage(damage);
+                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));

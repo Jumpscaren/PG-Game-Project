@@ -358,6 +358,15 @@ MonoMethodHandle CSMonoCore::TryRegisterMonoMethod(const CSMonoObject& mono_obje
 	return mono_method_handle;
 }
 
+MonoClassHandle CSMonoCore::TryGetParentClass(const CSMonoObject& mono_object)
+{
+	if (auto* parent = mono_class_get_parent(mono_object.m_mono_class); parent)
+	{
+		 return RegisterMonoClass(parent);
+	}
+	return NULL_CLASS;
+}
+
 void CSMonoCore::CallStaticMethod(const MonoMethodHandle method_handle)
 {
 	CallMethodInternal(method_handle, nullptr, nullptr, 0);

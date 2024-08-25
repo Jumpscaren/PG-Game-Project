@@ -204,6 +204,30 @@ public:
 			}
 		}
 	}
+
+	template <typename... Component>
+	const std::vector<Entity>& GetEntityList()
+	{
+		std::vector<ComponentPool*> pools;
+		pools.reserve(sizeof...(Component));
+
+		(pools.push_back(&GetComponentPool<Component>()), ...);
+
+		assert(pools.size() != 0);
+
+		ComponentPool* smallest_component_pool = pools[0];
+		for (int i = 1; i < pools.size(); ++i)
+		{
+			if (pools[i]->m_component_pool_entities.size() < smallest_component_pool->m_component_pool_entities.size())
+			{
+				smallest_component_pool = pools[i];
+			}
+		}
+
+		UpdateEntityListIfPoolHasChanged(smallest_component_pool);
+
+		return smallest_component_pool->list_of_component_pool_entities;
+	}
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------

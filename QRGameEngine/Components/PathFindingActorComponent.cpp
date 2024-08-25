@@ -10,6 +10,7 @@
 #include "TransformComponent.h"
 #include "SceneSystem/SceneManager.h"
 #include "Renderer/RenderCore.h"
+#include "Scripting/Objects/ListSetInterface.h"
 
 void PathFindingActorComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -22,6 +23,7 @@ void PathFindingActorComponentInterface::RegisterInterface(CSMonoCore* mono_core
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::PathFind>(path_finding_actor_class, "PathFind_Extern", PathFindingActorComponentInterface::PathFind);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::DebugPath>(path_finding_actor_class, "DebugPath", PathFindingActorComponentInterface::DebugPath);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::NeedNewPathFind>(path_finding_actor_class, "NeedNewPathFind_Extern", PathFindingActorComponentInterface::NeedNewPathFind);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::GetRandomNodes>(path_finding_actor_class, "GetRandomNodes", PathFindingActorComponentInterface::GetRandomNodes);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<PathFindingActorComponent>(SavePathFindingWorldComponent, LoadPathFindingWorldComponent);
 }
@@ -197,6 +199,21 @@ bool PathFindingActorComponentInterface::HasToPathFind(const PathFindingActorCom
 	const bool goal_is_not_null = goal_node != NULL_ENTITY;
 
 	return (goal_node_differ || !is_in_cached_path) && goal_is_not_null && own_node != NULL_ENTITY;
+}
+
+void PathFindingActorComponentInterface::GetRandomNodes(const CSMonoObject& game_object, const CSMonoObject& list, const uint32_t number_of_nodes)
+{
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+
+	const std::vector<Entity>& entities = entity_manager->GetEntityList<TransformComponent, PathFindingWorldComponent>();
+
+	for (uint32_t i = 0; i < number_of_nodes; ++i)
+	{
+		const auto index = rand() % entities.size();
+		ListSetInterface::AddGameObject(list, GameObjectInterface::NewGameObjectWithExistingEntity(entities[index], scene_index));
+	}
 }
 
 //path_finding_actor.cached_path = PathFinding::Get()->PathFind(scene_index, entity, goal_entity);

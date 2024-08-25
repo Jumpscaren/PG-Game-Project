@@ -93,7 +93,7 @@ namespace ScriptProject.Scripts
             {
                 Vector2 direction_to_player = player.transform.GetPosition() - game_object.transform.GetPosition();
                 float distance_to_player = direction_to_player.Length();
-                if (distance_to_player > 0.8f)
+                if (distance_to_player > 1.1f)//0.8f)
                 {
                     follow_player = false;
                     player_script.PrincessStopFollowPlayer();
@@ -144,9 +144,17 @@ namespace ScriptProject.Scripts
             body.SetVelocity(velocity);
         }
 
-        public override void TakeDamage(float damage)
+        public override void TakeDamage(GameObject hit_object, float damage)
         {
             health -= damage;
+            player_script.PrincessStopFollowPlayer();
+            follow_player = false;
+            if (hit_object.GetTag() == UserTags.EnemyHitbox)
+            {
+                OrcEnemy.OrcAngryEventData event_data = new OrcEnemy.OrcAngryEventData();
+                event_data.orc_to_target = hit_object.GetParent().GetParent();
+                EventSystem.SendEvent("OrcAngry", event_data);
+            }
         }
 
         public override void Knockback(Vector2 dir, float knockback)
@@ -154,7 +162,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object, Vector2 normal)
+        void BeginCollision(GameObject collided_game_object)
         {
             if (collided_game_object.GetName() == "Bouncer")
             {
@@ -173,11 +181,8 @@ namespace ScriptProject.Scripts
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
                 body.SetVelocity(dir * 10.3f);
-                follow_player = false;
-                player_script.PrincessStopFollowPlayer();
-                OrcEnemy.OrcAngryEventData event_data = new OrcEnemy.OrcAngryEventData();
-                event_data.orc_to_target = collided_game_object.GetParent().GetParent();
-                EventSystem.SendEvent("OrcAngry", event_data);
+
+
             }
         }
 

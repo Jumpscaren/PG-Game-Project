@@ -49,6 +49,8 @@ namespace ScriptProject.Scripts
         bool falling = false;
         float falling_speed = 1.0f;
 
+        HoleManager holes = new HoleManager();
+
         public static int GetCount()
         {
             return count;
@@ -83,8 +85,6 @@ namespace ScriptProject.Scripts
                 target = player_game_object;
             }
 
-            GameObject grabbed_by_orc = princess_script.GetGrabbedByOrc();
-
             Death();
             if (!dead)
             {
@@ -103,7 +103,7 @@ namespace ScriptProject.Scripts
             --count;
         }
 
-        public override void TakeDamage(float damage)
+        public override void TakeDamage(GameObject hit_object, float damage)
         {
             health -= damage;
             if (health <= 0.0f)
@@ -117,7 +117,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object, Vector2 normal)
+        void BeginCollision(GameObject collided_game_object)
         {
 
             if (collided_game_object.GetName() == "Bouncer")
@@ -126,13 +126,15 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (!dead && collided_game_object.GetTag() == UserTags.Hole)
+            if (holes.AddHole(collided_game_object, dead, max_speed, body.GetVelocity().Length()) == null)
             {
-                TakeDamage(100.0f);
-                body.SetVelocity(new Vector2());
-                falling = true;
-                game_object.RemoveComponent<CircleCollider>();
+                DieByFalling();
             }
+        }
+
+        void EndCollision(GameObject collided_game_object)
+        {
+            holes.RemoveHole(collided_game_object);
         }
 
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
@@ -151,7 +153,47 @@ namespace ScriptProject.Scripts
             {
                 teleport_timer = Time.GetElapsedTime() + teleport_time;
                 body.SetVelocity(new Vector2());
-                transform.SetPosition(target.transform.GetPosition());
+
+                ListSetGameObject nodes = new ListSetGameObject();
+                PathFindingActor.GetRandomNodes(game_object, nodes, 3);
+                List<GameObject> nodes_list = nodes.GetData();
+
+                GameObject teleport_game_object = null;
+                foreach (GameObject node in nodes_list)
+                {
+                    if (teleport_game_object == null)
+                    {
+                        teleport_game_object = node;
+                        continue;
+                    }
+
+                    float length_to_old_node = (current_position - teleport_game_object.transform.GetPosition()).Length();
+                    float length_to_new_node = (current_position - node.transform.GetPosition()).Length();
+
+                    bool old_node_inside = length_to_old_node >= 3.0f && length_to_old_node <= 7.0f;
+                    bool new_node_inside = length_to_new_node >= 3.0f && length_to_new_node <= 7.0f;
+
+                    if (!old_node_inside && new_node_inside)
+                    {
+                        teleport_game_object = node;
+                    }
+                    else if (old_node_inside && new_node_inside)
+                    {
+                        if (length_to_new_node > length_to_old_node)
+                        {
+                            teleport_game_object = node;
+                        }
+                    }
+                    else if (!old_node_inside && !new_node_inside)
+                    {
+                        if (length_to_new_node > 3.0f && length_to_new_node < length_to_old_node)
+                        {
+                            teleport_game_object = node;
+                        }
+                    }
+                }
+
+                transform.SetPosition(teleport_game_object.transform.GetPosition());
                 attack_ready = true;
             }
 
@@ -172,15 +214,33 @@ namespace ScriptProject.Scripts
             body.SetVelocity(velocity);
         }
 
+        void DieByFalling()
+        {
+            if (dead)
+            {
+                return;
+            }
+
+            TakeDamage(null, 100.0f);
+            body.SetVelocity(new Vector2());
+            falling = true;
+            game_object.RemoveComponent<CircleCollider>();
+        }
+
         void Death()
         {
+            if (!dead && holes.ShouldDieInHole(body.GetVelocity().Length(), max_speed))
+            {
+                DieByFalling();
+            }
+
             if (health <= 0.0f && !falling)
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
-                //GameObject new_game_object = GameObject.CreateGameObject();
-                //new_game_object.AddComponent<Sprite>();
-                //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
+                GameObject new_game_object = GameObject.CreateGameObject();
+                new_game_object.AddComponent<Sprite>();
+                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcDistracter");
                 return;
             }
 
@@ -220,6 +280,7 @@ namespace ScriptProject.Scripts
                 fireball.AddComponent<Sprite>();
                 fireball.transform.SetPosition(transform.GetPosition());
                 PrefabSystem.InstanceUserPrefab(fireball, "Fireball");
+                fireball.GetComponent<ProjectileScript>().SetCreator(this.game_object);
             }
 
             if (attacking && attack_timer < Time.GetElapsedTime())

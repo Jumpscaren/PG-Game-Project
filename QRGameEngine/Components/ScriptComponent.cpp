@@ -26,6 +26,14 @@ void ScriptComponentInterface::InitComponent(const CSMonoObject& object, SceneIn
 	script_component.script_start = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Start");
 	script_component.script_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Update");
 	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "BeginCollision");
+	if (script_component.script_begin_collision == CSMonoCore::NULL_METHOD)
+	{
+		const auto parent_class = CSMonoCore::Get()->TryGetParentClass(object);
+		if (parent_class != CSMonoCore::NULL_CLASS)
+		{
+			script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(parent_class, "BeginCollision");
+		}
+	}
 	script_component.script_end_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "EndCollision");
 
 #ifndef _EDITOR

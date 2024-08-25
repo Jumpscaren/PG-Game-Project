@@ -144,7 +144,7 @@ private:
 
 	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
-	void AddPolygonFixture(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddPolygonFixture(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool loop, bool solid, bool trigger = false, ColliderFilter collider_filter = {});
 
 	static void AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index);
 
@@ -178,7 +178,7 @@ public:
 	void AddPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type);
 	void AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
-	void AddPolygonCollider(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddPolygonCollider(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool loop, bool solid, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 

@@ -265,8 +265,9 @@ namespace ScriptProject
         static void Fireball(GameObject game_object)
         {
             game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Fireball.png"));
-            game_object.AddComponent<StaticBody>();
+            game_object.AddComponent<DynamicBody>();
             game_object.AddComponent<CircleCollider>().SetTrigger(true);
+            game_object.AddComponent<ProjectileScript>();
             game_object.SetName("Fireball");
         }
 

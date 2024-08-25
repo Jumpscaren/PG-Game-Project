@@ -10,7 +10,7 @@ namespace ScriptProject.Scripts
 {
     internal abstract class InteractiveCharacterInterface : ScriptingBehaviour
     {
-        public abstract void TakeDamage(float damage);
+        public abstract void TakeDamage(GameObject hit_object, float damage);
 
         public abstract void Knockback(Vector2 dir, float knockback);
     }

@@ -41,6 +41,7 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::HasChildren>(game_object_class, "HasChildren", GameObjectInterface::HasChildren);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::DestroyChildren>(game_object_class, "DestroyChildren", GameObjectInterface::DestroyChildren);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetParent>(game_object_class, "GetParent_Extern", GameObjectInterface::GetParent);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::HasParent>(game_object_class, "HasParent", GameObjectInterface::HasParent);
 
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetTag>(game_object_class, "SetTag", GameObjectInterface::SetTag);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetTag>(game_object_class, "GetTag", GameObjectInterface::GetTag);
@@ -216,6 +217,15 @@ CSMonoObject GameObjectInterface::GetParent(const SceneIndex scene_index, const 
 
     assert(false);
     return CSMonoObject();
+}
+
+bool GameObjectInterface::HasParent(const CSMonoObject& game_object)
+{
+    const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+    const auto entity = GameObjectInterface::GetEntityID(game_object);
+    EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+
+    return entity_manager->HasComponent<ParentComponent>(entity);
 }
 
 void GameObjectInterface::SetTag(const CSMonoObject& game_object, const uint8_t tag)

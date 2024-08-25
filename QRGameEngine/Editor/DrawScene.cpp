@@ -394,6 +394,13 @@ void DrawScene::WriteData(JsonObject& json, const std::string& object_name)
 		ImGui::InputInt(label_string.c_str(), (int*)&temp);
 		json.SetData(temp, object_name);
 	}
+	else if (json.IsObjectInteger(object_name))
+	{
+		int32_t temp;
+		json.LoadData(temp, object_name);
+		ImGui::InputInt(label_string.c_str(), (int*)&temp);
+		json.SetData(temp, object_name);
+	}
 	if (json.IsObjectFloat(object_name))
 	{
 		float temp;
@@ -653,6 +660,7 @@ void DrawScene::PolygonShaper()
 		bool switch_between = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM3);
 		bool stop = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM4);
 		bool show = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM5);
+		bool reverse_order = Keyboard::Get()->GetKeyPressed(Keyboard::Key::NUM6);
 
 		ImGui::Begin("Polygon Editor");
 		{
@@ -661,6 +669,7 @@ void DrawScene::PolygonShaper()
 			ImGui::Text("Switch - Press 3");
 			ImGui::Text("Exit - Press 4");
 			ImGui::Text("Show - Press 5");
+			ImGui::Text("Reverse Order - Press 6");
 		}
 		ImGui::End();
 
@@ -696,6 +705,13 @@ void DrawScene::PolygonShaper()
 		const TransformComponent& select_transform = entity_manager->GetComponent<TransformComponent>(m_select_entity);
 		PolygonColliderComponent& polygon = entity_manager->GetComponent<PolygonColliderComponent>(m_select_entity);
 		const Vector3 select_position = select_transform.GetPosition();
+
+		if (reverse_order)
+		{
+			std::ranges::reverse(polygon.points);
+			ClearPolygonShaper();
+			return;
+		}
 
 		if (!m_in_polygon_builder)
 		{
@@ -748,7 +764,10 @@ void DrawScene::PolygonShaper()
 
 		if (add) //&& m_polygon_vertices.size() < 8)
 		{
-			Vector2 new_point = Vector2();
+			const Vector3 prev_position = entity_manager->GetComponent<TransformComponent>(m_polygon_vertices[m_polygon_vertices.size() - 2].ent).GetPosition();
+			const Vector3 back_position = entity_manager->GetComponent<TransformComponent>(m_polygon_vertices.back().ent).GetPosition();
+			const Vector3 direction = (back_position - prev_position).Normalize();
+			const Vector2 new_point(back_position.x + direction.x - select_position.x, back_position.y + direction.y - select_position.y);
 			AddPolygonEntity(new_point, select_position, (uint32_t)m_polygon_vertices.size());
 			polygon.points.push_back(new_point);
 		}

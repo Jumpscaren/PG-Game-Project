@@ -28,7 +28,10 @@ public:
 	JsonObject GetSubJsonObject(const std::string& name);
 
 	void SetData(uint8_t data, const std::string& name);
+	void SetData(uint16_t data, const std::string& name);
+	void SetData(int16_t data, const std::string& name);
 	void SetData(uint32_t data, const std::string& name);
+	void SetData(int32_t data, const std::string& name);
 	void SetData(uint64_t data, const std::string& name);
 	void SetData(float data, const std::string& name);
 	void SetData(double data, const std::string& name);
@@ -38,7 +41,10 @@ public:
 	void SetData(const std::string& data, const std::string& name);
 
 	void LoadData(uint8_t& data, const std::string& name);
+	void LoadData(uint16_t& data, const std::string& name);
+	void LoadData(int16_t& data, const std::string& name);
 	void LoadData(uint32_t& data, const std::string& name);
+	void LoadData(int32_t& data, const std::string& name);
 	void LoadData(uint64_t& data, const std::string& name);
 	void LoadData(float& data, const std::string& name);
 	void LoadData(double& data, const std::string& name);

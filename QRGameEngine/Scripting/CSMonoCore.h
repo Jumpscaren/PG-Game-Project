@@ -24,6 +24,7 @@ class CSMonoCore
 
 public:
 	static constexpr MonoMethodHandle NULL_METHOD = { (uint64_t)(-1) };
+	static constexpr MonoClassHandle NULL_CLASS = { (uint64_t)(-1) };
 
 private:
 	typedef enum {
@@ -246,6 +247,8 @@ public:
 
 	MonoMethodHandle TryRegisterMonoMethod(const MonoClassHandle& class_handle, const std::string& method_name);
 	MonoMethodHandle TryRegisterMonoMethod(const CSMonoObject& mono_object, const std::string& method_name);
+
+	MonoClassHandle TryGetParentClass(const CSMonoObject& mono_object);
 
 	template<typename T>
 	bool IsValueType(const CSMonoObject& mono_object, const std::string& field_name);

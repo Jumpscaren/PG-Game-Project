@@ -4,6 +4,11 @@
 struct MonoClassHandle
 {
 	uint64_t handle;
+
+	bool operator ==(const MonoClassHandle& other) const
+	{
+		return handle == other.handle;
+	}
 };
 
 struct MonoFieldHandle
@@ -14,6 +19,11 @@ struct MonoFieldHandle
 struct MonoMethodHandle
 {
 	uint64_t handle;
+
+	bool operator ==(const MonoMethodHandle& other) const
+	{
+		return handle == other.handle;
+	}
 };
 
 struct MonoObjectHandle

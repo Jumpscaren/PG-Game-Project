@@ -55,7 +55,7 @@ namespace ScriptProject.Scripts
         bool falling = false;
         float falling_speed = 1.0f;
 
-        List<GameObject> holes = new List<GameObject>();
+        HoleManager holes = new HoleManager();
 
         public class OrcAngryEventData : EventSystem.BaseEventData
         {
@@ -131,7 +131,7 @@ namespace ScriptProject.Scripts
             --count;
         }
 
-        public override void TakeDamage(float damage)
+        public override void TakeDamage(GameObject hit_object, float damage)
         {
             health -= damage;
             if (health <= 0.0f)
@@ -145,7 +145,7 @@ namespace ScriptProject.Scripts
             body.SetVelocity(dir * knockback);
         }
 
-        void BeginCollision(GameObject collided_game_object, Vector2 normal)
+        void BeginCollision(GameObject collided_game_object)
         {
 
             if (collided_game_object.GetName() == "Bouncer")
@@ -154,32 +154,15 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(direction.Normalize() * 20.0f);
             }
 
-            if (!dead && collided_game_object.GetTag() == UserTags.Hole)
+            if (holes.AddHole(collided_game_object, dead, max_speed, body.GetVelocity().Length()) == null)
             {
-                if (body.GetVelocity().Length() > max_speed)
-                {
-                    holes.Add(collided_game_object);
-                }
-                else
-                {
-                    DieByFalling();
-                }
+                DieByFalling();
             }
         }
 
         void EndCollision(GameObject collided_game_object)
         {
-            if (collided_game_object.GetTag() == UserTags.Hole)
-            {
-                foreach (var hole in holes)
-                {
-                    if (hole == collided_game_object)
-                    {
-                        holes.Remove(collided_game_object);
-                        break;
-                    }
-                }
-            }
+            holes.RemoveHole(collided_game_object);
         }
 
         void CreateHitBox()
@@ -257,7 +240,7 @@ namespace ScriptProject.Scripts
 
         void Death()
         {
-            if (holes.Count > 0 && body.GetVelocity().Length() - 0.1001f <= max_speed)
+            if (!dead && holes.ShouldDieInHole(body.GetVelocity().Length(), max_speed))
             {
                 DieByFalling();
             }
@@ -350,7 +333,7 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            TakeDamage(100.0f);
+            TakeDamage(null, 100.0f);
             body.SetVelocity(new Vector2());
             falling = true;
             GameObject.DeleteGameObject(mid_block);
@@ -386,7 +369,7 @@ namespace ScriptProject.Scripts
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
             {
-                hit_object_script.TakeDamage(damage);
+                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));

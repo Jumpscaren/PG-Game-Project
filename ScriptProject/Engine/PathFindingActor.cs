@@ -37,5 +37,8 @@ namespace ScriptProject.Engine
         {
             return NeedNewPathFind_Extern(game_object.GetSceneIndex(), game_object.GetEntityID(), goal_game_object.GetSceneIndex(), goal_game_object.GetEntityID(), position_of_node_index);
         }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern void GetRandomNodes(GameObject game_object, ListSetGameObject nodes, UInt32 number_of_nodes);
     }
 }

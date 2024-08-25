@@ -33,7 +33,7 @@ void PolygonColliderComponentInterface::InitComponent(const CSMonoObject& object
 		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
 	}
 
-	PhysicsCore::Get()->AddPolygonCollider(scene_index, entity, { Vector2(0.5f, 0.5f), Vector2(-0.5f, -0.5f), Vector2(1.0f, 0.0f) });
+	PhysicsCore::Get()->AddPolygonCollider(scene_index, entity, { Vector2(0.5f, 0.5f), Vector2(-0.5f, -0.5f), Vector2(1.0f, 0.0f) }, true, true);
 }
 
 bool PolygonColliderComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -111,6 +111,9 @@ std::vector<Triangle> Triangulation(std::vector<Vector2> polygons)
 {
 	std::vector<Triangle> triangles;
 
+	std::size_t last_size = 0;
+	int same_since = 0;
+
 	for (int i = 0; i < polygons.size();)
 	{
 		const auto n = polygons.size();
@@ -118,6 +121,18 @@ std::vector<Triangle> Triangulation(std::vector<Vector2> polygons)
 		const auto prev_index = (i - 1 + n) % n;
 		const auto next_index = (i + 1) % n;
 
+		if (last_size == polygons.size())
+		{
+			if (same_since == i)
+			{
+				break;
+			}
+		}
+		else
+		{
+			last_size = polygons.size();
+			same_since = i;
+		}
 		if (!IsAnEar(polygons, prev_index, i, next_index))
 		{
 			++i;
@@ -171,12 +186,17 @@ void PolygonColliderComponentInterface::SaveScriptComponent(Entity ent, EntityMa
 	{
 		json_object->SetData(polygon_collider.points[i], "point_" + std::to_string(i));
 	}
+	json_object->SetData(polygon_collider.loop, "loop");
+	json_object->SetData(polygon_collider.solid, "solid");
+
+	json_object->SetData(polygon_collider.filter.category_bits, "filter.category_bits");
+	json_object->SetData(polygon_collider.filter.mask_bits, "filter.mask_bits");
+	json_object->SetData(polygon_collider.filter.group_index, "filter.group_index");
 }
 
 void PolygonColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	PolygonColliderComponent& polygon_collider = entman->GetComponent<PolygonColliderComponent>(ent);
-	Vector2 half_box_size;
 	json_object->LoadData(polygon_collider.trigger, "trigger");
 	uint64_t point_size = 0;
 	json_object->LoadData(point_size, "point_size");
@@ -186,6 +206,12 @@ void PolygonColliderComponentInterface::LoadScriptComponent(Entity ent, EntityMa
 	{
 		json_object->LoadData(polygon_collider.points[i], "point_" + std::to_string(i));
 	}
+	json_object->LoadData(polygon_collider.loop, "loop");
+	json_object->LoadData(polygon_collider.solid, "solid");
+
+	json_object->LoadData(polygon_collider.filter.category_bits, "filter.category_bits");
+	json_object->LoadData(polygon_collider.filter.mask_bits, "filter.mask_bits");
+	json_object->LoadData(polygon_collider.filter.group_index, "filter.group_index");
 
 	polygon_collider.update_polygon_collider = true;
 }

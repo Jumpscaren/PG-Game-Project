@@ -84,7 +84,22 @@ void JsonObject::SetData(uint8_t data, const std::string& name)
 	(*((nlohmann::json*)m_json_object))[name] = data;
 }
 
+void JsonObject::SetData(uint16_t data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
+void JsonObject::SetData(int16_t data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
 void JsonObject::SetData(uint32_t data, const std::string& name)
+{
+	(*((nlohmann::json*)m_json_object))[name] = data;
+}
+
+void JsonObject::SetData(int32_t data, const std::string& name)
 {
 	(*((nlohmann::json*)m_json_object))[name] = data;
 }
@@ -137,7 +152,37 @@ void JsonObject::LoadData(uint8_t& data, const std::string& name)
 	data = (*((nlohmann::json*)m_json_object))[name];
 }
 
+void JsonObject::LoadData(uint16_t& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = 0;
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
+}
+
+void JsonObject::LoadData(int16_t& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = 0;
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
+}
+
 void JsonObject::LoadData(uint32_t& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data = 0;
+		return;
+	}
+	data = (*((nlohmann::json*)m_json_object))[name];
+}
+
+void JsonObject::LoadData(int32_t& data, const std::string& name)
 {
 	if (!ObjectExist(name))
 	{

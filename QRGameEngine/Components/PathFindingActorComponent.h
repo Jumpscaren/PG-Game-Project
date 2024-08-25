@@ -31,6 +31,7 @@ public:
 
 private:
 	static bool HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity own_node, const Entity goal_node);
+	static void GetRandomNodes(const CSMonoObject& game_object, const CSMonoObject& list, const uint32_t number_of_nodes);
 
 public:
 	static void SavePathFindingWorldComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

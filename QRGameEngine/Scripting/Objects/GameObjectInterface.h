@@ -49,6 +49,7 @@ public:
 	static bool HasChildren(const CSMonoObject& game_object);
 	static void DestroyChildren(const CSMonoObject& game_object);
 	static CSMonoObject GetParent(const SceneIndex scene_index, const Entity entity);
+	static bool HasParent(const CSMonoObject& game_object);
 	
 	static void SetTag(const CSMonoObject& game_object, const uint8_t tag);
 	static uint8_t GetTag(const CSMonoObject& game_object);

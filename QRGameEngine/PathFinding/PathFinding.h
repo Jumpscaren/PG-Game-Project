@@ -88,6 +88,7 @@ public:
 	bool IsWorldConstructed() const;
 	void AddNewNode(const SceneIndex scene_index, const Entity entity);
 	void RemoveNode(const SceneIndex scene_index, const Entity entity);
+	const std::unordered_map<uint64_t, Entity>& GetPositionsToNode() const;
 
 	void HandleDeferredRemovedNodes(EntityManager* entity_manager);
 

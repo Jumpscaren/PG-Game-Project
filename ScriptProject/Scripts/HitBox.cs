@@ -39,12 +39,14 @@ namespace ScriptProject.Scripts
             hit_box_action.OnHit(this, hit_script);
         }
 
-        public void BeginCollision(GameObject collided_game_object, Vector2 normal)
+        public void BeginCollision(GameObject collided_game_object)
         {
             if (collided_game_object == avoid_game_object || !collided_game_object.HasComponent<ScriptingBehaviour>())
             {
                 return;
             }
+
+            Console.WriteLine("Begin Collision: MyName=" + game_object.GetName() + " OtherName=" + collided_game_object.GetName());
 
             ScriptingBehaviour script = collided_game_object.GetComponent<ScriptingBehaviour>();
             if (typeof(InteractiveCharacterInterface).IsAssignableFrom(script.GetType()))
