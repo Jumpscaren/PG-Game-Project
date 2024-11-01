@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "AssetManager.h"
+#include "../Event/EventCore.h"
 
 #pragma warning(push)
 #pragma warning(disable:6262)
@@ -13,15 +14,36 @@ AssetManager* AssetManager::s_asset_manager = nullptr;
 AssetManager::AssetManager()
 {
 	s_asset_manager = this;
+
+	m_asset_loading_thread = std::thread(&AssetManager::ThreadLoadAssetLoop, this);
 }
 
 AssetManager::~AssetManager()
 {
+	{
+		std::unique_lock<std::mutex> lock(m_asset_loading_thread_mutex);
+		m_terminate_loading_thread = true;
+	}
+	m_asset_loading_thread_condition_variable.notify_all();
+	m_asset_loading_thread.join();
 }
 
 AssetManager* AssetManager::Get()
 {
 	return s_asset_manager;
+}
+
+void AssetManager::HandleCompletedJobs()
+{
+	std::unique_lock<std::mutex> lock(m_assets_access_mutex);
+	for (const AssetData& asset : m_asset_loading_thread_completed_jobs)
+	{
+		bool asset_exists = false;
+		const AssetHandle asset_handle = LoadAssetPath(asset.asset_path, asset_exists);
+		m_assets.insert({ asset_handle, asset });
+		EventCore::Get()->SendEvent("Asset Finished Loading", asset_handle);
+	}
+	m_asset_loading_thread_completed_jobs.clear();
 }
 
 AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, const AssetLoadFlag& asset_load_flag)
@@ -31,12 +53,7 @@ AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, cons
 
 	if (!texture_exists)
 	{
-		int width, height, comp, channels = 4;
-		unsigned char* imageData = stbi_load(texture_path.c_str(),
-			&width, &height, &comp, channels);
-		TextureInfo* texture = new TextureInfo{ imageData, (uint32_t)width, (uint32_t)height, (uint32_t)comp, (uint32_t)channels };
-
-		m_assets.insert({ texture_handle, {texture, AssetType::TEXTURE, texture_path, asset_load_flag} });
+		AddAssetLoadingJob(AssetLoadingJob{.asset_info_data = AssetData{.asset_data = nullptr, .asset_type = AssetType::TEXTURE, .asset_path = texture_path, .asset_load_flag = asset_load_flag }, .load_function = &AssetManager::LoadTextureData });
 	}
 
 	return texture_handle;
@@ -91,6 +108,11 @@ void AssetManager::DeleteCPUAssetDataIfGPUOnly(AssetHandle asset_handle)
 	}
 }
 
+bool AssetManager::IsAssetLoaded(AssetHandle asset_handle)
+{
+	return m_assets.contains(asset_handle);
+}
+
 AssetHandle AssetManager::LoadAssetPath(const std::string& asset_path, bool& asset_existing)
 {
 	uint64_t asset_path_hash = std::hash<std::string>{}(asset_path);
@@ -108,4 +130,51 @@ AssetHandle AssetManager::LoadAssetPath(const std::string& asset_path, bool& ass
 	asset_existing = false;
 
 	return new_asset_handle;
+}
+
+void* AssetManager::LoadTextureData(const AssetData& asset_data)
+{
+	int width, height, comp, channels = 4;
+	unsigned char* imageData = stbi_load(asset_data.asset_path.c_str(),
+		&width, &height, &comp, channels);
+	TextureInfo* texture = new TextureInfo{ imageData, (uint32_t)width, (uint32_t)height, (uint32_t)comp, (uint32_t)channels };
+
+	return texture;
+}
+
+void AssetManager::AddAssetLoadingJob(const AssetLoadingJob& job)
+{
+	{
+		std::unique_lock<std::mutex> lock(m_asset_loading_thread_mutex);
+		m_asset_loading_thread_jobs.push_back(job);
+	}
+	m_asset_loading_thread_condition_variable.notify_one();
+}
+
+void AssetManager::ThreadLoadAssetLoop()
+{
+	while (true)
+	{
+		AssetLoadingJob job;
+		{
+			std::unique_lock<std::mutex> lock(m_asset_loading_thread_mutex);
+			m_asset_loading_thread_condition_variable.wait(lock, [this] {
+				return !m_asset_loading_thread_jobs.empty() || m_terminate_loading_thread;
+				});
+
+			if (m_terminate_loading_thread)
+			{
+				return;
+			}
+			job = m_asset_loading_thread_jobs.back();
+			m_asset_loading_thread_jobs.pop_back();
+		}
+
+		void* asset_data = job.load_function(job.asset_info_data);
+		{
+			std::unique_lock<std::mutex> lock(m_assets_access_mutex);
+			job.asset_info_data.asset_data = asset_data;
+			m_asset_loading_thread_completed_jobs.push_back(job.asset_info_data);
+		}
+	}
 }

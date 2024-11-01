@@ -25,6 +25,7 @@ SceneManager::SceneManager()
 	m_change_scene_index = NULL_SCENE_INDEX;
 	m_load_scene = false;
 	m_load_scene_index = NULL_SCENE_INDEX;
+	m_switch_scene = false;
 }
 
 SceneManager::~SceneManager()
@@ -70,8 +71,18 @@ void SceneManager::ChangeScene(SceneIndex scene_index)
 	m_change_scene_index = scene_index;
 }
 
+void SceneManager::ForceChangeScene(SceneIndex scene_index)
+{
+	ChangeScene(scene_index);
+	m_switch_scene = true;
+}
+
 void SceneManager::DestroyScene(SceneIndex scene_index)
 {
+	if (scene_index == NULL_SCENE_INDEX)
+	{
+		return;
+	}
 	m_deferred_scene_deletion.push_back(scene_index);
 }
 
@@ -106,23 +117,37 @@ void SceneManager::RemoveEntitiesFromDeferredDestroyedScenes()
 void SceneManager::HandleDeferredScenes()
 {
 	DestroyDeferredScenes();
-	if (m_load_scene)
+	if (m_switch_scene)
 	{
-		SceneLoader::Get()->LoadScene(m_load_scene_name, m_load_scene_index);
-	}
-	if (m_change_scene_index != NULL_SCENE_INDEX)
-	{
+		m_switch_scene = false;
+
 		m_active_scene = m_change_scene_index;
 		GetScene(m_active_scene)->SetSceneAsLoaded();
 		EventCore::Get()->SendEvent("SceneLoaded", m_active_scene);
+		m_change_scene_index = NULL_SCENE_INDEX;
 	}
-	m_change_scene_index = NULL_SCENE_INDEX;
+	if (m_load_scene)
+	{
+		//SceneLoader::Get()->LoadScene(m_load_scene_name, m_load_scene_index, false);
+		SceneLoader::Get()->LoadSceneThreaded(m_load_scene_name, m_load_scene_index);
+		//Sleep(10000);
+	}
+	if (SceneLoader::Get()->FinishedLoadingScene() && m_change_scene_index != NULL_SCENE_INDEX)
+	{
+		DestroyScene(GetActiveSceneIndex());
+		m_switch_scene = true;
+	}
 	m_load_scene = false;
 }
 
 bool SceneManager::SceneExists(SceneIndex scene_index)
 {
 	return m_scenes[scene_index];
+}
+
+bool SceneManager::AlreadyLoadingScene() const
+{
+	return  m_change_scene_index != NULL_SCENE_INDEX;
 }
 
 SceneIndex SceneManager::GetActiveSceneIndex()

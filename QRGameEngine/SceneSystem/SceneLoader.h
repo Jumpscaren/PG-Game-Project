@@ -5,6 +5,8 @@
 #include "Scripting/CSMonoObject.h"
 #include "SceneLoaderTypes.h"
 #include "SceneDefines.h"
+#include <thread>
+#include <mutex>
 
 class EntityManager;
 class OutputFile;
@@ -26,12 +28,27 @@ private:
 	MonoClassHandle m_prefab_instancer_class;
 	static SceneLoader* s_scene_loader;
 	std::unordered_map<std::string, OverrideSaveLoadMethods> m_override_methods;
-	std::unordered_map<TextureHandle, std::string> m_texture_paths;
+	struct RenderTexture
+	{
+		std::string texture_path;
+		TextureHandle render_texture_handle;
+	};
+	std::unordered_map<TextureHandle, RenderTexture> m_texture_paths;
+
+	std::thread* m_load_scene_thread = nullptr;
+	std::mutex m_load_scene_mutex;
+	std::atomic<bool> m_threaded_scene_loader_finished = false;
+	SceneIndex m_load_scene_index = NULL_SCENE_INDEX;
 
 private:
 	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths);
 	void LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity enitity);
-	void LoadScene(std::string scene_name, SceneIndex load_scene);
+	void LoadScene(std::string scene_name, SceneIndex load_scene, bool threaded);
+	void LoadSceneThreaded(std::string scene_name, SceneIndex load_scene);
+
+	void SaveComponent(JsonObject* component_json_object, const std::string& component_name, Entity entity, EntityManager* entity_manager);
+	void LoadTransformComponent(OutputFile* save_file, Entity entity, EntityManager* entity_manager);
+	void LoadComponent(JsonObject* component_json_object, const std::string& component_name, Entity entity, EntityManager* entity_manager);
 
 public:
 	SceneLoader();
@@ -43,8 +60,13 @@ public:
 
 	void InstancePrefab(const CSMonoObject& game_object, std::string prefab_name);
 
-	std::string GetTexturePath(TextureHandle texture_handle);
-	bool HasTexturePath(TextureHandle texture_handle);
+	TextureHandle GetRenderTexture(TextureHandle texture_handle);
+	bool HasRenderTexture(TextureHandle texture_handle);
+
+	void HandleSceneLoadingPreUser();
+	void HandleSceneLoadingPostUser();
+
+	bool FinishedLoadingScene();
 
 	template<typename Component>
 	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method);

@@ -87,7 +87,7 @@ void QREntryPoint::EntryPoint()
 	path_finding = new PathFinding();
 
 	main_scene = scene_manager->CreateScene();
-	scene_manager->ChangeScene(main_scene);
+	scene_manager->ForceChangeScene(main_scene);
 	scene_manager->HandleDeferredScenes();
 
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
@@ -202,17 +202,17 @@ void QREntryPoint::RunTime()
 		}
 		ImGui::End();
 
-#ifndef _EDITOR
+//#ifndef _EDITOR
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
-			scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
+			//scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
 			//SceneIndex scene = scene_manager->LoadScene("port"); //"port_path_test_2"
 			//SceneIndex scene = scene_manager->LoadScene("test_area_1");
 			SceneIndex scene = scene_manager->LoadScene("temp");
 			scene_manager->ChangeScene(scene);
 			change_scene = false;
 		}
-#endif // EDITOR
+//#endif // EDITOR
 
 #ifdef _EDITOR
 		editor_core->Update();
@@ -222,6 +222,12 @@ void QREntryPoint::RunTime()
 		* NOTE
 		* If the user changes the scene to another then we should wait until the next frame to change and not change during!!!
 		*/
+
+		/*SceneLoader::Get()->HandleSceneLoadingPreUser();*/
+
+		SceneLoader::Get()->HandleSceneLoadingPreUser();
+
+		asset_manager->HandleCompletedJobs();
 
 		physic_timer.StartTimer();
 		PhysicsCore::Get()->WaitForPhysics();
@@ -299,6 +305,8 @@ void QREntryPoint::RunTime()
 		Time::Stop();
 		TimeInterface::SetDeltaTime(mono_core);
 		TimeInterface::SetElapsedTime(mono_core);
+
+		SceneLoader::Get()->HandleSceneLoadingPostUser();
 	}
 }
 

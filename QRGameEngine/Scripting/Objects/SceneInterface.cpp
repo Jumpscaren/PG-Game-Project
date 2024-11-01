@@ -25,8 +25,15 @@ CSMonoObject SceneInterface::CreateSceneWithSceneIndex(SceneIndex scene_index)
 void SceneInterface::RestartActiveScene()
 {
     SceneManager* scene_manager = SceneManager::GetSceneManager();
+
+    if (scene_manager->AlreadyLoadingScene())
+    {
+        std::cout << "Already loading scene" << std::endl;
+        return;
+    }
+
     const auto scene_index = scene_manager->GetActiveSceneIndex();
-    scene_manager->DestroyScene(scene_index);
+    //scene_manager->DestroyScene(scene_index);
     SceneIndex scene = scene_manager->LoadScene(scene_index);
     scene_manager->ChangeScene(scene);
 }

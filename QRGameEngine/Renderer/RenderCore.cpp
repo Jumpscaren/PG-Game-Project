@@ -12,12 +12,36 @@
 #include "SceneSystem/GlobalScene.h"
 #include "Components/AnimatableSpriteComponent.h"
 #include <algorithm>
+#include "Event/EventCore.h"
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
 DX12Core* RenderCore::GetDX12Core()
 {
 	return &m_dx12_core;
+}
+
+void RenderCore::AssetFinishedLoadingListenEvent(AssetHandle asset_handle)
+{
+	if (RenderCore::s_render_core->m_asset_to_texture.contains(asset_handle))
+	{
+		RenderCore::s_render_core->LoadTextureWithAssetHandle(asset_handle);
+	}
+}
+
+void RenderCore::LoadTextureWithAssetHandle(AssetHandle asset_handle)
+{
+	TextureInfo* texture_info = AssetManager::Get()->GetTextureData(asset_handle);
+
+	DX12TextureHandle texture_internal_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
+	DX12TextureViewHandle texture_internal_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, texture_internal_handle, ViewType::SHADER_RESOURCE_VIEW);
+
+	const TextureHandle texture_handle = m_asset_to_texture.at(asset_handle);
+	auto& texture_handle_data = m_texture_handles.at(texture_handle);
+	texture_handle_data.texture_internal_handle = texture_internal_handle;
+	texture_handle_data.texture_internal_view_handle = texture_internal_view_handle;
+
+	AssetManager::Get()->DeleteCPUAssetDataIfGPUOnly(asset_handle);
 }
 
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
@@ -117,6 +141,14 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_dx12_core.GetCommandList()->Execute(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());
 	m_dx12_core.ResetBuffers();
+
+	EventCore::Get()->ListenToEvent<&RenderCore::AssetFinishedLoadingListenEvent>("Asset Finished Loading", 0, &RenderCore::AssetFinishedLoadingListenEvent);
+	/*	unsigned char* texture_data;
+	uint32_t width, height, comp, channels;*/
+	unsigned char texture_data[4] = { 255, 255, 255, 255 };
+	TextureInfo texture_info{ .texture_data =  texture_data, .width = 1, .height = 1, .comp = 4, .channels = 4 };
+	m_solid_color_texture.texture_internal_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, &texture_info, TextureFlags::NONE_FLAG);
+	m_solid_color_texture.texture_internal_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, m_solid_color_texture.texture_internal_handle, ViewType::SHADER_RESOURCE_VIEW);
 }
 
 RenderCore::~RenderCore()
@@ -134,7 +166,8 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	const auto assamble_render_data = [&](const Entity entity, const TransformComponent& transform, const SpriteComponent& sprite)
 		{
 			SpriteData sprite_data;
-			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(sprite.texture_handle);
+			const DX12TextureViewHandle texture_view = m_texture_handles.at(sprite.texture_handle).texture_internal_view_handle;
+			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(texture_view);
 
 			Vector2 uv;
 			if (assamble_render_data_ent_man->HasComponent<AnimatableSpriteComponent>(entity))
@@ -330,22 +363,23 @@ TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name)
 {
 	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTextureAsset(texture_file_name);
 
-	if (m_texture_handles.contains(texture_asset_handle))
+	if (m_asset_to_texture.contains(texture_asset_handle))
 	{
-		return m_texture_handles.find(texture_asset_handle)->second.texture_view_handle;
+		return m_asset_to_texture.find(texture_asset_handle)->second;
 	}
 
-	TextureInfo* texture_info = AssetManager::Get()->GetTextureData(texture_asset_handle);
+	TextureHandle texture_handle = ++m_texture_handle_counter;
+	m_texture_to_asset.insert({ texture_handle, texture_asset_handle });
+	m_asset_to_texture.insert({ texture_asset_handle, texture_handle });
+	if (!AssetManager::Get()->IsAssetLoaded(texture_asset_handle))
+	{
+		m_texture_handles.insert({ texture_handle, {m_solid_color_texture.texture_internal_handle, m_solid_color_texture.texture_internal_view_handle} });
+		return texture_handle;
+	}
 
-	DX12TextureHandle texture_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, texture_info, TextureFlags::NONE_FLAG);
-	DX12TextureViewHandle texture_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, texture_handle, ViewType::SHADER_RESOURCE_VIEW);
+	LoadTextureWithAssetHandle(texture_asset_handle);
 
-	m_texture_handles.insert({ texture_asset_handle, {texture_handle, texture_view_handle} });
-	m_texture_to_asset.insert({ texture_view_handle, texture_asset_handle });
-
-	AssetManager::Get()->DeleteCPUAssetDataIfGPUOnly(texture_asset_handle);
-
-	return texture_view_handle;
+	return texture_handle;
 }
 
 AssetHandle RenderCore::GetTextureAssetHandle(const TextureHandle texture_handle)

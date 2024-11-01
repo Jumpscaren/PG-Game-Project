@@ -182,8 +182,8 @@ void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManag
 	json_object->LoadData(sprite_component.flip_x, "flip_x");
 	json_object->LoadData(sprite_component.flip_y, "flip_y");
 
-	if (!SceneLoader::Get()->HasTexturePath(sprite_component.texture_handle))
+	if (!SceneLoader::Get()->HasRenderTexture(sprite_component.texture_handle))
 		return;
 
-	sprite_component.texture_handle = RenderCore::Get()->LoadTexture(SceneLoader::Get()->GetTexturePath(sprite_component.texture_handle));
+	sprite_component.texture_handle = SceneLoader::Get()->GetRenderTexture(sprite_component.texture_handle);
 }

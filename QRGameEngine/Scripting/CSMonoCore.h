@@ -7,6 +7,7 @@
 struct _MonoDomain;
 struct _MonoAssembly;
 struct _MonoImage;
+struct _MonoThread;
 
 //To force garbage collection to remove old objects
 //mono_gc_collect(mono_gc_max_generation());
@@ -82,6 +83,9 @@ private:
 	std::unordered_map<std::string, MonoMethodHandle> m_mono_method_name_to_mono_method_handle;
 
 	static CSMonoCore* s_mono_core;
+
+	//Temporary solution
+	_MonoThread* m_thread = nullptr;
 
 private:
 	//Type changing templates
@@ -303,6 +307,9 @@ public:
 	void PrintMethod(const MonoMethodHandle& method_handle);
 
 	void ForceGarbageCollection();
+
+	void HookThread();
+	void UnhookThread();
 };
 
 template<typename T>

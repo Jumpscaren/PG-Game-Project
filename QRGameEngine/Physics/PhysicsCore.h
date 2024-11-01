@@ -158,8 +158,6 @@ public:
 
 	const bool& IsThreaded() const;
 
-	void testg();
-
 	void WaitForPhysics();
 
 	void ThreadUpdatePhysic();

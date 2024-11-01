@@ -371,55 +371,6 @@ const bool& PhysicsCore::IsThreaded() const
 	return m_threaded_physics;
 }
 
-void PhysicsCore::testg()
-{
-	{
-		b2BodyDef body_def;
-		b2Vec2 pos;
-		pos.x = 0.5f;
-		pos.y = 0.5f;
-		body_def.position = pos;
-		body_def.type = b2_dynamicBody;
-		//body_def.type = b2_staticBody;
-		b2PolygonShape shape;
-		shape.SetAsBox(0.5f, 0.5f);
-		auto body = m_world->CreateBody(&body_def);
-		body->CreateFixture(&shape, 0.01f);
-		body->GetTransform();
-	}
-
-	{
-		b2BodyDef body_def;
-		b2Vec2 pos;
-		pos.x = 0.5f;
-		pos.y = -0.5f;
-		body_def.position = pos;
-		body_def.type = b2_dynamicBody;
-		//body_def.type = b2_staticBody;
-		b2PolygonShape shape;
-		shape.SetAsBox(0.5f, 0.5f);
-		auto body = m_world->CreateBody(&body_def);
-		body->CreateFixture(&shape, 0.01f);
-		body->GetTransform();
-	}
-
-	//for (int i = 0; i < 100; ++i)
-	//{
-	//	b2BodyDef body_def;
-	//	b2Vec2 pos;
-	//	pos.x = 0.5f;
-	//	pos.y = (float)i + -0.5f;
-	//	body_def.position = pos;
-	//	body_def.type = b2_dynamicBody;
-	//	//body_def.type = b2_staticBody;
-	//	b2PolygonShape shape;
-	//	shape.SetAsBox(0.5f, 0.5f);
-	//	auto body = m_world->CreateBody(&body_def);
-	//	body->CreateFixture(&shape, 0.01f);
-	//	body->GetTransform();
-	//}
-}
-
 void PhysicsCore::WaitForPhysics()
 {
 	if (m_threaded_physics)
@@ -536,8 +487,10 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 		EntityManager* ent_man = SceneManager::GetSceneManager()->GetEntityManager(pure_static_body.scene_index);
 		if (ent_man->EntityExists(pure_static_body.entity) && ent_man->HasComponent<PureStaticBodyComponent>(pure_static_body.entity))
 		{
+			const auto transform = ent_man->GetComponent<TransformComponent>(pure_static_body.entity);
 			const auto physic_object_handle = ent_man->GetComponent<PureStaticBodyComponent>(pure_static_body.entity).physic_object_handle;
 			PhysicObjectData& physic_object = m_physic_object_data[physic_object_handle];
+			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
 			physic_object.object_body->SetEnabled(true);
 		}
 	}

@@ -5,6 +5,7 @@
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/mono-config.h>
 #include <mono/metadata/mono-gc.h>
+#include <mono/metadata/threads.h>
 
 CSMonoCore* CSMonoCore::s_mono_core = nullptr;
 
@@ -438,4 +439,14 @@ void CSMonoCore::PrintMethod(const MonoMethodHandle& method_handle)
 void CSMonoCore::ForceGarbageCollection()
 {
 	mono_gc_collect(mono_gc_max_generation());
+}
+
+void CSMonoCore::HookThread()
+{
+	m_thread = mono_thread_attach(m_domain);
+}
+
+void CSMonoCore::UnhookThread()
+{
+	mono_thread_detach(m_thread);
 }

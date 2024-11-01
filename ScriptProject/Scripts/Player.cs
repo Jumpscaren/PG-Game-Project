@@ -338,7 +338,7 @@ namespace ScriptProject.Scripts
 
         public class HitBoxPlayer : HitBoxAction
         {
-            float damage = 0.0f;//10.0f;
+            float damage = 10.0f;
             float knockback = 10.3f;
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)

@@ -28,8 +28,8 @@ private:
 
 	struct TextureHandleData
 	{
-		DX12TextureHandle texture_handle;
-		DX12TextureViewHandle texture_view_handle;
+		DX12TextureHandle texture_internal_handle;
+		DX12TextureViewHandle texture_internal_view_handle;
 	};
 	struct VertexGrid
 	{
@@ -56,8 +56,9 @@ private:
 	DX12BufferHandle m_camera_buffer;
 	DX12BufferViewHandle m_camera_buffer_view;
 
-	std::unordered_map<AssetHandle, TextureHandleData> m_texture_handles;
+	std::unordered_map<AssetHandle, TextureHandle> m_asset_to_texture;
 	std::unordered_map<TextureHandle, AssetHandle> m_texture_to_asset;
+	std::unordered_map<TextureHandle, TextureHandleData> m_texture_handles;
 
 	DX12RootSignature m_grid_root_signature;
 	DX12Pipeline m_grid_pipeline;
@@ -72,8 +73,15 @@ private:
 
 	static RenderCore* s_render_core;
 
+	TextureHandle m_texture_handle_counter = 0;
+
+	TextureHandleData m_solid_color_texture;
+
 private:
 	DX12Core* GetDX12Core();
+
+	static void AssetFinishedLoadingListenEvent(AssetHandle asset_handle);
+	void LoadTextureWithAssetHandle(AssetHandle asset_handle);
 
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
