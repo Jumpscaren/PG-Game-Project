@@ -37,6 +37,7 @@ private:
 
 	std::thread* m_load_scene_thread = nullptr;
 	std::mutex m_load_scene_mutex;
+	bool m_load_scene_user_controlled = false;
 	std::atomic<bool> m_threaded_scene_loader_finished = false;
 	SceneIndex m_load_scene_index = NULL_SCENE_INDEX;
 
@@ -52,6 +53,7 @@ private:
 
 public:
 	SceneLoader();
+	~SceneLoader();
 
 	void SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name);
 	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> LoadSceneEditor(std::string scene_name);

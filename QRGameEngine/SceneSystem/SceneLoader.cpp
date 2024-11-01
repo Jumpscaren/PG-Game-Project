@@ -69,6 +69,17 @@ SceneLoader::SceneLoader()
 	m_instance_prefab_method = mono_core->RegisterMonoMethod(m_prefab_instancer_class, "InstanceUserPrefab");
 }
 
+SceneLoader::~SceneLoader()
+{
+	if (!m_load_scene_user_controlled)
+	{
+		return;
+	}
+
+	m_threaded_scene_loader_finished = true;
+	HandleSceneLoadingPostUser();
+}
+
 void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name)
 {
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
@@ -379,6 +390,7 @@ void SceneLoader::HandleSceneLoadingPreUser()
 		return;
 	}
 	m_load_scene_mutex.lock();
+	m_load_scene_user_controlled = true;
 }
 
 void SceneLoader::HandleSceneLoadingPostUser()
@@ -389,6 +401,7 @@ void SceneLoader::HandleSceneLoadingPostUser()
 	}
 
 	m_load_scene_mutex.unlock();
+	m_load_scene_user_controlled = false;
 	if (m_threaded_scene_loader_finished)
 	{
 		m_load_scene_thread->join();

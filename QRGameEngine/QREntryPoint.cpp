@@ -264,7 +264,9 @@ void QREntryPoint::RunTime()
 		rendering_timer.StartTimer();
 		window_exist = render_core->UpdateRender(active_scene);
 		if (!window_exist)
+		{
 			break;
+		}
 		average_rendering_frame_time = average_rendering_frame_time * 0.9 + 0.1 * rendering_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 
 		deferred_timer.StartTimer();
@@ -312,15 +314,15 @@ void QREntryPoint::RunTime()
 
 void QREntryPoint::Cleanup()
 {
-	delete mono_core;
+	delete scene_loader;
 	delete render_core;
 	delete scene_manager;
+	delete mono_core;
 	delete asset_manager;
 	delete scripting_manager;
 	delete keyboard;
 	delete mouse;
 	delete editor_core;
-	delete scene_loader;
 	delete physics_core;
 	delete event_core;
 	delete global_scene;
