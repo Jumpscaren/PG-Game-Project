@@ -11,6 +11,7 @@
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "IO/JsonObject.h"
 #include "Scripting/Objects/Vector2Interface.h"
+#include "KinematicBodyComponent.h"
 
 void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -30,8 +31,8 @@ void BoxColliderComponentInterface::InitComponent(const CSMonoObject& object, Sc
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
-	//So that we do not need add staticbody when adding a boxcollider if we do not use a dynamic body
-	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity))
+	//So that we do not need add staticbody when adding a circlecollider if we do not use a dynamic body
+	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity) && !entity_manager->HasComponent<KinematicBodyComponent>(entity))
 		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
 
 	PhysicsCore::Get()->AddBoxCollider(scene_index, entity, Vector2(0.5f, 0.5f));

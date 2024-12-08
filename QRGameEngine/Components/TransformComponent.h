@@ -41,8 +41,8 @@ public:
 
 	static void SetLocalPosition(const SceneIndex scene_index, const Entity entity, const float x, const float y);
 	static CSMonoObject GetLocalPosition(const CSMonoObject& cs_transform);
-	static void SetLocalRotation(const CSMonoObject& cs_transform, const float angle);
-	static float GetLocalRotation(const CSMonoObject& cs_transform);
+	static void SetLocalRotation(const SceneIndex scene_index, const Entity entity, const float angle);
+	static float GetLocalRotation(const SceneIndex scene_index, const Entity entity);
 
 	static void SetScale(const CSMonoObject& cs_transform, const CSMonoObject& scale);
 	static CSMonoObject GetScale(const CSMonoObject& cs_transform);

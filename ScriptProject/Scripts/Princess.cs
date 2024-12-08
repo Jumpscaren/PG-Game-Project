@@ -47,6 +47,7 @@ namespace ScriptProject.Scripts
             new_random_direction_timer = start_to_move_time + new_random_direction_time;
 
             player = GameObject.TempFindGameObject("Player");
+            //player_body = player.GetComponent<DynamicBody>();
             player_body = player.GetComponent<DynamicBody>();
             player_script = player.GetComponent<Player>();
         }

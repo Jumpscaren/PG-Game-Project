@@ -24,6 +24,12 @@ _MonoDomain* CSMonoCore::GetDomain() const
 	return m_domain;
 }
 
+std::mutex* CSMonoCore::GetClassMutex(const MonoClassHandle mono_class_handle)
+{
+	//return m_mono_class_to_mutex.at(mono_class_handle);
+	return nullptr;
+}
+
 CSMonoCore::CSMonoCore()
 {
 	mono_set_dirs("../QRGameEngine/", "../QRGameEngine/");
@@ -325,7 +331,6 @@ MonoFieldHandle CSMonoCore::RegisterField(const MonoClassHandle& mono_class_hand
 	m_mono_field_tokens.push_back(token);
 
 	return field_handle;
-	//return GetMonoClass(mono_class_handle)->AddField(field_name);
 }
 
 bool CSMonoCore::CheckIfMonoMethodExists(const MonoClassHandle& class_handle, const std::string& method_name)
@@ -441,12 +446,24 @@ void CSMonoCore::ForceGarbageCollection()
 	mono_gc_collect(mono_gc_max_generation());
 }
 
-void CSMonoCore::HookThread()
+MonoThreadHandle CSMonoCore::HookThread()
 {
-	m_thread = mono_thread_attach(m_domain);
+	MonoThreadHandle mono_thread_handle = { .handle = mono_threads.size() };
+	if (!free_mono_thread_handles.empty())
+	{
+		mono_thread_handle = free_mono_thread_handles.back();
+		free_mono_thread_handles.pop_back();
+		mono_threads[mono_thread_handle] = (mono_thread_attach(m_domain));
+	}
+	else
+	{
+		mono_threads.push_back(mono_thread_attach(m_domain));
+	}
+	return mono_thread_handle;
 }
 
-void CSMonoCore::UnhookThread()
+void CSMonoCore::UnhookThread(const MonoThreadHandle thread_handle)
 {
-	mono_thread_detach(m_thread);
+	mono_thread_detach(mono_threads[thread_handle.handle]);
+	free_mono_thread_handles.push_back(thread_handle);
 }

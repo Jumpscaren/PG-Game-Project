@@ -5,9 +5,9 @@
 #include <string>
 #include <iostream>
 #include <assert.h>
-#include <unordered_map>
-#include <map>
-#include <unordered_set>
+//#include <unordered_map>
+//#include <map>
+//#include <unordered_set>
 #include <fstream>
 #include <stack>
 #include <chrono>
@@ -18,6 +18,17 @@
 #include <list>
 #include <ranges>
 #include <tuple>
+#include "Vendor/Include/ankerl/unordered_dense.h"
+namespace qr {
+	template <typename Key, typename T, class Hash = ankerl::unordered_dense::hash<Key>,
+		class KeyEqual = std::equal_to<Key>,
+		class AllocatorOrContainer = std::allocator<std::pair<Key, T>>,
+		class Bucket = ankerl::unordered_dense::bucket_type::standard,
+		class BucketContainer = ankerl::unordered_dense::detail::default_container_t>
+	using unordered_map = ankerl::unordered_dense::map<Key, T, Hash, KeyEqual, AllocatorOrContainer, Bucket, BucketContainer>;
+	template <typename T>
+	using unordered_set = ankerl::unordered_dense::set<T>;
+}
 
 //Windows
 #include <Windows.h>

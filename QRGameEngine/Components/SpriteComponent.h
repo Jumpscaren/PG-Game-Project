@@ -34,6 +34,8 @@ public:
 	static void SaveSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void LoadSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 
+	static void LoadTextureToSprite(SceneIndex scene_index, Entity entity, SpriteComponent& sprite_component, TextureHandle texture_handle);
+
 public:
 	static void SetTexture(const CSMonoObject& object, const CSMonoObject& texture);
 	static void FlipX(const CSMonoObject& object, bool flip_x);

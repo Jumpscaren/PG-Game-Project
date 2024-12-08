@@ -95,8 +95,8 @@ namespace ScriptProject.Scripts
             }
             else
             {
-                only = game_object;
-                //for (int i = 0; i < 10; ++i)
+                //only = game_object;
+                //for (int i = 0; i < 1000; ++i)
                 //{
                 //    GameObject new_game_object = GameObject.CreateGameObject();
                 //    new_game_object.AddComponent<Sprite>();
@@ -125,7 +125,7 @@ namespace ScriptProject.Scripts
 
         void Remove()
         {
-            Console.WriteLine("Remove Event");
+           // Console.WriteLine("Remove Event");
             EventSystem.StopListeningToEvent("OrcAngry", game_object, OrcAngryEvent);
 
             --count;
@@ -147,7 +147,6 @@ namespace ScriptProject.Scripts
 
         void BeginCollision(GameObject collided_game_object)
         {
-
             if (collided_game_object.GetName() == "Bouncer")
             {
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
@@ -209,7 +208,7 @@ namespace ScriptProject.Scripts
             }
             //Console.WriteLine("Dir: " + dir);
             //last_position = actor.PathFind(target, 1);
-            actor.DebugPath();
+            //actor.DebugPath();
             if (target_dir.Length() < 1.01f)
             {
                 dir = new Vector2();
@@ -375,6 +374,11 @@ namespace ScriptProject.Scripts
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
+            }
+
+            public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)
+            {
+
             }
         }
     }

@@ -27,19 +27,20 @@ private:
 	MonoMethodHandle m_instance_prefab_method;
 	MonoClassHandle m_prefab_instancer_class;
 	static SceneLoader* s_scene_loader;
-	std::unordered_map<std::string, OverrideSaveLoadMethods> m_override_methods;
+	qr::unordered_map<std::string, OverrideSaveLoadMethods> m_override_methods;
 	struct RenderTexture
 	{
 		std::string texture_path;
 		TextureHandle render_texture_handle;
 	};
-	std::unordered_map<TextureHandle, RenderTexture> m_texture_paths;
+	qr::unordered_map<TextureHandle, RenderTexture> m_texture_paths;
 
 	std::thread* m_load_scene_thread = nullptr;
 	std::mutex m_load_scene_mutex;
 	bool m_load_scene_user_controlled = false;
 	std::atomic<bool> m_threaded_scene_loader_finished = false;
 	SceneIndex m_load_scene_index = NULL_SCENE_INDEX;
+	MonoThreadHandle m_mono_thread_handle;
 
 private:
 	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths);
@@ -55,8 +56,8 @@ public:
 	SceneLoader();
 	~SceneLoader();
 
-	void SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name);
-	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> LoadSceneEditor(std::string scene_name);
+	void SaveScene(qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name);
+	qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> LoadSceneEditor(std::string scene_name);
 
 	static SceneLoader* Get();
 

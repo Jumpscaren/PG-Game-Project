@@ -10,7 +10,7 @@ struct PathFindingActorComponent
 	Entity goal_last_visited_node = NULL_ENTITY;
 	uint8_t last_path_index;
 	std::vector<Entity> cached_path;
-	std::unordered_set<Entity> cached_mapped_path;
+	qr::unordered_set<Entity> cached_mapped_path;
 };
 
 class JsonObject;

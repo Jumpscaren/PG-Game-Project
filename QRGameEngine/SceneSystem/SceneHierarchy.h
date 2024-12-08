@@ -19,7 +19,7 @@ private:
 private:
 	static SceneHierarchy* s_singleton;
 	std::set<Entity> m_root;
-	std::unordered_map<Entity, Parent> m_parent_connections;
+	qr::unordered_map<Entity, Parent> m_parent_connections;
 
 private:
 	void RemoveParentChildRelationInternal(const Entity parent, const Entity child, EntityManager* entity_manager);

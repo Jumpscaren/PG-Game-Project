@@ -27,11 +27,11 @@ struct PolygonEntity
 class DrawScene
 {
 private:
-	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> m_blocks;
+	qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> m_blocks;
 
 	PrefabData m_prefab_selected = {};
 
-	static std::unordered_map<std::string, std::vector<PrefabAndTextureData>> m_user_prefabs;
+	static qr::unordered_map<std::string, std::vector<PrefabAndTextureData>> m_user_prefabs;
 
 	std::string m_scene_name;
 
@@ -51,7 +51,7 @@ private:
 
 	bool m_in_editor_menu;
 
-	std::unordered_map<std::string, uint8_t> m_names_already_in_use;
+	qr::unordered_map<std::string, uint8_t> m_names_already_in_use;
 
 	static std::string m_category_in_use;
 

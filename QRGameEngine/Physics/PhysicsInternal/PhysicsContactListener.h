@@ -43,7 +43,7 @@ private:
 	};
 
 private:
-	std::unordered_map<CollisionData, int, CollisionDataHasher> m_collisions_per_entity;
+	qr::unordered_map<CollisionData, int, CollisionDataHasher> m_collisions_per_entity;
 
 	std::vector<CollisionData> m_deferred_begin_collision_data;
 	std::vector<CollisionData> m_deferred_end_collision_data;
@@ -54,6 +54,13 @@ private:
 
 	/// Called when two fixtures cease to touch.
 	void EndContact(b2Contact* contact) override;
+
+	void PreSolve(b2Contact*, const b2Manifold*) override
+	{
+		//B2_NOT_USED(contact);
+		//B2_NOT_USED(oldManifold);
+		//contact->SetEnabled(true);
+	}
 
 public:
 	void HandleDeferredCollisionData();

@@ -42,6 +42,27 @@ void RenderCore::LoadTextureWithAssetHandle(AssetHandle asset_handle)
 	texture_handle_data.texture_internal_view_handle = texture_internal_view_handle;
 
 	AssetManager::Get()->DeleteCPUAssetDataIfGPUOnly(asset_handle);
+
+	if (auto it = m_subscribe_to_texture_loading.find(texture_handle); it != m_subscribe_to_texture_loading.end())
+	{
+		for (const auto& subscribe_entity : it->second)
+		{
+			if (!SceneManager::GetSceneManager()->SceneExists(subscribe_entity.scene_index))
+			{
+				continue;
+			}
+
+			EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(subscribe_entity.scene_index);
+			if (!entity_manager->EntityExists(subscribe_entity.entity) || !entity_manager->HasComponent<SpriteComponent>(subscribe_entity.entity))
+			{
+				continue;
+			}
+
+			entity_manager->GetComponent<SpriteComponent>(subscribe_entity.entity).texture_handle = texture_handle;
+		}
+
+		m_subscribe_to_texture_loading.erase(it);
+	}
 }
 
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
@@ -382,11 +403,48 @@ TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name)
 	return texture_handle;
 }
 
+bool RenderCore::IsTextureAvailable(TextureHandle texture_handle)
+{
+	return m_texture_handles.contains(texture_handle);
+}
+
+bool RenderCore::IsTextureLoaded(const TextureHandle texture_handle)
+{
+	assert(m_texture_handles.contains(texture_handle));
+	return m_texture_handles.at(texture_handle) != m_solid_color_texture;
+}
+
+void RenderCore::SubscribeEntityToTextureLoading(const TextureHandle texture_handle, const SceneIndex scene_index, const Entity entity)
+{
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	assert(entity_manager->HasComponent<SpriteComponent>(entity));
+
+	auto it = m_subscribe_to_texture_loading.find(texture_handle);
+	if (it == m_subscribe_to_texture_loading.end())
+	{
+		m_subscribe_to_texture_loading.insert({ texture_handle, {{ scene_index, entity }} });
+		return;
+	}
+
+	it->second.push_back({ scene_index, entity });
+}
+
 AssetHandle RenderCore::GetTextureAssetHandle(const TextureHandle texture_handle)
 {
 	if (m_texture_to_asset.contains(texture_handle))
 	{
 		return m_texture_to_asset.find(texture_handle)->second;
+	}
+
+	assert(false);
+	return 0;
+}
+
+DX12TextureViewHandle RenderCore::GetTextureViewHandle(const TextureHandle texture_handle)
+{
+	if (m_texture_handles.contains(texture_handle))
+	{
+		return m_texture_handles.find(texture_handle)->second.texture_internal_view_handle;
 	}
 
 	assert(false);

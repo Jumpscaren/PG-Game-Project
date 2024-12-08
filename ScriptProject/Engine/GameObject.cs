@@ -18,6 +18,7 @@ namespace ScriptProject.Engine
         bool destroyed;
 
         private Cache<GameObject> cache_parent = new Cache<GameObject>();
+        private Cache<Byte> cache_tag = new Cache<Byte>();
 
         private static Dictionary<UInt32, Dictionary<UInt32, GameObject>> game_object_database = new Dictionary<uint, Dictionary<uint, GameObject>>();
         private static Dictionary<UInt32, Dictionary<UInt32, Dictionary<String, Component>>> scene_to_component_map = new Dictionary<uint, Dictionary<uint, Dictionary<string, Component>>>();
@@ -368,9 +369,25 @@ namespace ScriptProject.Engine
         public extern bool HasParent();
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetTag(Byte tag);
+        private static extern void SetTag_Extern(UInt32 scene_index, UInt32 entity, Byte tag);
+
+        public void SetTag(Byte tag)
+        {
+            cache_tag.CacheData(tag);
+            SetTag_Extern(GetSceneIndex(), GetEntityID(), tag);
+        }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern Byte GetTag();
+        private static extern Byte GetTag_Extern(UInt32 scene_index, UInt32 entity);
+
+        public Byte GetTag()
+        {
+            if (cache_tag.IsDataOld())
+            {
+                cache_tag.CacheData(GetTag_Extern(scene.GetSceneIndex(), entity_id));
+            }
+
+            return cache_tag.GetData();
+        }
     }
 }

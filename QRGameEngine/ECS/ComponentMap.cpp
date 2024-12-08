@@ -14,6 +14,7 @@
 #include "Components/SpriteComponent.h"
 #include "Components/StaticBodyComponent.h"
 #include "Components/TransformComponent.h"
+#include "Components/KinematicBodyComponent.h"
 
 std::vector<ComponentMap::ComponentMapData> ComponentMap::s_component_maps;
 
@@ -43,4 +44,5 @@ void ComponentMap::AddAllComponents()
 	AddComponent<SpriteComponent>();
 	AddComponent<StaticBodyComponent>();
 	AddComponent<TransformComponent>();
+	AddComponent<KinematicBodyComponent>();
 }

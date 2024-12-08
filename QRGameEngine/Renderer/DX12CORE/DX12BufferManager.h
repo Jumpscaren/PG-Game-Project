@@ -25,7 +25,7 @@ private:
 
 	Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_buffer_allocator;
 
-	std::unordered_map<DX12BufferHandle, std::vector<DX12BufferViewHandle>> m_buffer_to_views;
+	qr::unordered_map<DX12BufferHandle, std::vector<DX12BufferViewHandle>> m_buffer_to_views;
 
 	static constexpr uint32_t m_fixed_buffer_size = 10'000'000;
 

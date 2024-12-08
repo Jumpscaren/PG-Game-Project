@@ -26,7 +26,7 @@ float PathFinding::Heuristic(const Node& neighbor_node, const Node& goal_node)
 	//return std::roundf(diff.Length() / LENGTH_BETWEEN_NODES);
 }
 
-void PathFinding::ConstructPath(const std::map<Entity, Entity>& came_from, Entity current, std::vector<Entity>& path)
+void PathFinding::ConstructPath(const qr::unordered_map<Entity, Entity>& came_from, Entity current, std::vector<Entity>& path)
 {
 	while (came_from.contains(current))
 	{
@@ -222,7 +222,12 @@ void PathFinding::AStarPathfinding(const PathFindData& path_find_data, std::vect
 	const auto start_node_index = path_find_data.start_node_index;
 	const auto goal_node_index = path_find_data.goal_node_index;
 
-	std::map<Entity, float> f_score;
+	if (m_nodes.find(start_node_index) == m_nodes.end() || m_nodes.find(goal_node_index) == m_nodes.end())
+	{
+		return;
+	}
+
+	qr::unordered_map<Entity, float> f_score;
 	const auto cmp = [&](Node* left, Node* right) { return f_score.at(left->entity) > f_score.at(right->entity); };
 	std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> open_set(cmp);
 	std::set<Entity> open_set_entities;
@@ -230,8 +235,8 @@ void PathFinding::AStarPathfinding(const PathFindData& path_find_data, std::vect
 	auto& start_node = m_nodes.at(start_node_index);
 	const auto& goal_node = m_nodes.at(goal_node_index);
 	open_set.emplace(&(m_nodes.at(start_node_index)));
-	std::map<Entity, Entity> came_from;
-	std::map<Entity, float> g_score;
+	qr::unordered_map<Entity, Entity> came_from;
+	qr::unordered_map<Entity, float> g_score;
 
 	g_score.insert({ start_node_index, 0.0f });
 	f_score.insert({ start_node_index, Heuristic(start_node, goal_node) });
@@ -454,7 +459,7 @@ void PathFinding::RemoveNode(const SceneIndex scene_index, const Entity entity)
 	m_thread_state = ThreadState::Run;
 }
 
-const std::unordered_map<uint64_t, Entity>& PathFinding::GetPositionsToNode() const
+const qr::unordered_map<uint64_t, Entity>& PathFinding::GetPositionsToNode() const
 {
 	return m_position_to_node;
 }

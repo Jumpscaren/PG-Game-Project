@@ -4,6 +4,8 @@
 #include "SceneSystem/Scene.h"
 #include "ComponentMap.h"
 
+uint32_t EntityManager::m_current_component_type_index = 0;
+
 bool EntityManager::EntityExists(Entity entity) const
 {
 	return (entity < m_max_entities && m_entities[entity] == entity);
@@ -91,6 +93,9 @@ EntityManager::EntityManager(uint32_t max_entities, SceneIndex scene_index) : m_
 	m_free_entities.resize(max_entities);
 	m_component_pools.resize(MAX_COMPONENT_POOLS);
 	m_current_component_pool_index = 0;
+	m_component_type_to_pool.resize(MAX_COMPONENT_POOLS);
+	std::ranges::fill(m_component_type_to_pool, MAX_COMPONENT_POOLS);
+	//m_component_type_to_pool.
 
 	const uint32_t max_ent = (max_entities - 1);
 	for (uint32_t i = max_ent; i >= 0 && i < max_entities; --i)
@@ -134,6 +139,10 @@ Entity EntityManager::NewEntity()
 void EntityManager::RemoveEntity(Entity entity)
 {
 	assert(EntityExists(entity));
+	if (HasComponent<DeferredEntityDeletion>(entity))
+	{
+		return;
+	}
 	AddComponent<DeferredEntityDeletion>(entity);
 }
 

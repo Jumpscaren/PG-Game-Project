@@ -54,8 +54,10 @@ void SpriteComponentInterface::SetTexture(const CSMonoObject& object, const CSMo
 
 	uint64_t texture_handle;
 	CSMonoCore::Get()->GetValue(texture_handle, texture, "texture_asset_handle");
-	
-	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).texture_handle = texture_handle;
+
+	SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
+
+	SpriteComponentInterface::LoadTextureToSprite(scene_index, entity, sprite_component, texture_handle);
 }
 
 void SpriteComponentInterface::FlipX(const CSMonoObject& object, bool flip_x)
@@ -186,4 +188,15 @@ void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManag
 		return;
 
 	sprite_component.texture_handle = SceneLoader::Get()->GetRenderTexture(sprite_component.texture_handle);
+}
+
+void SpriteComponentInterface::LoadTextureToSprite(SceneIndex scene_index, Entity entity, SpriteComponent& sprite_component, TextureHandle texture_handle)
+{
+	if (RenderCore::Get()->IsTextureAvailable(sprite_component.texture_handle) && !RenderCore::Get()->IsTextureLoaded(texture_handle))
+	{
+		RenderCore::Get()->SubscribeEntityToTextureLoading(texture_handle, scene_index, entity);
+		return;
+	}
+
+	sprite_component.texture_handle = texture_handle;
 }

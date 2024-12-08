@@ -436,6 +436,11 @@ namespace ScriptProject.Scripts
 
                 hit_object_script.Knockback(dir, knockback);
             }
+
+            public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)
+            {
+
+            }
         }
     }
 }

@@ -110,8 +110,8 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetZIndex>(transform_class, "GetZIndex", TransformComponentInterface::GetZIndex);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalPosition>(transform_class, "SetLocalPosition_Extern", TransformComponentInterface::SetLocalPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalPosition>(transform_class, "GetLocalPosition", TransformComponentInterface::GetLocalPosition);
-	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalRotation>(transform_class, "SetLocalRotation", TransformComponentInterface::SetLocalRotation);
-	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalRotation>(transform_class, "GetLocalRotation", TransformComponentInterface::GetLocalRotation);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalRotation>(transform_class, "SetLocalRotation_Extern", TransformComponentInterface::SetLocalRotation);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalRotation>(transform_class, "GetLocalRotation_Extern", TransformComponentInterface::GetLocalRotation);
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetScale>(transform_class, "SetScale", TransformComponentInterface::SetScale);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetScale>(transform_class, "GetScale", TransformComponentInterface::GetScale);
@@ -211,13 +211,9 @@ CSMonoObject TransformComponentInterface::GetLocalPosition(const CSMonoObject& c
 	return vector2_position;
 }
 
-void TransformComponentInterface::SetLocalRotation(const CSMonoObject& cs_transform, const float angle)
+void TransformComponentInterface::SetLocalRotation(const SceneIndex scene_index, const Entity entity, const float angle)
 {
-	CSMonoObject game_object;
-	CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
-	const Entity entity = GameObjectInterface::GetEntityID(game_object);
-
-	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(GameObjectInterface::GetSceneIndex(game_object))->GetEntityManager();
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
 	if (entity_manager->HasComponent<ParentComponent>(entity))
 	{
 		ParentComponent& local_transform = entity_manager->GetComponent<ParentComponent>(entity);
@@ -228,13 +224,9 @@ void TransformComponentInterface::SetLocalRotation(const CSMonoObject& cs_transf
 	transform.SetRotation(Vector3(0, 0, angle));
 }
 
-float TransformComponentInterface::GetLocalRotation(const CSMonoObject& cs_transform)
+float TransformComponentInterface::GetLocalRotation(const SceneIndex scene_index, const Entity entity)
 {
-	CSMonoObject game_object;
-	CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
-	const Entity entity = GameObjectInterface::GetEntityID(game_object);
-
-	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(GameObjectInterface::GetSceneIndex(game_object))->GetEntityManager();
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
 	if (entity_manager->HasComponent<ParentComponent>(entity))
 	{
 		return entity_manager->GetComponent<ParentComponent>(entity).GetRotationEuler().z;

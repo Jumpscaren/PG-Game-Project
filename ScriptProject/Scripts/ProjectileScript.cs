@@ -108,6 +108,11 @@ namespace ScriptProject.Scripts
 
                 GameObject.DeleteGameObject(hit_box_script.GetGameOjbect().GetParent());
             }
+
+            public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)
+            {
+                hit_box_script.GetGameOjbect().GetParent().GetComponent<ProjectileScript>().SetCreator(null);
+            }
         }
     }
 }

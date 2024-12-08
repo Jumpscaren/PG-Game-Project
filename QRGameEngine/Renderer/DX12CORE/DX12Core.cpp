@@ -146,8 +146,8 @@ void DX12Core::InitCore(Window* window, uint32_t backbuffer_count)
 
 #ifdef _DEBUG
 	//Leaks memory for some reason
-	EnableDebugLayer();
-	EnableGPUBasedValidation();
+	//EnableDebugLayer();
+	//EnableGPUBasedValidation();
 #endif // DEBUG
 
 	m_handle_manager = std::make_unique<HandleManager>();

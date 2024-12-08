@@ -43,8 +43,8 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetParent>(game_object_class, "GetParent_Extern", GameObjectInterface::GetParent);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::HasParent>(game_object_class, "HasParent", GameObjectInterface::HasParent);
 
-    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetTag>(game_object_class, "SetTag", GameObjectInterface::SetTag);
-    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetTag>(game_object_class, "GetTag", GameObjectInterface::GetTag);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetTag>(game_object_class, "SetTag_Extern", GameObjectInterface::SetTag);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetTag>(game_object_class, "GetTag_Extern", GameObjectInterface::GetTag);
 }
 
 CSMonoObject GameObjectInterface::GetGameObjectFromComponent(const CSMonoObject& component)
@@ -228,14 +228,14 @@ bool GameObjectInterface::HasParent(const CSMonoObject& game_object)
     return entity_manager->HasComponent<ParentComponent>(entity);
 }
 
-void GameObjectInterface::SetTag(const CSMonoObject& game_object, const uint8_t tag)
+void GameObjectInterface::SetTag(const SceneIndex scene_index, const Entity entity, const uint8_t tag)
 {
-    SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(game_object))->GetComponent<EntityDataComponent>(GetEntityID(game_object)).entity_tag = tag;
+    SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<EntityDataComponent>(entity).entity_tag = tag;
 }
 
-uint8_t GameObjectInterface::GetTag(const CSMonoObject& game_object)
+uint8_t GameObjectInterface::GetTag(const SceneIndex scene_index, const Entity entity)
 {
-    return SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(game_object))->GetComponent<EntityDataComponent>(GetEntityID(game_object)).entity_tag;
+    return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<EntityDataComponent>(entity).entity_tag;
 }
 
 void GameObjectInterface::RemoveSceneFromSceneToComponentMap(const SceneIndex scene_index)

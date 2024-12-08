@@ -11,7 +11,7 @@ public:
 	};
 
 private:
-	std::unordered_map<HandleType, std::vector<uint64_t>> m_handles;
+	qr::unordered_map<HandleType, std::vector<uint64_t>> m_handles;
 	static HandleManager* s_handle_manager;
 
 public:

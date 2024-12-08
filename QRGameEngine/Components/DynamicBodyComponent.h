@@ -25,8 +25,8 @@ public:
 	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
-	static void SetVelocity(const CSMonoObject& object, const CSMonoObject& velocity);
-	static CSMonoObject GetVelocity(const CSMonoObject& object);
+	static void SetVelocity(SceneIndex scene_index, Entity entity, const CSMonoObject& velocity);
+	static CSMonoObject GetVelocity(SceneIndex scene_index, Entity entity);
 	static void SetFixedRotation(const CSMonoObject& object, bool fixed_rotation);
 	static void SetEnabled(const CSMonoObject& object, const bool enabled);
 

@@ -69,7 +69,7 @@ void ScriptingManager::StartScriptsFromLoadedScene(SceneIndex scene_index)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
-	entity_manager->System<ScriptComponent>([&](const ScriptComponent& script_component) {
+	entity_manager->System<ScriptComponent>([&](ScriptComponent& script_component) {
 			ScriptingManager::Get()->StartScript(script_component);
 		});
 }
@@ -83,11 +83,14 @@ ScriptingManager::ScriptingManager()
 	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromLoadedScene>("SceneLoaded", 1, ScriptingManager::StartScriptsFromLoadedScene);
 }
 
-void ScriptingManager::StartScript(const ScriptComponent& script)
+void ScriptingManager::StartScript(ScriptComponent& script)
 {
 	CSMonoCore* mono_core = CSMonoCore::Get();
-	if (mono_core->CheckIfMonoMethodExists(script.script_start))
+	if (!script.already_started && mono_core->CheckIfMonoMethodExists(script.script_start))
+	{
+		script.already_started = true;
 		mono_core->CallMethod(script.script_start, script.script_object);
+	}
 }
 
 void ScriptingManager::UpdateScripts(EntityManager* entity_manager)

@@ -54,7 +54,8 @@ void ImGUIMain::EndFrame(DX12Core* dx12_core)
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dx12_core->GetCommandList()->GetCommandList());
 }
 
-bool ImGUIMain::ImageButton(const std::string& image_id, TextureHandle image_texture)
+bool ImGUIMain::ImageButton(const std::string& image_id, const TextureHandle image_texture)
 {
-	return ImGui::ImageButton(image_id.c_str(), (ImTextureID)RenderCore::Get()->GetDX12Core()->GetTextureManager()->GetTextureView(image_texture)->texture_descriptor_handle.gpu_handle.ptr, {100.0f, 100.0f});
+	const DX12TextureViewHandle texture_view_handle = RenderCore::Get()->GetTextureViewHandle(image_texture);
+	return ImGui::ImageButton(image_id.c_str(), (ImTextureID)RenderCore::Get()->GetDX12Core()->GetTextureManager()->GetTextureView(texture_view_handle)->texture_descriptor_handle.gpu_handle.ptr, {100.0f, 100.0f});
 }

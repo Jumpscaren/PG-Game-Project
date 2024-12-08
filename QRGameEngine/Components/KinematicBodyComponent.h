@@ -1,23 +1,23 @@
 #pragma once
-#include "Common/EngineTypes.h"
+#include "Physics/PhysicDefines.h"
 #include "Scripting/CSMonoObject.h"
-#include "SceneSystem/SceneDefines.h"
 #include "ECS/EntityDefinition.h"
+#include "SceneSystem/SceneDefines.h"
+#include "Common/EngineTypes.h"
 
-struct ScriptComponent
+struct KinematicBodyComponent
 {
-	CSMonoObject script_object;
-	bool already_started = false;
-	MonoMethodHandle script_start;
-	MonoMethodHandle script_update;
-	MonoMethodHandle script_begin_collision;
-	MonoMethodHandle script_end_collision;
+	PhysicObjectHandle physic_object_handle;
+	bool awake = true;
+	Vector2 velocity;
+	bool fixed_rotation;
+	bool enabled = true;
 };
 
 class JsonObject;
 class EntityManager;
 
-class ScriptComponentInterface
+class KinematicBodyComponentInterface
 {
 public:
 	static void RegisterInterface(CSMonoCore* mono_core);
@@ -25,10 +25,14 @@ public:
 	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
-	static void AddScriptComponent(const std::string& script_class_name, SceneIndex scene_index, Entity entity);
+public:
+	static void SetVelocity(const CSMonoObject& object, const CSMonoObject& velocity);
+	static CSMonoObject GetVelocity(const CSMonoObject& object);
+	static void SetFixedRotation(const CSMonoObject& object, bool fixed_rotation);
+	static void SetEnabled(const CSMonoObject& object, const bool enabled);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
-	static void RemoveComponentData(ScriptComponent& script_component);
 };
+

@@ -3,6 +3,7 @@
 #include "CSMonoMethod.h"
 #include "CSMonoObject.h"
 #include "CSMonoString.h"
+#include <mutex>
 
 struct _MonoDomain;
 struct _MonoAssembly;
@@ -69,23 +70,45 @@ private:
 		MONO_TYPE_ENUM = 0x55        /* an enumeration */
 	} CSMonoType;
 
+	struct MonoClassHandlerHasher
+	{
+		std::size_t operator()(const MonoClassHandle& mono_class_handle) const
+		{
+			return mono_class_handle.handle;
+		}
+	};
+
+	struct MonoThreadHandlerHasher
+	{
+		std::size_t operator()(const MonoThreadHandle& mono_thread_handle) const
+		{
+			return mono_thread_handle.handle;
+		}
+	};
+
 private:
 	_MonoDomain* m_domain;
 	_MonoAssembly* m_assembly;
 	_MonoImage* m_image;
 
-	std::unordered_map<_MonoClass*, MonoClassHandle> m_mono_class_ptr_to_mono_class_handle;
+	qr::unordered_map<_MonoClass*, MonoClassHandle> m_mono_class_ptr_to_mono_class_handle;
+	//qr::unordered_map<MonoClassHandle, std::mutex*, MonoClassHandlerHasher> m_mono_class_to_mutex;
+	struct T
+	{
+		std::mutex mutex;
+		std::atomic<std::thread::id> thread_id;
+	} thread_mutex;
 	std::vector<CSMonoClass> m_mono_classes;
 	std::vector<CSMonoMethod> m_mono_methods;
 	std::vector<uint32_t> m_mono_field_tokens;
 
-	std::unordered_map<std::string, MonoClassHandle> m_mono_class_name_to_mono_class_handle;
-	std::unordered_map<std::string, MonoMethodHandle> m_mono_method_name_to_mono_method_handle;
+	qr::unordered_map<std::string, MonoClassHandle> m_mono_class_name_to_mono_class_handle;
+	qr::unordered_map<std::string, MonoMethodHandle> m_mono_method_name_to_mono_method_handle;
 
 	static CSMonoCore* s_mono_core;
 
-	//Temporary solution
-	_MonoThread* m_thread = nullptr;
+	std::vector<_MonoThread*> mono_threads;
+	std::vector<MonoThreadHandle> free_mono_thread_handles;
 
 private:
 	//Type changing templates
@@ -237,6 +260,8 @@ private:
 
 	//MonoMethodHandle FindMonoMethod();
 
+	std::mutex* GetClassMutex(const MonoClassHandle mono_class_handle);
+
 public:
 	CSMonoCore();
 	~CSMonoCore();
@@ -308,8 +333,8 @@ public:
 
 	void ForceGarbageCollection();
 
-	void HookThread();
-	void UnhookThread();
+	MonoThreadHandle HookThread();
+	void UnhookThread(const MonoThreadHandle thread_handle);
 };
 
 template<typename T>
@@ -463,23 +488,31 @@ inline void CSMonoCore::CallMethod(Type& return_value, const MonoMethodHandle& m
 	return_value = MonoObjectToValue((Type*)method_return_value);
 }
 
+template<auto t_method>
+static MonoClassHandle SetAndGetHookedMonoClassHandle(const MonoClassHandle class_handle)
+{
+	static MonoClassHandle hooked_class_handle = class_handle;
+	assert(class_handle.handle == 0 || (class_handle.handle != 0 && hooked_class_handle == class_handle));
+	return hooked_class_handle;
+}
+
 template<auto t_method, typename Type, typename ...Args>
 inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, Type(*)(Args...))
 {
+	SetAndGetHookedMonoClassHandle<t_method>(class_handle);
 	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethod<(void*)t_method, ChangeType<Type>, ChangeType<Args>...>);
 }
 
 template<auto t_method, typename ...Args>
 inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, void(*)(Args ...))
 {
+	SetAndGetHookedMonoClassHandle<t_method>(class_handle);
 	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethodVoid<(void*)t_method, ChangeType<Args>...>);
 }
 
 template<void* method, typename Type, typename ...Args>
 inline Type CSMonoCore::HookedMethod(Args ...args)
 {
-	sizeof...(Args);
-
 	return MonoMethodReturn(((ChangeType<Type>(*)(ChangeType<Args>...))(method))(MonoMethodParameter(args)...));
 }
 

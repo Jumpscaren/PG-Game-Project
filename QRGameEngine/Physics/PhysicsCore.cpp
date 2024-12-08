@@ -4,6 +4,7 @@
 #include "Vendor/Include/Box2D/box2d.h"
 #include "Renderer/RenderCore.h"
 #include "PhysicsInternal/PhysicsDebugDraw.h"
+#include "PhysicsInternal/PhysicsContactFilter.h"
 #include "PhysicsInternal/PhysicsContactListener.h"
 #include "PhysicsInternal/PhysicsDestructionListener.h"
 
@@ -11,6 +12,7 @@
 #include "Components/DynamicBodyComponent.h"
 #include "Components/StaticBodyComponent.h"
 #include "Components/PureStaticBodyComponent.h"
+#include "Components/KinematicBodyComponent.h"
 #include "Components/BoxColliderComponent.h"
 #include "Components/CircleColliderComponent.h"
 #include "Components/PolygonColliderComponent.h"
@@ -36,6 +38,7 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 	s_physics_core = this;
 
 	m_debug_draw = new PhysicsDebugDraw();
+	m_contact_filter = new PhysicsContactFilter();
 	m_contact_listener = new PhysicsContactListener();
 	m_destruction_listener = new PhysicsDestructionListener();
 
@@ -44,9 +47,10 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 	gravity.Set(0.0f, 0.0f);
 	m_world = new b2World(gravity);
 
-	m_world->SetDestructionListener(m_destruction_listener);
-	m_world->SetContactListener(m_contact_listener);
 	m_world->SetDebugDraw(m_debug_draw);
+	m_world->SetContactFilter(m_contact_filter);
+	m_world->SetContactListener(m_contact_listener);
+	m_world->SetDestructionListener(m_destruction_listener);
 
 	m_physic_object_data.resize(MAX_PHYSIC_OBJECTS);
 	for (PhysicObjectHandle i = MAX_PHYSIC_OBJECTS - 1; i > 0; --i)
@@ -359,6 +363,11 @@ void PhysicsCore::AwakePhysicObjectsFromLoadedScene(const SceneIndex scene_index
 			//PhysicObjectData& physic_object = m_physic_object_data[pure_static_body.physic_object_handle];
 			//static_body.enabled = true;
 		});
+	entity_manager->System<KinematicBodyComponent>([&](KinematicBodyComponent& kinematic_body)
+		{
+			kinematic_body.enabled = true;
+			kinematic_body.awake = true;
+		});
 }
 
 void PhysicsCore::AwakePureStaticBody(SceneIndex scene_index, Entity entity)
@@ -496,6 +505,21 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 	}
 	m_deferred_enable_pure_static_bodies.clear();
 
+	entity_manager->System<KinematicBodyComponent, TransformComponent>([&](const KinematicBodyComponent& kinematic_body, const TransformComponent& transform)
+		{
+			PhysicObjectData& physic_object = m_physic_object_data[kinematic_body.physic_object_handle];
+			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+			if (kinematic_body.awake != physic_object.object_body->IsAwake())
+				physic_object.object_body->SetAwake(kinematic_body.awake);
+			physic_object.object_body->SetLinearVelocity({ kinematic_body.velocity.x, kinematic_body.velocity.y });
+			if (kinematic_body.fixed_rotation != physic_object.object_body->IsFixedRotation())
+				physic_object.object_body->SetFixedRotation(kinematic_body.fixed_rotation);
+			if (kinematic_body.enabled != physic_object.object_body->IsEnabled())
+			{
+				physic_object.object_body->SetEnabled(kinematic_body.enabled);
+			}
+		});
+
 	entity_manager->System<BoxColliderComponent>([&](Entity entity, BoxColliderComponent& box_collider)
 		{
 			if (box_collider.update_box_collider) [[unlikely]]
@@ -542,6 +566,20 @@ void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 			 dynamic_body.velocity.x = velocity.x;
 			 dynamic_body.velocity.y = velocity.y;
 		});
+
+	entity_manager->System<KinematicBodyComponent, TransformComponent>([&](KinematicBodyComponent& kinematic_body, TransformComponent& transform)
+		{
+			PhysicObjectData& physic_object = m_physic_object_data[kinematic_body.physic_object_handle];
+			const b2Transform& transform_physic_object = physic_object.object_body->GetTransform();
+			transform.SetPosition(Vector2(transform_physic_object.p.x, transform_physic_object.p.y));
+			Vector3 rotation = transform.GetRotationEuler();
+			rotation.z = transform_physic_object.q.GetAngle();
+			transform.SetRotation(rotation);
+
+			const b2Vec2& velocity = physic_object.object_body->GetLinearVelocity();
+			kinematic_body.velocity.x = velocity.x;
+			kinematic_body.velocity.y = velocity.y;
+		});
 }
 
 void PhysicsCore::AddBoxPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, const bool trigger, const ColliderFilter collider_filter)
@@ -584,6 +622,11 @@ void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity 
 		physic_object_handle = entity_manager->GetComponent<PureStaticBodyComponent>(entity).physic_object_handle;
 		entity_manager->RemoveComponent<PureStaticBodyComponent>(entity);
 	}
+	else if (entity_manager->HasComponent<KinematicBodyComponent>(entity))
+	{
+		physic_object_handle = entity_manager->GetComponent<KinematicBodyComponent>(entity).physic_object_handle;
+		entity_manager->RemoveComponent<KinematicBodyComponent>(entity);
+	}
 
 	if (IsDeferringPhysicCalls())
 	{
@@ -599,7 +642,7 @@ b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic
 	const PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 
 	float density = 1.0f;
-	if (physic_object_body_type == PhysicObjectBodyType::StaticBody || physic_object_body_type == PhysicObjectBodyType::PureStaticBody)
+	if (physic_object_body_type == PhysicObjectBodyType::StaticBody || physic_object_body_type == PhysicObjectBodyType::PureStaticBody) //|| physic_object_body_type == PhysicObjectBodyType::KinematicBody)
 		density = 0.0f;
 
 	b2Filter filter;
@@ -668,6 +711,10 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	{
 		assert(PhysicObjectBodyType::PureStaticBody == physic_object_body_type);
 	}
+	if (entity_manager->HasComponent<KinematicBodyComponent>(entity))
+	{
+		assert(PhysicObjectBodyType::KinematicBody == physic_object_body_type);
+	}
 
 	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && physic_object_body_type == PhysicObjectBodyType::DynamicBody)
 	{
@@ -680,6 +727,10 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	else if (!entity_manager->HasComponent<PureStaticBodyComponent>(entity) && physic_object_body_type == PhysicObjectBodyType::PureStaticBody)
 	{
 		entity_manager->AddComponent<PureStaticBodyComponent>(entity).physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
+	}
+	else if (!entity_manager->HasComponent<KinematicBodyComponent>(entity) && physic_object_body_type == PhysicObjectBodyType::KinematicBody)
+	{
+		entity_manager->AddComponent<KinematicBodyComponent>(entity).physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
 	}
 
 	if (IsDeferringPhysicCalls())
@@ -701,7 +752,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	b2BodyDef physic_body_def = {};
 	physic_body_def.position = physic_object_position;
 
-	b2BodyType body_type;
+	b2BodyType body_type{};
 	switch (physic_object_body_type)
 	{
 	case PhysicObjectBodyType::DynamicBody:
@@ -710,6 +761,9 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	case PhysicObjectBodyType::StaticBody:
 	case PhysicObjectBodyType::PureStaticBody:
 		body_type = b2BodyType::b2_staticBody;
+		break;
+	case PhysicObjectBodyType::KinematicBody:
+		body_type = b2BodyType::b2_kinematicBody;
 		break;
 	}
 	physic_body_def.type = body_type;
@@ -772,6 +826,26 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 #ifdef _EDITOR
 		physic_object_data.object_body->SetEnabled(false);
 		//static_body.enabled = physic_object_data.object_body->IsEnabled();
+#endif // _EDITOR
+	}
+	else if (physic_object_body_type == PhysicObjectBodyType::KinematicBody)
+	{
+		KinematicBodyComponent& kinematic_body = entity_manager->GetComponent<KinematicBodyComponent>(entity);
+		kinematic_body.physic_object_handle = new_physic_object_handle;
+#ifndef _EDITOR
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		{
+			physic_object_data.object_body->SetEnabled(false);
+			kinematic_body.enabled = physic_object_data.object_body->IsEnabled();
+			physic_object_data.object_body->SetAwake(false);
+			kinematic_body.awake = physic_object_data.object_body->IsAwake();
+		}
+#endif // !_EDITOR
+#ifdef _EDITOR
+		physic_object_data.object_body->SetEnabled(false);
+		kinematic_body.enabled = physic_object_data.object_body->IsEnabled();
+		physic_object_data.object_body->SetAwake(false);
+		kinematic_body.awake = physic_object_data.object_body->IsAwake();
 #endif // _EDITOR
 	}
 }
@@ -927,6 +1001,11 @@ void PhysicsCore::RemoveDeferredPhysicObjects(EntityManager* entity_manager)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
 		});
+
+	entity_manager->System<DeferredEntityDeletion, KinematicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, KinematicBodyComponent)
+		{
+			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
+		});
 }
 
 PhysicObjectHandle PhysicsCore::GetPhysicObjectHandle(EntityManager* entity_manager, const Entity entity)
@@ -943,6 +1022,10 @@ PhysicObjectHandle PhysicsCore::GetPhysicObjectHandle(EntityManager* entity_mana
 	else if (entity_manager->HasComponent<PureStaticBodyComponent>(entity))
 	{
 		physic_object_handle = entity_manager->GetComponent<PureStaticBodyComponent>(entity).physic_object_handle;
+	}
+	else if (entity_manager->HasComponent<KinematicBodyComponent>(entity))
+	{
+		physic_object_handle = entity_manager->GetComponent<KinematicBodyComponent>(entity).physic_object_handle;
 	}
 
 	assert(physic_object_handle != NULL_PHYSIC_OBJECT_HANDLE);

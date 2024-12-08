@@ -9,6 +9,7 @@
 #include "SceneSystem/SceneManager.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "IO/JsonObject.h"
+#include "KinematicBodyComponent.h"
 
 void PolygonColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -27,11 +28,9 @@ void PolygonColliderComponentInterface::InitComponent(const CSMonoObject& object
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
-	//So that we do not need add staticbody when adding a polygon collider if we do not use a dynamic body
-	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity))
-	{
+	//So that we do not need add staticbody when adding a circlecollider if we do not use a dynamic body
+	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity) && !entity_manager->HasComponent<KinematicBodyComponent>(entity))
 		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
-	}
 
 	PhysicsCore::Get()->AddPolygonCollider(scene_index, entity, { Vector2(0.5f, 0.5f), Vector2(-0.5f, -0.5f), Vector2(1.0f, 0.0f) }, true, true);
 }
@@ -164,8 +163,6 @@ std::vector<Triangle> PolygonColliderComponentInterface::CreatePolygonTriangulat
 	std::vector<Vector2> polygons = polygon_collider.points;
 	return Triangulation(polygons);
 }
-
-
 
 void PolygonColliderComponentInterface::SetTrigger(const CSMonoObject& object, bool trigger)
 {

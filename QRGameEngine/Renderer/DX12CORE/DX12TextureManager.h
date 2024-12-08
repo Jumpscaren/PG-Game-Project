@@ -29,7 +29,7 @@ private:
 
 	Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_texture_allocator;
 
-	std::unordered_map<DX12TextureHandle, std::vector<DX12TextureViewHandle>> m_texture_to_views;
+	qr::unordered_map<DX12TextureHandle, std::vector<DX12TextureViewHandle>> m_texture_to_views;
 
 private:
 	DX12TextureHandle AddTexture(Microsoft::WRL::ComPtr<ID3D12Resource> texture, Microsoft::WRL::ComPtr<D3D12MA::Allocation> texture_allocation, const ResourceState& state);

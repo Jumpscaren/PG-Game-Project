@@ -231,6 +231,7 @@ namespace ScriptProject.Scripts
 
         void BeginCollision(GameObject collided_game_object)
         {
+            //Console.WriteLine("Enter - " + collided_game_object.GetName());
             if (collided_game_object.GetName() == "Bouncer")
             {
                 Vector2 direction = game_object.transform.GetPosition() - collided_game_object.transform.GetPosition();
@@ -354,6 +355,11 @@ namespace ScriptProject.Scripts
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
+            }
+
+            public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)
+            {
+
             }
         }
     }

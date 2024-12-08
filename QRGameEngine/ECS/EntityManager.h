@@ -6,7 +6,8 @@
 struct ComponentPool
 {
 	void* component_pool_data;
-	std::unordered_set<Entity> m_component_pool_entities;
+	qr::unordered_set<Entity> m_component_pool_entities;
+	//ankerl::unordered_dense::set<Entity> m_component_pool_entities;
 	bool pool_changed = false;
 	std::vector<Entity> list_of_component_pool_entities;
 	std::vector<bool> has_component_entities;
@@ -49,12 +50,15 @@ private:
 	std::vector<Entity> m_free_entities;
 	std::vector<Entity> m_entities;
 
-	std::unordered_map<uint64_t, uint32_t> m_component_type_to_pool;
-	std::unordered_map<std::string, NameToPoolData> m_component_name_to_pool;
+	//qr::unordered_map<uint64_t, uint32_t> m_component_type_to_pool;
+	qr::unordered_map<std::string, NameToPoolData> m_component_name_to_pool;
 
 	std::vector<ComponentPool> m_component_pools;
 	uint32_t m_current_component_pool_index;
 	static constexpr uint32_t MAX_COMPONENT_POOLS = 100;
+
+	static uint32_t m_current_component_type_index;
+	std::vector<uint32_t> m_component_type_to_pool;
 
 	char* m_data_pool;
 	static constexpr uint32_t DATA_POOL_SIZE = 100 * 10000 * MAX_COMPONENT_POOLS;
@@ -228,6 +232,13 @@ public:
 
 		return smallest_component_pool->list_of_component_pool_entities;
 	}
+
+	template <typename Component>
+	uint32_t GetComponentTypeIndex()
+	{
+		static uint32_t index = m_current_component_type_index++;
+		return index;
+	}
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -263,22 +274,34 @@ inline uint32_t EntityManager::CreateComponentPool()
 template<typename Component>
 inline ComponentPool& EntityManager::GetComponentPool()
 {
-	uint64_t component_index = (uint64_t)static_type_info::getTypeIndex<Component>();
+	//uint64_t component_index = (uint64_t)static_type_info::getTypeIndex<Component>();
 
-	auto it = m_component_type_to_pool.find(component_index);
+	//auto it = m_component_type_to_pool.find(component_index);
 
-	uint32_t component_pool_index = 0;
+	//uint32_t component_pool_index = 0;
 
-	if (it != m_component_type_to_pool.end())
+	//if (it != m_component_type_to_pool.end())
+	//{
+	//	component_pool_index = it->second;
+	//}
+	//else
+	//{
+	//	component_pool_index = CreateComponentPool<Component>();
+	//	m_component_type_to_pool.insert({ component_index, component_pool_index });
+	//}
+
+	if (m_entity_manager_scene_index == 1)
 	{
-		component_pool_index = it->second;
+		int f = 0;
 	}
-	else
+
+	const uint32_t component_type_index = GetComponentTypeIndex<Component>();
+	uint32_t component_pool_index = m_component_type_to_pool[component_type_index];
+	if (component_pool_index == MAX_COMPONENT_POOLS)
 	{
 		component_pool_index = CreateComponentPool<Component>();
-		m_component_type_to_pool.insert({ component_index, component_pool_index });
+		m_component_type_to_pool[component_type_index] = component_pool_index;
 	}
-
 	return m_component_pools[component_pool_index];
 }
 

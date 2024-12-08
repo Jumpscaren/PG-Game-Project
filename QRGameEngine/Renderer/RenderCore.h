@@ -8,6 +8,7 @@
 #include "Components/TransformComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Asset/AssetTypes.h"
+#include "SceneSystem/SceneDefines.h"
 
 class DX12StackAllocator;
 class ImGUIMain;
@@ -30,11 +31,22 @@ private:
 	{
 		DX12TextureHandle texture_internal_handle;
 		DX12TextureViewHandle texture_internal_view_handle;
+
+		bool operator==(const TextureHandleData& other) const
+		{
+			return texture_internal_handle == other.texture_internal_handle && texture_internal_view_handle == other.texture_internal_view_handle;
+		}
 	};
 	struct VertexGrid
 	{
 		float position[3];
 		float pad;
+	};
+
+	struct SubscribeToTextureLoading
+	{
+		SceneIndex scene_index;
+		Entity entity;
 	};
 
 private:
@@ -56,9 +68,11 @@ private:
 	DX12BufferHandle m_camera_buffer;
 	DX12BufferViewHandle m_camera_buffer_view;
 
-	std::unordered_map<AssetHandle, TextureHandle> m_asset_to_texture;
-	std::unordered_map<TextureHandle, AssetHandle> m_texture_to_asset;
-	std::unordered_map<TextureHandle, TextureHandleData> m_texture_handles;
+	qr::unordered_map<AssetHandle, TextureHandle> m_asset_to_texture;
+	qr::unordered_map<TextureHandle, AssetHandle> m_texture_to_asset;
+	qr::unordered_map<TextureHandle, TextureHandleData> m_texture_handles;
+
+	qr::unordered_map<TextureHandle, std::vector<SubscribeToTextureLoading>> m_subscribe_to_texture_loading;
 
 	DX12RootSignature m_grid_root_signature;
 	DX12Pipeline m_grid_pipeline;
@@ -90,7 +104,12 @@ public:
 	bool UpdateRender(Scene* draw_scene);
 
 	TextureHandle LoadTexture(const std::string& texture_file_name);
+	bool IsTextureAvailable(TextureHandle texture_handle);
+	bool IsTextureLoaded(TextureHandle texture_handle);
+	void SubscribeEntityToTextureLoading(const TextureHandle texture_handle, const SceneIndex scene_index, const Entity entity);
+
 	AssetHandle GetTextureAssetHandle(TextureHandle texture_handle);
+	DX12TextureViewHandle GetTextureViewHandle(TextureHandle texture_handle);
 	
 	void AddLine(const Vector2& line);
 

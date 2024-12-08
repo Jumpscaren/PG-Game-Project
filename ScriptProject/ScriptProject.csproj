@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\KinematicBody.cs" />
     <Compile Include="Engine\PolygonCollider.cs" />
     <Compile Include="Engine\Cache.cs" />
     <Compile Include="Engine\AnimationManager.cs" />

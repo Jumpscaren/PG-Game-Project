@@ -15,7 +15,7 @@ private:
 
 public:
 	ScriptingManager();
-	void StartScript(const ScriptComponent& script);
+	void StartScript(ScriptComponent& script);
 	void UpdateScripts(EntityManager* entity_manager);
 	void RemoveDeferredScripts(EntityManager* entity_manager);
 	void RemoveScript(ScriptComponent& script);

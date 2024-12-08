@@ -41,9 +41,9 @@ private:
 	};
 
 private:
-	std::unordered_map<uint64_t, AssetHandle> m_loaded_assets;
+	qr::unordered_map<uint64_t, AssetHandle> m_loaded_assets;
 
-	std::unordered_map<AssetHandle, AssetData> m_assets;
+	qr::unordered_map<AssetHandle, AssetData> m_assets;
 
 	static AssetManager* s_asset_manager;
 

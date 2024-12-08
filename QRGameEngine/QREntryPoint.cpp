@@ -202,17 +202,27 @@ void QREntryPoint::RunTime()
 		}
 		ImGui::End();
 
-//#ifndef _EDITOR
+#ifndef _EDITOR
 		if (keyboard->GetKeyPressed(Keyboard::Key::I))
 		{
 			//scene_manager->DestroyScene(scene_manager->GetActiveSceneIndex());
 			//SceneIndex scene = scene_manager->LoadScene("port"); //"port_path_test_2"
 			//SceneIndex scene = scene_manager->LoadScene("test_area_1");
-			SceneIndex scene = scene_manager->LoadScene("temp");
-			scene_manager->ChangeScene(scene);
-			change_scene = false;
+			std::cout << "Change Scene" << std::endl;
+			if (scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetSceneName() == "temp")
+			{
+				SceneIndex scene = scene_manager->LoadScene("empty_with_camerad");
+				scene_manager->ChangeScene(scene);
+				change_scene = false;
+			}
+			else
+			{
+				SceneIndex scene = scene_manager->LoadScene("temp");
+				scene_manager->ChangeScene(scene);
+				change_scene = false;
+			}
 		}
-//#endif // EDITOR
+#endif // EDITOR
 
 #ifdef _EDITOR
 		editor_core->Update();

@@ -424,6 +424,8 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Components\ParentComponent.cpp" />
     <ClCompile Include="Components\PureStaticBodyComponent.cpp" />
     <ClCompile Include="Components\PolygonColliderComponent.cpp" />
+    <ClCompile Include="Components\KinematicBodyComponent.cpp" />
+    <ClCompile Include="Physics\PhysicsInternal\PhysicsContactFilter.cpp" />
     <ClCompile Include="Scripting\Objects\ListSetInterface.cpp" />
     <ClCompile Include="PathFinding\PathFinding.cpp" />
     <ClCompile Include="Components\PathFindingWorldComponent.cpp" />
@@ -565,6 +567,8 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Components\ParentComponent.h" />
     <ClInclude Include="Components\PureStaticBodyComponent.h" />
     <ClInclude Include="Components\PolygonColliderComponent.h" />
+    <ClInclude Include="Components\KinematicBodyComponent.h" />
+    <ClInclude Include="Physics\PhysicsInternal\PhysicsContactFilter.h" />
     <ClInclude Include="Scripting\Objects\ListSetInterface.h" />
     <ClInclude Include="PathFinding\PathFinding.h" />
     <ClInclude Include="Components\PathFindingWorldComponent.h" />
@@ -643,6 +647,7 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Time\Timer.h" />
     <ClInclude Include="Components\TransformComponent.h" />
     <ClInclude Include="Scripting\Objects\Vector2Interface.h" />
+    <ClInclude Include="Vendor\Include\ankerl\unordered_dense.h" />
     <ClInclude Include="Vendor\Include\Box2D\b2_api.h" />
     <ClInclude Include="Vendor\Include\Box2D\b2_block_allocator.h" />
     <ClInclude Include="Vendor\Include\Box2D\b2_body.h" />

@@ -26,6 +26,7 @@
 #include "Components/PureStaticBodyComponent.h"
 #include "Scripting/Objects/ListSetInterface.h"
 #include "Components/PolygonColliderComponent.h"
+#include "Components/KinematicBodyComponent.h"
 
 void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 {
@@ -58,4 +59,5 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	ListSetInterface::RegisterInterface(mono_core);
 	PureStaticBodyComponentInterface::RegisterInterface(mono_core);
 	PolygonColliderComponentInterface::RegisterInterface(mono_core);
+	KinematicBodyComponentInterface::RegisterInterface(mono_core);
 }

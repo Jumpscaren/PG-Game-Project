@@ -17,7 +17,7 @@ private:
 
 	bool m_not_initialized = false;
 
-	static std::unordered_set<uint32_t> test;
+	static qr::unordered_set<uint32_t> test;
 
 private:
 	_MonoObject* GetMonoObject() const;

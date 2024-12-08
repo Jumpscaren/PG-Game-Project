@@ -11,6 +11,7 @@ class b2Body;
 class b2Shape;
 class b2Fixture;
 class PhysicsDebugDraw;
+class PhysicsContactFilter;
 class PhysicsContactListener;
 class PhysicsDestructionListener;
 class EntityManager;
@@ -84,6 +85,7 @@ private:
 private:
 	b2World* m_world;
 	PhysicsDebugDraw* m_debug_draw;
+	PhysicsContactFilter* m_contact_filter;
 	PhysicsContactListener* m_contact_listener;
 	PhysicsDestructionListener* m_destruction_listener;
 

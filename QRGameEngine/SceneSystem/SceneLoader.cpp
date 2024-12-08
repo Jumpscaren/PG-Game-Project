@@ -80,7 +80,7 @@ SceneLoader::~SceneLoader()
 	HandleSceneLoadingPostUser();
 }
 
-void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name)
+void SceneLoader::SaveScene(qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name)
 {
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
@@ -97,7 +97,7 @@ void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint
 	uint32_t numberofblocks = (uint32_t)blocks.size();
 	save_file.Write(numberofblocks);
 
-	std::unordered_map<TextureHandle, std::string> texture_paths;
+	qr::unordered_map<TextureHandle, std::string> texture_paths;
 
 	for (auto it = blocks.begin(); it != blocks.end(); it++)
 	{
@@ -169,9 +169,9 @@ void SceneLoader::SaveScene(std::unordered_map<uint64_t, std::unordered_map<uint
 	save_file.Close();
 }
 
-std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoader::LoadSceneEditor(std::string scene_name)
+qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> SceneLoader::LoadSceneEditor(std::string scene_name)
 {
-	std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> blocks;
+	qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> blocks;
 
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
@@ -197,7 +197,7 @@ std::unordered_map<uint64_t, std::unordered_map<uint32_t, BlockData>> SceneLoade
 		uint64_t unique_number = save_file.Read<uint64_t>();
 		uint64_t block_layers = save_file.Read<uint64_t>();
 
-		std::unordered_map<uint32_t, BlockData> layer_block_map;
+		qr::unordered_map<uint32_t, BlockData> layer_block_map;
 
 		for (uint64_t layers = 0; layers < block_layers; ++layers)
 		{
@@ -253,7 +253,7 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 	if (threaded)
 	{
 		m_load_scene_mutex.lock();
-		CSMonoCore::Get()->HookThread();
+		m_mono_thread_handle = CSMonoCore::Get()->HookThread();
 	}
 	LoadTexturePaths(&save_file, number_texture_paths);
 	if (threaded)
@@ -300,7 +300,7 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 	if (threaded)
 	{
 		m_load_scene_mutex.lock();
-		CSMonoCore::Get()->UnhookThread();
+		CSMonoCore::Get()->UnhookThread(m_mono_thread_handle);
 		m_load_scene_mutex.unlock();
 	}
 

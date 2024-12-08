@@ -5,7 +5,7 @@
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/debug-helpers.h>
 
-std::unordered_set<uint32_t> CSMonoObject::test;
+qr::unordered_set<uint32_t> CSMonoObject::test;
 
 _MonoObject* CSMonoObject::GetMonoObject() const
 {

@@ -11,6 +11,7 @@ namespace ScriptProject.Scripts
     internal abstract class HitBoxAction
     {
         public abstract void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script);
+        public abstract void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script);
     }
 
     internal class HitBox : ScriptingBehaviour
@@ -43,10 +44,11 @@ namespace ScriptProject.Scripts
         {
             if (collided_game_object == avoid_game_object || !collided_game_object.HasComponent<ScriptingBehaviour>())
             {
+                hit_box_action.OnHitAvoidGameObject(this);
                 return;
             }
 
-            Console.WriteLine("Begin Collision: MyName=" + game_object.GetName() + " OtherName=" + collided_game_object.GetName());
+           // Console.WriteLine("Begin Collision: MyName=" + game_object.GetName() + " OtherName=" + collided_game_object.GetName());
 
             ScriptingBehaviour script = collided_game_object.GetComponent<ScriptingBehaviour>();
             if (typeof(InteractiveCharacterInterface).IsAssignableFrom(script.GetType()))

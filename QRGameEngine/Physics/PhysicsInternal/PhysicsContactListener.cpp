@@ -49,10 +49,6 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 	{
 		const auto collision_data = m_deferred_begin_collision_data[i];
 
-		if (!SceneManager::GetSceneManager()->SceneExists(collision_data.body_1_scene_index) ||
-			!SceneManager::GetSceneManager()->SceneExists(collision_data.body_2_scene_index))
-			continue;
-
 		if (const auto collision_entity = m_collisions_per_entity.find(collision_data); collision_entity != m_collisions_per_entity.end())
 		{
 			++collision_entity->second;
@@ -66,9 +62,13 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 			m_collisions_per_entity.insert({ collision_data, 1 });
 		}
 
+		if (!SceneManager::GetSceneManager()->SceneExists(collision_data.body_1_scene_index) ||
+			!SceneManager::GetSceneManager()->SceneExists(collision_data.body_2_scene_index))
+			continue;
+
 		EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(collision_data.body_1_scene_index);
 		EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(collision_data.body_2_scene_index);
-		if (!entity_manager_1->EntityExists(m_deferred_begin_collision_data[i].body_1_entity) || !entity_manager_2->EntityExists(collision_data.body_2_entity))
+		if (!entity_manager_1->EntityExists(collision_data.body_1_entity) || !entity_manager_2->EntityExists(collision_data.body_2_entity))
 			continue;
 
 		EventCore::Get()->SendEvent("BeginCollision", collision_data.body_1_entity, collision_data.body_1_scene_index,
@@ -79,10 +79,6 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 	{
 		const auto collision_data = m_deferred_end_collision_data[i];
 
-		if (!SceneManager::GetSceneManager()->SceneExists(collision_data.body_1_scene_index) ||
-			!SceneManager::GetSceneManager()->SceneExists(collision_data.body_2_scene_index))
-			continue;
-
 		if (const auto collision_entity = m_collisions_per_entity.find(collision_data); collision_entity != m_collisions_per_entity.end())
 		{
 			--collision_entity->second;
@@ -90,11 +86,16 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 			{
 				continue;
 			}
+			m_collisions_per_entity.erase(collision_entity);
 		}
 		else
 		{
 			assert(false);
 		}
+
+		if (!SceneManager::GetSceneManager()->SceneExists(collision_data.body_1_scene_index) ||
+			!SceneManager::GetSceneManager()->SceneExists(collision_data.body_2_scene_index))
+			continue;
 
 		EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(collision_data.body_1_scene_index);
 		EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(collision_data.body_2_scene_index);

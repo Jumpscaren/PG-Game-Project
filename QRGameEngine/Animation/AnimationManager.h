@@ -17,7 +17,7 @@ private:
 
 private:
 	static AnimationManager* s_singleton;
-	std::unordered_map<uint64_t, AnimationData> m_cached_animation_data;
+	qr::unordered_map<uint64_t, AnimationData> m_cached_animation_data;
 	uint8_t m_animation_id = 0;
 
 public:

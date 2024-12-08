@@ -61,7 +61,10 @@ bool AnimationManager::LoadAnimation(const SceneIndex scene_index, const Entity 
 	{
 		animatable_sprite = it->second.animatable_sprite_data;
 		sprite = it->second.sprite_data;
-		sprite.texture_handle = RenderCore::Get()->LoadTexture(it->second.texture_path);
+
+		const TextureHandle texture_handle = RenderCore::Get()->LoadTexture(it->second.texture_path);
+		SpriteComponentInterface::LoadTextureToSprite(scene_index, entity, sprite, texture_handle);
+
 		return true;
 	}
 
@@ -85,7 +88,9 @@ bool AnimationManager::LoadAnimation(const SceneIndex scene_index, const Entity 
 
 	std::string sprite_texture_path;
 	sprite_data.LoadData(sprite_texture_path, "Texture_Path");
-	sprite.texture_handle = RenderCore::Get()->LoadTexture(sprite_texture_path);
+
+	const TextureHandle texture_handle = RenderCore::Get()->LoadTexture(sprite_texture_path);
+	SpriteComponentInterface::LoadTextureToSprite(scene_index, entity, sprite, texture_handle);
 
 	animatable_sprite.id = ++m_animation_id;
 	AnimationData cached_animation_data;
