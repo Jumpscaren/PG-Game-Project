@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScriptProject.EngineMath
 {
@@ -56,6 +52,30 @@ namespace ScriptProject.EngineMath
             if (z_cross_product > 0)
                 return -angle;
             return angle;
+        }
+
+        public Vector2 PerpendicularClockwise()
+        {
+            return new Vector2(y, -x);
+        }
+
+        public Vector2 PerpendicularCounterClockwise()
+        {
+            return new Vector2(-y, x);
+        }
+
+        static public float ProjectVectorOnVector(Vector2 vector_a, Vector2 vector_b)
+        {
+            float vector_b_length = vector_b.Length();
+
+            if (vector_b_length < 1e-05)
+            {
+                vector_b_length = 1.0f;
+            }
+
+            float dot_product = vector_a.x * vector_b.x + vector_a.y * vector_b.y;
+
+            return dot_product / vector_b_length;
         }
 
         public override string ToString()

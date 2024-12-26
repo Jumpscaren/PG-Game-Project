@@ -20,8 +20,19 @@ void PhysicsContactListener::BeginContact(b2Contact* contact)
 		else
 			m_deferred_begin_collision_data.push_back(CollisionData(body_1.first, body_1.second, body_2.first, body_2.second));
 
+
+
 		//EventCore::Get()->SendEvent("");
 		//Send Event That a collision has happened, scripting system or something else could listen and catch these events
+	}
+
+	if (contact->GetFixtureA()->GetBody()->GetType() == b2_kinematicBody && contact->GetFixtureB()->GetBody()->GetType() == b2_dynamicBody)
+	{
+		std::cout << "Hi1\n";
+	}
+	if (contact->GetFixtureA()->GetBody()->GetType() == b2_dynamicBody && contact->GetFixtureB()->GetBody()->GetType() == b2_kinematicBody)
+	{
+		std::cout << "Hi2\n";
 	}
 }
 

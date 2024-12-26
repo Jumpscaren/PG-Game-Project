@@ -16,6 +16,8 @@ AssetManager::AssetManager()
 	s_asset_manager = this;
 
 	m_asset_loading_thread = std::thread(&AssetManager::ThreadLoadAssetLoop, this);
+
+	EventCore::Get()->ListenToEvent<AssetManager::DeletedSceneEventListener>("DeletedScene", 0, AssetManager::DeletedSceneEventListener);
 }
 
 AssetManager::~AssetManager()
@@ -41,15 +43,43 @@ void AssetManager::HandleCompletedJobs()
 		bool asset_exists = false;
 		const AssetHandle asset_handle = LoadAssetPath(asset.asset_path, asset_exists);
 		m_assets.insert({ asset_handle, asset });
+
+		if (!asset_exists)
+		{
+			DeleteAsset(asset_handle);
+			continue;
+		}
+
 		EventCore::Get()->SendEvent("Asset Finished Loading", asset_handle);
 	}
 	m_asset_loading_thread_completed_jobs.clear();
 }
 
-AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, const AssetLoadFlag& asset_load_flag)
+AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, const SceneIndex scene_index, const AssetLoadFlag& asset_load_flag)
 {
 	bool texture_exists = false;
 	AssetHandle texture_handle = LoadAssetPath(texture_path, texture_exists);
+
+	if (!m_loaded_assets_in_scenes.contains(scene_index))
+	{
+		qr::unordered_set<AssetHandle> assets;
+		m_loaded_assets_in_scenes.insert({ scene_index, assets });
+	}
+
+	if (!m_loaded_assets_in_scenes.at(scene_index).contains(texture_handle))
+	{
+		auto it = m_assets_information.find(texture_handle);
+		if (it != m_assets_information.end())
+		{
+			++it->second.count_asset_loaded_by_scenes;
+		}
+		else
+		{
+			m_assets_information.insert({ texture_handle, {.count_asset_loaded_by_scenes = 1} });
+		}
+
+		m_loaded_assets_in_scenes.at(scene_index).insert(texture_handle);
+	}
 
 	if (!texture_exists)
 	{
@@ -104,7 +134,7 @@ void AssetManager::DeleteCPUAssetDataIfGPUOnly(AssetHandle asset_handle)
 	{
 		TextureInfo* texture_info = (TextureInfo*)asset_data->second.asset_data;
 		free(texture_info->texture_data);
-		delete texture_info;
+		texture_info->texture_data = nullptr;
 	}
 }
 
@@ -177,4 +207,50 @@ void AssetManager::ThreadLoadAssetLoop()
 			m_asset_loading_thread_completed_jobs.push_back(job.asset_info_data);
 		}
 	}
+}
+
+void AssetManager::DeleteAsset(const AssetHandle asset)
+{
+	EventCore::Get()->SendEvent("DeletedAsset", asset);
+
+	auto it = m_assets.find(asset);
+	assert(m_assets.contains(asset));
+
+	if (it->second.asset_data && it->second.asset_type == AssetType::TEXTURE)
+	{
+		TextureInfo* texture_info = (TextureInfo*)it->second.asset_data;
+		if (texture_info->texture_data)
+		{
+			free(texture_info->texture_data);
+		}
+		delete texture_info;
+	}
+
+	uint64_t hashed_path = std::hash<std::string>{}(it->second.asset_path);
+	m_loaded_assets.erase(hashed_path);
+	m_assets.erase(it);
+}
+
+void AssetManager::HandleDeletedScene(const SceneIndex scene_index)
+{
+	if (auto it = m_loaded_assets_in_scenes.find(scene_index); it != m_loaded_assets_in_scenes.end())
+	{
+		for (const AssetHandle asset : it->second)
+		{
+			AssetInformation& asset_information = m_assets_information.at(asset);
+			--asset_information.count_asset_loaded_by_scenes;
+			if (asset_information.count_asset_loaded_by_scenes == 0)
+			{
+				DeleteAsset(asset);
+				m_assets_information.erase(asset);
+			}
+		}
+
+		m_loaded_assets_in_scenes.erase(it);
+	}
+}
+
+void AssetManager::DeletedSceneEventListener(const SceneIndex scene_index)
+{
+	AssetManager::Get()->HandleDeletedScene(scene_index);
 }

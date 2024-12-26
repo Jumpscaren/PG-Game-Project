@@ -63,7 +63,7 @@ BlockData DrawScene::CreateBlock(const Vector3& block_transform)
 	Entity new_block = GameObjectInterface::GetEntityID(game_object);
 
 	entity_manager->GetComponent<TransformComponent>(new_block).SetPosition(block_transform);
-	entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
+	entity_manager->AddComponent<SpriteComponent>(new_block).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png", scene_manager->GetActiveSceneIndex());
 
 	SceneLoader::Get()->InstancePrefab(game_object, m_prefab_selected.prefab_name);
 
@@ -450,7 +450,7 @@ void DrawScene::AddPolygonEntity(const Vector2& point, const Vector3& select_pos
 
 	Entity ent = entity_manager->NewEntity();
 	entity_manager->AddComponent<TransformComponent>(ent).SetPosition(Vector3(point.x + select_position.x, point.y + select_position.y, 0.1f)).SetScale(Vector3(0.075f, 0.075f, 1.0f));
-	entity_manager->AddComponent<SpriteComponent>(ent).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png");
+	entity_manager->AddComponent<SpriteComponent>(ent).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp_2.png", scene_manager->GetActiveSceneIndex());
 
 	m_polygon_vertices.push_back(PolygonEntity{ .ent = ent, .vertex_index = index });
 }
@@ -610,7 +610,7 @@ void DrawScene::Animation()
 	bool texture_exists = false;
 	if (std::filesystem::exists(texture_full_path) && std::filesystem::is_regular_file(texture_full_path))
 	{
-		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_full_path);
+		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_full_path, SceneManager::GetSceneManager()->GetActiveSceneIndex());
 		texture_exists = true;
 	}
 
@@ -842,7 +842,7 @@ void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index, 
 	SceneManager* scene_manager = SceneManager::GetSceneManager();
 	EntityManager* entity_manager = scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetEntityManager();
 
-	entity_manager->AddComponent<SpriteComponent>(ent).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png");
+	entity_manager->AddComponent<SpriteComponent>(ent).texture_handle = RenderCore::Get()->LoadTexture("../QRGameEngine/Textures/Temp.png", scene_manager->GetActiveSceneIndex());
 
 	SceneLoader::Get()->InstancePrefab(game_object, prefab_name);
 	

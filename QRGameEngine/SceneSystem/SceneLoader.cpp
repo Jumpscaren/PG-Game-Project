@@ -13,7 +13,7 @@
 
 SceneLoader* SceneLoader::s_scene_loader = nullptr;
 
-void SceneLoader::LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths)
+void SceneLoader::LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths, const SceneIndex scene_index)
 {
 	m_texture_paths.clear();
 
@@ -27,7 +27,7 @@ void SceneLoader::LoadTexturePaths(OutputFile* save_file, uint32_t number_of_tex
 
 		RenderTexture texture_path;
 		texture_path.texture_path = text;
-		texture_path.render_texture_handle = RenderCore::Get()->LoadTexture(texture_path.texture_path);
+		texture_path.render_texture_handle = RenderCore::Get()->LoadTexture(texture_path.texture_path, scene_index);
 
 		m_texture_paths.insert({ texture_handle, texture_path });
 	}
@@ -189,7 +189,7 @@ qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> SceneLoader:
 
 	uint32_t number_texture_paths = save_file.Read<uint32_t>();
 
-	LoadTexturePaths(&save_file, number_texture_paths);
+	LoadTexturePaths(&save_file, number_texture_paths, scene_manager->GetActiveSceneIndex());
 
 	std::string prefab_name;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
@@ -255,7 +255,7 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 		m_load_scene_mutex.lock();
 		m_mono_thread_handle = CSMonoCore::Get()->HookThread();
 	}
-	LoadTexturePaths(&save_file, number_texture_paths);
+	LoadTexturePaths(&save_file, number_texture_paths, load_scene);
 	if (threaded)
 	{
 		m_load_scene_mutex.unlock();

@@ -1,8 +1,6 @@
 #pragma once
 #include "Asset/AssetTypes.h"
-#include <thread>
-#include <mutex>
-#include <functional>
+#include "SceneSystem/SceneDefines.h"
 
 struct TextureInfo
 {
@@ -34,6 +32,11 @@ private:
 		AssetLoadFlag asset_load_flag;
 	};
 
+	struct AssetInformation
+	{
+		uint8_t count_asset_loaded_by_scenes;
+	};
+
 	struct AssetLoadingJob
 	{
 		AssetData asset_info_data;
@@ -44,6 +47,10 @@ private:
 	qr::unordered_map<uint64_t, AssetHandle> m_loaded_assets;
 
 	qr::unordered_map<AssetHandle, AssetData> m_assets;
+
+	qr::unordered_map<SceneIndex, qr::unordered_set<AssetHandle>> m_loaded_assets_in_scenes;
+
+	qr::unordered_map<AssetHandle, AssetInformation> m_assets_information;
 
 	static AssetManager* s_asset_manager;
 
@@ -65,6 +72,11 @@ private:
 	void AddAssetLoadingJob(const AssetLoadingJob& job);
 	void ThreadLoadAssetLoop();
 
+	void DeleteAsset(AssetHandle asset);
+
+	void HandleDeletedScene(SceneIndex scene_index);
+	static void DeletedSceneEventListener(SceneIndex scene_index);
+
 public:
 	AssetManager();
 	~AssetManager();
@@ -73,7 +85,7 @@ public:
 
 	void HandleCompletedJobs();
 
-	AssetHandle LoadTextureAsset(const std::string& texture_path, const AssetLoadFlag& asset_load_flag = GPU_ONLY);
+	AssetHandle LoadTextureAsset(const std::string& texture_path, SceneIndex scene_index, const AssetLoadFlag& asset_load_flag = GPU_ONLY);
 	TextureInfo* GetTextureData(const AssetHandle& texture_handle);
 	std::string GetAssetPath(const AssetHandle& asset_handle);
 	const AssetLoadFlag& GetAssetLoadFlag(AssetHandle asset_handle);

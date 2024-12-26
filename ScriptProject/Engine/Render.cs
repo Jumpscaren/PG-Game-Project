@@ -10,6 +10,10 @@ namespace ScriptProject.Engine
     internal class Render
     {
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static public extern Texture LoadTexture(string texture_name);
+        static private extern Texture LoadTexture_External(string texture_name, UInt32 scene_index);
+        static public void LoadTexture(string texture_name, Sprite sprite)
+        {
+            sprite.SetTexture(LoadTexture_External(texture_name, sprite.GetGameOjbect().GetSceneIndex()));
+        }
     }
 }

@@ -1,13 +1,10 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Engine.Constants;
 using ScriptProject.EngineMath;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using static ScriptProject.Scripts.OrcCarrier;
+using static ScriptProject.Engine.Input;
 
 namespace ScriptProject.Scripts
 {
@@ -50,13 +47,30 @@ namespace ScriptProject.Scripts
         float invincible_timer = 0.0f;
         float invincible_time = 1.0f;
 
+        GameObject current_rope;
+        Vector2 current_rope_end_positon;
+        GameObject current_rope_hooked_game_object;
+        Vector2 current_rope_difference_in_position;
+        Sprite current_rope_sprite;
+
+        float rope_animate_timer = 0.0f;
+        float rope_animation_speed = 40.0f;
+        float rope_animation_time = 0.0f;
+
+        float rope_respawn_timer = 0.0f;
+        float rope_respawn_time = 8.0f;
+
         HoleManager holes = new HoleManager();
+
+        List<GameObject> boomerangs = new List<GameObject>();
+        const UInt16 max_boomerangs = 2;
 
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
             anim_sprite = game_object.GetComponent<AnimatableSprite>();
+
             hit_box = GameObject.CreateGameObject();
             hit_box.SetName("Attack_Box");
             hit_box_body = hit_box.AddComponent<StaticBody>();
@@ -73,18 +87,6 @@ namespace ScriptProject.Scripts
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
-
-            //{
-            //    GameObject hit_box1 = GameObject.CreateGameObject();
-            //    hit_box1.SetName("Attack_Box");
-            //    hit_box1.AddComponent<StaticBody>().SetEnabled(false);
-            //    box_collider = hit_box1.AddComponent<BoxCollider>();
-            //    box_collider.SetTrigger(true);
-            //    box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
-            //    hit_box1.transform.SetPosition(0.7f, 0.0f);
-            //    hit_box1.SetName("HitBox1");
-            //    mid_block.AddChild(hit_box1);
-            //}
 
             camera = GameObject.TempFindGameObject("PlayerCamera");
 
@@ -107,7 +109,7 @@ namespace ScriptProject.Scripts
                 SceneManager.RestartActiveScene();
             }
 
-            if(holes.ShouldDieInHole(body.GetVelocity().Length(), max_speed))
+            if (holes.ShouldDieInHole(body.GetVelocity().Length(), max_speed))
             {
                 TakeDamage(null, 20.0f);
                 game_object.transform.SetPosition(saved_position);
@@ -212,6 +214,10 @@ namespace ScriptProject.Scripts
             body.SetVelocity(velocity);
 
             PrincessLogic();
+
+            RopeLogic(new_velocity);
+
+            BoomerangLogic(mouse_dir);
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -270,22 +276,6 @@ namespace ScriptProject.Scripts
                 Console.WriteLine("Finished Level");
                 SceneManager.RestartActiveScene();
             }
-
-            if (collided_game_object.GetTag() == UserTags.Player)
-            {
-                //Console.WriteLine("Enter");
-                //Console.WriteLine(normal);
-            }
-
-            //if (collided_game_object.GetTag() == UserTags.EnemyHitbox)
-            //{
-            //    health -= 20.0f;
-            //    float rot = collided_game_object.GetParent().transform.GetLocalRotation();
-            //    Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-            //    body.SetVelocity(dir * 11.0f);
-
-            //    PrincessStopFollowPlayer();
-            //}
         }
 
         void EndCollision(GameObject collided_game_object)
@@ -314,7 +304,7 @@ namespace ScriptProject.Scripts
             float distance_from_princess = (game_object.transform.GetPosition() - princess.transform.GetPosition()).Length();
             princess_script.KnightHoldingPrincess(holding_princess);
 
-            if (holding_princess && Input.GetKeyPressed(Input.Key.E))
+            if (current_rope != null || holding_princess && Input.GetKeyPressed(Input.Key.E))
             {
                 holding_princess = false;
                 return;
@@ -328,6 +318,145 @@ namespace ScriptProject.Scripts
             if (Input.GetKeyPressed(Input.Key.E))
             {
                 holding_princess = true;
+            }
+        }
+
+        void DestroyRope()
+        {
+            GameObject.DeleteGameObject(current_rope);
+            current_rope = null;
+            current_rope_hooked_game_object = null;
+            current_rope_sprite = null;
+
+            rope_respawn_timer = rope_respawn_time + Time.GetElapsedTime();
+        }
+
+        void RopeLogic(Vector2 new_velocity)
+        {
+            if (rope_respawn_timer > Time.GetElapsedTime())
+            {
+                return;
+            }
+
+            if (Input.GetMouseButtonPressed(MouseButton.RIGHT))
+            {
+                if (current_rope != null)
+                {
+                    DestroyRope();
+                    return;
+                }
+
+                GameObject rope = GameObject.CreateGameObject();
+                Sprite rope_sprite = rope.AddComponent<Sprite>();
+                Render.LoadTexture("../QRGameEngine/Textures/Rope.png", rope_sprite);
+
+                Vector2 player_position = game_object.transform.GetPosition();
+                Vector2 mouse_position = Input.GetMousePositionInWorld(camera);
+                Vector2 distance = mouse_position - player_position;
+
+                RaycastResult result = Physics.Raycast(player_position, distance.Normalize(),
+                    PhysicCollisionCategory.AllCategories, UserCollisionCategories.FilterForPrincessBlockers, 0);
+
+                if (result.intersected)
+                {
+                    current_rope = rope;
+                    current_rope_end_positon = result.intersected_position;
+                    current_rope_hooked_game_object = result.intersected_game_object;
+                    current_rope_difference_in_position =
+                        result.intersected_game_object.transform.GetPosition() - result.intersected_position;
+
+                    rope_animation_time = (current_rope_end_positon - player_position).Length() / rope_animation_speed;
+                    rope_animate_timer = rope_animation_time + Time.GetElapsedTime();
+
+                    current_rope_sprite = rope_sprite;
+                }
+            }
+
+            if (current_rope != null)
+            {
+                if (current_rope_hooked_game_object == null)
+                {
+                    DestroyRope();
+                    return;
+                }
+
+                Vector2 player_position = game_object.transform.GetPosition();
+
+                Vector2 rope_end_position_with_difference = current_rope_hooked_game_object.transform.GetPosition()
+                - current_rope_end_positon - current_rope_difference_in_position;
+
+                Vector2 distance = current_rope_end_positon - player_position + rope_end_position_with_difference;
+
+                if (distance.Length() < 0.8f)
+                {
+                    DestroyRope();
+                    return;
+                }
+
+                if (!Physics.RaycastCheckIfClosest(player_position, distance.Normalize(),
+                    PhysicCollisionCategory.AllCategories, UserCollisionCategories.FilterForPrincessBlockersAndCharacters, 0,
+                    current_rope_hooked_game_object))
+                {
+                    DestroyRope();
+                    return;
+                }
+
+                Vector2 direction = distance.Normalize();
+                if (rope_animate_timer >= Time.GetElapsedTime())
+                {
+                    Vector2 target_rope_position = current_rope_end_positon
+                        - direction * distance.Length() * ((rope_animate_timer - Time.GetElapsedTime()) / rope_animation_time);
+                    distance = target_rope_position - player_position + rope_end_position_with_difference;
+                    direction = distance.Normalize();
+                }
+
+                current_rope.transform.SetPosition(player_position + distance / 2);
+                current_rope.transform.SetScale(new Vector2(0.1f, distance.Length()));
+
+                float rope_rotation = Vector2.Angle(direction, new Vector2(0.0f, 1.0f));
+                current_rope.transform.SetLocalRotation(rope_rotation);
+
+                current_rope_sprite.SetUV(new Vector2(), new Vector2(1.0f, distance.Length()));
+
+                if (rope_animate_timer < Time.GetElapsedTime())
+                {
+                    float rope_velocity = max_speed * (3.5f - 0.5f / distance.Length());
+
+                    Vector2 perpendicular_direction = direction.PerpendicularClockwise();
+                    float projected_speed = Vector2.ProjectVectorOnVector(new_velocity, perpendicular_direction);
+
+                    Vector2 velocity = direction * rope_velocity + perpendicular_direction * projected_speed * 2.0f;
+                    if (velocity.Length() > rope_velocity)
+                    {
+                        velocity = velocity.Normalize() * rope_velocity;
+                    }
+                    body.SetVelocity(velocity);
+                }
+            }
+        }
+
+        void BoomerangLogic(Vector2 boomerang_initial_direction)
+        {
+            for (int i = 0; i < boomerangs.Count; ++i)
+            {
+                if (boomerangs[i] == null)
+                {
+                    boomerangs.RemoveAt(i);
+                    --i;
+                }
+            }
+
+            if (boomerangs.Count < max_boomerangs && Input.GetKeyPressed(Key.R))
+            {
+                GameObject boomerang = GameObject.CreateGameObject();
+                Sprite boomerang_sprite = boomerang.AddComponent<Sprite>();
+                Render.LoadTexture("../QRGameEngine/Textures/Boomerang.png", boomerang_sprite);
+                boomerang.transform.SetPosition(game_object.transform.GetPosition());
+                boomerang.transform.SetScale(new Vector2(1.5f, 1.5f));
+
+                boomerang.AddComponent<BoomerangScript>().SetInitialDirection(boomerang_initial_direction).SetOwner(game_object);
+
+                boomerangs.Add(boomerang);
             }
         }
 

@@ -75,7 +75,8 @@ void QREntryPoint::EntryPoint()
 
 	mouse = new Mouse();
 
-	render_core = new RenderCore(1920, 1080, L"2DRENDERER");
+	//render_core = new RenderCore(1920, 1080, L"2DRENDERER");
+	render_core = new RenderCore(1280, 720, L"2DRENDERER");
 	//render_core = new RenderCore(480, 360, L"2DRENDERER");
 
 	scene_manager = new SceneManager();
@@ -118,25 +119,25 @@ void QREntryPoint::EntryPoint()
 	mono_core->HookAndRegisterMonoMethodType<cpptestint>(main_class_handle, "cpptestint", cpptestint);
 	mono_core->HookAndRegisterMonoMethodType<cpptestmany>(main_class_handle, "cpptestmany", cpptestmany);
 
-	Timer time;
-	mono_core->CallStaticMethod(test1);
-	auto testTime1 = time.StopTimer();
+	//Timer time;
+	//mono_core->CallStaticMethod(test1);
+	//auto testTime1 = time.StopTimer();
 
-	time.StartTimer();
-	mono_core->CallStaticMethod(test2);
-	auto testTime2 = time.StopTimer();
+	//time.StartTimer();
+	//mono_core->CallStaticMethod(test2);
+	//auto testTime2 = time.StopTimer();
 
-	time.StartTimer();
-	mono_core->CallStaticMethod(test3);
-	auto testTime3 = time.StopTimer();
+	//time.StartTimer();
+	//mono_core->CallStaticMethod(test3);
+	//auto testTime3 = time.StopTimer();
 
-	mono_core->CallStaticMethod(test4);
-	time.StartTimer();
-	mono_core->CallStaticMethod(test4);
-	auto testTime4 = time.StopTimer();
+	//mono_core->CallStaticMethod(test4);
+	//time.StartTimer();
+	//mono_core->CallStaticMethod(test4);
+	//auto testTime4 = time.StopTimer();
 
-	std::cout << "Time 1: " << testTime1 / (double)Timer::TimeTypes::Milliseconds << "\nTime 2: " << testTime2 / (double)Timer::TimeTypes::Milliseconds << "\nTime 3: " 
-		<< testTime3 / (double)Timer::TimeTypes::Milliseconds << "\nTime 4: " << testTime4 / (double)Timer::TimeTypes::Milliseconds << "\n";
+	//std::cout << "Time 1: " << testTime1 / (double)Timer::TimeTypes::Milliseconds << "\nTime 2: " << testTime2 / (double)Timer::TimeTypes::Milliseconds << "\nTime 3: " 
+	//	<< testTime3 / (double)Timer::TimeTypes::Milliseconds << "\nTime 4: " << testTime4 / (double)Timer::TimeTypes::Milliseconds << "\n";
 }
 
 Timer rendering_timer;

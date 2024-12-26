@@ -1,12 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
-using ScriptProject.UserDefined;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static ScriptProject.Scripts.OrcEnemy;
 
 namespace ScriptProject.Scripts
 {
@@ -16,6 +10,7 @@ namespace ScriptProject.Scripts
         const float max_speed = 7.0f;
         float speed = max_speed;
         GameObject player;
+        DynamicBody player_body;
         float alive_timer = 0.0f;
         float alive_time = 10.0f;
 
@@ -27,7 +22,9 @@ namespace ScriptProject.Scripts
         {
             body = game_object.GetComponent<DynamicBody>();
             player = GameObject.TempFindGameObject("Player");
-            Vector2 predicted_position = player.transform.GetPosition() + player.GetComponent<DynamicBody>().GetVelocity() * 1.0f;
+            player_body = player.GetComponent<DynamicBody>();
+
+            Vector2 predicted_position = player.transform.GetPosition() + player_body.GetVelocity() * 1.0f;
             body.SetVelocity((predicted_position - game_object.transform.GetPosition()).Normalize() * max_speed);
             alive_timer = Time.GetElapsedTime() + alive_time;
 
@@ -59,7 +56,7 @@ namespace ScriptProject.Scripts
             speed = max_speed * (alive_timer - Time.GetElapsedTime()) / alive_time + 0.1f;
 
             Vector2 velocity = body.GetVelocity();
-            Vector2 predicted_position = player.transform.GetPosition() + player.GetComponent<DynamicBody>().GetVelocity() * 0.2f;
+            Vector2 predicted_position = player.transform.GetPosition() + player_body.GetVelocity() * 0.2f;
             Vector2 direction = predicted_position - game_object.transform.GetPosition();
             Vector2 new_velocity = velocity + direction.Normalize() * speed * Time.GetDeltaTime();
             if (new_velocity.Length() > speed)

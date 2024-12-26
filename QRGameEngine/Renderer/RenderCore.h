@@ -97,13 +97,16 @@ private:
 	static void AssetFinishedLoadingListenEvent(AssetHandle asset_handle);
 	void LoadTextureWithAssetHandle(AssetHandle asset_handle);
 
+	static void AssetDeletedListenEvent(AssetHandle asset_handle);
+	void DeleteTexture(AssetHandle asset_handle);
+
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name);
 	~RenderCore();
 
 	bool UpdateRender(Scene* draw_scene);
 
-	TextureHandle LoadTexture(const std::string& texture_file_name);
+	TextureHandle LoadTexture(const std::string& texture_file_name, SceneIndex scene_index);
 	bool IsTextureAvailable(TextureHandle texture_handle);
 	bool IsTextureLoaded(TextureHandle texture_handle);
 	void SubscribeEntityToTextureLoading(const TextureHandle texture_handle, const SceneIndex scene_index, const Entity entity);

@@ -13,6 +13,8 @@ private:
 	//MonoClassHandle m_class_handle;
 	_MonoClass* m_mono_class;
 
+	std::string m_class_name;
+
 	CSMonoCore* m_mono_core_ref;
 
 	bool m_not_initialized = false;

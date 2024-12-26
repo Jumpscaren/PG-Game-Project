@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Engine\KinematicBody.cs" />
+    <Compile Include="Engine\Physics.cs" />
     <Compile Include="Engine\PolygonCollider.cs" />
     <Compile Include="Engine\Cache.cs" />
     <Compile Include="Engine\AnimationManager.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Engine\PrefabSystem.cs" />
     <Compile Include="Engine\PureStaticBody.cs" />
     <Compile Include="Engine\RandomGenerator.cs" />
+    <Compile Include="Engine\RaycastResult.cs" />
     <Compile Include="Engine\Render.cs" />
     <Compile Include="Engine\Scene.cs" />
     <Compile Include="Engine\SceneManager.cs" />
@@ -98,6 +100,8 @@
     <Compile Include="EngineMath\Vector2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scripts\BasicEnemy.cs" />
+    <Compile Include="Scripts\BoomerangScript.cs" />
+    <Compile Include="Scripts\GameMaster.cs" />
     <Compile Include="Scripts\HitBox.cs" />
     <Compile Include="Scripts\HoleManager.cs" />
     <Compile Include="Scripts\InteractiveCharacterInterface.cs" />

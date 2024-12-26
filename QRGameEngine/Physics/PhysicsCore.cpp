@@ -1008,6 +1008,56 @@ void PhysicsCore::RemoveDeferredPhysicObjects(EntityManager* entity_manager)
 		});
 }
 
+class PhysicsRaycastCallback : public b2RayCastCallback
+{
+public:
+	PhysicsRaycastCallback(const ColliderFilter collider_filter, const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic)
+		: m_collider_filter(collider_filter), m_raycast_logic(raycast_logic)
+	{
+		m_closest_result.intersected = false;
+	}
+
+	RaycastResult GetResult() const
+	{
+		return m_closest_result;
+	}
+
+private:
+	float ReportFixture(b2Fixture* fixture, const b2Vec2& point,
+		const b2Vec2& normal, float fraction)
+	{
+		const bool should_collide = PhysicsContactFilter::ShouldCollide(fixture, m_collider_filter);
+		const bool should_raycast = should_collide && !fixture->IsSensor();
+		const auto entity_data = PhysicsCore::Get()->GetEntityAndSceneFromUserData((void*)fixture->GetBody()->GetUserData().pointer);
+
+		if (m_raycast_logic(should_raycast, fraction, m_closest_fraction, entity_data.second, entity_data.first)) {
+			m_closest_fraction = fraction;
+			m_closest_result.position = Vector2(point.x, point.y);
+			m_closest_result.entity = entity_data.first;
+			m_closest_result.scene_index = entity_data.second;
+
+			m_closest_result.intersected = true;
+		}
+
+		return 1.0f;
+	}
+
+private:
+	ColliderFilter m_collider_filter;
+	RaycastResult m_closest_result;
+	float m_closest_fraction = 9999;
+	std::function<bool(bool, float, float, SceneIndex, Entity)> m_raycast_logic;
+};
+
+RaycastResult PhysicsCore::Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, 
+	const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic)
+{
+	const b2Vec2 b2_position(position.x, position.y);
+	PhysicsRaycastCallback callback(collider_filter, raycast_logic);
+	m_world->RayCast(&callback, b2_position, b2_position + b2Vec2(direction.x * 100.0f, direction.y * 100.0f));
+	return callback.GetResult();
+}
+
 PhysicObjectHandle PhysicsCore::GetPhysicObjectHandle(EntityManager* entity_manager, const Entity entity)
 {
 	PhysicObjectHandle physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;

@@ -43,7 +43,7 @@ private:
 	MonoThreadHandle m_mono_thread_handle;
 
 private:
-	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths);
+	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths, SceneIndex scene_index);
 	void LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity enitity);
 	void LoadScene(std::string scene_name, SceneIndex load_scene, bool threaded);
 	void LoadSceneThreaded(std::string scene_name, SceneIndex load_scene);

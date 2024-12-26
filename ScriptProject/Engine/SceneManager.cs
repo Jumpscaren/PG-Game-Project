@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScriptProject.Engine
 {
@@ -24,5 +20,19 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern void RestartActiveScene();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Scene GetGlobalScene();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Scene LoadScene(string scene_name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern bool IsSceneLoaded_External(UInt32 scene_index);
+
+        static public bool IsSceneLoaded(Scene scene)
+        {
+            return IsSceneLoaded_External(scene.GetSceneIndex());
+        }
     }
 }

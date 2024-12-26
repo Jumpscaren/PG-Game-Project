@@ -1,12 +1,6 @@
-﻿using ScriptProject.EngineMath;
-using ScriptProject.UserDefined;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScriptProject.Engine
 {
@@ -69,8 +63,8 @@ namespace ScriptProject.Engine
             return this.entity_id == other.entity_id && this.scene.GetSceneIndex() == other.scene.GetSceneIndex();
         }
 
-        public override int GetHashCode() 
-        { 
+        public override int GetHashCode()
+        {
             return this.entity_id.GetHashCode();
         }
 
@@ -110,6 +104,21 @@ namespace ScriptProject.Engine
             return game_object;
         }
 
+        static public GameObject CreateGameObjectWithScene(Scene scene)
+        {
+            GameObject game_object = new GameObject();
+            game_object.entity_id = scene.GetEntityManager().NewEntity();
+            game_object.scene = scene;
+            game_object.AddEntityData();
+
+            game_object.transform = game_object.AddComponent<Transform>();
+            game_object.transform.SetZIndex(1);
+
+            AddGameObjectToDatabase(game_object);
+
+            return game_object;
+        }
+
         static public void DeleteGameObject(GameObject game_object)
         {
             SceneManager.GetActiveScene().GetEntityManager().RemoveEntity(game_object);
@@ -117,9 +126,9 @@ namespace ScriptProject.Engine
             //game_object = null;
         }
 
-        public UInt32 GetEntityID() 
-        { 
-            return entity_id; 
+        public UInt32 GetEntityID()
+        {
+            return entity_id;
         }
 
         public UInt32 GetSceneIndex()
@@ -165,7 +174,7 @@ namespace ScriptProject.Engine
             }
 
             Console.WriteLine("ERROR: COULDN'T FIND COMPONENT (" + typeof(T) + ")");
-
+            Console.WriteLine("StackTrace: '{0}'", Environment.StackTrace);
             return null;
         }
 

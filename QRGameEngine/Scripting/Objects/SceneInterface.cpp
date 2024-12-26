@@ -2,6 +2,7 @@
 #include "SceneInterface.h"
 #include "Scripting/CSMonoCore.h"
 #include "SceneSystem/SceneManager.h"
+#include "SceneSystem/GlobalScene.h"
 
 MonoClassHandle SceneInterface::scene_object_class;
 MonoMethodHandle SceneInterface::create_scene_with_scene_index;
@@ -13,6 +14,9 @@ void SceneInterface::RegisterInterface(CSMonoCore* mono_core)
 
     const auto scene_manager_object_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "SceneManager");
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::RestartActiveScene>(scene_manager_object_class, "RestartActiveScene", SceneInterface::RestartActiveScene);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::GetGlobalScene>(scene_manager_object_class, "GetGlobalScene", SceneInterface::GetGlobalScene);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::LoadScene>(scene_manager_object_class, "LoadScene", SceneInterface::LoadScene);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::IsSceneLoaded>(scene_manager_object_class, "IsSceneLoaded_External", SceneInterface::IsSceneLoaded);
 }
 
 CSMonoObject SceneInterface::CreateSceneWithSceneIndex(SceneIndex scene_index)
@@ -36,4 +40,19 @@ void SceneInterface::RestartActiveScene()
     //scene_manager->DestroyScene(scene_index);
     SceneIndex scene = scene_manager->LoadScene(scene_index);
     scene_manager->ChangeScene(scene);
+}
+
+CSMonoObject SceneInterface::GetGlobalScene()
+{
+    return SceneInterface::CreateSceneWithSceneIndex(GlobalScene::Get()->GetSceneIndex());
+}
+
+CSMonoObject SceneInterface::LoadScene(const std::string& scene_name)
+{
+    return SceneInterface::CreateSceneWithSceneIndex(SceneManager::GetSceneManager()->LoadScene(scene_name));
+}
+
+bool SceneInterface::IsSceneLoaded(const uint32_t scene_index)
+{
+    return SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded();
 }

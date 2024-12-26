@@ -22,6 +22,7 @@ void CSMonoObject::CreateLinkToMono(_MonoObject* mono_object)
 		assert(false);
 	}
 	m_gchandle = mono_gchandle_new(mono_object, false);
+	m_class_name = mono_class_get_name(m_mono_class);
 	//test.emplace(m_gchandle);
 	
 	//std::cout << "New handle: " << m_gchandle << "\n";

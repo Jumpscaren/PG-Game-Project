@@ -36,7 +36,7 @@ namespace ScriptProject.Scripts
                 if (Input.GetKeyDown(Input.Key.E))
                 {
                     switched = true;
-                    game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/UglySwitchOn.png"));
+                    Render.LoadTexture("../QRGameEngine/Textures/UglySwitchOn.png", game_object.GetComponent<Sprite>());
 
                     foreach (var replace in replace_blocks)
                     {

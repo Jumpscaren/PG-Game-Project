@@ -15,10 +15,12 @@ class PhysicsContactFilter;
 class PhysicsContactListener;
 class PhysicsDestructionListener;
 class EntityManager;
+class PhysicsRaycastCallback;
 
 class PhysicsCore
 {
 	friend PhysicsContactListener;
+	friend PhysicsRaycastCallback;
 
 public:
 	enum PhysicObjectBodyType
@@ -188,5 +190,7 @@ public:
 	void RemovePolygonCollider(SceneIndex scene_index, Entity entity);
 
 	void RemoveDeferredPhysicObjects(EntityManager* entity_manager);
+
+	RaycastResult Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic);
 };
 

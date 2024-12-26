@@ -36,6 +36,12 @@ void ScriptComponentInterface::InitComponent(const CSMonoObject& object, SceneIn
 	}
 	script_component.script_end_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "EndCollision");
 
+	if (const MonoMethodHandle awake_method_handle = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Awake"); 
+		awake_method_handle != CSMonoCore::NULL_METHOD)
+	{
+		CSMonoCore::Get()->CallMethod(awake_method_handle, object);
+	}
+
 #ifndef _EDITOR
 	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
 		ScriptingManager::Get()->StartScript(script_component);

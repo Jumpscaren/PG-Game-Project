@@ -1,16 +1,8 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
-using ScriptProject.Engine.Constants;
 using ScriptProject.Scripts;
 using ScriptProject.UserDefined;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace ScriptProject
 {
@@ -87,6 +79,9 @@ namespace ScriptProject
             //Texture texture = Render.LoadTexture(texture_path);
             //sprite.SetTexture(texture);
 
+            GameObject gameMaster = GameObject.CreateGameObjectWithScene(SceneManager.GetGlobalScene());
+            gameMaster.AddComponent<GameMaster>();
+
             PrefabSystem.CreateUserPrefab("Prefab1", Prefab1, 1, "Block");
             PrefabSystem.CreateUserPrefab("Prefab2", Prefab2, 2, "Path");
             PrefabSystem.CreateUserPrefab("WallCollider", WallCollider, 2, "Block");
@@ -112,7 +107,7 @@ namespace ScriptProject
 
         static void Prefab1(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png", game_object.GetComponent<Sprite>());
             //game_object.AddComponent<DynamicBody>();
             game_object.AddComponent<PureStaticBody>();
             game_object.AddComponent<BoxCollider>();
@@ -120,14 +115,14 @@ namespace ScriptProject
 
         static void Prefab2(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Temp.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<PathFindingWorld>();
             //game_object.AddComponent<BoxCollider>();
         }
 
         static void WallCollider(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Temp.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<PureStaticBody>();
             game_object.AddComponent<BoxCollider>();
         }
@@ -135,7 +130,7 @@ namespace ScriptProject
         static void PlayerPrefab(GameObject game_object)
         {
             game_object.SetName("Player");
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<AnimatableSprite>();
             game_object.AddComponent<Player>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
@@ -146,7 +141,7 @@ namespace ScriptProject
 
         static void PlayerCameraPrefab(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<Camera>();
             game_object.AddComponent<PlayerCamera>();
             game_object.SetName("PlayerCamera");
@@ -155,7 +150,7 @@ namespace ScriptProject
         static void Princess(GameObject game_object)
         {
             game_object.SetName("Princess");
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Princess.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Princess.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.PrincessCharacter, UserCollisionCategories.FilterForPrincess, 0);
             game_object.AddComponent<Princess>();
@@ -163,7 +158,7 @@ namespace ScriptProject
 
         static void BouncePrefab(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Knight_Temp.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<StaticBody>();
             game_object.AddComponent<BoxCollider>().SetTrigger(true);
             game_object.SetName("Bouncer");
@@ -171,7 +166,7 @@ namespace ScriptProject
 
         static void BasicEnemy(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<BasicEnemy>();
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
@@ -180,7 +175,7 @@ namespace ScriptProject
 
         static void OrcEnemy(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Orc.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Orc.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             var collider = game_object.AddComponent<CircleCollider>();
@@ -221,7 +216,7 @@ namespace ScriptProject
 
         static void OrcCarrier(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/OrcCarrier.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/OrcCarrier.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             var collider = game_object.AddComponent<CircleCollider>();
@@ -247,13 +242,13 @@ namespace ScriptProject
 
         static void Switch(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/UglySwitchOff.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/UglySwitchOff.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<SwitchScript>();
         }
 
         static void OrcDistracter(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/OrcDistracter.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/OrcDistracter.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             var collider = game_object.AddComponent<CircleCollider>();
@@ -264,7 +259,7 @@ namespace ScriptProject
 
         static void Fireball(GameObject game_object)
         {
-            game_object.GetComponent<Sprite>().SetTexture(Render.LoadTexture("../QRGameEngine/Textures/Fireball.png"));
+            Render.LoadTexture("../QRGameEngine/Textures/Fireball.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<DynamicBody>();
             game_object.AddComponent<CircleCollider>().SetTrigger(true);
             game_object.AddComponent<ProjectileScript>();

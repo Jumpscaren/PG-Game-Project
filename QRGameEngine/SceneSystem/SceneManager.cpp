@@ -10,6 +10,8 @@ void SceneManager::DestroyDeferredScenes()
 {
 	for (const SceneIndex scene_index: m_deferred_scene_deletion)
 	{
+		EventCore::Get()->SendEvent("DeletedScene", scene_index);
+
 		delete m_scenes[scene_index];
 		m_scenes[scene_index] = nullptr;
 

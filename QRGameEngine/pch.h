@@ -9,6 +9,9 @@
 //#include <map>
 //#include <unordered_set>
 #include <fstream>
+#include <thread>
+#include <mutex>
+#include <functional>
 #include <stack>
 #include <chrono>
 #include <concepts>
@@ -18,6 +21,7 @@
 #include <list>
 #include <ranges>
 #include <tuple>
+
 #include "Vendor/Include/ankerl/unordered_dense.h"
 namespace qr {
 	template <typename Key, typename T, class Hash = ankerl::unordered_dense::hash<Key>,

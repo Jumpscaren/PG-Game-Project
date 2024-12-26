@@ -65,6 +65,27 @@ void RenderCore::LoadTextureWithAssetHandle(AssetHandle asset_handle)
 	}
 }
 
+void RenderCore::AssetDeletedListenEvent(const AssetHandle asset_handle)
+{
+	if (RenderCore::s_render_core->m_asset_to_texture.contains(asset_handle))
+	{
+		RenderCore::s_render_core->DeleteTexture(asset_handle);
+	}
+}
+
+void RenderCore::DeleteTexture(const AssetHandle asset_handle)
+{
+	const TextureHandle texture_handle = m_asset_to_texture.at(asset_handle);
+
+	const TextureHandleData texture_handle_data = m_texture_handles.at(texture_handle);
+
+	m_dx12_core.GetResourceDestroyer()->FreeTexture(&m_dx12_core, texture_handle_data.texture_internal_handle);
+
+	m_texture_handles.erase(texture_handle);
+	m_texture_to_asset.erase(texture_handle);
+	m_asset_to_texture.erase(asset_handle);
+}
+
 RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name)
 {
 	s_render_core = this;
@@ -164,6 +185,8 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_dx12_core.ResetBuffers();
 
 	EventCore::Get()->ListenToEvent<&RenderCore::AssetFinishedLoadingListenEvent>("Asset Finished Loading", 0, &RenderCore::AssetFinishedLoadingListenEvent);
+	EventCore::Get()->ListenToEvent<&RenderCore::AssetDeletedListenEvent>("DeletedAsset", 0, &RenderCore::AssetDeletedListenEvent);
+
 	/*	unsigned char* texture_data;
 	uint32_t width, height, comp, channels;*/
 	unsigned char texture_data[4] = { 255, 255, 255, 255 };
@@ -380,9 +403,9 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	return m_window->WinMsg();
 }
 
-TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name)
+TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name, const SceneIndex scene_index)
 {
-	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTextureAsset(texture_file_name);
+	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTextureAsset(texture_file_name, scene_index);
 
 	if (m_asset_to_texture.contains(texture_asset_handle))
 	{

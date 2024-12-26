@@ -499,14 +499,12 @@ static MonoClassHandle SetAndGetHookedMonoClassHandle(const MonoClassHandle clas
 template<auto t_method, typename Type, typename ...Args>
 inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, Type(*)(Args...))
 {
-	SetAndGetHookedMonoClassHandle<t_method>(class_handle);
 	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethod<(void*)t_method, ChangeType<Type>, ChangeType<Args>...>);
 }
 
 template<auto t_method, typename ...Args>
 inline MonoMethodHandle CSMonoCore::HookAndRegisterMonoMethodType(const MonoClassHandle& class_handle, const std::string& method_name, void(*)(Args ...))
 {
-	SetAndGetHookedMonoClassHandle<t_method>(class_handle);
 	return HookAndRegisterMonoMethod(class_handle, method_name, &CSMonoCore::HookedMethodVoid<(void*)t_method, ChangeType<Args>...>);
 }
 
