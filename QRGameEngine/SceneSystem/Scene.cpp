@@ -8,6 +8,7 @@ Scene::Scene(const SceneIndex scene_index) : m_scene_index(scene_index)
 
 	m_entity_manager = std::make_unique<EntityManager>(max_entities, scene_index);
 	m_scene_loaded = false;
+	m_scene_active = false;
 }
 
 Scene::~Scene()
@@ -34,6 +35,17 @@ void Scene::SetSceneAsLoaded()
 bool Scene::IsSceneLoaded()
 {
 	return m_scene_loaded;
+}
+
+void Scene::SetSceneAsActive()
+{
+	assert(!m_scene_active);
+	m_scene_active = true;
+}
+
+bool Scene::IsSceneActive()
+{
+	return m_scene_active;
 }
 
 SceneIndex Scene::GetSceneIndex() const

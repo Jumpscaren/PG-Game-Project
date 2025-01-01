@@ -33,5 +33,6 @@ public:
 
 	void SaveAnimation(const SceneIndex scene_index, const Entity entity, const std::string& animation_file_name);
 	bool LoadAnimation(const SceneIndex scene_index, const Entity entity, const std::string& animation_file_name);
+	std::string GetAnimationTexturePath(const SceneIndex scene_index, const Entity entity, const std::string& animation_file_name) const;
 };
 

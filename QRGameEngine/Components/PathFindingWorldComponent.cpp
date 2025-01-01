@@ -19,7 +19,7 @@ void PathFindingWorldComponentInterface::RegisterInterface(CSMonoCore* mono_core
 void PathFindingWorldComponentInterface::InitComponent(const CSMonoObject&, const SceneIndex scene_index, const Entity entity)
 {
 	SceneManager::GetEntityManager(scene_index)->AddComponent<PathFindingWorldComponent>(entity);
-	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded() && PathFinding::Get()->IsWorldConstructed())
+	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive() && PathFinding::Get()->IsWorldConstructed())
 	{
 		PathFinding::Get()->AddNewNode(scene_index, entity);
 	}

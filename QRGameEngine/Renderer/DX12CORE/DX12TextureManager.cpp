@@ -186,6 +186,8 @@ void DX12TextureManager::UploadTextureData(DX12Core* dx12_core, DX12TextureHandl
 	//Throttle the GPU to upload texture data (which requires less memory for CPU buffer)
 	dx12_core->GetCommandList()->Execute(dx12_core, dx12_core->GetGraphicsCommandQueue());
 	dx12_core->GetCommandList()->Signal(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	dx12_core->GetCommandList()->Wait(dx12_core);
+	dx12_core->GetCommandList()->Reset();
 
 	//m_upload_current_offset = destination_offset;
 }

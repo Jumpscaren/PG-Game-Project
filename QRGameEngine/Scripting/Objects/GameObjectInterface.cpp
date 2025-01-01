@@ -33,6 +33,7 @@ void GameObjectInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::SetName>(game_object_class, "SetName", GameObjectInterface::SetName);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::GetName>(game_object_class, "GetName", GameObjectInterface::GetName);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::TempFindGameObject>(game_object_class, "TempFindGameObject", GameObjectInterface::TempFindGameObject);
+    mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::FindGameObjectsWithName>(game_object_class, "FindGameObjectsWithName_Extern", GameObjectInterface::FindGameObjectsWithName);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::FindGameObjectWithTag>(game_object_class, "FindGameObjectWithTag", GameObjectInterface::FindGameObjectWithTag);
     mono_core->HookAndRegisterMonoMethodType<GameObjectInterface::FindGameObjectsWithTag>(game_object_class, "FindGameObjectsWithTag_Extern", GameObjectInterface::FindGameObjectsWithTag);
 
@@ -109,7 +110,7 @@ CSMonoObject GameObjectInterface::TempFindGameObject(const std::string& name)
             if (found_game_object != NULL_ENTITY)
                 return;
 
-            const std::string entity_name = entity_data.entity_name.substr(0, name.length());
+            const std::string& entity_name = entity_data.entity_name;
             
             if (entity_name == name)
                 found_game_object = entity;
@@ -125,12 +126,25 @@ Entity GameObjectInterface::TempFindGameObjectEntity(const std::string& name)
             if (found_game_object != NULL_ENTITY)
                 return;
 
-            const std::string entity_name = entity_data.entity_name.substr(0, name.length());
+            //const std::string entity_name = entity_data.entity_name.substr(0, name.length());
+            const std::string& entity_name = entity_data.entity_name;
 
             if (entity_name == name)
                 found_game_object = entity;
         });
     return found_game_object;
+}
+
+void GameObjectInterface::FindGameObjectsWithName(const CSMonoObject& list, const std::string& name)
+{
+    SceneManager::GetSceneManager()->GetEntityManager(SceneManager::GetActiveSceneIndex())->System<EntityDataComponent>([&](const Entity entity, const EntityDataComponent& entity_data)
+        {
+            if (name == entity_data.entity_name)
+            {
+                const auto game_object = NewGameObjectWithExistingEntity(entity, SceneManager::GetActiveSceneIndex());
+                ListSetInterface::AddGameObject(list, game_object);
+            }
+        });
 }
 
 CSMonoObject GameObjectInterface::FindGameObjectWithTag(const uint8_t tag)

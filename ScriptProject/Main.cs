@@ -230,6 +230,7 @@ namespace ScriptProject
             game_object.AddComponent<PureStaticBody>();
             game_object.RemoveComponent<Sprite>();
             game_object.AddComponent<BoxCollider>().SetTrigger(true);
+            game_object.SetTag(UserTags.Finish);
         }
 
         static void ReplaceBlock(GameObject game_object)

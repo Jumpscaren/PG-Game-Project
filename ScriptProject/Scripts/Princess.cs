@@ -2,11 +2,6 @@
 using ScriptProject.EngineMath;
 using ScriptProject.UserDefined;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScriptProject.Scripts
 {
@@ -47,13 +42,12 @@ namespace ScriptProject.Scripts
             new_random_direction_timer = start_to_move_time + new_random_direction_time;
 
             player = GameObject.TempFindGameObject("Player");
-            //player_body = player.GetComponent<DynamicBody>();
             player_body = player.GetComponent<DynamicBody>();
             player_script = player.GetComponent<Player>();
         }
 
         Vector2 grabbed_position_change = new Vector2(0.0f, 0.4f);
-        void Update() 
+        void Update()
         {
             if (rescue_state)
             {
@@ -188,7 +182,7 @@ namespace ScriptProject.Scripts
         }
 
         public void KnightHoldingPrincess(bool holding)
-        {            
+        {
             follow_player = holding;
 
             if (holding && rescue_state)

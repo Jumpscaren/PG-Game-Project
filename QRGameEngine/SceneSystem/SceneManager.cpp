@@ -25,8 +25,6 @@ SceneManager::SceneManager()
 	m_active_scene = NULL_SCENE_INDEX;
 	s_singleton = this;
 	m_change_scene_index = NULL_SCENE_INDEX;
-	m_load_scene = false;
-	m_load_scene_index = NULL_SCENE_INDEX;
 	m_switch_scene = false;
 }
 
@@ -88,24 +86,23 @@ void SceneManager::DestroyScene(SceneIndex scene_index)
 	m_deferred_scene_deletion.push_back(scene_index);
 }
 
-SceneIndex SceneManager::LoadScene(const std::string& scene_name)
+SceneIndex SceneManager::LoadScene(const std::string& scene_name, bool asynchronized)
 {
-	assert(!m_load_scene && "Trying to load scenes multiple times per frame, not illegal but we want to avoid that happening!");
-	m_load_scene = true;
-	m_load_scene_name = scene_name;
-	m_load_scene_index = CreateScene();
-	m_scenes[m_load_scene_index]->SetSceneName(m_load_scene_name);
-	return m_load_scene_index;
+	//assert(!m_load_scene && "Trying to load scenes multiple times per frame, not illegal but we want to avoid that happening!");
+	const SceneIndex new_scene = CreateScene();
+	m_scenes_to_be_loading.push_back(SceneLoading{ .load_scene_name = scene_name, .load_scene_index = new_scene, .load_scene_in_thread = asynchronized });
+	m_scenes[new_scene]->SetSceneName(scene_name);
+	return new_scene;
 }
 
-SceneIndex SceneManager::LoadScene(const SceneIndex scene_index)
+SceneIndex SceneManager::LoadScene(const SceneIndex scene_index, bool asynchronized)
 {
-	assert(!m_load_scene && "Trying to load scenes multiple times per frame, not illegal but we want to avoid that happening!");
-	m_load_scene = true;
-	m_load_scene_name = GetScene(scene_index)->GetSceneName();
-	m_load_scene_index = CreateScene();
-	m_scenes[m_load_scene_index]->SetSceneName(m_load_scene_name);
-	return m_load_scene_index;
+	//assert(!m_load_scene && "Trying to load scenes multiple times per frame, not illegal but we want to avoid that happening!");
+	const std::string& scene_name = GetScene(scene_index)->GetSceneName();
+	const SceneIndex new_scene = CreateScene();
+	m_scenes_to_be_loading.push_back(SceneLoading{ .load_scene_name = scene_name, .load_scene_index = new_scene, .load_scene_in_thread = asynchronized });
+	m_scenes[new_scene]->SetSceneName(scene_name);
+	return new_scene;
 }
 
 void SceneManager::RemoveEntitiesFromDeferredDestroyedScenes()
@@ -119,27 +116,42 @@ void SceneManager::RemoveEntitiesFromDeferredDestroyedScenes()
 void SceneManager::HandleDeferredScenes()
 {
 	DestroyDeferredScenes();
+
+	if (!m_loading_scene && !m_scenes_to_be_loading.empty())
+	{
+		m_loading_scene = m_scenes_to_be_loading.front();
+		m_scenes_to_be_loading.erase(m_scenes_to_be_loading.begin());
+	}
+
 	if (m_switch_scene)
 	{
 		m_switch_scene = false;
 
 		m_active_scene = m_change_scene_index;
-		GetScene(m_active_scene)->SetSceneAsLoaded();
-		EventCore::Get()->SendEvent("SceneLoaded", m_active_scene);
+		GetScene(m_change_scene_index)->SetSceneAsActive();
+		EventCore::Get()->SendEvent("SceneActivated", m_active_scene);
 		m_change_scene_index = NULL_SCENE_INDEX;
 	}
-	if (m_load_scene)
+	if (m_loading_scene && SceneLoader::Get()->FinishedLoadingScene())
 	{
 		//SceneLoader::Get()->LoadScene(m_load_scene_name, m_load_scene_index, false);
-		SceneLoader::Get()->LoadSceneThreaded(m_load_scene_name, m_load_scene_index);
+		if (m_loading_scene->load_scene_in_thread)
+		{
+			SceneLoader::Get()->LoadSceneThreaded(m_loading_scene->load_scene_name, m_loading_scene->load_scene_index);
+		}
+		else
+		{
+			SceneLoader::Get()->LoadScene(m_loading_scene->load_scene_name, m_loading_scene->load_scene_index, false);
+			GetScene(m_loading_scene->load_scene_index)->SetSceneAsLoaded();
+		}
 		//Sleep(10000);
+		m_loading_scene = std::nullopt;
 	}
-	if (SceneLoader::Get()->FinishedLoadingScene() && m_change_scene_index != NULL_SCENE_INDEX)
+	if (m_change_scene_index != NULL_SCENE_INDEX && GetScene(m_change_scene_index)->IsSceneLoaded())
 	{
 		DestroyScene(GetActiveSceneIndex());
 		m_switch_scene = true;
 	}
-	m_load_scene = false;
 }
 
 bool SceneManager::SceneExists(SceneIndex scene_index)

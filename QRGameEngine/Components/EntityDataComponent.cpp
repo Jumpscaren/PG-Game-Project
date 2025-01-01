@@ -23,4 +23,6 @@ void EntityDataComponentInterface::LoadScriptComponent(Entity ent, EntityManager
 	json_object->LoadData(entity_data.entity_name, "entity_name");
 	json_object->LoadData(entity_data.entity_tag, "entity_tag");
 	json_object->LoadData(entity_data.entity_layer, "entity_layer");
+
+	entity_data.entity_name.erase(std::remove(entity_data.entity_name.begin(), entity_data.entity_name.end(), 0), entity_data.entity_name.end());
 }

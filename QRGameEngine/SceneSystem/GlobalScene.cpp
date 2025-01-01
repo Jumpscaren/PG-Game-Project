@@ -8,6 +8,8 @@ GlobalScene::GlobalScene()
 {
 	s_global_scene = this;
 	m_scene_index = SceneManager::GetSceneManager()->CreateScene();
+	SceneManager::GetSceneManager()->GetScene(m_scene_index)->SetSceneAsLoaded();
+	SceneManager::GetSceneManager()->GetScene(m_scene_index)->SetSceneAsActive();
 }
 
 GlobalScene* GlobalScene::Get()

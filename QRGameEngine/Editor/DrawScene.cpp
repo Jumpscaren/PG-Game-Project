@@ -29,6 +29,7 @@
 
 qr::unordered_map<std::string, std::vector<PrefabAndTextureData>> DrawScene::m_user_prefabs;
 std::string DrawScene::m_category_in_use;
+std::vector<Entity> DrawScene::m_entities_waiting_for_assets;
 
 uint64_t DrawScene::GetNumberFromPosition(const Vector3& position)
 {
@@ -74,6 +75,41 @@ BlockData DrawScene::CreateBlock(const Vector3& block_transform)
 	return new_block_data;
 }
 
+bool DrawScene::WaitForAssetsForPrefab()
+{
+	if (m_entities_waiting_for_assets.empty())
+	{
+		return false;
+	}
+
+	for (int i = 0; i < m_entities_waiting_for_assets.size(); ++i)
+	{
+		Entity ent = m_entities_waiting_for_assets[i];
+		if (!RenderCore::Get()->IsEntitySubscribedToTextureLoading(SceneManager::GetActiveSceneIndex(), ent))
+		{
+			SceneManager::GetEntityManager(SceneManager::GetActiveSceneIndex())->RemoveEntity(ent);
+			m_entities_waiting_for_assets.erase(m_entities_waiting_for_assets.begin() + i);
+			--i;
+
+			for (auto& it : m_user_prefabs)
+			{
+				for (auto& prefab : it.second)
+				{
+					if (prefab.prefab_data.prefab_name ==
+						SceneManager::GetEntityManager(
+							SceneManager::GetActiveSceneIndex())->GetComponent<EntityDataComponent>(ent).entity_name)
+					{
+						prefab.texture_handle = SceneManager::GetEntityManager(
+							SceneManager::GetActiveSceneIndex())->GetComponent<SpriteComponent>(ent).texture_handle;
+					}
+				}
+			}
+		}
+	}
+
+	return !m_entities_waiting_for_assets.empty();
+}
+
 DrawScene::DrawScene()
 {
 	SetAddUserPrefab();
@@ -85,6 +121,11 @@ DrawScene::DrawScene()
 
 void DrawScene::Update()
 {
+	if (WaitForAssetsForPrefab())
+	{
+		return;
+	}
+
 	Vector2u mouse_coords = Mouse::Get()->GetMouseCoords();
 	
 	bool save_pressed = false;
@@ -195,40 +236,6 @@ void DrawScene::Update()
 		new_window_data.window_height = ImGui::GetWindowHeight();
 		new_window_data.window_width = ImGui::GetWindowWidth();
 		window_data.push_back(new_window_data);
-
-		//for (int i = 0; i < m_user_prefabs.size(); ++i)
-		//{
-		//	if (i % 3 == 0)
-		//	{
-		//		ImGui::Text(m_user_prefabs[i].prefab_data.prefab_name.c_str());
-		//		if (i + 1 < m_user_prefabs.size())
-		//		{
-		//			ImGui::SameLine();
-		//			ImGui::Text(m_user_prefabs[i + 1].prefab_data.prefab_name.c_str());
-		//		}
-		//		if (i + 2 < m_user_prefabs.size())
-		//		{
-		//			ImGui::SameLine();
-		//			ImGui::Text(m_user_prefabs[i + 2].prefab_data.prefab_name.c_str());
-		//		}
-		//	}
-
-		//	if (m_user_prefabs[i].texture_handle != -1 && ImGUIMain::ImageButton("Prefab Click" + std::to_string(i), m_user_prefabs[i].texture_handle))
-		//	{
-		//		m_prefab_selected = m_user_prefabs[i].prefab_data;
-		//		m_select = false;
-		//	}
-		//	else if (m_user_prefabs[i].texture_handle == -1 && ImGui::Button(m_user_prefabs[i].prefab_data.prefab_name.c_str(), ImVec2(108.0f, 108.0f)))
-		//	{
-		//		m_prefab_selected = m_user_prefabs[i].prefab_data;
-		//		m_select = false;
-		//	}
-
-		//	if (i % 3 != 2)
-		//	{
-		//		ImGui::SameLine();
-		//	}
-		//}
 	}
 	ImGui::End();
 
@@ -537,7 +544,7 @@ void DrawScene::Select()
 
 void DrawScene::Animation()
 {
-	auto* ent_man = SceneManager::GetSceneManager()->GetScene(SceneManager::GetSceneManager()->GetActiveSceneIndex())->GetEntityManager();
+	auto* ent_man = SceneManager::GetSceneManager()->GetScene(SceneManager::GetActiveSceneIndex())->GetEntityManager();
 	if (m_animation_base_entity == NULL_ENTITY)
 	{
 		Save(m_animation_temp_save_file_name);
@@ -610,7 +617,7 @@ void DrawScene::Animation()
 	bool texture_exists = false;
 	if (std::filesystem::exists(texture_full_path) && std::filesystem::is_regular_file(texture_full_path))
 	{
-		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_full_path, SceneManager::GetSceneManager()->GetActiveSceneIndex());
+		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_full_path, SceneManager::GetActiveSceneIndex());
 		texture_exists = true;
 	}
 
@@ -625,13 +632,13 @@ void DrawScene::Animation()
 	}
 	if (save_animation_pressed && texture_exists)
 	{
-		AnimationManager::Get()->SaveAnimation(SceneManager::GetSceneManager()->GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
+		AnimationManager::Get()->SaveAnimation(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
 	}
 	if (load_animation_pressed)
 	{
-		if (AnimationManager::Get()->LoadAnimation(SceneManager::GetSceneManager()->GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name))
+		if (AnimationManager::Get()->LoadAnimation(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name))
 		{
-			const auto& sprite_texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
+			const auto sprite_texture_path = AnimationManager::Get()->GetAnimationTexturePath(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
 			m_animation_texture_name = sprite_texture_path.substr(folder_path.length(), sprite_texture_path.length() - folder_path.length());
 		}
 	}
@@ -849,13 +856,14 @@ void DrawScene::AddUserPrefab(const std::string& prefab_name, uint32_t z_index, 
 	if (entity_manager->HasComponent<SpriteComponent>(ent))
 	{
 		prefab_and_texture_data.texture_handle = entity_manager->GetComponent<SpriteComponent>(ent).texture_handle;
+		entity_manager->GetComponent<EntityDataComponent>(ent).entity_name = prefab_name;
+		m_entities_waiting_for_assets.push_back(ent);
 	}
 	else
 	{
 		prefab_and_texture_data.texture_handle = -1;
+		entity_manager->RemoveEntity(ent);
 	}
-
-	entity_manager->RemoveEntity(ent);
 
 	if (m_user_prefabs.size() == 0)
 	{

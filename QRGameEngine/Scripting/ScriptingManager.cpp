@@ -65,7 +65,7 @@ void ScriptingManager::ScriptEndCollision(Entity entity_1, SceneIndex scene_inde
 	}
 }
 
-void ScriptingManager::StartScriptsFromLoadedScene(SceneIndex scene_index)
+void ScriptingManager::StartScriptsFromActivatedScene(SceneIndex scene_index)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 
@@ -80,7 +80,7 @@ ScriptingManager::ScriptingManager()
 
 	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptBeginCollision>("BeginCollision", 0, ScriptingManager::ScriptBeginCollision);
 	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptEndCollision>("EndCollision", 0, ScriptingManager::ScriptEndCollision);
-	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromLoadedScene>("SceneLoaded", 1, ScriptingManager::StartScriptsFromLoadedScene);
+	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromActivatedScene>("SceneActivated", 1, ScriptingManager::StartScriptsFromActivatedScene);
 }
 
 void ScriptingManager::StartScript(ScriptComponent& script)

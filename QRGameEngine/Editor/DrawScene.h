@@ -55,6 +55,8 @@ private:
 
 	static std::string m_category_in_use;
 
+	static std::vector<Entity> m_entities_waiting_for_assets;
+
 private:
 	uint64_t GetNumberFromPosition(const Vector3& position);
 	Vector3 GetWorldPositionFromMouse(const CameraComponent& editor_camera_component);
@@ -64,6 +66,8 @@ private:
 	void AddPolygonEntity(const Vector2& point, const Vector3& select_position, const uint32_t index);
 
 	void printtriangle(int i, int j);
+
+	bool WaitForAssetsForPrefab();
 
 public:
 	DrawScene();

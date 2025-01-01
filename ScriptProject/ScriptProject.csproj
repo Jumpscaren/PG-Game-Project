@@ -99,6 +99,7 @@
     <Compile Include="Main.cs" />
     <Compile Include="EngineMath\Vector2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scripts\Arrow.cs" />
     <Compile Include="Scripts\BasicEnemy.cs" />
     <Compile Include="Scripts\BoomerangScript.cs" />
     <Compile Include="Scripts\GameMaster.cs" />

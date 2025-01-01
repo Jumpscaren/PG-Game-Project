@@ -8,6 +8,7 @@ private:
 		void* hooked_callback_method;
 		void* original_method_ptr;
 		uint8_t event_order;
+		std::string event_name;
 	};
 
 	struct EventListenerData
@@ -129,6 +130,7 @@ inline void EventCore::ListenToEvent(const std::string& event_name, const uint8_
 	new_callback.hooked_callback_method = (void*)EventCore::HookEvent<(void*)t_method, Args...>;
 	new_callback.original_method_ptr = (void*)t_method;
 	new_callback.event_order = event_order;
+	new_callback.event_name = event_name;
 	auto& callback_data = it->second.hooked_event_callback_data;
 	auto const new_pos = std::lower_bound(callback_data.begin(), callback_data.end(), new_callback, [](const HookedEventCallbackData& first, const HookedEventCallbackData& second)
 		{

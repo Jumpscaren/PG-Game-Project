@@ -16,7 +16,9 @@ void SceneInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::RestartActiveScene>(scene_manager_object_class, "RestartActiveScene", SceneInterface::RestartActiveScene);
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::GetGlobalScene>(scene_manager_object_class, "GetGlobalScene", SceneInterface::GetGlobalScene);
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::LoadScene>(scene_manager_object_class, "LoadScene", SceneInterface::LoadScene);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::LoadSceneSynchronized>(scene_manager_object_class, "LoadSceneSynchronized", SceneInterface::LoadSceneSynchronized);
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::IsSceneLoaded>(scene_manager_object_class, "IsSceneLoaded_External", SceneInterface::IsSceneLoaded);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::ChangeScene>(scene_manager_object_class, "ChangeScene_External", SceneInterface::ChangeScene);
 }
 
 CSMonoObject SceneInterface::CreateSceneWithSceneIndex(SceneIndex scene_index)
@@ -38,7 +40,7 @@ void SceneInterface::RestartActiveScene()
 
     const auto scene_index = scene_manager->GetActiveSceneIndex();
     //scene_manager->DestroyScene(scene_index);
-    SceneIndex scene = scene_manager->LoadScene(scene_index);
+    SceneIndex scene = scene_manager->LoadScene(scene_index, true);
     scene_manager->ChangeScene(scene);
 }
 
@@ -49,10 +51,20 @@ CSMonoObject SceneInterface::GetGlobalScene()
 
 CSMonoObject SceneInterface::LoadScene(const std::string& scene_name)
 {
-    return SceneInterface::CreateSceneWithSceneIndex(SceneManager::GetSceneManager()->LoadScene(scene_name));
+    return SceneInterface::CreateSceneWithSceneIndex(SceneManager::GetSceneManager()->LoadScene(scene_name, true));
 }
 
-bool SceneInterface::IsSceneLoaded(const uint32_t scene_index)
+CSMonoObject SceneInterface::LoadSceneSynchronized(const std::string& scene_name)
+{
+    return SceneInterface::CreateSceneWithSceneIndex(SceneManager::GetSceneManager()->LoadScene(scene_name, false));
+}
+
+bool SceneInterface::IsSceneLoaded(const SceneIndex scene_index)
 {
     return SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded();
+}
+
+void SceneInterface::ChangeScene(const SceneIndex scene_index)
+{
+    SceneManager::GetSceneManager()->ChangeScene(scene_index);
 }

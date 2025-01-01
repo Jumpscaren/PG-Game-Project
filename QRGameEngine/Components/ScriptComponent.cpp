@@ -43,7 +43,7 @@ void ScriptComponentInterface::InitComponent(const CSMonoObject& object, SceneIn
 	}
 
 #ifndef _EDITOR
-	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
 		ScriptingManager::Get()->StartScript(script_component);
 #endif // _EDITOR
 }

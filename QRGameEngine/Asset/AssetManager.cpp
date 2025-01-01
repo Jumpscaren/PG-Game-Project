@@ -155,7 +155,7 @@ AssetHandle AssetManager::LoadAssetPath(const std::string& asset_path, bool& ass
 
 	AssetHandle new_asset_handle = m_asset_count++;
 
-	m_loaded_assets.insert({asset_path_hash, new_asset_handle });
+	m_loaded_assets.insert({ asset_path_hash, new_asset_handle });
 
 	asset_existing = false;
 

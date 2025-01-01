@@ -16,6 +16,8 @@ public:
 	static void RestartActiveScene();
 	static CSMonoObject GetGlobalScene();
 	static CSMonoObject LoadScene(const std::string& scene_name);
-	static bool IsSceneLoaded(const uint32_t scene_index);
+	static CSMonoObject LoadSceneSynchronized(const std::string& scene_name);
+	static bool IsSceneLoaded(const SceneIndex scene_index);
+	static void ChangeScene(const SceneIndex scene_index);
 };
 

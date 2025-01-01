@@ -14,9 +14,15 @@ private:
 	std::vector<SceneIndex> m_deferred_scene_deletion;
 	SceneIndex m_change_scene_index;
 	bool m_switch_scene;
-	bool m_load_scene;
-	std::string m_load_scene_name;
-	SceneIndex m_load_scene_index;
+
+	struct SceneLoading {
+		std::string load_scene_name;
+		SceneIndex load_scene_index;
+		bool load_scene_in_thread;
+	};
+
+	std::vector<SceneLoading> m_scenes_to_be_loading;
+	std::optional<SceneLoading> m_loading_scene;
 
 private:
 	void DestroyDeferredScenes();
@@ -30,8 +36,8 @@ public:
 	void ChangeScene(SceneIndex scene_index);
 	void ForceChangeScene(SceneIndex scene_index);
 	void DestroyScene(SceneIndex scene_index);
-	SceneIndex LoadScene(const std::string& scene_name);
-	SceneIndex LoadScene(SceneIndex scene_index);
+	SceneIndex LoadScene(const std::string& scene_name, bool asynchronized);
+	SceneIndex LoadScene(SceneIndex scene_index, bool asynchronized);
 	void RemoveEntitiesFromDeferredDestroyedScenes();
 	void HandleDeferredScenes();
 	bool SceneExists(SceneIndex scene_index);

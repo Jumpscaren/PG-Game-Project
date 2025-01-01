@@ -28,11 +28,22 @@ namespace ScriptProject.Engine
         static public extern Scene LoadScene(string scene_name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Scene LoadSceneSynchronized(string scene_name);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static private extern bool IsSceneLoaded_External(UInt32 scene_index);
 
         static public bool IsSceneLoaded(Scene scene)
         {
             return IsSceneLoaded_External(scene.GetSceneIndex());
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern void ChangeScene_External(UInt32 scene_index);
+
+        static public void ChangeScene(Scene scene)
+        {
+            ChangeScene_External(scene.GetSceneIndex());
         }
     }
 }

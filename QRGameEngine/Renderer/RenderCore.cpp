@@ -210,8 +210,12 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	const auto assamble_render_data = [&](const Entity entity, const TransformComponent& transform, const SpriteComponent& sprite)
 		{
 			SpriteData sprite_data;
-			const DX12TextureViewHandle texture_view = m_texture_handles.at(sprite.texture_handle).texture_internal_view_handle;
-			sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(texture_view);
+
+			if (const auto it = m_texture_handles.find(sprite.texture_handle); it != m_texture_handles.end())
+			{
+				const DX12TextureViewHandle texture_view = it->second.texture_internal_view_handle;
+				sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(texture_view);
+			}
 
 			Vector2 uv;
 			if (assamble_render_data_ent_man->HasComponent<AnimatableSpriteComponent>(entity))
@@ -450,6 +454,22 @@ void RenderCore::SubscribeEntityToTextureLoading(const TextureHandle texture_han
 	}
 
 	it->second.push_back({ scene_index, entity });
+}
+
+bool RenderCore::IsEntitySubscribedToTextureLoading(const SceneIndex scene_index, const Entity entity)
+{
+	for (const auto it : m_subscribe_to_texture_loading)
+	{
+		const std::vector<SubscribeToTextureLoading>& subscribers = it.second;
+		for (const SubscribeToTextureLoading subscriber : subscribers)
+		{
+			if (subscriber.entity == entity && subscriber.scene_index == scene_index)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 AssetHandle RenderCore::GetTextureAssetHandle(const TextureHandle texture_handle)

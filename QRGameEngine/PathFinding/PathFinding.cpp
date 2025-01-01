@@ -305,7 +305,7 @@ uint64_t PathFinding::PositionToNodeIndex(const Vector2& position) const
 PathFinding::PathFinding()
 {
 	s_singleton = this;
-	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneLoaded", 0, PathFinding::ConstructPathFindingWorldEvent);
+	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneActivated", 0, PathFinding::ConstructPathFindingWorldEvent);
 
 	m_thread_state = ThreadState::Run;
 	m_calculate_paths_thread = new std::thread(&PathFinding::ThreadHandleRequests, this);

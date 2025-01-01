@@ -262,10 +262,17 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 	}
 
 	std::string prefab_name;
+	bool locked = false;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
 		uint64_t unique_number = save_file.Read<uint64_t>();
 		uint64_t block_layers = save_file.Read<uint64_t>();
+
+		//if (threaded && i % 3 == 0)
+		//{
+		//	m_load_scene_mutex.lock();
+		//	locked = true;
+		//}
 
 		for (uint64_t layers = 0; layers < block_layers; ++layers)
 		{
@@ -280,6 +287,7 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 			if (threaded)
 			{
 				m_load_scene_mutex.lock();
+				locked = true;
 			}
 			CSMonoObject game_object = GameObjectInterface::NewGameObjectWithExistingEntity(new_entity, load_scene);
 			LoadTransformComponent(&save_file, new_entity, entity_manager);
@@ -287,10 +295,21 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 			if (threaded)
 			{
 				m_load_scene_mutex.unlock();
+				locked = false;
 			}
 
 			LoadComponents(&save_file, entity_manager, new_entity);
 		}
+		//if (threaded && i % 3 == 2)
+		//{
+		//	m_load_scene_mutex.unlock();
+		//	locked = false;
+		//}
+	}
+
+	if (locked)
+	{
+		m_load_scene_mutex.unlock();
 	}
 
 	save_file.Close();
@@ -408,6 +427,7 @@ void SceneLoader::HandleSceneLoadingPostUser()
 		delete m_load_scene_thread;
 		m_load_scene_thread = nullptr;
 		m_threaded_scene_loader_finished = false;
+		SceneManager::GetSceneManager()->GetScene(m_load_scene_index)->SetSceneAsLoaded();
 		m_load_scene_index = NULL_SCENE_INDEX;
 		return;
 	}
@@ -416,6 +436,11 @@ void SceneLoader::HandleSceneLoadingPostUser()
 bool SceneLoader::FinishedLoadingScene()
 {
 	return m_load_scene_index == NULL_SCENE_INDEX;
+}
+
+SceneIndex SceneLoader::GetLoadingScene() const
+{
+	return m_load_scene_index;
 }
 
 std::function<void(Entity, EntityManager*, JsonObject*)>* SceneLoader::GetOverrideSaveComponentMethod(const std::string& component_name)

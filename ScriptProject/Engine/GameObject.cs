@@ -337,6 +337,16 @@ namespace ScriptProject.Engine
         static public extern GameObject TempFindGameObject(string name);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern void FindGameObjectsWithName_Extern(ListSetGameObject list, string name);
+
+        static public List<GameObject> FindGameObjectsWithName(string name)
+        {
+            ListSetGameObject list = new ListSetGameObject();
+            FindGameObjectsWithName_Extern(list, name);
+            return list.GetData();
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern GameObject FindGameObjectWithTag(Byte tag);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

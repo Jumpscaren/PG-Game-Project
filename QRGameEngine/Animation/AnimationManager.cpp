@@ -102,6 +102,23 @@ bool AnimationManager::LoadAnimation(const SceneIndex scene_index, const Entity 
 	return true;
 }
 
+std::string AnimationManager::GetAnimationTexturePath(const SceneIndex scene_index, const Entity entity, const std::string& animation_file_name) const
+{
+	if (!SceneManager::GetEntityManager(scene_index)->HasComponent<AnimatableSpriteComponent>(entity))
+	{
+		return "";
+	}
+
+	const uint64_t animation_file_name_hash = std::hash<std::string>{}(animation_file_name);
+	if (!m_cached_animation_data.contains(animation_file_name_hash))
+	{
+		return "";
+
+	}
+
+	return m_cached_animation_data.at(animation_file_name_hash).texture_path;
+}
+
 void AnimationManager::RegisterInterface(CSMonoCore* mono_core)
 {
 	const auto animation_manager_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "AnimationManager");

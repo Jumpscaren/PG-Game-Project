@@ -70,6 +70,7 @@ public:
 	void HandleSceneLoadingPostUser();
 
 	bool FinishedLoadingScene();
+	SceneIndex GetLoadingScene() const;
 
 	template<typename Component>
 	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method);

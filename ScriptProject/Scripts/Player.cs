@@ -65,6 +65,11 @@ namespace ScriptProject.Scripts
         List<GameObject> boomerangs = new List<GameObject>();
         const UInt16 max_boomerangs = 2;
 
+        bool bow_shot = false;
+        float bow_charge = 0.0f;
+        float bow_charge_max = 100.0f;
+        float bow_charge_increase = 200.0f;
+
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
@@ -218,6 +223,22 @@ namespace ScriptProject.Scripts
             RopeLogic(new_velocity);
 
             BoomerangLogic(mouse_dir);
+
+            if (Input.GetKeyDown(Key.Q))
+            {
+                bow_charge += bow_charge_increase * Time.GetDeltaTime();
+                if (!bow_shot && bow_charge > bow_charge_max)
+                {
+                    GameObject arrow = GameObject.CreateGameObject();
+                    arrow.AddComponent<Arrow>().InitArrow(game_object.transform.GetPosition(), mouse_dir);
+                    bow_shot = true;
+                }
+            }
+            else
+            {
+                bow_charge = 0.0f;
+                bow_shot = false;
+            }
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -274,7 +295,8 @@ namespace ScriptProject.Scripts
             if (holding_princess && collided_game_object.GetTag() == UserTags.Finish)
             {
                 Console.WriteLine("Finished Level");
-                SceneManager.RestartActiveScene();
+                GameMaster.game_master.NextScene();
+                //SceneManager.RestartActiveScene();
             }
         }
 

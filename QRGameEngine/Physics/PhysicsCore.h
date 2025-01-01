@@ -107,6 +107,7 @@ private:
 	std::mutex m_physic_update_thread_mutex;
 	std::atomic<PhysicThreadState> m_update_physics;
 	bool m_defer_physic_calls;
+	bool m_handling_defered_physic_calls = false;
 
 	std::vector<DeferredPhysicObjectHandle> m_deferred_physic_object_handles;
 	std::vector<DeferredPhysicObjectCreationData> m_deferred_physic_object_creations;
@@ -132,6 +133,7 @@ private:
 	std::pair<Entity, SceneIndex> GetEntityAndSceneFromUserData(void* user_data) const;
 
 	bool IsDeferringPhysicCalls();
+	bool ShouldDeferPhysicCalls(const SceneIndex scene_index);
 
 	void AddDeferredPhysicObjectHandle(uint64_t index_to_data, bool is_physic_object_creation_data);
 
@@ -150,7 +152,7 @@ private:
 	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddPolygonFixture(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool loop, bool solid, bool trigger = false, ColliderFilter collider_filter = {});
 
-	static void AwakePhysicObjectsFromLoadedScene(SceneIndex scene_index);
+	static void AwakePhysicObjectsFromActivatedScene(SceneIndex scene_index);
 
 	void AwakePureStaticBody(SceneIndex scene_index, Entity entity);
 

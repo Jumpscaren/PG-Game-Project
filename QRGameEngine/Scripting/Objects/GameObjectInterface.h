@@ -41,6 +41,7 @@ public:
 
 	static CSMonoObject TempFindGameObject(const std::string& name);
 	static Entity TempFindGameObjectEntity(const std::string& name);
+	static void FindGameObjectsWithName(const CSMonoObject& list, const std::string& name);
 	static CSMonoObject FindGameObjectWithTag(const uint8_t tag);
 	static void FindGameObjectsWithTag(const CSMonoObject& list, const uint8_t tag);
 

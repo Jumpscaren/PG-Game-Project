@@ -33,6 +33,12 @@ bool PhysicsCore::IsDeferringPhysicCalls()
 	return m_defer_physic_calls;
 }
 
+bool PhysicsCore::ShouldDeferPhysicCalls(const SceneIndex scene_index)
+{
+	return IsDeferringPhysicCalls() || 
+		!m_handling_defered_physic_calls && m_threaded_physics && !SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded();
+}
+
 PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_physics)
 {
 	s_physics_core = this;
@@ -66,7 +72,7 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 
 	m_defer_physic_calls = false;
 
-	EventCore::Get()->ListenToEvent<PhysicsCore::AwakePhysicObjectsFromLoadedScene>("SceneLoaded", 0, PhysicsCore::AwakePhysicObjectsFromLoadedScene);
+	EventCore::Get()->ListenToEvent<PhysicsCore::AwakePhysicObjectsFromActivatedScene>("SceneActivated", 0, PhysicsCore::AwakePhysicObjectsFromActivatedScene);
 }
 
 PhysicsCore::~PhysicsCore()
@@ -161,6 +167,7 @@ void PhysicsCore::AddDeferredPhysicObjectDestruction(const SceneIndex scene_inde
 
 void PhysicsCore::HandleDeferredPhysicObjectHandleData()
 {
+	m_handling_defered_physic_calls = true;
 	for (const auto& handle : m_deferred_physic_object_handles)
 	{
 		if (handle.is_physic_object_creation_data)
@@ -168,6 +175,7 @@ void PhysicsCore::HandleDeferredPhysicObjectHandleData()
 		else
 			HandleDeferredPhysicObjectDestructionData(m_deferred_physic_object_destructions[handle.index_to_physic_object_data]);
 	}
+	m_handling_defered_physic_calls = false;
 
 	m_deferred_physic_object_handles.clear();
 	m_deferred_physic_object_creations.clear();
@@ -345,7 +353,7 @@ void PhysicsCore::AddPolygonFixture(SceneIndex scene_index, Entity entity, const
 	polygon_collider.filter = collider_filter;
 }
 
-void PhysicsCore::AwakePhysicObjectsFromLoadedScene(const SceneIndex scene_index)
+void PhysicsCore::AwakePhysicObjectsFromActivatedScene(const SceneIndex scene_index)
 {
 	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
 	entity_manager->System<DynamicBodyComponent>([&](DynamicBodyComponent& dynamic_body)
@@ -501,6 +509,7 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			PhysicObjectData& physic_object = m_physic_object_data[physic_object_handle];
 			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
 			physic_object.object_body->SetEnabled(true);
+			physic_object.object_body->SetAwake(true);
 		}
 	}
 	m_deferred_enable_pure_static_bodies.clear();
@@ -628,7 +637,7 @@ void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity 
 		entity_manager->RemoveComponent<KinematicBodyComponent>(entity);
 	}
 
-	if (IsDeferringPhysicCalls())
+	if (ShouldDeferPhysicCalls(scene_index))
 	{
 		AddDeferredPhysicObjectDestruction(scene_index, entity, physic_object_handle, false, ColliderType::None);
 		return;
@@ -733,7 +742,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 		entity_manager->AddComponent<KinematicBodyComponent>(entity).physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
 	}
 
-	if (IsDeferringPhysicCalls())
+	if (ShouldDeferPhysicCalls(scene_index))
 	{
 		AddDeferredPhysicObjectCreation(scene_index, entity, physic_object_body_type);
 		return;
@@ -781,7 +790,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 		DynamicBodyComponent& dynamic_body = entity_manager->GetComponent<DynamicBodyComponent>(entity);
 		dynamic_body.physic_object_handle = new_physic_object_handle;
 #ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
 		{
 			physic_object_data.object_body->SetEnabled(false);
 			dynamic_body.enabled = physic_object_data.object_body->IsEnabled();
@@ -801,7 +810,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 		StaticBodyComponent& static_body = entity_manager->GetComponent<StaticBodyComponent>(entity);
 		static_body.physic_object_handle = new_physic_object_handle;
 #ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
 		{
 			physic_object_data.object_body->SetEnabled(false);
 			static_body.enabled = physic_object_data.object_body->IsEnabled();
@@ -817,7 +826,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 		PureStaticBodyComponent& pure_static_body = entity_manager->GetComponent<PureStaticBodyComponent>(entity);
 		pure_static_body.physic_object_handle = new_physic_object_handle;
 #ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
 		{
 			physic_object_data.object_body->SetEnabled(false);
 			//static_body.enabled = physic_object_data.object_body->IsEnabled();
@@ -825,7 +834,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 #endif // !_EDITOR
 #ifdef _EDITOR
 		physic_object_data.object_body->SetEnabled(false);
-		//static_body.enabled = physic_object_data.object_body->IsEnabled();
+		physic_object_data.object_body->SetAwake(false);
 #endif // _EDITOR
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::KinematicBody)
@@ -833,7 +842,7 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 		KinematicBodyComponent& kinematic_body = entity_manager->GetComponent<KinematicBodyComponent>(entity);
 		kinematic_body.physic_object_handle = new_physic_object_handle;
 #ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded())
+		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
 		{
 			physic_object_data.object_body->SetEnabled(false);
 			kinematic_body.enabled = physic_object_data.object_body->IsEnabled();
@@ -867,7 +876,7 @@ void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity enti
 		assert(entity_manager->GetComponent<BoxColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
 	}
 
-	if (IsDeferringPhysicCalls())
+	if (ShouldDeferPhysicCalls(scene_index))
 	{
 		AddBoxColliderDeferredPhysicObjectCreation(scene_index, entity);
 		return;
@@ -893,7 +902,7 @@ void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity e
 		assert(entity_manager->GetComponent<CircleColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
 	}
 
-	if (IsDeferringPhysicCalls())
+	if (ShouldDeferPhysicCalls(scene_index))
 	{
 		AddCircleColliderDeferredPhysicObjectCreation(scene_index, entity);
 		return;
@@ -919,7 +928,7 @@ void PhysicsCore::AddPolygonCollider(const SceneIndex scene_index, const Entity 
 		assert(entity_manager->GetComponent<PolygonColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
 	}
 
-	if (IsDeferringPhysicCalls())
+	if (ShouldDeferPhysicCalls(scene_index))
 	{
 		AddPolygonColliderDeferredPhysicObjectCreation(scene_index, entity);
 		return;
@@ -937,7 +946,7 @@ void PhysicsCore::RemoveBoxCollider(const SceneIndex scene_index, const Entity e
 		PhysicObjectHandle physic_object_handle = entity_manager->GetComponent<BoxColliderComponent>(entity).physic_object_handle;
 		entity_manager->RemoveComponent<BoxColliderComponent>(entity);
 
-		if (IsDeferringPhysicCalls())
+		if (ShouldDeferPhysicCalls(scene_index))
 		{
 			AddDeferredPhysicObjectDestruction(scene_index, entity, physic_object_handle, true, ColliderType::Box);
 			return;
@@ -956,7 +965,7 @@ void PhysicsCore::RemoveCircleCollider(const SceneIndex scene_index, const Entit
 		PhysicObjectHandle physic_object_handle = entity_manager->GetComponent<CircleColliderComponent>(entity).physic_object_handle;
 		entity_manager->RemoveComponent<CircleColliderComponent>(entity);
 
-		if (IsDeferringPhysicCalls())
+		if (ShouldDeferPhysicCalls(scene_index))
 		{
 			AddDeferredPhysicObjectDestruction(scene_index, entity, physic_object_handle, true, ColliderType::Circle);
 			return;
@@ -975,7 +984,7 @@ void PhysicsCore::RemovePolygonCollider(SceneIndex scene_index, Entity entity)
 		PhysicObjectHandle physic_object_handle = entity_manager->GetComponent<PolygonColliderComponent>(entity).physic_object_handle;
 		entity_manager->RemoveComponent<PolygonColliderComponent>(entity);
 
-		if (IsDeferringPhysicCalls())
+		if (ShouldDeferPhysicCalls(scene_index))
 		{
 			AddDeferredPhysicObjectDestruction(scene_index, entity, physic_object_handle, true, ColliderType::Polygon);
 			return;

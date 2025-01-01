@@ -170,6 +170,8 @@ void QREntryPoint::RunTime()
 	//	std::cout << "------------------------------------" << std::endl;
 	//}
 
+	auto* eventcore = EventCore::Get();
+
 	bool window_exist = true;
 	while (window_exist)
 	{
@@ -212,13 +214,13 @@ void QREntryPoint::RunTime()
 			std::cout << "Change Scene" << std::endl;
 			if (scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetSceneName() == "temp")
 			{
-				SceneIndex scene = scene_manager->LoadScene("empty_with_camerad");
+				SceneIndex scene = scene_manager->LoadScene("empty_with_camerad", true);
 				scene_manager->ChangeScene(scene);
 				change_scene = false;
 			}
 			else
 			{
-				SceneIndex scene = scene_manager->LoadScene("temp");
+				SceneIndex scene = scene_manager->LoadScene("temp", true);
 				scene_manager->ChangeScene(scene);
 				change_scene = false;
 			}
@@ -260,10 +262,11 @@ void QREntryPoint::RunTime()
 		scene_hierarchy->UpdateEntityTransforms(active_scene->GetSceneIndex());
 
 		physic_timer.StartTimer();
-		PhysicsCore::Get()->DrawColliders();
 
 		PhysicsCore::Get()->SetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->SetWorldPhysicObjectData(global_entity_manager);
+
+		PhysicsCore::Get()->DrawColliders();
 
 		PhysicsCore::Get()->UpdatePhysics();
 
@@ -305,6 +308,8 @@ void QREntryPoint::RunTime()
 		//}
 		//std::cout << "Size = " << CSMonoObject::test.size() << "\n";
 
+		SceneLoader::Get()->HandleSceneLoadingPostUser();
+
 		mono_core->ForceGarbageCollection();
 
 		average_deferred_frame_time = average_deferred_frame_time * 0.9 + 0.1 * deferred_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
@@ -318,8 +323,6 @@ void QREntryPoint::RunTime()
 		Time::Stop();
 		TimeInterface::SetDeltaTime(mono_core);
 		TimeInterface::SetElapsedTime(mono_core);
-
-		SceneLoader::Get()->HandleSceneLoadingPostUser();
 	}
 }
 

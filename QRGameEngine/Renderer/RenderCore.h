@@ -110,6 +110,7 @@ public:
 	bool IsTextureAvailable(TextureHandle texture_handle);
 	bool IsTextureLoaded(TextureHandle texture_handle);
 	void SubscribeEntityToTextureLoading(const TextureHandle texture_handle, const SceneIndex scene_index, const Entity entity);
+	bool IsEntitySubscribedToTextureLoading(const SceneIndex scene_index, const Entity entity);
 
 	AssetHandle GetTextureAssetHandle(TextureHandle texture_handle);
 	DX12TextureViewHandle GetTextureViewHandle(TextureHandle texture_handle);
