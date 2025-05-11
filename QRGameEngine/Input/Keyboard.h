@@ -7,7 +7,7 @@ public:
 	{
 		BACKSPACE = 8, TAB,
 		ENTER = 13,
-		RALT = 17, LALT = 18,
+		LCTRL = 17, RCTRL,
 		CAPSLOCK = 20,
 		ESCAPE = 27,
 		SPACEBAR = 32,
@@ -15,7 +15,7 @@ public:
 		NUM0 = 48, NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9,
 		A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 		F1 = 112, F2, F3, F4,
-		LSHIFT = 160, RSHIFT, LCTRL, RCTRL, 
+		LSHIFT = 160, RSHIFT, LALT, RALT,
 		PERIOD = 190,
 	};
 

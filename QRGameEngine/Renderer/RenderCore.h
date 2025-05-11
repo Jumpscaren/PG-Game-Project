@@ -27,6 +27,8 @@ private:
 		float pad[3];
 	};
 
+	using WorldMatrixData = DirectX::XMMATRIX;
+
 	struct TextureHandleData
 	{
 		DX12TextureHandle texture_internal_handle;
@@ -62,7 +64,7 @@ private:
 	DX12BufferViewHandle m_fullscreen_quad_view_handle;
 	DX12StackAllocator* m_stack_allocator;
 
-	std::vector<TransformComponent> m_transform_data_vector;
+	std::vector<WorldMatrixData> m_transform_data_vector;
 	std::vector<SpriteData> m_sprite_data_vector;
 
 	DX12BufferHandle m_camera_buffer;
@@ -82,6 +84,9 @@ private:
 
 	DX12BufferHandle m_line_color_buffer;
 	DX12BufferViewHandle m_line_color_buffer_view;
+
+	DX12RootSignature m_tile_generator_root_signature;
+	DX12Pipeline m_tile_generator_pipeline;
 
 	std::vector<VertexGrid> m_debug_lines;
 
@@ -107,6 +112,9 @@ public:
 	bool UpdateRender(Scene* draw_scene);
 
 	TextureHandle LoadTexture(const std::string& texture_file_name, SceneIndex scene_index);
+	TextureHandle ForceLoadTexture(const std::string& texture_file_name, SceneIndex scene_index);
+	void DeleteTextureHandle(const TextureHandle texture_handle);
+
 	bool IsTextureAvailable(TextureHandle texture_handle);
 	bool IsTextureLoaded(TextureHandle texture_handle);
 	void SubscribeEntityToTextureLoading(const TextureHandle texture_handle, const SceneIndex scene_index, const Entity entity);
@@ -114,6 +122,8 @@ public:
 
 	AssetHandle GetTextureAssetHandle(TextureHandle texture_handle);
 	DX12TextureViewHandle GetTextureViewHandle(TextureHandle texture_handle);
+
+	TextureInfo* GenerateTile(const TextureHandle tile_full_input_texture, const TextureHandle tile_empty_input_texture, const uint32_t tiles_per_row, const uint32_t edge_width);
 	
 	void AddLine(const Vector2& line);
 

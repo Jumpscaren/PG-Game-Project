@@ -59,8 +59,33 @@ void cpptestmany(const CSMonoObject& object)
 	
 }
 
+struct Data {
+	int num;
+	float other;
+	double big;
+	char tecken;
+};
+
+int square(const Data& num, const Data& num2, const Data& num3) {
+	return num.num * num2.num * num3.num;
+}
+
+template <typename ...Args>
+int squarenum(Args&&... args)
+{
+	int num = square(std::forward<Args>(args)...);
+	int num2 = square(std::forward<Args>(args)...);
+	//int num2 = square(args...);
+
+	return num + num2;
+}
+
 void QREntryPoint::EntryPoint()
 {
+	Data data{};
+	data.num = 1;
+	squarenum(data, Data{ .num = 2 }, Data{ .num = 3 });
+
 	ComponentMap::AddAllComponents();
 
 	event_core = new EventCore();
@@ -75,13 +100,14 @@ void QREntryPoint::EntryPoint()
 
 	mouse = new Mouse();
 
+	scene_manager = new SceneManager();
+	scene_loader = new SceneLoader();
+	global_scene = new GlobalScene();
+
 	//render_core = new RenderCore(1920, 1080, L"2DRENDERER");
 	render_core = new RenderCore(1280, 720, L"2DRENDERER");
 	//render_core = new RenderCore(480, 360, L"2DRENDERER");
 
-	scene_manager = new SceneManager();
-	scene_loader = new SceneLoader();
-	global_scene = new GlobalScene();
 	scene_hierarchy = new SceneHierarchy();
 	animation_manager = new AnimationManager();
 
@@ -177,6 +203,8 @@ void QREntryPoint::RunTime()
 	{
 		Time::Start();
 		Timer time;
+		TimeInterface::SetDeltaTime(mono_core);
+		TimeInterface::SetElapsedTime(mono_core);
 
 		Mouse::Get()->ResetMouseDeltaCoords();
 
@@ -214,6 +242,7 @@ void QREntryPoint::RunTime()
 			std::cout << "Change Scene" << std::endl;
 			if (scene_manager->GetScene(scene_manager->GetActiveSceneIndex())->GetSceneName() == "temp")
 			{
+				//SceneIndex scene = scene_manager->LoadScene("empty_with_camerad", true);
 				SceneIndex scene = scene_manager->LoadScene("empty_with_camerad", true);
 				scene_manager->ChangeScene(scene);
 				change_scene = false;
@@ -266,7 +295,8 @@ void QREntryPoint::RunTime()
 		PhysicsCore::Get()->SetWorldPhysicObjectData(entman);
 		PhysicsCore::Get()->SetWorldPhysicObjectData(global_entity_manager);
 
-		PhysicsCore::Get()->DrawColliders();
+		PhysicsCore::Get()->DrawColliders(entman);
+		PhysicsCore::Get()->DrawColliders(global_entity_manager);
 
 		PhysicsCore::Get()->UpdatePhysics();
 
@@ -310,19 +340,17 @@ void QREntryPoint::RunTime()
 
 		SceneLoader::Get()->HandleSceneLoadingPostUser();
 
-		mono_core->ForceGarbageCollection();
+		//mono_core->ForceGarbageCollection();
 
 		average_deferred_frame_time = average_deferred_frame_time * 0.9 + 0.1 * deferred_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 
 		//double frame_time = 0.0f;
-		//while (frame_time < 1000.0 / 100.0)
+		//while (frame_time < 16.67)//1000.0 / 100.0)
 		//{
 		//	frame_time = time.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 		//}
 
 		Time::Stop();
-		TimeInterface::SetDeltaTime(mono_core);
-		TimeInterface::SetElapsedTime(mono_core);
 	}
 }
 

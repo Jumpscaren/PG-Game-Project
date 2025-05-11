@@ -11,6 +11,7 @@ struct CircleColliderComponent {
 	bool update_circle_collider = false;
 	bool trigger;
 	ColliderFilter filter;
+	bool debug_draw = false;
 };
 
 class JsonObject;

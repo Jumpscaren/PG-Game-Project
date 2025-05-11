@@ -1,6 +1,7 @@
 #pragma once
 #include "DrawScene.h"
 #include "ECS/EntityManager.h"
+#include "TileHandler.h"
 
 class EditorCore
 {
@@ -10,6 +11,7 @@ private:
 	Entity m_editor_camera_ent;
 
 	DrawScene m_draw_scene;
+	TileHandler m_tile_handler;
 
 public:
 	EditorCore();

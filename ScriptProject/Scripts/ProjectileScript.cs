@@ -4,7 +4,7 @@ using System;
 
 namespace ScriptProject.Scripts
 {
-    internal class ProjectileScript : InteractiveCharacterInterface
+    internal class ProjectileScript : InteractiveCharacterBehaviour
     {
         DynamicBody body;
         const float max_speed = 7.0f;
@@ -87,7 +87,7 @@ namespace ScriptProject.Scripts
             float damage = 20.0f;
             float knockback = 7.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
+            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (!hit_box_script.GetGameOjbect().HasParent())
                 {

@@ -22,7 +22,10 @@ void PathFindingActorComponentInterface::RegisterInterface(CSMonoCore* mono_core
 
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::PathFind>(path_finding_actor_class, "PathFind_Extern", PathFindingActorComponentInterface::PathFind);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::DebugPath>(path_finding_actor_class, "DebugPath", PathFindingActorComponentInterface::DebugPath);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::IsPositionInPath>(path_finding_actor_class, "IsPositionInPath", PathFindingActorComponentInterface::IsPositionInPath);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::NeedNewPathFind>(path_finding_actor_class, "NeedNewPathFind_Extern", PathFindingActorComponentInterface::NeedNewPathFind);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::GetGameObjectNodeByPosition>(path_finding_actor_class, "GetGameObjectNodeByPosition", PathFindingActorComponentInterface::GetGameObjectNodeByPosition);
+	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::IsPositionInWorld>(path_finding_actor_class, "IsPositionInWorld", PathFindingActorComponentInterface::IsPositionInWorld);
 	mono_core->HookAndRegisterMonoMethodType<PathFindingActorComponentInterface::GetRandomNodes>(path_finding_actor_class, "GetRandomNodes", PathFindingActorComponentInterface::GetRandomNodes);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<PathFindingActorComponent>(SavePathFindingWorldComponent, LoadPathFindingWorldComponent);
@@ -159,6 +162,19 @@ void PathFindingActorComponentInterface::DebugPath(const CSMonoObject& object)
 	}
 }
 
+bool PathFindingActorComponentInterface::IsPositionInPath(const CSMonoObject& object, const CSMonoObject& position)
+{
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const PathFindingActorComponent& path_finding_actor = SceneManager::GetEntityManager(scene_index)->GetComponent<PathFindingActorComponent>(entity);
+
+	const Vector2 position_vector = Vector2Interface::GetVector2(position);
+	const Entity position_node = PathFinding::Get()->GetNodeFromPosition(position_vector);
+
+	return path_finding_actor.cached_mapped_path.contains(position_node);
+}
+
 bool PathFindingActorComponentInterface::NeedNewPathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index)
 {
 	const Entity entity = actor_entity;
@@ -192,6 +208,13 @@ bool PathFindingActorComponentInterface::NeedNewPathFind(const SceneIndex actor_
 	return HasToPathFind(path_finding_actor, current_node, goal_node);
 }
 
+CSMonoObject PathFindingActorComponentInterface::GetGameObjectNodeByPosition(const CSMonoObject& position)
+{
+	const Vector2 position_vector = Vector2Interface::GetVector2(position);
+	const Entity node = PathFinding::Get()->GetNodeFromPosition(position_vector);
+	return GameObjectInterface::NewGameObjectWithExistingEntity(node, SceneManager::GetActiveSceneIndex());
+}
+
 bool PathFindingActorComponentInterface::HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity own_node, const Entity goal_node)
 {
 	const bool goal_node_differ = goal_node != path_finding_actor.goal_last_visited_node;
@@ -199,6 +222,13 @@ bool PathFindingActorComponentInterface::HasToPathFind(const PathFindingActorCom
 	const bool goal_is_not_null = goal_node != NULL_ENTITY;
 
 	return (goal_node_differ || !is_in_cached_path) && goal_is_not_null && own_node != NULL_ENTITY;
+}
+
+bool PathFindingActorComponentInterface::IsPositionInWorld(const CSMonoObject& position)
+{
+	const Vector2 position_vector = Vector2Interface::GetVector2(position);
+	const Entity node = PathFinding::Get()->GetNodeFromPosition(position_vector);
+	return node != NULL_ENTITY;
 }
 
 void PathFindingActorComponentInterface::GetRandomNodes(const CSMonoObject& game_object, const CSMonoObject& list, const uint32_t number_of_nodes)

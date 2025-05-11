@@ -15,6 +15,7 @@ public:
 	~DX12Fence();
 	void InitFence(DX12Core* dx12_core);
 	void Signal(DX12Core* dx12_core, DX12CommandQueue* command_queue);
+	bool IsFenceCompleted(DX12Core* dx12_core);
 	void Wait(DX12Core* dx12_core);
 	void SignalAndWait(DX12Core* dx12_core, DX12CommandQueue* command_queue);
 };

@@ -48,7 +48,7 @@ namespace ScriptProject.Scripts
             float damage = 5.0f;
             float knockback = 7.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
+            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (!hit_box_script.GetGameOjbect().HasParent())
                 {

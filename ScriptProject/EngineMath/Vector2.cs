@@ -4,6 +4,8 @@ namespace ScriptProject.EngineMath
 {
     internal class Vector2
     {
+        public static readonly Vector2 Zero = new Vector2(0.0f, 0.0f);
+
         public float x = 0.0f, y = 0.0f;
 
         public Vector2()
@@ -27,7 +29,7 @@ namespace ScriptProject.EngineMath
             float length = Length();
             if (length < 1e-05)
                 length = 1.0f;
-            return new Vector2(x, y) / length;
+            return new Vector2(x / length, y / length);
         }
 
         //https://stackoverflow.com/questions/7785601/detecting-if-angle-is-more-than-180-degrees

@@ -3,6 +3,7 @@
 //#include <stdlib.h>
 //#include <crtdbg.h>
 //#include <iostream>
+#include "ScriptHelp/CharactersInterface.h"
 
 QREntryPoint* entry_point;
 
@@ -16,6 +17,8 @@ int main()
 	entry_point = new QREntryPoint();
 
 	entry_point->EntryPoint();
+
+	CharactersInterface::RegisterInterface();
 
 	entry_point->RunTime();
 

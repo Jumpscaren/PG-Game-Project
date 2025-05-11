@@ -19,5 +19,7 @@ public:
 	static CSMonoObject LoadSceneSynchronized(const std::string& scene_name);
 	static bool IsSceneLoaded(const SceneIndex scene_index);
 	static void ChangeScene(const SceneIndex scene_index);
+	static bool IsSceneActive(const SceneIndex scene_index);
+	static bool SceneExists(const SceneIndex scene_index);
 };
 

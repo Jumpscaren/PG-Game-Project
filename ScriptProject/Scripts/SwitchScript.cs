@@ -45,7 +45,8 @@ namespace ScriptProject.Scripts
                         new_game_object.AddComponent<Sprite>();
                         new_game_object.transform.SetPosition(replace.transform.GetPosition());
                         new_game_object.transform.SetZIndex(2);
-                        PrefabSystem.InstanceUserPrefab(new_game_object, replace.GetComponent<ReplaceBlockScript>().replace_prefab_name);
+                        ReplaceBlockScript script = replace.GetComponent<ReplaceBlockScript>();
+                        PrefabSystem.InstanceUserPrefab(new_game_object, script.replace_prefab_name);
                     }
                 }
             }

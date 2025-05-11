@@ -18,31 +18,24 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            //scenes.Add(SceneManager.LoadSceneSynchronized("temp"));
-            scenes.Add(SceneManager.LoadSceneSynchronized("lvl_1"));
+
+            //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_1"));
+            //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_2"));
+            //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_3"));
+            scenes.Add(SceneManager.LoadSceneSynchronized("lvl_4"));
             scenes.Add(SceneManager.LoadScene("temp"));
-            //scenes.Add(SceneManager.LoadScene("test_area_1"));
             scenes.Add(SceneManager.LoadScene("man"));
 
-            SceneManager.ChangeScene(scenes[0]);
-
-            scenes.RemoveAt(0);
+            NextScene();
 
             game_master = this;
         }
 
         public void NextScene()
         {
-            if (changing_scene != null)
+            if (changing_scene != null && SceneManager.SceneExists(changing_scene) && !SceneManager.IsSceneActive(changing_scene))
             {
-                if (SceneManager.GetActiveScene() == changing_scene)
-                {
-                    changing_scene = null;
-                }
-                else
-                {
-                    Console.WriteLine("Skip beacuse scene is changing");
-                }
+                Console.WriteLine("Skip beacuse scene is changing");
                 return;
             }
 

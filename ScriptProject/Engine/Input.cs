@@ -24,12 +24,14 @@ namespace ScriptProject.Engine
             F1 = 112, F2, F3, F4,
             LSHIFT = 160, RSHIFT, LCTRL, RCTRL,
             PERIOD = 190,
+            END_ENUM
         };
 
         public enum MouseButton
         {
-            LEFT = 0, RIGHT, WHEEL
+            LEFT = 0, RIGHT, WHEEL,
             //Etc for more mouse buttons
+            END_ENUM
         };
 
         public enum MouseWheelSpin
@@ -37,7 +39,8 @@ namespace ScriptProject.Engine
             UP = 0,
 		    DOWN = 1,
 		    MIDDLE = 2,
-	    };
+            END_ENUM
+        };
 
         //When key is pressed
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

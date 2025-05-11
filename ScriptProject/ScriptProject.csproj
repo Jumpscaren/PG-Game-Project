@@ -64,6 +64,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EngineFramework\InputBuffer.cs" />
+    <Compile Include="EngineFramework\Timer.cs" />
     <Compile Include="Engine\KinematicBody.cs" />
     <Compile Include="Engine\Physics.cs" />
     <Compile Include="Engine\PolygonCollider.cs" />
@@ -94,6 +96,7 @@
     <Compile Include="Engine\Sprite.cs" />
     <Compile Include="Engine\StaticBody.cs" />
     <Compile Include="Engine\Texture.cs" />
+    <Compile Include="Engine\Tile.cs" />
     <Compile Include="Engine\Time.cs" />
     <Compile Include="Engine\Transform.cs" />
     <Compile Include="Main.cs" />
@@ -102,10 +105,12 @@
     <Compile Include="Scripts\Arrow.cs" />
     <Compile Include="Scripts\BasicEnemy.cs" />
     <Compile Include="Scripts\BoomerangScript.cs" />
+    <Compile Include="Scripts\Effects\Effect.cs" />
+    <Compile Include="Scripts\Effects\StunEffect.cs" />
     <Compile Include="Scripts\GameMaster.cs" />
     <Compile Include="Scripts\HitBox.cs" />
     <Compile Include="Scripts\HoleManager.cs" />
-    <Compile Include="Scripts\InteractiveCharacterInterface.cs" />
+    <Compile Include="Scripts\InteractiveCharacterBehaviour.cs" />
     <Compile Include="Scripts\OrcCarrier.cs" />
     <Compile Include="Scripts\OrcDistracter.cs" />
     <Compile Include="Scripts\OrcEnemy.cs" />
@@ -114,13 +119,16 @@
     <Compile Include="Scripts\Princess.cs" />
     <Compile Include="Scripts\ProjectileScript.cs" />
     <Compile Include="Scripts\ReplaceBlockScript.cs" />
+    <Compile Include="Scripts\Spawner.cs" />
     <Compile Include="Scripts\SwitchScript.cs" />
     <Compile Include="TestScript.cs" />
+    <Compile Include="UserDefined\CharactersInterface.cs" />
     <Compile Include="UserDefined\UserCollisionCategories.cs" />
     <Compile Include="UserDefined\UserTags.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

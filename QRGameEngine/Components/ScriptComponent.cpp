@@ -76,6 +76,11 @@ void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* en
 	const std::vector<std::string> field_names = CSMonoCore::Get()->GetAllFieldNames(script_component.script_object);
 	for (const std::string& field_name : field_names)
 	{
+		if (!CSMonoCore::Get()->IsFieldPublic(script_component.script_object, field_name))
+		{
+			continue;
+		}
+
 		if (CSMonoCore::Get()->IsValueType<uint32_t>(script_component.script_object, field_name))
 		{
 			uint32_t value;
@@ -91,6 +96,12 @@ void ScriptComponentInterface::SaveScriptComponent(Entity ent, EntityManager* en
 		else if (CSMonoCore::Get()->IsValueType<double>(script_component.script_object, field_name))
 		{
 			double value;
+			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
+			json_object->SetData(value, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<float>(script_component.script_object, field_name))
+		{
+			float value;
 			CSMonoCore::Get()->GetValue(value, script_component.script_object, field_name);
 			json_object->SetData(value, field_name);
 		}
@@ -115,6 +126,11 @@ void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* en
 	const std::vector<std::string> field_names = CSMonoCore::Get()->GetAllFieldNames(script_component.script_object);
 	for (const std::string& field_name : field_names)
 	{
+		if (!CSMonoCore::Get()->IsFieldPublic(script_component.script_object, field_name))
+		{
+			continue;
+		}
+
 		if (CSMonoCore::Get()->IsValueType<uint32_t>(script_component.script_object, field_name))
 		{
 			uint32_t value;
@@ -130,6 +146,12 @@ void ScriptComponentInterface::LoadScriptComponent(Entity ent, EntityManager* en
 		else if (CSMonoCore::Get()->IsValueType<double>(script_component.script_object, field_name))
 		{
 			double value;
+			json_object->LoadData(value, field_name);
+			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
+		}
+		else if (CSMonoCore::Get()->IsValueType<float>(script_component.script_object, field_name))
+		{
+			float value;
 			json_object->LoadData(value, field_name);
 			CSMonoCore::Get()->SetValue(value, script_component.script_object, field_name);
 		}

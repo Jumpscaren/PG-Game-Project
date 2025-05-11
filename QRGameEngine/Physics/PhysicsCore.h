@@ -3,6 +3,7 @@
 #include "PhysicDefines.h"
 #include "Common/EngineTypes.h"
 #include "SceneSystem/SceneDefines.h"
+#include "Time/Timer.h"
 #include <thread>
 #include <mutex>
 
@@ -98,9 +99,11 @@ private:
 	std::stack<PhysicObjectHandle> m_free_physic_object_handles;
 
 	static constexpr float TIME_STEP = 1.0f / 120.0f;
-	static constexpr int32_t VELOCITY_ITERATIONS = 8;
+	static constexpr int32_t VELOCITY_ITERATIONS = 3;
 	static constexpr int32_t POSITION_ITERATIONS = 3;
 	float m_time_since_last_update = 0.0f;
+	Timer m_update_timer;
+	float m_previous_physics_update_time = 0.0f;
 
 	bool m_threaded_physics;
 	std::thread* m_physic_update_thread = nullptr;
@@ -172,7 +175,7 @@ public:
 
 	void UpdatePhysics();
 
-	void DrawColliders();
+	void DrawColliders(EntityManager* entity_manager);
 	void HandleDeferredPhysicData();
 	void HandleDeferredCollisionData();
 

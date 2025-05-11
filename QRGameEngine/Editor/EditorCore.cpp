@@ -13,6 +13,7 @@
 #include "Components/ScriptComponent.h"
 #include "SceneSystem/SceneLoader.h"
 #include "SceneSystem/GlobalScene.h"
+#include "Asset/AssetManager.h"
 
 EditorCore* EditorCore::s_editor_core = nullptr;
 
@@ -25,6 +26,9 @@ EditorCore::EditorCore()
 	m_editor_camera_ent = em->NewEntity();
 	em->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 0.0f));
 	em->AddComponent<CameraComponent>(m_editor_camera_ent);
+
+	m_draw_scene.SetTileHandler(&m_tile_handler);
+	m_tile_handler.SetDrawScene(&m_draw_scene);
 }
 
 EditorCore* EditorCore::Get()
@@ -78,6 +82,8 @@ void EditorCore::Update()
 	em->GetComponent<TransformComponent>(m_editor_camera_ent).SetPosition(editor_camera_pos);
 
 	m_draw_scene.Update();
+
+	m_tile_handler.Update();
 }
 
 Entity EditorCore::GetEditorCameraEntity() const

@@ -13,6 +13,7 @@ struct PolygonColliderComponent
 	bool update_polygon_collider = false;
 	bool trigger;
 	ColliderFilter filter;
+	bool debug_draw = false;
 
 	bool loop = false;
 	bool solid = false;

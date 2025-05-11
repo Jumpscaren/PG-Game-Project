@@ -6,6 +6,9 @@
 #include <mono/metadata/mono-config.h>
 #include <mono/metadata/mono-gc.h>
 #include <mono/metadata/threads.h>
+#include <mono/metadata/class.h>
+#include <mono/metadata/object.h>
+#include <mono/metadata/metadata.h>
 
 CSMonoCore* CSMonoCore::s_mono_core = nullptr;
 
@@ -373,6 +376,12 @@ MonoClassHandle CSMonoCore::TryGetParentClass(const CSMonoObject& mono_object)
 	return NULL_CLASS;
 }
 
+bool CSMonoCore::IsFieldPublic(const CSMonoObject& mono_object, const std::string& field_name)
+{
+	MonoClassField* mono_field = mono_class_get_field_from_name(mono_object.m_mono_class, field_name.c_str());
+	return (mono_field_get_flags(mono_field) & (uint32_t)CSMonoFieldAttribute::MONO_FIELD_ATTRIBUTE_FIELD_ACCESS_MASK) == (uint32_t)CSMonoFieldAttribute::MONO_FIELD_ATTRIBUTE_PUBLIC;
+}
+
 void CSMonoCore::CallStaticMethod(const MonoMethodHandle method_handle)
 {
 	CallMethodInternal(method_handle, nullptr, nullptr, 0);
@@ -448,22 +457,62 @@ void CSMonoCore::ForceGarbageCollection()
 
 MonoThreadHandle CSMonoCore::HookThread()
 {
-	MonoThreadHandle mono_thread_handle = { .handle = mono_threads.size() };
-	if (!free_mono_thread_handles.empty())
+	MonoThreadHandle mono_thread_handle = { .handle = m_mono_threads.size() };
+	if (!m_free_mono_thread_handles.empty())
 	{
-		mono_thread_handle = free_mono_thread_handles.back();
-		free_mono_thread_handles.pop_back();
-		mono_threads[mono_thread_handle] = (mono_thread_attach(m_domain));
+		mono_thread_handle = m_free_mono_thread_handles.back();
+		m_free_mono_thread_handles.pop_back();
+		m_mono_threads[mono_thread_handle] = (mono_thread_attach(m_domain));
 	}
 	else
 	{
-		mono_threads.push_back(mono_thread_attach(m_domain));
+		m_mono_threads.push_back(mono_thread_attach(m_domain));
+	}
+	if (m_mono_threads[mono_thread_handle] != mono_thread_current())
+	{
+		assert(false);
 	}
 	return mono_thread_handle;
 }
 
 void CSMonoCore::UnhookThread(const MonoThreadHandle thread_handle)
 {
-	mono_thread_detach(mono_threads[thread_handle.handle]);
-	free_mono_thread_handles.push_back(thread_handle);
+	//ForceGarbageCollection();
+
+	//std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+	if (mono_domain_get() == nullptr)
+	{
+		assert(false);
+	}
+
+	MonoThread* mono_thread = m_mono_threads[thread_handle.handle];
+	if (mono_thread == nullptr)
+	{
+		assert(false);
+	}
+	//mono_gc_collect(0);
+
+	while (mono_thread != mono_thread_current())
+	{
+
+	}
+	if (mono_thread != mono_thread_current())
+	{
+		assert(false);
+	}
+	mono_thread_detach(mono_thread);
+	m_free_mono_thread_handles.push_back(thread_handle);
+}
+
+bool CSMonoCore::IsOfClass(const CSMonoObject& object, const std::string& class_namespace, const std::string& class_name)
+{
+	const MonoClassHandle class_handle = RegisterMonoClass(class_namespace, class_name);
+	return mono_class_is_subclass_of(object.m_mono_class, m_mono_classes[class_handle].GetMonoClass(), true);
+}
+
+bool CSMonoCore::IsOfClass(const CSMonoObject& object, const MonoClassHandle class_handle)
+{
+	assert(class_handle < m_mono_classes.size());
+	return mono_class_is_subclass_of(object.m_mono_class, m_mono_classes[class_handle].GetMonoClass(), true);
 }

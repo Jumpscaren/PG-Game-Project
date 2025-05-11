@@ -11,7 +11,7 @@ using static ScriptProject.Scripts.OrcEnemy;
 
 namespace ScriptProject.Scripts
 {
-    internal class OrcDistracter : InteractiveCharacterInterface
+    internal class OrcDistracter : InteractiveCharacterBehaviour
     {
         GameObject player_game_object;
         GameObject princess_game_object;
@@ -140,6 +140,11 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
             Vector2 player_position = target.transform.GetPosition();
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
             sprite.FlipX(player_dir.x < 0);
@@ -149,7 +154,9 @@ namespace ScriptProject.Scripts
         {
             Vector2 current_position = transform.GetPosition();
 
-            if (teleport_timer < Time.GetElapsedTime())
+            bool stop_movement = !IsEffectOver() && GetEffect().StopMovement();
+
+            if (teleport_timer < Time.GetElapsedTime() && !stop_movement)
             {
                 teleport_timer = Time.GetElapsedTime() + teleport_time;
                 body.SetVelocity(new Vector2());
@@ -190,6 +197,18 @@ namespace ScriptProject.Scripts
                         {
                             teleport_game_object = node;
                         }
+                    }
+                }
+
+                ListSetGameObject characters = new ListSetGameObject();
+                CharactersInterface.GetInteractiveCharacters(characters);
+
+                Vector2 diff = teleport_game_object.transform.GetPosition() - transform.GetPosition();
+                foreach (GameObject character in characters.GetData())
+                {
+                    if ((character.transform.GetPosition() - transform.GetPosition()).Length() < 2.0f)
+                    {
+                        character.transform.SetPosition(character.transform.GetPosition() + diff);
                     }
                 }
 
@@ -238,9 +257,6 @@ namespace ScriptProject.Scripts
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
-                GameObject new_game_object = GameObject.CreateGameObject();
-                new_game_object.AddComponent<Sprite>();
-                PrefabSystem.InstanceUserPrefab(new_game_object, "OrcDistracter");
                 return;
             }
 
@@ -263,6 +279,11 @@ namespace ScriptProject.Scripts
 
         void Attack()
         {
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
             if (!delay_attack && attack_ready)
             {
                 delay_attack = true;
@@ -291,6 +312,11 @@ namespace ScriptProject.Scripts
 
         void PrincessLogic()
         {
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
             if (target != princess_game_object)
             {
                 return;

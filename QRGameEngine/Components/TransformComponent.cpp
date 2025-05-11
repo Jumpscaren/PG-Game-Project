@@ -8,10 +8,12 @@
 #include "Math/MathHelp.h"
 #include "ParentComponent.h"
 #include "Scripting/Objects/Vector2Interface.h"
+#include "SceneSystem/SceneLoader.h"
+#include "IO/JsonObject.h"
 
 MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
-TransformComponent::TransformComponent(const Vector3& position, const Vector3& rotation, const Vector3& scale)
+TransformComponent::TransformComponent(const Vector3& position, const Vector3& rotation, const Vector3& scale) : m_scale(scale), m_rotation(rotation)
 {
 	world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
 		DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
@@ -37,26 +39,34 @@ TransformComponent& TransformComponent::SetPosition(const Vector2& position)
 
 TransformComponent& TransformComponent::SetRotation(const Vector3& rotation)
 {
-	DirectX::XMVECTOR pos, quat, scl;
+	//DirectX::XMVECTOR pos, quat, scl;
 
-	DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
+	//DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
 
-	world_matrix = DirectX::XMMatrixScalingFromVector(scl) *
+	m_rotation = rotation;
+
+	world_matrix = DirectX::XMMatrixScalingFromVector(m_scale) *
 		DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
-		DirectX::XMMatrixTranslationFromVector(pos);
+		DirectX::XMMatrixTranslationFromVector(GetPosition());
 
 	return *this;
 }
 
 TransformComponent& TransformComponent::SetScale(const Vector3& scale)
 {
-	DirectX::XMVECTOR pos, quat, scl;
+	//DirectX::XMVECTOR pos, quat, scl;
 
-	DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
+	//DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
+
+	//world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
+	//	DirectX::XMMatrixRotationQuaternion(quat) *
+	//	DirectX::XMMatrixTranslationFromVector(pos);
+
+	m_scale = scale;
 
 	world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
-		DirectX::XMMatrixRotationQuaternion(quat) *
-		DirectX::XMMatrixTranslationFromVector(pos);
+		DirectX::XMMatrixRotationRollPitchYawFromVector(m_rotation) *
+		DirectX::XMMatrixTranslationFromVector(GetPosition());
 
 	return *this;
 }
@@ -84,14 +94,16 @@ Vector4 TransformComponent::GetRotation() const
 
 Vector3 TransformComponent::GetRotationEuler() const
 {
-	return MathHelp::ToEulerAngles(GetRotation());
+	//return MathHelp::ToEulerAngles(GetRotation());
+	return m_rotation;
 }
 
 Vector3 TransformComponent::GetScale() const
 {
-	DirectX::XMVECTOR xmScale, rotationQuat, translation;
-	DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, world_matrix);
-	return xmScale;
+	//DirectX::XMVECTOR xmScale, rotationQuat, translation;
+	//DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, world_matrix);
+	//return xmScale;
+	return m_scale;
 }
 
 void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
@@ -115,6 +127,8 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetScale>(transform_class, "SetScale", TransformComponentInterface::SetScale);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetScale>(transform_class, "GetScale", TransformComponentInterface::GetScale);
+
+	SceneLoader::Get()->OverrideSaveComponentMethod<TransformComponent>(SaveTransformComponent, LoadTransformComponent);
 }
 
 void TransformComponentInterface::AddTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -130,6 +144,46 @@ bool TransformComponentInterface::HasComponent(const CSMonoObject& object, Scene
 void TransformComponentInterface::RemoveTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<TransformComponent>(entity);
+}
+
+void TransformComponentInterface::SaveTransformComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
+{
+	const TransformComponent& component = entman->GetComponent<TransformComponent>(ent);
+	json_object->SetData((char*)&(component.world_matrix), sizeof(DirectX::XMMATRIX), "world_matrix");
+	json_object->SetData(component.m_scale, "scale");
+	json_object->SetData(component.m_rotation, "rotation");
+}
+
+void TransformComponentInterface::LoadTransformComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
+{
+	if (json_object->ObjectExist("b_size") && json_object->ObjectExist("b_data"))
+	{
+		const uint32_t component_data_max_size = 2000;
+		char component_data[component_data_max_size];
+		uint32_t component_size;
+		json_object->LoadData(component_size, "b_size");
+		//assert(component_size <= component_data_max_size);
+		json_object->LoadData(component_data, component_size, "b_data");
+		DirectX::XMMATRIX* matrix = reinterpret_cast<DirectX::XMMATRIX*>(component_data);
+
+		DirectX::XMVECTOR pos, quat, scl;
+		DirectX::XMMatrixDecompose(&scl, &quat, &pos, *matrix);
+
+		Vector3 scale = scl;
+		Vector3 rotation = MathHelp::ToEulerAngles(quat);
+
+		memcpy(component_data + sizeof(DirectX::XMMATRIX), &scale, sizeof(Vector3));
+		memcpy(component_data + sizeof(DirectX::XMMATRIX) + sizeof(Vector3), &rotation, sizeof(Vector3));
+
+		entman->SetComponentData(ent, "TransformComponent", component_data);
+
+		return;
+	}
+
+	TransformComponent& component = entman->GetComponent<TransformComponent>(ent);
+	json_object->LoadData((char*)&(component.world_matrix), sizeof(DirectX::XMMATRIX), "world_matrix");
+	json_object->LoadData(component.m_scale, "scale");
+	json_object->LoadData(component.m_rotation, "rotation");
 }
 
 void TransformComponentInterface::SetPosition(SceneIndex scene_index, Entity entity, float x, float y)
@@ -261,4 +315,11 @@ CSMonoObject TransformComponentInterface::GetScale(const CSMonoObject& cs_transf
 	CSMonoCore::Get()->SetValue(scale.x, vector2_scale, "x");
 	CSMonoCore::Get()->SetValue(scale.y, vector2_scale, "y");
 	return vector2_scale;
+}
+
+PositionScaleRotation TransformComponentInterface::GetDataFromWorldMatrix(const TransformComponent& transform)
+{
+	DirectX::XMVECTOR xmScale, rotationQuat, translation;
+	DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, transform.world_matrix);
+	return PositionScaleRotation{.position = translation, .scale = xmScale, .rotation = MathHelp::ToEulerAngles(rotationQuat)};
 }

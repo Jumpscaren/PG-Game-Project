@@ -3,6 +3,7 @@
 
 class PhysicsDebugDraw : public b2Draw
 {
+public:
 	/// Draw a closed polygon provided in CCW order.
 	void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color) override;
 

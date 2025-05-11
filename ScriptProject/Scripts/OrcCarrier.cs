@@ -11,7 +11,7 @@ using static ScriptProject.Scripts.OrcEnemy;
 
 namespace ScriptProject.Scripts
 {
-    internal class OrcCarrier : InteractiveCharacterInterface
+    internal class OrcCarrier : InteractiveCharacterBehaviour
     {
         GameObject player_game_object;
         GameObject princess_game_object;
@@ -29,7 +29,7 @@ namespace ScriptProject.Scripts
         float charge_up = 0.0f;
         bool charged_up = false;
         const float charge_up_distance = 4.0f;
-        const float charge_up_increase = 1.0f;
+        const float charge_up_increase = 2.0f;
         const float charge_up_decrease = 0.3f;
         bool attack_ready = false;
         bool attacking = false;
@@ -64,6 +64,10 @@ namespace ScriptProject.Scripts
         float falling_speed = 1.0f;
 
         HoleManager holes = new HoleManager();
+
+        const float max_distance_to_change_target_to_player = 2.5f;
+        const float max_time_to_change_target_to_player= 8.0f;
+        float timer_to_change_target_to_player = 0.0f;
 
         public static int GetCount()
         {
@@ -121,7 +125,7 @@ namespace ScriptProject.Scripts
             }
 
             GameObject grabbed_by_orc = princess_script.GetGrabbedByOrc();
-            if (grabbed_by_orc == game_object)
+            if (grabbed_princess && grabbed_by_orc == game_object)
             {
                 target = door_game_object;
             }
@@ -129,9 +133,17 @@ namespace ScriptProject.Scripts
             {
                 target = player_game_object;
             }
-            else
+            else if (target != player_game_object)
             {
                 target = princess_game_object;
+            }
+
+            float distance_to_player = (player_game_object.transform.GetPosition() - transform.GetPosition()).Length();
+            if (distance_to_player < max_distance_to_change_target_to_player && timer_to_change_target_to_player < Time.GetElapsedTime())
+            {
+                Console.WriteLine("Change target to player");
+                target = player_game_object;
+                timer_to_change_target_to_player = Time.GetElapsedTime() + max_time_to_change_target_to_player;
             }
 
             Death();
@@ -142,14 +154,19 @@ namespace ScriptProject.Scripts
                 Attack();
                 PrincessLogic();
 
+                if (target == null)
+                {
+                    return;
+                }
+
                 Vector2 target_dir = target.transform.GetPosition() - transform.GetPosition();
                 if (target == door_game_object && target_dir.Length() < 0.1f)
                 {
                     GameObject.DeleteGameObject(game_object);
                     princess_script.SetRescueState();
-                    GameObject new_game_object = GameObject.CreateGameObject();
-                    new_game_object.AddComponent<Sprite>();
-                    PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
+                    //GameObject new_game_object = GameObject.CreateGameObject();
+                    //new_game_object.AddComponent<Sprite>();
+                    //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcCarrier");
                 }
             }
         }
@@ -233,6 +250,11 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
             Vector2 player_position = target.transform.GetPosition();
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(Vector2.Angle(player_dir, right_dir)));
@@ -271,19 +293,20 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            float new_velocity_length = new_velocity.Length();
-            if (velocity.Length() <= speed && new_velocity_length != 0.0f)
-                velocity = new_velocity;
-            //else
-            //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity_length == 0.0f && velocity.Length() <= speed)
-                velocity = new Vector2(0.0f, 0.0f);
-            if (velocity.Length() > speed)
-                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            if (new_velocity_length > 0.0f && velocity.Length() < speed)
-                velocity = velocity.Normalize() * speed;
+            Movement(velocity, new_velocity, speed, drag_speed, body);
+            //float new_velocity_length = new_velocity.Length();
+            //if (velocity.Length() <= speed && new_velocity_length != 0.0f)
+            //    velocity = new_velocity;
+            ////else
+            ////    velocity += new_velocity * Time.GetDeltaTime();
+            //if (new_velocity_length == 0.0f && velocity.Length() <= speed)
+            //    velocity = new Vector2(0.0f, 0.0f);
+            //if (velocity.Length() > speed)
+            //    velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
+            //if (new_velocity_length > 0.0f && velocity.Length() < speed)
+            //    velocity = velocity.Normalize() * speed;
 
-            body.SetVelocity(velocity);
+            //body.SetVelocity(velocity);
         }
 
         void Death()
@@ -323,6 +346,11 @@ namespace ScriptProject.Scripts
         void Attack()
         {
             if (target == princess_game_object || target == door_game_object)
+            {
+                return;
+            }
+
+            if (!IsEffectOver() && GetEffect().StopMovement())
             {
                 return;
             }
@@ -376,12 +404,22 @@ namespace ScriptProject.Scripts
             {
                 attacking = false;
                 hit_box_body.SetEnabled(false);
+
+                if (target == player_game_object)
+                {
+                    target = null;
+                }
             }
         }
 
         void PrincessLogic()
         {
             if (target != princess_game_object)
+            {
+                return;
+            }
+
+            if (!IsEffectOver() && GetEffect().StopMovement())
             {
                 return;
             }
@@ -425,9 +463,9 @@ namespace ScriptProject.Scripts
         public class HitBoxOrcCarrier : HitBoxAction
         {
             float damage = 5.0f;
-            float knockback = 10.3f;
+            float knockback = 8.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
+            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 
@@ -435,6 +473,8 @@ namespace ScriptProject.Scripts
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
+
+                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

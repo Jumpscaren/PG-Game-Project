@@ -28,6 +28,11 @@ void DX12Fence::Signal(DX12Core* dx12_core, DX12CommandQueue* command_queue)
 	assert(SUCCEEDED(hr));
 }
 
+bool DX12Fence::IsFenceCompleted(DX12Core* dx12_core)
+{
+	return !(!m_succeded && m_fence->GetCompletedValue() < m_fence_value);
+}
+
 void DX12Fence::Wait(DX12Core* dx12_core)
 {
 	//std::cout << "Succeded: " << m_succeded << "\n";

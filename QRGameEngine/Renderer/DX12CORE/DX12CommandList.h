@@ -35,6 +35,7 @@ public:
 	void SetPipeline(DX12Pipeline* pipeline);
 	void SignalAndWait(DX12Core* dx12_core, DX12CommandQueue* command_queue);
 	void Signal(DX12Core* dx12_core, DX12CommandQueue* command_queue);
+	bool IsCompleted(DX12Core* dx12_core);
 	void Wait(DX12Core* dx12_core);
 	//Waits for the GPU and resets the command list
 	//Useful for when you want to wait for something
@@ -47,6 +48,7 @@ public:
 	void ClearDepthStencilView(DX12Core* dx12_core, DX12TextureViewHandle texture_view_handle);
 	void SetPrimitiveTopology(const D3D_PRIMITIVE_TOPOLOGY& topology);
 	void SetOMRenderTargets(DX12Core* dx12_core, DX12TextureViewHandle render_target_view, DX12TextureViewHandle depthstencil_view);
+	void SetOMRenderTargets(DX12Core* dx12_core, DX12TextureViewHandle render_target_view);
 	void SetViewport(uint64_t width, uint64_t height);
 	void SetScissorRect(uint64_t width, uint64_t height);
 	void SetBufferDescriptorTable(DX12Core* dx12_core, DX12BufferViewHandle buffer_view_handle, uint64_t root_parameter_index);

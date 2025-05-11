@@ -45,5 +45,21 @@ namespace ScriptProject.Engine
         {
             ChangeScene_External(scene.GetSceneIndex());
         }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern bool IsSceneActive_External(UInt32 scene_index);
+
+        static public bool IsSceneActive(Scene scene)
+        {
+            return IsSceneActive_External(scene.GetSceneIndex());
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern bool SceneExists_External(UInt32 scene_index);
+
+        static public bool SceneExists(Scene scene)
+        {
+            return SceneExists_External(scene.GetSceneIndex());
+        }
     }
 }

@@ -423,15 +423,23 @@ void PhysicsCore::ThreadUpdatePhysic()
 
 void PhysicsCore::Update()
 {
+	m_update_timer.StartTimer();
 	m_time_since_last_update += (float)Time::GetDeltaTime();
-	if (m_time_since_last_update > TIME_STEP * 10.0f)
-		m_time_since_last_update = TIME_STEP * 10.0f;
+	//To ensure that we don't end up in a endless death loop
+	if (m_time_since_last_update - m_previous_physics_update_time >= 0.0f)
+	{
+		m_time_since_last_update -= m_previous_physics_update_time;
+	}
+	//if (m_time_since_last_update > TIME_STEP * 10.0f)
+	//	m_time_since_last_update = TIME_STEP * 10.0f;
 	while (m_time_since_last_update > TIME_STEP)
 	{
-		//std::cout << "TIME: " << m_time_since_last_update << "\n";
 		m_world->Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
 		m_time_since_last_update -= TIME_STEP;
 	}
+	m_previous_physics_update_time = m_update_timer.StopTimer();
+	//std::cout << "TIME: " << m_time_since_last_update << "\n";
+	//std::cout << "Physics Update Time: " << m_previous_physics_update_time << "\n";
 }
 
 void PhysicsCore::UpdatePhysics()
@@ -445,12 +453,96 @@ void PhysicsCore::UpdatePhysics()
 		Update();
 }
 
-void PhysicsCore::DrawColliders()
+void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 {
 	uint32 flags = 0;
 	flags += true * b2Draw::e_shapeBit;
 	m_debug_draw->SetFlags(flags);
-	m_world->DebugDraw();
+	//m_world->DebugDraw();
+
+	std::vector<b2Vec2> vertices;
+	entity_manager->System<TransformComponent, BoxColliderComponent>([&](const TransformComponent& transform, const BoxColliderComponent& box_collider)
+		{
+			if (!box_collider.debug_draw)
+			{
+				return;
+			}
+
+			const Vector3 position = transform.GetPosition();
+
+			const auto rotation_z = transform.GetRotationEuler().z;
+			const Vector3& scale = transform.GetScale();
+
+			const b2Vec2 top_left_corner = b2Vec2(-box_collider.half_box_size.x * scale.x, box_collider.half_box_size.y * scale.y);
+			const b2Vec2 top_right_corner = b2Vec2(box_collider.half_box_size.x * scale.x, box_collider.half_box_size.y * scale.y);
+			const b2Vec2 bottom_left_corner = b2Vec2(-box_collider.half_box_size.x * scale.x, -box_collider.half_box_size.y * scale.y);
+			const b2Vec2 bottom_right_corner = b2Vec2(box_collider.half_box_size.x * scale.x, -box_collider.half_box_size.y * scale.y);
+
+			const b2Vec2 rotated_top_left_corner = b2Vec2(top_left_corner.x * cosf(rotation_z) - top_left_corner.y * sinf(rotation_z), top_left_corner.x * sinf(rotation_z) + top_left_corner.y * cosf(rotation_z));
+			const b2Vec2 rotated_top_right_corner = b2Vec2(top_right_corner.x * cosf(rotation_z) - top_right_corner.y * sinf(rotation_z), top_right_corner.x * sinf(rotation_z) + top_right_corner.y * cosf(rotation_z));
+			const b2Vec2 rotated_bottom_left_corner = b2Vec2(bottom_left_corner.x * cosf(rotation_z) - bottom_left_corner.y * sinf(rotation_z), bottom_left_corner.x * sinf(rotation_z) + bottom_left_corner.y * cosf(rotation_z));
+			const b2Vec2 rotated_bottom_right_corner = b2Vec2(bottom_right_corner.x * cosf(rotation_z) - bottom_right_corner.y * sinf(rotation_z), bottom_right_corner.x * sinf(rotation_z) + bottom_right_corner.y * cosf(rotation_z));
+
+			vertices.push_back(b2Vec2(position.x, position.y) + rotated_top_left_corner);
+			vertices.push_back(b2Vec2(position.x, position.y) + rotated_bottom_left_corner);
+			vertices.push_back(b2Vec2(position.x, position.y) + rotated_bottom_right_corner);
+			vertices.push_back(b2Vec2(position.x, position.y) + rotated_top_right_corner);
+
+			m_debug_draw->DrawPolygon(vertices.data(), static_cast<int32>(vertices.size()), b2Color(1.0f, 0.0f, 0.0f));
+
+			vertices.clear();
+		});
+
+	entity_manager->System<TransformComponent, CircleColliderComponent>([&](const TransformComponent& transform, const CircleColliderComponent& circle_collider)
+		{
+			if (!circle_collider.debug_draw)
+			{
+				return;
+			}
+
+			const Vector3 position = transform.GetPosition();
+
+			const auto rotation_z = transform.GetRotationEuler().z;
+
+			const b2Vec2 rotated_circle_pointer = b2Vec2(circle_collider.circle_radius * cosf(rotation_z), circle_collider.circle_radius * sinf(rotation_z));
+
+			vertices.push_back(b2Vec2(position.x, position.y));
+			vertices.push_back(b2Vec2(position.x, position.y) + rotated_circle_pointer);
+
+			m_debug_draw->DrawPolygon(vertices.data(), static_cast<int32>(vertices.size()), b2Color(1.0f, 0.0f, 0.0f));
+			m_debug_draw->DrawCircle(b2Vec2(position.x, position.y), circle_collider.circle_radius, b2Color(1.0f, 0.0f, 0.0f));
+
+			vertices.clear();
+		});
+
+	entity_manager->System<TransformComponent, PolygonColliderComponent>([&](const TransformComponent& transform, const PolygonColliderComponent& polygon_collider)
+		{
+			if (!polygon_collider.debug_draw)
+			{
+				return;
+			}
+
+			const Vector3 position = transform.GetPosition();
+
+			const auto rotation_z = transform.GetRotationEuler().z;
+
+			const b2Vec2 position_2d(position.x, position.y);
+
+			for (int i = 0; i < polygon_collider.points.size() - 1; ++i)
+			{
+				const Vector2 point_1 = polygon_collider.points[i];
+				const Vector2 point_2 = polygon_collider.points[i + 1];
+
+				m_debug_draw->DrawSegment(position_2d + b2Vec2(point_1.x, point_1.y), position_2d + b2Vec2(point_2.x, point_2.y), b2Color(1.0f, 0.0f, 0.0f));
+			}
+
+			if (polygon_collider.loop)
+			{
+				const Vector2 point_1 = polygon_collider.points.back();
+				const Vector2 point_2 = polygon_collider.points.front();
+				m_debug_draw->DrawSegment(position_2d + b2Vec2(point_1.x, point_1.y), position_2d + b2Vec2(point_2.x, point_2.y), b2Color(1.0f, 0.0f, 0.0f));
+			}
+		});
 }
 
 void PhysicsCore::HandleDeferredPhysicData()
@@ -870,6 +962,7 @@ void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity enti
 		box_collider.trigger = trigger;
 		box_collider.filter = collider_filter;
 		box_collider.half_box_size = half_box_size;
+		box_collider.debug_draw = true;
 	}
 	else
 	{
@@ -896,6 +989,7 @@ void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity e
 		circle_collider.trigger = trigger;
 		circle_collider.filter = collider_filter;
 		circle_collider.circle_radius = circle_radius;
+		circle_collider.debug_draw = true;
 	}
 	else
 	{
@@ -922,6 +1016,7 @@ void PhysicsCore::AddPolygonCollider(const SceneIndex scene_index, const Entity 
 		polygon_collider.trigger = trigger;
 		polygon_collider.filter = collider_filter;
 		polygon_collider.points = points;
+		polygon_collider.debug_draw = true;
 	}
 	else
 	{

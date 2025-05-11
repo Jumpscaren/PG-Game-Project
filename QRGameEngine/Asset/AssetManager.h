@@ -72,8 +72,6 @@ private:
 	void AddAssetLoadingJob(const AssetLoadingJob& job);
 	void ThreadLoadAssetLoop();
 
-	void DeleteAsset(AssetHandle asset);
-
 	void HandleDeletedScene(SceneIndex scene_index);
 	static void DeletedSceneEventListener(SceneIndex scene_index);
 
@@ -85,12 +83,16 @@ public:
 
 	void HandleCompletedJobs();
 
-	AssetHandle LoadTextureAsset(const std::string& texture_path, SceneIndex scene_index, const AssetLoadFlag& asset_load_flag = GPU_ONLY);
+	void ExportTextureDataToPNG(TextureInfo* texture_data, const std::string& texture_name);
+
+	AssetHandle LoadTextureAsset(const std::string& texture_path, SceneIndex scene_index, bool asynchronous = true, const AssetLoadFlag& asset_load_flag = GPU_ONLY);
 	TextureInfo* GetTextureData(const AssetHandle& texture_handle);
 	std::string GetAssetPath(const AssetHandle& asset_handle);
 	const AssetLoadFlag& GetAssetLoadFlag(AssetHandle asset_handle);
 	void DeleteCPUAssetDataIfGPUOnly(AssetHandle asset_handle);
 
 	bool IsAssetLoaded(AssetHandle asset_handle);
+
+	void DeleteAsset(AssetHandle asset);
 };
 

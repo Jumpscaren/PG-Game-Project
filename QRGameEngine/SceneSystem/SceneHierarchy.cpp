@@ -131,7 +131,11 @@ void SceneHierarchy::UpdateWorldTransforms(const Entity parent, EntityManager* e
 	const auto& parent_world_matrix = entity_manager->GetComponent<TransformComponent>(parent).world_matrix;
 	for (const auto& child : it_parent->second.children)
 	{
-		entity_manager->GetComponent<TransformComponent>(child).world_matrix = entity_manager->GetComponent<ParentComponent>(child).world_matrix * parent_world_matrix;
+		TransformComponent& child_transform = entity_manager->GetComponent<TransformComponent>(child);
+		child_transform.world_matrix = entity_manager->GetComponent<ParentComponent>(child).world_matrix * parent_world_matrix;
+		PositionScaleRotation matrix_data = TransformComponentInterface::GetDataFromWorldMatrix(child_transform);
+		child_transform.m_rotation = matrix_data.rotation;
+		child_transform.m_scale = matrix_data.scale;
 		UpdateWorldTransforms(child, entity_manager);
 	}
 }

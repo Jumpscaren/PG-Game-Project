@@ -79,9 +79,10 @@ void DX12TextureManager::FreeView(DX12TextureViewHandle& view_handle)
 	assert(false);
 }
 
-void DX12TextureManager::ResetUploadBuffer()
+void DX12TextureManager::ResetBuffers()
 {
 	m_upload_current_offset = 0;
+	m_readback_current_offset = 0;
 }
 
 uint32_t DX12TextureManager::ConvertTextureViewHandleToGPUTextureViewHandle(DX12TextureViewHandle texture_view_handle)
@@ -241,6 +242,41 @@ DX12TextureManager::DX12TextureManager(DX12Core* dx12_core)
 	allocator_desc.pAdapter = dx12_core->GetAdapter();
 	hr = D3D12MA::CreateAllocator(&allocator_desc, m_texture_allocator.GetAddressOf());
 	assert(SUCCEEDED(hr));
+
+	const UINT readback_buffer_size = 20'000'000;
+
+	m_readback_current_offset = 0;
+
+	//Create readback heap and buffer
+	properties.Type = D3D12_HEAP_TYPE_READBACK;
+	properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	properties.CreationNodeMask = 0;
+	properties.VisibleNodeMask = 0;
+
+	heap_desc.SizeInBytes = readback_buffer_size;
+	heap_desc.Properties = properties;
+	heap_desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	heap_desc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+
+	hr = dx12_core->GetDevice()->CreateHeap(&heap_desc, IID_PPV_ARGS(m_readback_heap.GetAddressOf()));
+	assert(SUCCEEDED(hr));
+
+	buffer_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	buffer_desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	buffer_desc.Width = readback_buffer_size;
+	buffer_desc.Height = 1;
+	buffer_desc.DepthOrArraySize = 1;
+	buffer_desc.MipLevels = 1;
+	buffer_desc.Format = DXGI_FORMAT_UNKNOWN;
+	buffer_desc.SampleDesc.Count = 1;
+	buffer_desc.SampleDesc.Quality = 0;
+	buffer_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	buffer_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	hr = dx12_core->GetDevice()->CreatePlacedResource(m_readback_heap.Get(), 0, &buffer_desc, D3D12_RESOURCE_STATE_COPY_DEST,//D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr, IID_PPV_ARGS(m_readback_buffer.GetAddressOf()));
+	assert(SUCCEEDED(hr));
 }
 
 DX12TextureManager::~DX12TextureManager()
@@ -341,6 +377,85 @@ DX12TextureViewHandle DX12TextureManager::AddView(DX12Core* dx12_core, DX12Textu
 	DX12TextureViewHandle view_handle = AddView(texture_handle, view_type, texture_descriptor_handle);
 
 	return view_handle;
+}
+
+TextureInfo* DX12TextureManager::GetTextureData(DX12Core* dx12_core, const DX12TextureHandle texture_handle, const ResourceState texture_current_resource_state)
+{
+	int subresource = 0;
+	uint64_t alignment = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
+
+	//Wait until the gpu is completed
+	dx12_core->GetCommandList()->Wait(dx12_core);
+	dx12_core->GetCommandList()->Reset();
+
+	ID3D12Resource* texture_resource = GetTextureResource(texture_handle);
+
+	dx12_core->GetCommandList()->TransitionResource(texture_resource, ResourceState::COPY_SOURCE, texture_current_resource_state);
+
+	D3D12_RESOURCE_DESC resource_desc = texture_resource->GetDesc();
+	D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+	UINT nr_of_rows = 0;
+	UINT64 row_size_in_bytes = 0;
+	UINT64 total_bytes = 0;
+	dx12_core->GetDevice()->GetCopyableFootprints(&resource_desc, subresource, 1, 0, &footprint, &nr_of_rows,
+		&row_size_in_bytes, &total_bytes);
+
+	D3D12_TEXTURE_COPY_LOCATION destination;
+	destination.pResource = m_readback_buffer.Get();
+	destination.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+	destination.PlacedFootprint.Offset = ((m_readback_current_offset + (alignment - 1)) & ~(alignment - 1));
+	destination.PlacedFootprint.Footprint.Width = footprint.Footprint.Width;
+	destination.PlacedFootprint.Footprint.Height = footprint.Footprint.Height;
+	destination.PlacedFootprint.Footprint.Depth = footprint.Footprint.Depth;
+	destination.PlacedFootprint.Footprint.RowPitch = footprint.Footprint.RowPitch;
+	destination.PlacedFootprint.Footprint.Format = resource_desc.Format;
+	D3D12_TEXTURE_COPY_LOCATION source;
+	source.pResource = texture_resource;
+	source.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+	source.SubresourceIndex = subresource;
+
+	dx12_core->GetCommandList()->CopyTextureRegion(&destination, &source);
+
+	//Throttle the GPU to upload texture data (which requires less memory for CPU buffer)
+	dx12_core->GetCommandList()->Execute(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	dx12_core->GetCommandList()->Signal(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	dx12_core->GetCommandList()->Wait(dx12_core);
+	dx12_core->GetCommandList()->Reset();
+
+
+	D3D12_RANGE nothing = { 0, 0 };
+	unsigned char* mapped_ptr = nullptr;
+	HRESULT hr = m_readback_buffer->Map(0, &nothing, reinterpret_cast<void**>(&mapped_ptr));
+	assert(SUCCEEDED(hr));
+
+	uint64_t destination_offset = 0;
+	size_t source_offset = ((m_readback_current_offset + (alignment - 1)) & ~(alignment - 1));
+
+	uint8_t* data = (uint8_t*)malloc(total_bytes);
+	for (UINT row = 0; row < nr_of_rows; ++row)
+	{
+		std::memcpy((unsigned char*)data + destination_offset, mapped_ptr + source_offset, row_size_in_bytes);
+		destination_offset += row_size_in_bytes;
+		source_offset += footprint.Footprint.RowPitch;
+	}
+
+	m_readback_buffer->Unmap(0, nullptr);
+	dx12_core->GetCommandList()->TransitionResource(texture_resource, texture_current_resource_state, ResourceState::COPY_SOURCE);
+
+	//Throttle the GPU to upload texture data (which requires less memory for CPU buffer)
+	dx12_core->GetCommandList()->Execute(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	dx12_core->GetCommandList()->Signal(dx12_core, dx12_core->GetGraphicsCommandQueue());
+	dx12_core->GetCommandList()->Wait(dx12_core);
+	dx12_core->GetCommandList()->Reset();
+
+	TextureInfo* texture_data = new TextureInfo();
+	texture_data->width = footprint.Footprint.Width;
+	texture_data->height = footprint.Footprint.Height;
+	texture_data->texture_data = (unsigned char*)data;
+	assert(resource_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM);
+	texture_data->comp = texture_data->channels = 4;
+
+	return texture_data;
 }
 
 ID3D12Resource* DX12TextureManager::GetTextureResource(const DX12TextureHandle& texture_handle)

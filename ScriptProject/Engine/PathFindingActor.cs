@@ -31,6 +31,9 @@ namespace ScriptProject.Engine
         public extern void DebugPath();
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern bool IsPositionInPath(Vector2 position);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         private static extern bool NeedNewPathFind_Extern(UInt32 actor_scene_index, UInt32 actor_entity, UInt32 goal_scene_index, UInt32 goal_entity, UInt32 position_of_node_index);
 
         public bool NeedNewPathFind(GameObject goal_game_object, UInt32 position_of_node_index = 1)
@@ -39,6 +42,12 @@ namespace ScriptProject.Engine
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern bool IsPositionInWorld(Vector2 position);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern void GetRandomNodes(GameObject game_object, ListSetGameObject nodes, UInt32 number_of_nodes);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern GameObject GetGameObjectNodeByPosition(Vector2 position);
     }
 }

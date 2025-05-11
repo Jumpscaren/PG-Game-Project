@@ -70,6 +70,32 @@ private:
 		MONO_TYPE_ENUM = 0x55        /* an enumeration */
 	} CSMonoType;
 
+	enum class CSMonoFieldAttribute : uint32_t
+	{
+		MONO_FIELD_ATTRIBUTE_FIELD_ACCESS_MASK     = 0x0007,
+		MONO_FIELD_ATTRIBUTE_COMPILER_CONTROLLED   = 0x0000,
+		MONO_FIELD_ATTRIBUTE_PRIVATE               = 0x0001,
+		MONO_FIELD_ATTRIBUTE_FAM_AND_ASSEM         = 0x0002,
+		MONO_FIELD_ATTRIBUTE_ASSEMBLY              = 0x0003,
+		MONO_FIELD_ATTRIBUTE_FAMILY                = 0x0004,
+		MONO_FIELD_ATTRIBUTE_FAM_OR_ASSEM          = 0x0005,
+		MONO_FIELD_ATTRIBUTE_PUBLIC                = 0x0006,
+										  
+		MONO_FIELD_ATTRIBUTE_STATIC                = 0x0010,
+		MONO_FIELD_ATTRIBUTE_INIT_ONLY             = 0x0020,
+		MONO_FIELD_ATTRIBUTE_LITERAL               = 0x0040,
+		MONO_FIELD_ATTRIBUTE_NOT_SERIALIZED        = 0x0080,
+		MONO_FIELD_ATTRIBUTE_SPECIAL_NAME          = 0x0200,
+		MONO_FIELD_ATTRIBUTE_PINVOKE_IMPL          = 0x2000,
+										  
+		/* For runtime use only */			   
+		MONO_FIELD_ATTRIBUTE_RESERVED_MASK         = 0x9500,
+		MONO_FIELD_ATTRIBUTE_RT_SPECIAL_NAME       = 0x0400,
+		MONO_FIELD_ATTRIBUTE_HAS_FIELD_MARSHAL     = 0x1000,
+		MONO_FIELD_ATTRIBUTE_HAS_DEFAULT           = 0x8000,
+		MONO_FIELD_ATTRIBUTE_HAS_FIELD_RVA         = 0x0100,
+	};
+
 	struct MonoClassHandlerHasher
 	{
 		std::size_t operator()(const MonoClassHandle& mono_class_handle) const
@@ -107,8 +133,8 @@ private:
 
 	static CSMonoCore* s_mono_core;
 
-	std::vector<_MonoThread*> mono_threads;
-	std::vector<MonoThreadHandle> free_mono_thread_handles;
+	std::vector<_MonoThread*> m_mono_threads;
+	std::vector<MonoThreadHandle> m_free_mono_thread_handles;
 
 private:
 	//Type changing templates
@@ -281,6 +307,7 @@ public:
 
 	template<typename T>
 	bool IsValueType(const CSMonoObject& mono_object, const std::string& field_name);
+	bool IsFieldPublic(const CSMonoObject& mono_object, const std::string& field_name);
 
 	template<typename Type>
 	void GetValue(Type& return_value, const CSMonoObject& mono_object, const std::string& field_name);
@@ -335,6 +362,9 @@ public:
 
 	MonoThreadHandle HookThread();
 	void UnhookThread(const MonoThreadHandle thread_handle);
+
+	bool IsOfClass(const CSMonoObject& object, const std::string& class_namespace, const std::string& class_name);
+	bool IsOfClass(const CSMonoObject& object, const MonoClassHandle class_handle);
 };
 
 template<typename T>

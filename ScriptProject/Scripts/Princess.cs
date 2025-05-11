@@ -2,13 +2,15 @@
 using ScriptProject.EngineMath;
 using ScriptProject.UserDefined;
 using System;
+using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
-    internal class Princess : InteractiveCharacterInterface
+    internal class Princess : InteractiveCharacterBehaviour
     {
         DynamicBody body;
         Sprite sprite;
+        PathFindingActor actor;
         const float max_speed = 1.0f;
         const float drag_speed = 20.0f;
         const float start_to_move_time = 5;
@@ -31,12 +33,16 @@ namespace ScriptProject.Scripts
 
         bool rescue_state = false;
         float rescue_time = 10.0f;
-        float rescue_timer;
+        Timer rescue_timer = new Timer();
+
+        GameObject target = null;
+        const float target_speed = 2.75f;
 
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
+            actor = game_object.GetComponent<PathFindingActor>();
             random_direction = new Vector2(0, 0);
             start_to_move_timer = Time.GetElapsedTime() + start_to_move_time;
             new_random_direction_timer = start_to_move_time + new_random_direction_time;
@@ -44,6 +50,8 @@ namespace ScriptProject.Scripts
             player = GameObject.TempFindGameObject("Player");
             player_body = player.GetComponent<DynamicBody>();
             player_script = player.GetComponent<Player>();
+
+            rescue_timer.SetTimeLimit(rescue_time);
         }
 
         Vector2 grabbed_position_change = new Vector2(0.0f, 0.4f);
@@ -51,7 +59,7 @@ namespace ScriptProject.Scripts
         {
             if (rescue_state)
             {
-                if (rescue_timer <= Time.GetElapsedTime())
+                if (rescue_timer.IsExpired())
                 {
                     Console.WriteLine("Princess Rescue Restart");
                     SceneManager.RestartActiveScene();
@@ -76,6 +84,7 @@ namespace ScriptProject.Scripts
                 sprite.FlipX(player_velocity.x < 0);
                 return;
             }
+            grabbed_by_orc = null;
 
             if (health <= 1e-05)
             {
@@ -110,33 +119,45 @@ namespace ScriptProject.Scripts
 
             if (start_to_move_timer >= Time.GetElapsedTime())
             {
-                random_direction = new Vector2(0, 0);
+                random_direction = Vector2.Zero;
             }
 
             if (new_random_direction_timer < Time.GetElapsedTime())
             {
-                random_direction = new Vector2(random_generator.RandomFloat(-1.0f, 1.0f), random_generator.RandomFloat(-1.0f, 1.0f));
+                random_direction = new Vector2(random_generator.RandomFloat(-1.0f, 1.0f), random_generator.RandomFloat(-1.0f, 1.0f)).Normalize();
                 new_random_direction_timer = Time.GetElapsedTime() + new_random_direction_time;
             }
 
+            if (!PathFindingActor.IsPositionInWorld(random_direction * 1.5f + game_object.transform.GetPosition()))
+            {
+                Console.WriteLine("Not in world");
+                random_direction = Vector2.Zero;
+                new_random_direction_timer = 0.0f;
+            }
+
+            bool is_running_to_target = RunToTarget();
+
+            if (!is_running_to_target)
+            {
+                Vector2 new_velocity = random_direction;
+                new_velocity = new_velocity.Normalize() * max_speed;
+                Movement(body.GetVelocity(), new_velocity, max_speed, drag_speed, body);
+            }
+
             Vector2 velocity = body.GetVelocity();
-            Vector2 new_velocity = random_direction;
+            sprite.FlipX(velocity.x < 0);
+            //if (velocity.Length() <= max_speed && new_velocity.Length() != 0.0f)
+            //    velocity = new_velocity;
+            ////else
+            ////    velocity += new_velocity * Time.GetDeltaTime();
+            //if (new_velocity.Length() == 0.0f && velocity.Length() <= max_speed)
+            //    velocity = new Vector2(0.0f, 0.0f);
+            //if (velocity.Length() > max_speed)
+            //    velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
+            //if (new_velocity.Length() > 0.0f && velocity.Length() < max_speed)
+            //    velocity = velocity.Normalize() * max_speed;
 
-            sprite.FlipX(new_velocity.x < 0);
-
-            new_velocity = new_velocity.Normalize() * max_speed;
-            if (velocity.Length() <= max_speed && new_velocity.Length() != 0.0f)
-                velocity = new_velocity;
-            //else
-            //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity.Length() == 0.0f && velocity.Length() <= max_speed)
-                velocity = new Vector2(0.0f, 0.0f);
-            if (velocity.Length() > max_speed)
-                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            if (new_velocity.Length() > 0.0f && velocity.Length() < max_speed)
-                velocity = velocity.Normalize() * max_speed;
-
-            body.SetVelocity(velocity);
+            //body.SetVelocity(velocity);
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -176,9 +197,39 @@ namespace ScriptProject.Scripts
                 float rot = collided_game_object.GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
                 body.SetVelocity(dir * 10.3f);
-
-
             }
+        }
+
+        bool RunToTarget()
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            if (follow_player)
+            {
+                target = null;
+                return false;
+            }
+
+            Vector2 current_position = game_object.transform.GetPosition();
+            Vector2 last_position = actor.PathFind(target, 1);
+            Vector2 dir = last_position - current_position;
+            Vector2 target_dir = target.transform.GetPosition() - current_position;
+            if (target_dir.Length() < 1.01f)
+            {
+                dir = new Vector2();
+                target = null;
+            }
+
+            Vector2 velocity = body.GetVelocity();
+            float speed = target_speed;
+            Vector2 new_velocity = dir.Normalize() * speed;
+
+            Movement(velocity, new_velocity, speed, drag_speed, body);
+
+            return true;
         }
 
         public void KnightHoldingPrincess(bool holding)
@@ -189,11 +240,12 @@ namespace ScriptProject.Scripts
             {
                 rescue_state = false;
                 sprite.FlipY(false);
-                rescue_time = rescue_timer - Time.GetElapsedTime();
+                rescue_time = rescue_timer.GetTime() - Time.GetElapsedTime();
                 if (rescue_time < 3.0f)
                 {
                     rescue_time = 3.0f;
                 }
+                rescue_timer.SetTimeLimit(rescue_time);
                 Console.WriteLine(rescue_time);
             }
         }
@@ -204,6 +256,7 @@ namespace ScriptProject.Scripts
             grabbed_body = orc.GetComponent<DynamicBody>();
             follow_player = false;
             player_script.PrincessStopFollowPlayer();
+            target = null;
         }
 
         public GameObject GetGrabbedByOrc()
@@ -215,13 +268,23 @@ namespace ScriptProject.Scripts
         {
             grabbed_by_orc = null;
             rescue_state = true;
-            rescue_timer = Time.GetElapsedTime() + rescue_time;
+            rescue_timer.Start();
             sprite.FlipY(true);
         }
 
         public bool GetRescueState()
         {
             return rescue_state;
+        }
+
+        public void RunToPosition(Vector2 position)
+        {
+            GameObject game_object_node = PathFindingActor.GetGameObjectNodeByPosition(position);
+
+            if (game_object_node != null)
+            {
+                target = game_object_node;
+            }
         }
     }
 }

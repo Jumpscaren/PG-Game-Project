@@ -131,6 +131,14 @@ void JsonObject::SetData(const Vector2& data, const std::string& name)
 	vector.SetData(data.y, "y");
 }
 
+void JsonObject::SetData(const Vector3& data, const std::string& name)
+{
+	JsonObject vector = CreateSubJsonObject(name);
+	vector.SetData(data.x, "x");
+	vector.SetData(data.y, "y");
+	vector.SetData(data.z, "z");
+}
+
 void JsonObject::SetData(char* data, uint32_t data_size, const std::string& name)
 {
 	std::vector<uint8_t> v(data, data + data_size);
@@ -243,6 +251,21 @@ void JsonObject::LoadData(Vector2& data, const std::string& name)
 	JsonObject vector = GetSubJsonObject(name);
 	vector.LoadData(data.x, "x");
 	vector.LoadData(data.y, "y");
+}
+
+void JsonObject::LoadData(Vector3& data, const std::string& name)
+{
+	if (!ObjectExist(name))
+	{
+		data.x = 0.0f;
+		data.y = 0.0f;
+		data.z = 0.0f;
+		return;
+	}
+	JsonObject vector = GetSubJsonObject(name);
+	vector.LoadData(data.x, "x");
+	vector.LoadData(data.y, "y");
+	vector.LoadData(data.z, "z");
 }
 
 void JsonObject::LoadData(char* data, uint32_t data_size, const std::string& name)

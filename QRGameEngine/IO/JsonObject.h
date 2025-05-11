@@ -37,6 +37,7 @@ public:
 	void SetData(double data, const std::string& name);
 	void SetData(bool data, const std::string& name);
 	void SetData(const Vector2& data, const std::string& name);
+	void SetData(const Vector3& data, const std::string& name);
 	void SetData(char* data, uint32_t data_size, const std::string& name);
 	void SetData(const std::string& data, const std::string& name);
 
@@ -50,6 +51,7 @@ public:
 	void LoadData(double& data, const std::string& name);
 	void LoadData(bool& data, const std::string& name);
 	void LoadData(Vector2& data, const std::string& name);
+	void LoadData(Vector3& data, const std::string& name);
 	void LoadData(char* data, uint32_t data_size, const std::string& name);
 	void LoadData(std::string& data, const std::string& name);
 

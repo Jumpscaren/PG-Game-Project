@@ -20,6 +20,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_upload_buffer;
 	uint64_t m_upload_current_offset;
 
+	Microsoft::WRL::ComPtr<ID3D12Heap> m_readback_heap;
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_readback_buffer;
+	uint64_t m_readback_current_offset;
+
 	std::vector<DX12Texture> m_textures;
 	std::vector<DX12TextureView> m_texture_views;
 
@@ -43,7 +47,7 @@ private:
 	void FreeTexture(DX12TextureHandle& texture_handle);
 	void FreeView(DX12TextureViewHandle& view_handle);
 
-	void ResetUploadBuffer();
+	void ResetBuffers();
 
 public:
 	DX12TextureManager() = delete;
@@ -54,6 +58,8 @@ public:
 	DX12TextureHandle AddTexture(DX12Core* dx12_core, uint32_t texture_width, uint32_t texture_height, TextureFlags texture_flag);
 	DX12TextureHandle AddTexture(DX12Core* dx12_core, TextureInfo* texture_data, TextureFlags texture_flag);
 	DX12TextureViewHandle AddView(DX12Core* dx12_core, DX12TextureHandle texture_handle, const ViewType& view_type);
+
+	TextureInfo* GetTextureData(DX12Core* dx12_core, const DX12TextureHandle texture_handle, const ResourceState texture_current_resource_state);
 
 	uint32_t ConvertTextureViewHandleToGPUTextureViewHandle(DX12TextureViewHandle texture_view_handle);
 

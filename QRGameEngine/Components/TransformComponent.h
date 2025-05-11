@@ -4,6 +4,7 @@
 #include "Scripting/CSMonoObject.h"
 
 class CSMonoCore;
+class JsonObject;
 
 struct TransformComponent
 {
@@ -21,6 +22,12 @@ struct TransformComponent
 	Vector3 GetScale() const;
 
 	DirectX::XMMATRIX world_matrix;
+	Vector3 m_scale, m_rotation;
+};
+
+struct PositionScaleRotation
+{
+	Vector3 position, scale, rotation;
 };
 
 class TransformComponentInterface
@@ -32,6 +39,10 @@ public:
 	static void AddTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 	static void RemoveTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
+
+public:
+	static void SaveTransformComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
+	static void LoadTransformComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 
 public:
 	static void SetPosition(SceneIndex scene_index, Entity entity, float x, float y);
@@ -46,5 +57,8 @@ public:
 
 	static void SetScale(const CSMonoObject& cs_transform, const CSMonoObject& scale);
 	static CSMonoObject GetScale(const CSMonoObject& cs_transform);
+
+public:
+	static PositionScaleRotation GetDataFromWorldMatrix(const TransformComponent& transform);
 };
 

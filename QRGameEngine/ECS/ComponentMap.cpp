@@ -15,6 +15,8 @@
 #include "Components/StaticBodyComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/KinematicBodyComponent.h"
+#include "Components/TileComponent.h"
+#include "Components/PolygonColliderComponent.h"
 
 std::vector<ComponentMap::ComponentMapData> ComponentMap::s_component_maps;
 
@@ -36,13 +38,15 @@ void ComponentMap::AddAllComponents()
 	AddComponent<CircleColliderComponent>();
 	AddComponent<DynamicBodyComponent>();
 	AddComponent<EntityDataComponent>();
+	AddComponent<KinematicBodyComponent>();
 	AddComponent<ParentComponent>();
 	AddComponent<PathFindingActorComponent>();
 	AddComponent<PathFindingWorldComponent>();
+	AddComponent<PolygonColliderComponent>();
 	AddComponent<PureStaticBodyComponent>();
 	AddComponent<ScriptComponent>();
 	AddComponent<SpriteComponent>();
 	AddComponent<StaticBodyComponent>();
+	AddComponent<TileComponent>();
 	AddComponent<TransformComponent>();
-	AddComponent<KinematicBodyComponent>();
 }

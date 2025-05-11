@@ -5,10 +5,11 @@ using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
 using static ScriptProject.Engine.Input;
+using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
-    internal class Player : InteractiveCharacterInterface
+    internal class Player : InteractiveCharacterBehaviour
     {
         DynamicBody body;
         Sprite sprite;
@@ -19,17 +20,17 @@ namespace ScriptProject.Scripts
         StaticBody hit_box_body;
         GameObject camera;
         const float attack_time = 0.1f;
-        float attack_timer = 0.0f;
+        Timer attack_timer = new Timer();
         const float attack_angle = (float)Math.PI / 2.0f;
         const float between_attack_time = 0.45f;
-        float between_attack_timer = 0.0f;
+        Timer between_attack_timer = new Timer();
 
         float health = 100.0f;
 
         const float max_speed = 4.0f;//8.1f;
         const float princess_speed = max_speed * 0.7f;
         const float drag_speed = 20.0f;
-        const float attack_speed = max_speed / 2.0f;
+        const float attack_speed = 0.0f;// max_speed / 2.0f;
 
         GameObject princess;
         bool holding_princess = false;
@@ -39,13 +40,13 @@ namespace ScriptProject.Scripts
         List<GameObject> remove_path = new List<GameObject>();
 
         Vector2 saved_position;
-        float save_position_timer = 0.0f;
-        float save_position_time = 5.0f;
+        Timer save_position_timer = new Timer();
+        const float save_position_time = 5.0f;
 
         bool invincible_switch = false;
         bool is_invincble = false;
-        float invincible_timer = 0.0f;
-        float invincible_time = 1.0f;
+        Timer invincible_timer = new Timer();
+        const float invincible_time = 1.0f;
 
         GameObject current_rope;
         Vector2 current_rope_end_positon;
@@ -53,12 +54,12 @@ namespace ScriptProject.Scripts
         Vector2 current_rope_difference_in_position;
         Sprite current_rope_sprite;
 
-        float rope_animate_timer = 0.0f;
+        Timer rope_animate_timer = new Timer();
         float rope_animation_speed = 40.0f;
         float rope_animation_time = 0.0f;
 
-        float rope_respawn_timer = 0.0f;
-        float rope_respawn_time = 8.0f;
+        Timer rope_respawn_timer = new Timer();
+        const float rope_respawn_time = 8.0f;
 
         HoleManager holes = new HoleManager();
 
@@ -69,6 +70,13 @@ namespace ScriptProject.Scripts
         float bow_charge = 0.0f;
         float bow_charge_max = 100.0f;
         float bow_charge_increase = 200.0f;
+
+        Timer princess_call_timer = new Timer();
+        const float princess_call_time = 10.0f;
+
+        InputBuffer inputBuffer = new InputBuffer();
+
+        const float epsilion = 0.1f;
 
         void Start()
         {
@@ -103,10 +111,20 @@ namespace ScriptProject.Scripts
             {
                 Console.WriteLine(obj.GetTag());
             }
+
+            rope_respawn_timer.SetTimeLimit(rope_respawn_time);
+            invincible_timer.SetTimeLimit(invincible_time);
+            save_position_timer.SetTimeLimit(save_position_time);
+            attack_timer.SetTimeLimit(attack_time);
+            between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+            princess_call_timer.SetTimeLimit(princess_call_time);
         }
 
         void Update()
         {
+            GetInput();
+            bool stop_movement = !IsEffectOver() && GetEffect().StopMovement();
+
             if (health <= 0.0f)
             {
                 health = 0.0f;
@@ -121,17 +139,17 @@ namespace ScriptProject.Scripts
                 body.SetVelocity(new Vector2());
             }
 
-            if (save_position_timer < Time.GetElapsedTime())
+            if (save_position_timer.IsExpired())
             {
-                save_position_timer = Time.GetElapsedTime() + save_position_time;
                 if (!holes.InHoles())
                 {
                     saved_position = game_object.transform.GetPosition();
+                    save_position_timer.Start();
                 }
             }
 
             bool show_sprite = true;
-            if (invincible_timer > Time.GetElapsedTime())
+            if (!invincible_timer.IsExpired())
             {
                 invincible_switch = !invincible_switch;
                 show_sprite = invincible_switch;
@@ -147,12 +165,12 @@ namespace ScriptProject.Scripts
             {
                 current_speed = princess_speed;
             }
-            if (between_attack_timer >= Time.GetElapsedTime())
+            if (!between_attack_timer.IsExpired())
             {
                 current_speed = attack_speed;
             }
 
-            if (attack_timer < Time.GetElapsedTime())
+            if (attack_timer.IsExpired())
             {
                 hit_box_body.SetEnabled(false);
             }
@@ -177,18 +195,24 @@ namespace ScriptProject.Scripts
                 if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightIdle.anim"))
                     AnimationManager.LoadAnimation(game_object, "Animations/KnightIdle.anim");
             }
-            else if (!attack && !AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightRunAnim.anim"))
+            else if (!attack && !stop_movement && !AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightRunAnim.anim"))
             {
                 AnimationManager.LoadAnimation(game_object, "Animations/KnightRunAnim.anim");
             }
 
-            if (!holding_princess && Input.GetMouseButtonPressed(Input.MouseButton.LEFT) && between_attack_timer < Time.GetElapsedTime())
+            if (!holding_princess && between_attack_timer.IsExpired() && !stop_movement && inputBuffer.ConsumeBufferedInput(MouseButton.LEFT))
             {
                 AnimationManager.LoadAnimation(game_object, "Animations/KnightAttack.anim");
                 attack = true;
                 hit_box_body.SetEnabled(true);
-                attack_timer = attack_time + Time.GetElapsedTime();
-                between_attack_timer = attack_timer + between_attack_time;
+                attack_timer.Start();
+                between_attack_timer.Start();
+
+                if (velocity.Length() <= max_speed + epsilion)
+                {
+                    velocity = velocity.Normalize() * attack_speed;
+                }
+                current_speed = attack_speed;
             }
 
             if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightAttack.anim"))
@@ -202,21 +226,30 @@ namespace ScriptProject.Scripts
             float calculated_rot = Vector2.Angle(mouse_dir, right_dir);
 
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(calculated_rot));
-            sprite.FlipX(mouse_dir.x < 0);
 
             new_velocity = new_velocity.Normalize() * current_speed;
-            if (velocity.Length() <= current_speed && new_velocity.Length() != 0.0f)
-                velocity = new_velocity;
-            //else
-            //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity.Length() == 0.0f && velocity.Length() <= current_speed)
-                velocity = new Vector2(0.0f, 0.0f);
-            if (velocity.Length() > current_speed)
-                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            if (new_velocity.Length() > 0.0f && velocity.Length() < current_speed)
-                velocity = velocity.Normalize() * current_speed;
+            Movement(velocity, new_velocity, current_speed, drag_speed, body);
 
-            body.SetVelocity(velocity);
+            //new_velocity = new_velocity.Normalize() * current_speed;
+            //if (velocity.Length() <= current_speed && new_velocity.Length() != 0.0f)
+            //    velocity = new_velocity;
+            ////else
+            ////    velocity += new_velocity * Time.GetDeltaTime();
+            //if (new_velocity.Length() == 0.0f && velocity.Length() <= current_speed)
+            //    velocity = new Vector2(0.0f, 0.0f);
+            //if (velocity.Length() > current_speed)
+            //    velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
+            //if (new_velocity.Length() > 0.0f && velocity.Length() < current_speed)
+            //    velocity = velocity.Normalize() * current_speed;
+
+            //body.SetVelocity(velocity);
+
+            if (stop_movement)
+            {
+                return;
+            }
+
+            sprite.FlipX(mouse_dir.x < epsilion);
 
             PrincessLogic();
 
@@ -224,21 +257,9 @@ namespace ScriptProject.Scripts
 
             BoomerangLogic(mouse_dir);
 
-            if (Input.GetKeyDown(Key.Q))
-            {
-                bow_charge += bow_charge_increase * Time.GetDeltaTime();
-                if (!bow_shot && bow_charge > bow_charge_max)
-                {
-                    GameObject arrow = GameObject.CreateGameObject();
-                    arrow.AddComponent<Arrow>().InitArrow(game_object.transform.GetPosition(), mouse_dir);
-                    bow_shot = true;
-                }
-            }
-            else
-            {
-                bow_charge = 0.0f;
-                bow_shot = false;
-            }
+            BowLogic(mouse_dir);
+
+            PrincessCall();
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -246,7 +267,7 @@ namespace ScriptProject.Scripts
             if (!is_invincble)
             {
                 health -= damage;
-                invincible_timer = invincible_time + Time.GetElapsedTime();
+                invincible_timer.Start();
                 is_invincble = true;
             }
         }
@@ -313,9 +334,9 @@ namespace ScriptProject.Scripts
         float GetMidBlockRotation(float calculated_rot)
         {
             float attack_time_rot = 0.0f;
-            if (attack_timer > Time.GetElapsedTime())
+            if (!attack_timer.IsExpired())
             {
-                attack_time_rot = (1.0f - (attack_timer - Time.GetElapsedTime()) / attack_time) * attack_angle;
+                attack_time_rot = (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_time) * attack_angle;
             }
             return calculated_rot - attack_angle / 2.0f + attack_time_rot;
         }
@@ -326,7 +347,9 @@ namespace ScriptProject.Scripts
             float distance_from_princess = (game_object.transform.GetPosition() - princess.transform.GetPosition()).Length();
             princess_script.KnightHoldingPrincess(holding_princess);
 
-            if (current_rope != null || holding_princess && Input.GetKeyPressed(Input.Key.E))
+            bool pressed_e = inputBuffer.ConsumeBufferedInput(Key.E);
+
+            if (current_rope != null || holding_princess && pressed_e)
             {
                 holding_princess = false;
                 return;
@@ -337,7 +360,7 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            if (Input.GetKeyPressed(Input.Key.E))
+            if (pressed_e)
             {
                 holding_princess = true;
             }
@@ -350,17 +373,17 @@ namespace ScriptProject.Scripts
             current_rope_hooked_game_object = null;
             current_rope_sprite = null;
 
-            rope_respawn_timer = rope_respawn_time + Time.GetElapsedTime();
+            rope_respawn_timer.Start();
         }
 
         void RopeLogic(Vector2 new_velocity)
         {
-            if (rope_respawn_timer > Time.GetElapsedTime())
+            if (!rope_respawn_timer.IsExpired())
             {
                 return;
             }
 
-            if (Input.GetMouseButtonPressed(MouseButton.RIGHT))
+            if (inputBuffer.ConsumeBufferedInput(Input.MouseButton.RIGHT))
             {
                 if (current_rope != null)
                 {
@@ -388,7 +411,8 @@ namespace ScriptProject.Scripts
                         result.intersected_game_object.transform.GetPosition() - result.intersected_position;
 
                     rope_animation_time = (current_rope_end_positon - player_position).Length() / rope_animation_speed;
-                    rope_animate_timer = rope_animation_time + Time.GetElapsedTime();
+                    rope_animate_timer.SetTimeLimit(rope_animation_time);
+                    rope_animate_timer.Start();
 
                     current_rope_sprite = rope_sprite;
                 }
@@ -424,10 +448,10 @@ namespace ScriptProject.Scripts
                 }
 
                 Vector2 direction = distance.Normalize();
-                if (rope_animate_timer >= Time.GetElapsedTime())
+                if (!rope_animate_timer.IsExpired())
                 {
                     Vector2 target_rope_position = current_rope_end_positon
-                        - direction * distance.Length() * ((rope_animate_timer - Time.GetElapsedTime()) / rope_animation_time);
+                        - direction * distance.Length() * ((rope_animate_timer.GetTime() - Time.GetElapsedTime()) / rope_animation_time);
                     distance = target_rope_position - player_position + rope_end_position_with_difference;
                     direction = distance.Normalize();
                 }
@@ -440,7 +464,7 @@ namespace ScriptProject.Scripts
 
                 current_rope_sprite.SetUV(new Vector2(), new Vector2(1.0f, distance.Length()));
 
-                if (rope_animate_timer < Time.GetElapsedTime())
+                if (rope_animate_timer.IsExpired())
                 {
                     float rope_velocity = max_speed * (3.5f - 0.5f / distance.Length());
 
@@ -468,7 +492,7 @@ namespace ScriptProject.Scripts
                 }
             }
 
-            if (boomerangs.Count < max_boomerangs && Input.GetKeyPressed(Key.R))
+            if (boomerangs.Count < max_boomerangs && inputBuffer.ConsumeBufferedInput(Key.R))
             {
                 GameObject boomerang = GameObject.CreateGameObject();
                 Sprite boomerang_sprite = boomerang.AddComponent<Sprite>();
@@ -482,18 +506,72 @@ namespace ScriptProject.Scripts
             }
         }
 
+        void BowLogic(Vector2 arrow_direction)
+        {
+            if (Input.GetKeyDown(Key.Q))
+            {
+                bow_charge += bow_charge_increase * Time.GetDeltaTime();
+                if (!bow_shot && bow_charge > bow_charge_max)
+                {
+                    GameObject arrow = GameObject.CreateGameObject();
+                    arrow.AddComponent<Arrow>().InitArrow(game_object.transform.GetPosition(), arrow_direction);
+                    bow_shot = true;
+                }
+            }
+            else
+            {
+                bow_charge = 0.0f;
+                bow_shot = false;
+            }
+        }
+
+        void PrincessCall()
+        {
+            if (princess_call_timer.IsExpired() && inputBuffer.ConsumeBufferedInput(Key.F))
+            {
+                princess_script.RunToPosition(game_object.transform.GetPosition());
+                princess_call_timer.Start();
+            }
+        }
+
         public void PrincessStopFollowPlayer()
         {
             holding_princess = false;
             princess_script.KnightHoldingPrincess(holding_princess);
         }
 
+        void GetInput()
+        {
+            const float buffered_input_time = 0.5f;
+            if (Input.GetMouseButtonPressed(Input.MouseButton.LEFT))
+            {
+                inputBuffer.AddBufferedInput(Input.MouseButton.LEFT, buffered_input_time);
+            }
+            if (Input.GetMouseButtonPressed(Input.MouseButton.RIGHT))
+            {
+                inputBuffer.AddBufferedInput(Input.MouseButton.RIGHT, buffered_input_time);
+            }
+            if (Input.GetKeyPressed(Input.Key.E))
+            {
+                inputBuffer.AddBufferedInput(Input.Key.E, buffered_input_time);
+            }
+            if (Input.GetKeyPressed(Input.Key.R))
+            {
+                inputBuffer.AddBufferedInput(Input.Key.R, buffered_input_time);
+            }
+            if (Input.GetKeyPressed(Input.Key.F))
+            {
+                inputBuffer.AddBufferedInput(Input.Key.F, buffered_input_time);
+            }
+        }
+
         public class HitBoxPlayer : HitBoxAction
         {
             float damage = 10.0f;
-            float knockback = 10.3f;
+            //float knockback = 10.3f;
+            float knockback = 8.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
+            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (hit_object_script is Princess)
                 {
@@ -506,6 +584,8 @@ namespace ScriptProject.Scripts
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
+
+                hit_object_script.SetEffect(new Effects.StunEffect(0.75f));
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

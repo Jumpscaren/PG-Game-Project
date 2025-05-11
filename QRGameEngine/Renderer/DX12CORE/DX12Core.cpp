@@ -227,7 +227,7 @@ IDXGIAdapter1* DX12Core::GetAdapter()
 void DX12Core::ResetBuffers()
 {
 	m_buffer_manager->ResetUploadBuffer(this);
-	m_texture_manager->ResetUploadBuffer();
+	m_texture_manager->ResetBuffers();
 }
 
 void DX12Core::EndOfFrame()

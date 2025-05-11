@@ -27,10 +27,14 @@ public:
 public:
 	static CSMonoObject PathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index);
 	static void DebugPath(const CSMonoObject& object);
+	static bool IsPositionInPath(const CSMonoObject& object, const CSMonoObject& position);
 	static bool NeedNewPathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index);
+
+	static CSMonoObject GetGameObjectNodeByPosition(const CSMonoObject& position);
 
 private:
 	static bool HasToPathFind(const PathFindingActorComponent& path_finding_actor, const Entity own_node, const Entity goal_node);
+	static bool IsPositionInWorld(const CSMonoObject& position);
 	static void GetRandomNodes(const CSMonoObject& game_object, const CSMonoObject& list, const uint32_t number_of_nodes);
 
 public:

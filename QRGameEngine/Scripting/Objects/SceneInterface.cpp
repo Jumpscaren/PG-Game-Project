@@ -19,6 +19,8 @@ void SceneInterface::RegisterInterface(CSMonoCore* mono_core)
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::LoadSceneSynchronized>(scene_manager_object_class, "LoadSceneSynchronized", SceneInterface::LoadSceneSynchronized);
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::IsSceneLoaded>(scene_manager_object_class, "IsSceneLoaded_External", SceneInterface::IsSceneLoaded);
     mono_core->HookAndRegisterMonoMethodType<SceneInterface::ChangeScene>(scene_manager_object_class, "ChangeScene_External", SceneInterface::ChangeScene);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::IsSceneActive>(scene_manager_object_class, "IsSceneActive_External", SceneInterface::IsSceneActive);
+    mono_core->HookAndRegisterMonoMethodType<SceneInterface::SceneExists>(scene_manager_object_class, "SceneExists_External", SceneInterface::SceneExists);
 }
 
 CSMonoObject SceneInterface::CreateSceneWithSceneIndex(SceneIndex scene_index)
@@ -67,4 +69,14 @@ bool SceneInterface::IsSceneLoaded(const SceneIndex scene_index)
 void SceneInterface::ChangeScene(const SceneIndex scene_index)
 {
     SceneManager::GetSceneManager()->ChangeScene(scene_index);
+}
+
+bool SceneInterface::IsSceneActive(const SceneIndex scene_index)
+{
+    return SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive();
+}
+
+bool SceneInterface::SceneExists(const SceneIndex scene_index)
+{
+    return SceneManager::GetSceneManager()->SceneExists(scene_index);
 }

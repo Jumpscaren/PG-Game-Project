@@ -101,6 +101,10 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("OrcDistracter", OrcDistracter, 1, "Character");
             PrefabSystem.CreateUserPrefab("Fireball", Fireball, 0, "Misc");
             PrefabSystem.CreateUserPrefab("HolePolygon", HolePolygon, 0, "Block");
+            PrefabSystem.CreateUserPrefab("TestTileBlock", TestTileBlock, 1, "Block");
+            PrefabSystem.CreateUserPrefab("GreyPath", GreyPath, 2, "Path");
+            PrefabSystem.CreateUserPrefab("NewWall", NewWall, 2, "Block");
+            PrefabSystem.CreateUserPrefab("Fence", Fence, 1, "Block");
 
             return 0;
         }
@@ -153,6 +157,7 @@ namespace ScriptProject
             Render.LoadTexture("../QRGameEngine/Textures/Princess.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.PrincessCharacter, UserCollisionCategories.FilterForPrincess, 0);
+            game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<Princess>();
         }
 
@@ -239,6 +244,7 @@ namespace ScriptProject
             game_object.RemoveComponent<Sprite>();
             game_object.AddComponent<BoxCollider>();
             game_object.AddComponent<ReplaceBlockScript>();
+            game_object.SetTag(UserTags.Replace);
         }
 
         static void Switch(GameObject game_object)
@@ -277,6 +283,32 @@ namespace ScriptProject
 
             game_object.GetComponent<Sprite>();
             game_object.RemoveComponent<Sprite>();
+        }
+
+        static void TestTileBlock(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/Tile_Test.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<Tile>();
+        }
+
+        static void GreyPath(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/work.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PathFindingWorld>();
+            game_object.AddComponent<Tile>();
+        }
+
+        static void NewWall(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/wall.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PureStaticBody>();
+            game_object.AddComponent<BoxCollider>();
+        }
+
+        static void Fence(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/Fence.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<Spawner>();
         }
     }
 }

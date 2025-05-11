@@ -86,6 +86,11 @@ void DX12CommandList::Signal(DX12Core* dx12_core, DX12CommandQueue* command_queu
 	m_fence->Signal(dx12_core, command_queue);
 }
 
+bool DX12CommandList::IsCompleted(DX12Core* dx12_core)
+{
+	return m_fence->IsFenceCompleted(dx12_core);
+}
+
 void DX12CommandList::Wait(DX12Core* dx12_core)
 {
 	m_fence->Wait(dx12_core);
@@ -147,6 +152,11 @@ void DX12CommandList::SetOMRenderTargets(DX12Core* dx12_core, DX12TextureViewHan
 {
 	m_command_list->OMSetRenderTargets(1, &dx12_core->GetTextureManager()->GetTextureView(render_target_view)->texture_descriptor_handle.cpu_handle,
 		true, &dx12_core->GetTextureManager()->GetTextureView(depthstencil_view)->texture_descriptor_handle.cpu_handle);
+}
+
+void DX12CommandList::SetOMRenderTargets(DX12Core* dx12_core, DX12TextureViewHandle render_target_view)
+{
+	m_command_list->OMSetRenderTargets(1, &dx12_core->GetTextureManager()->GetTextureView(render_target_view)->texture_descriptor_handle.cpu_handle, true, nullptr);
 }
 
 void DX12CommandList::SetViewport(uint64_t width, uint64_t height)

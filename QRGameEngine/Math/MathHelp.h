@@ -4,7 +4,7 @@
 #include <cmath>
 
 namespace MathHelp {
-       Vector3 ToEulerAngles(const Vector4& q) {
+    Vector3 ToEulerAngles(const Vector4& q) {
         Vector3 angles;
 
         // roll (x-axis rotation)

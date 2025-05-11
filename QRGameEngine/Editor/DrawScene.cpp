@@ -10,7 +10,6 @@
 #include "Asset/AssetManager.h"
 #include "Renderer/ImGUIMain.h"
 #include "IO/Output.h"
-#include <set>
 #include "Scripting/CSMonoCore.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "SceneSystem/SceneLoader.h"
@@ -26,12 +25,17 @@
 #include "Animation/AnimationManager.h"
 #include "Components/PolygonColliderComponent.h"
 #include "Input/Keyboard.h"
+#include "Components/TileComponent.h"
+#include "TileHandler.h"
+#include "Components/BoxColliderComponent.h"
+#include "Components/CircleColliderComponent.h"
+#include "Components/PolygonColliderComponent.h"
 
 qr::unordered_map<std::string, std::vector<PrefabAndTextureData>> DrawScene::m_user_prefabs;
 std::string DrawScene::m_category_in_use;
 std::vector<Entity> DrawScene::m_entities_waiting_for_assets;
 
-uint64_t DrawScene::GetNumberFromPosition(const Vector3& position)
+uint64_t DrawScene::GetNumberFromPosition(const Vector3& position) const
 {
 	uint64_t unique_number = 0;
 	char* ptr_un = (char*)&unique_number;
@@ -110,12 +114,10 @@ bool DrawScene::WaitForAssetsForPrefab()
 	return !m_entities_waiting_for_assets.empty();
 }
 
-DrawScene::DrawScene()
+DrawScene::DrawScene() : m_animator_handler(this)
 {
 	SetAddUserPrefab();
 	m_scene_name.resize(50);
-	m_animation_texture_name.resize(50);
-	m_animation_file_name.resize(50);
 	m_select = false;
 }
 
@@ -181,6 +183,8 @@ void DrawScene::Update()
 
 		select_pressed = ImGui::Button("Select");
 		animation_pressed = ImGui::Button("Animation");
+
+		ImGui::InputInt("Layer:", (int*)&m_layer_index);
 	}
 	ImGui::End();
 
@@ -252,6 +256,8 @@ void DrawScene::Update()
 	}
 	m_in_editor_menu = hovering_window;
 
+	ShowLayer();
+
 	if (m_select)
 	{
 		Select();
@@ -317,6 +323,12 @@ void DrawScene::DrawBlock()
 			block_to_index_map.insert({ m_prefab_selected.z_index, new_block_data });
 
 			m_blocks.insert({ unique_number, block_to_index_map });
+
+			if (entity_manager->HasComponent<TileComponent>(new_block_data.block_entity))
+			{
+				m_tile_handler->SetTileSprite(world_mouse_position, new_block_data.block_entity);
+				m_tile_handler->SetNeighborTileSprites(world_mouse_position);
+			}
 		}
 		else
 		{
@@ -326,6 +338,12 @@ void DrawScene::DrawBlock()
 				BlockData new_block_data = CreateBlock(world_mouse_position);
 
 				it->second.insert({ m_prefab_selected.z_index, new_block_data});
+
+				if (entity_manager->HasComponent<TileComponent>(new_block_data.block_entity))
+				{
+					m_tile_handler->SetTileSprite(world_mouse_position, new_block_data.block_entity);
+					m_tile_handler->SetNeighborTileSprites(world_mouse_position);
+				}
 			}
 		}
 	}
@@ -338,12 +356,104 @@ void DrawScene::DrawBlock()
 
 		if (m_blocks.find(unique_number) != m_blocks.end())
 		{
-			for (auto it = m_blocks.find(unique_number)->second.begin(); it != m_blocks.find(unique_number)->second.end(); it++)
+			if (!Keyboard::Get()->GetKeyDown(Keyboard::Key::LCTRL))
 			{
-				entity_manager->RemoveEntity(it->second.block_entity);
+				for (auto it = m_blocks.find(unique_number)->second.begin(); it != m_blocks.find(unique_number)->second.end(); it++)
+				{
+					entity_manager->RemoveEntity(it->second.block_entity);
+				}
+				m_blocks.erase(unique_number);
 			}
-			m_blocks.erase(unique_number);
+			else
+			{
+				for (const auto& layer_it : m_blocks.find(unique_number)->second)
+				{
+					if (layer_it.first == m_layer_index)
+					{
+						entity_manager->RemoveEntity(layer_it.second.block_entity);
+						m_blocks.at(unique_number).erase(layer_it.first);
+						break;
+					}
+				}
+			}
+
+			m_tile_handler->SetNeighborTileSprites(world_mouse_position);
 		}
+	}
+}
+
+void DrawScene::ShowLayer()
+{
+	if (Keyboard::Get()->GetKeyDown(Keyboard::Key::LCTRL) && !m_show_only_layer)
+	{
+		Scene* scene = SceneManager::GetSceneManager()->GetScene(SceneManager::GetSceneManager()->GetActiveSceneIndex());
+		EntityManager* entity_manager = scene->GetEntityManager();
+
+		for (const auto& blocks : m_blocks | std::views::values)
+		{
+			for (const auto& layer_it : blocks)
+			{
+				if (layer_it.first == m_layer_index)
+				{
+					continue;
+				}
+
+				if (entity_manager->HasComponent<SpriteComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<SpriteComponent>(layer_it.second.block_entity).show = false;
+				}
+
+				if (entity_manager->HasComponent<BoxColliderComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<BoxColliderComponent>(layer_it.second.block_entity).debug_draw = false;
+				}
+
+				if (entity_manager->HasComponent<CircleColliderComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<CircleColliderComponent>(layer_it.second.block_entity).debug_draw = false;
+				}
+
+				if (entity_manager->HasComponent<PolygonColliderComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<PolygonColliderComponent>(layer_it.second.block_entity).debug_draw = false;
+				}
+			}
+		}
+
+		m_show_only_layer = true;
+	}
+	else if (!Keyboard::Get()->GetKeyDown(Keyboard::Key::LCTRL) && m_show_only_layer)
+	{
+		Scene* scene = SceneManager::GetSceneManager()->GetScene(SceneManager::GetSceneManager()->GetActiveSceneIndex());
+		EntityManager* entity_manager = scene->GetEntityManager();
+
+		for (const auto& blocks : m_blocks | std::views::values)
+		{
+			for (const auto& layer_it : blocks)
+			{
+				if (entity_manager->HasComponent<SpriteComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<SpriteComponent>(layer_it.second.block_entity).show = true;
+				}
+
+				if (entity_manager->HasComponent<BoxColliderComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<BoxColliderComponent>(layer_it.second.block_entity).debug_draw = true;
+				}
+
+				if (entity_manager->HasComponent<CircleColliderComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<CircleColliderComponent>(layer_it.second.block_entity).debug_draw = true;
+				}
+
+				if (entity_manager->HasComponent<PolygonColliderComponent>(layer_it.second.block_entity))
+				{
+					entity_manager->GetComponent<PolygonColliderComponent>(layer_it.second.block_entity).debug_draw = true;
+				}
+			}
+		}
+
+		m_show_only_layer = false;
 	}
 }
 
@@ -544,104 +654,7 @@ void DrawScene::Select()
 
 void DrawScene::Animation()
 {
-	auto* ent_man = SceneManager::GetSceneManager()->GetScene(SceneManager::GetActiveSceneIndex())->GetEntityManager();
-	if (m_animation_base_entity == NULL_ENTITY)
-	{
-		Save(m_animation_temp_save_file_name);
-		Clear();
-
-		const auto base_ent = ent_man->NewEntity();
-		ent_man->AddComponent<TransformComponent>(base_ent).SetPosition(Vector3(0.0f, 0.0f, 0.1f));
-		ent_man->AddComponent<SpriteComponent>(base_ent);
-		ent_man->AddComponent<AnimatableSpriteComponent>(base_ent);
-		m_animation_base_entity = m_select_entity = base_ent;
-		return;
-	}
-
-	bool back_pressed = false;
-	bool save_animation_pressed = false;
-	bool load_animation_pressed = false;
-	SpriteComponent& sprite = ent_man->GetComponent<SpriteComponent>(m_animation_base_entity);
-	Vector2 uv_1 = sprite.uv[0];
-	Vector2 uv_4 = sprite.uv[3];
-	ImGui::Begin("Animation");
-	{
-		back_pressed = ImGui::Button("Back");
-		ImGui::InputText("Animation Name", (char*)m_animation_file_name.c_str(), m_animation_file_name.size());
-		if (ImGui::BeginCombo("##Animations", m_animation_file_name.c_str()))
-		{
-			auto path = std::filesystem::current_path() / std::filesystem::path("Animations");
-			for (const auto& entry : std::filesystem::directory_iterator(path))
-			{
-				if (entry.path().extension() == ".anim")
-				{
-					const auto filename = entry.path().filename().replace_extension().string();
-					const bool is_selected = (m_animation_file_name == filename);
-					if (ImGui::Selectable(filename.c_str(), is_selected))
-					{
-						m_animation_file_name = filename;
-					}
-					if (is_selected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-			}
-			ImGui::EndCombo();
-		}
-		save_animation_pressed = ImGui::Button("Save Animation");
-		load_animation_pressed = ImGui::Button("Load Animation");
-		ImGui::InputText("Texture Name", (char*)m_animation_texture_name.c_str(), m_animation_texture_name.size());
-		ImGui::InputFloat("uv_1.x", (float*)&uv_1.x);
-		ImGui::InputFloat("uv_1.y", (float*)&uv_1.y);
-		ImGui::InputFloat("uv_4.x", (float*)&uv_4.x);
-		ImGui::InputFloat("uv_4.y", (float*)&uv_4.y);
-	}
-	ImGui::End();
-
-	sprite.uv[0] = uv_1;
-	sprite.uv[1] = Vector2(uv_4.x, uv_1.y);
-	sprite.uv[2] = Vector2(uv_1.x, uv_4.y);
-	sprite.uv[3] = uv_4;
-
-	if (back_pressed)
-	{
-		m_in_animation = false;
-		ent_man->RemoveEntity(m_animation_base_entity);
-		m_animation_base_entity = NULL_ENTITY;
-		Load(m_animation_temp_save_file_name);
-	}
-
-	const std::string folder_path = "../QRGameEngine/Textures/";
-	const std::string texture_full_path = folder_path + m_animation_texture_name;
-	bool texture_exists = false;
-	if (std::filesystem::exists(texture_full_path) && std::filesystem::is_regular_file(texture_full_path))
-	{
-		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_full_path, SceneManager::GetActiveSceneIndex());
-		texture_exists = true;
-	}
-
-	std::string fixed_animation_file_name = "Animations/";
-	//So goddamn stupid!!!
-	fixed_animation_file_name.insert(fixed_animation_file_name.length(), m_animation_file_name.c_str());
-	fixed_animation_file_name += ".anim";
-
-	if (save_animation_pressed && !texture_exists)
-	{
-		std::cout << "Animation Texture doesn't exists\n";
-	}
-	if (save_animation_pressed && texture_exists)
-	{
-		AnimationManager::Get()->SaveAnimation(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
-	}
-	if (load_animation_pressed)
-	{
-		if (AnimationManager::Get()->LoadAnimation(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name))
-		{
-			const auto sprite_texture_path = AnimationManager::Get()->GetAnimationTexturePath(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
-			m_animation_texture_name = sprite_texture_path.substr(folder_path.length(), sprite_texture_path.length() - folder_path.length());
-		}
-	}
+	m_in_animation = m_animator_handler.AnimationTool();
 }
 
 bool show_triangles = false;
@@ -818,6 +831,18 @@ void DrawScene::PolygonShaper()
 bool DrawScene::InEditorMenu() const
 {
 	return m_in_editor_menu;
+}
+
+const qr::unordered_map<uint32_t, BlockData>* DrawScene::GetBlocksFromPosition(const Vector3& position) const
+{
+	uint64_t tile_unique_number = GetNumberFromPosition(position);
+	bool has_tile_component = false;
+	if (auto it = m_blocks.find(tile_unique_number); it != m_blocks.end())
+	{
+		return &(it->second);
+	}
+
+	return nullptr;
 }
 
 void DrawScene::SetAddUserPrefab()

@@ -7,13 +7,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Policy;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcCarrier;
 using static ScriptProject.Scripts.Player;
 
 namespace ScriptProject.Scripts
 {
-    internal class OrcEnemy : InteractiveCharacterInterface
+    internal class OrcEnemy : InteractiveCharacterBehaviour
     {
         GameObject player_game_object;
         PathFindingActor actor;
@@ -101,6 +102,7 @@ namespace ScriptProject.Scripts
                 //    GameObject new_game_object = GameObject.CreateGameObject();
                 //    new_game_object.AddComponent<Sprite>();
                 //    PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
+                //    //Console.WriteLine("New Orc: " + new_game_object.GetEntityID());
                 //}
             }
 
@@ -188,6 +190,11 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
             Vector2 player_position = target.transform.GetPosition();
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(Vector2.Angle(player_dir, right_dir)));
@@ -222,19 +229,20 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            float new_velocity_length = new_velocity.Length();
-            if (velocity.Length() <= speed && new_velocity_length != 0.0f)
-                velocity = new_velocity;
-            //else
-            //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity_length == 0.0f && velocity.Length() <= speed)  
-                velocity = new Vector2(0.0f, 0.0f);
-            if (velocity.Length() > speed)
-                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            if (new_velocity_length > 0.0f && velocity.Length() < speed)
-                velocity = velocity.Normalize() * speed;
+            Movement(velocity, new_velocity, speed, drag_speed, body);
+            //float new_velocity_length = new_velocity.Length();
+            //if (velocity.Length() <= speed && new_velocity_length != 0.0f)
+            //    velocity = new_velocity;
+            ////else
+            ////    velocity += new_velocity * Time.GetDeltaTime();
+            //if (new_velocity_length == 0.0f && velocity.Length() <= speed)  
+            //    velocity = new Vector2(0.0f, 0.0f);
+            //if (velocity.Length() > speed)
+            //    velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
+            //if (new_velocity_length > 0.0f && velocity.Length() < speed)
+            //    velocity = velocity.Normalize() * speed;
 
-            body.SetVelocity(velocity);
+            //body.SetVelocity(velocity);
         }
 
         void Death()
@@ -273,6 +281,11 @@ namespace ScriptProject.Scripts
 
         void Attack()
         {
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
             float distance_to_player = (game_object.transform.GetPosition() - target.transform.GetPosition()).Length();
             if (distance_to_player < charge_up_distance)
             {
@@ -366,7 +379,7 @@ namespace ScriptProject.Scripts
             float damage = 20.0f;
             float knockback = 10.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterInterface hit_object_script)
+            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 

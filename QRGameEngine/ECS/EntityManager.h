@@ -15,12 +15,20 @@ struct ComponentPool
 
 	uint16_t component_size;
 	void* free_component_data = nullptr;
+	void* create_component_data = nullptr;
 
 	template <typename Component>
 	static void FreeComponentData(void* component_memory)
 	{
 		Component* component = (Component*)component_memory;
 		component->~Component();
+	}
+
+	template <typename Component>
+	static void CreateComponentData(void* component_memory)
+	{
+		Component* component = (Component*)component_memory;
+		new(component) Component();
 	}
 };
 
@@ -105,6 +113,9 @@ public:
 
 	template <typename Component, typename ...Args>
 	Component& AddComponent(Entity entity, Args&& ...args);
+
+	template <typename ...Args>
+	void AddComponent(const std::string& component_name, Entity entity, Args&& ...args);
 
 	template <typename Component>
 	bool HasComponent(Entity entity);
@@ -261,6 +272,7 @@ inline uint32_t EntityManager::CreateComponentPool()
 	component_pool.component_name = GetComponentNameFromComponent<Component>();
 	component_pool.has_component_entities.resize(m_max_entities, false);
 	component_pool.free_component_data = (void*) (& ComponentPool::FreeComponentData<Component>);
+	component_pool.create_component_data = (void*)(&ComponentPool::CreateComponentData<Component>);
 	component_pool.component_size = sizeof(Component);
 
 	//m_component_pools.push_back(component_pool);
@@ -342,6 +354,26 @@ inline Component& EntityManager::AddComponent(Entity entity, Args&& ...args)
 	Component* new_component = new(component_pool_data + entity * sizeof(Component)) Component(std::forward<Args>(args)...);
 
 	return *new_component;
+}
+
+template<typename ...Args>
+inline void EntityManager::AddComponent(const std::string& component_name, Entity entity, Args&& ...args)
+{
+	assert(EntityExists(entity));
+
+	const uint32_t component_pool_index = m_component_name_to_pool.find(component_name)->second.component_pool_index;
+
+	ComponentPool& component_pool = m_component_pools[component_pool_index];
+
+	assert(!HasComponent(entity, component_pool));
+
+	component_pool.m_component_pool_entities.insert(entity);
+	component_pool.pool_changed = true;
+	SetHasComponent(entity, &component_pool, true);
+
+	char* component_pool_data = (char*)component_pool.component_pool_data;
+	char* component = component_pool_data + entity * component_pool.component_size;
+	((void(*)(void*))(component_pool.create_component_data))(component);
 }
 
 template<typename Component>

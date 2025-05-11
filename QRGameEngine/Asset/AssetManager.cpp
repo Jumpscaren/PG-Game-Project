@@ -9,6 +9,9 @@
 #include "stb_image.h"
 #pragma warning(pop)
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 AssetManager* AssetManager::s_asset_manager = nullptr;
 
 AssetManager::AssetManager()
@@ -55,7 +58,12 @@ void AssetManager::HandleCompletedJobs()
 	m_asset_loading_thread_completed_jobs.clear();
 }
 
-AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, const SceneIndex scene_index, const AssetLoadFlag& asset_load_flag)
+void AssetManager::ExportTextureDataToPNG(TextureInfo* texture_data, const std::string& texture_path)
+{
+	stbi_write_png(texture_path.c_str(), texture_data->width, texture_data->height, texture_data->comp, texture_data->texture_data, texture_data->width * texture_data->comp);
+}
+
+AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, const SceneIndex scene_index, bool asynchronous, const AssetLoadFlag& asset_load_flag)
 {
 	bool texture_exists = false;
 	AssetHandle texture_handle = LoadAssetPath(texture_path, texture_exists);
@@ -83,7 +91,16 @@ AssetHandle AssetManager::LoadTextureAsset(const std::string& texture_path, cons
 
 	if (!texture_exists)
 	{
-		AddAssetLoadingJob(AssetLoadingJob{.asset_info_data = AssetData{.asset_data = nullptr, .asset_type = AssetType::TEXTURE, .asset_path = texture_path, .asset_load_flag = asset_load_flag }, .load_function = &AssetManager::LoadTextureData });
+		if (asynchronous)
+		{
+			AddAssetLoadingJob(AssetLoadingJob{ .asset_info_data = AssetData{.asset_data = nullptr, .asset_type = AssetType::TEXTURE, .asset_path = texture_path, .asset_load_flag = asset_load_flag }, .load_function = &AssetManager::LoadTextureData });
+		}
+		else
+		{
+			AssetData asset{ .asset_data = nullptr, .asset_type = AssetType::TEXTURE, .asset_path = texture_path, .asset_load_flag = asset_load_flag };
+			asset.asset_data = LoadTextureData(asset);
+			m_assets.insert({ texture_handle, asset });
+		}
 	}
 
 	return texture_handle;
@@ -211,10 +228,10 @@ void AssetManager::ThreadLoadAssetLoop()
 
 void AssetManager::DeleteAsset(const AssetHandle asset)
 {
-	EventCore::Get()->SendEvent("DeletedAsset", asset);
-
 	auto it = m_assets.find(asset);
 	assert(m_assets.contains(asset));
+
+	EventCore::Get()->SendEvent("DeletedAsset", asset);
 
 	if (it->second.asset_data && it->second.asset_type == AssetType::TEXTURE)
 	{

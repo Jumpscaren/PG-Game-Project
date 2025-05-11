@@ -31,6 +31,12 @@ DX12Pipeline& DX12Pipeline::AddTopology(const D3D12_PRIMITIVE_TOPOLOGY_TYPE& top
 	return *this;
 }
 
+DX12Pipeline& DX12Pipeline::AddDepthStencil(bool depth_stencil)
+{
+	m_pipeline_info.depth_stencil = depth_stencil;
+	return *this;
+}
+
 void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_signature, const std::wstring& vertex_shader, const std::wstring& pixel_shader)
 {
 	//Create pipeline
@@ -112,8 +118,17 @@ void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_sig
 	stream_output_desc.NumStrides = 0;
 	stream_output_desc.RasterizedStream = 0;
 
-	pipeline_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	pipeline_desc.DepthStencilState = depth_stencil_desc;
+	if (m_pipeline_info.depth_stencil)
+	{
+		pipeline_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		pipeline_desc.DepthStencilState = depth_stencil_desc;
+	}
+	else
+	{
+		pipeline_desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+		pipeline_desc.DepthStencilState = depth_stencil_desc;
+	}
+
 	pipeline_desc.StreamOutput = stream_output_desc;
 	pipeline_desc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 
