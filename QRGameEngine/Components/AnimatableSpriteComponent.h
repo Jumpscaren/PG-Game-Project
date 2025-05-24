@@ -3,6 +3,7 @@
 #include "Scripting/CSMonoObject.h"
 #include "SceneSystem/SceneDefines.h"
 #include "Common/EngineTypes.h"
+#include "Animation/AnimationDefines.h"
 
 struct AnimatableSpriteComponent
 {
@@ -11,9 +12,12 @@ struct AnimatableSpriteComponent
 	uint8_t current_split_index = 0;
 	float time_between_splits;
 	float time_since_last_split = 0.0f;
+	float max_animation_time = 0.0f;
+	float current_animation_time = 0.0f;
 	bool loop = false;
 	uint8_t id = 0;
 	bool finished = false;
+	qr::unordered_map<Entity, std::vector<AnimationKeyFrameId>> key_frames_indicies;
 };
 
 class JsonObject;

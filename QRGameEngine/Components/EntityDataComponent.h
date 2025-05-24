@@ -23,6 +23,6 @@ public:
 	static void RegisterInterface(CSMonoCore* mono_core);
 
 public:
-	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
-	static void LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
+	static void SaveEntityDataComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
+	static void LoadEntityDataComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 };

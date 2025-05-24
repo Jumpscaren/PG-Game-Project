@@ -37,11 +37,6 @@ const Vector2 Vector2::operator-(const Vector2& vector)
 	return Vector2(x - vector.x, y - vector.y);
 }
 
-const Vector2 Vector2::operator*(const Vector2& vector)
-{
-	return Vector2(x * vector.x, y * vector.y);
-}
-
 const Vector2 operator+(const Vector2& vector_1, const Vector2& vector_2)
 {
 	return Vector2(vector_1.x + vector_2.x, vector_1.y + vector_2.y);
@@ -52,14 +47,14 @@ const Vector2 operator-(const Vector2& vector_1, const Vector2& vector_2)
 	return Vector2(vector_1.x - vector_2.x, vector_1.y - vector_2.y);
 }
 
-const Vector2 operator*(const Vector2& vector_1, const Vector2& vector_2)
+const Vector2 operator*(const Vector2& vector_1, float scalar)
 {
-	return Vector2(vector_1.x * vector_2.x, vector_1.y * vector_2.y);
+	return Vector2(vector_1.x * scalar, vector_1.y * scalar);
 }
 
-const Vector2 Vector2::operator*=(const Vector2& vector)
+const Vector2 Vector2::operator*=(float scalar)
 {
-	return Vector2(x * vector.x, y * vector.y);
+	return Vector2(x * scalar, y * scalar);
 }
 
 const Vector2 Vector2::operator*(const float scalar)

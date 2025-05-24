@@ -187,6 +187,7 @@ namespace ScriptProject
             collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             collider.SetRadius(0.49f);
             game_object.AddComponent<OrcEnemy>();
+            game_object.AddComponent<AnimatableSprite>();
         }
 
         static void EmptyCollider(GameObject game_object)
@@ -228,6 +229,7 @@ namespace ScriptProject
             collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             collider.SetRadius(0.49f);
             game_object.AddComponent<OrcCarrier>();
+            game_object.AddComponent<AnimatableSprite>();
         }
 
         static void Finish(GameObject game_object)
@@ -262,6 +264,7 @@ namespace ScriptProject
             collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             collider.SetRadius(0.49f);
             game_object.AddComponent<OrcDistracter>();
+            game_object.AddComponent<AnimatableSprite>();
         }
 
         static void Fireball(GameObject game_object)

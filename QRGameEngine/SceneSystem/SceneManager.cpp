@@ -3,6 +3,7 @@
 #include "ECS/EntityManager.h"
 #include "SceneLoader.h"
 #include "Event/EventCore.h"
+#include "SceneHierarchy.h"
 
 SceneManager* SceneManager::s_singleton;
 
@@ -16,6 +17,7 @@ void SceneManager::DestroyDeferredScenes()
 		m_scenes[scene_index] = nullptr;
 
 		m_free_scene_indicies.push_back(scene_index);
+		SceneHierarchy::Get()->RemoveSceneHierarchy(scene_index);
 	}
 	m_deferred_scene_deletion.clear();
 }
@@ -55,6 +57,7 @@ SceneIndex SceneManager::CreateScene()
 		m_scenes[scene_index] = new Scene(scene_index);
 	}
 
+	SceneHierarchy::Get()->AddSceneHierarchy(scene_index);
 	return scene_index;
 }
 

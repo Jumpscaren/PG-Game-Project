@@ -110,6 +110,7 @@ namespace ScriptProject.Scripts
             {
                 dead = true;
             }
+            AnimationManager.LoadAnimation(game_object, "Animations/HurtTest.anim");
         }
 
         public override void Knockback(Vector2 dir, float knockback)

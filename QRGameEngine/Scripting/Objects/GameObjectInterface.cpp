@@ -88,8 +88,11 @@ CSMonoObject GameObjectInterface::NewGameObjectWithExistingEntity(Entity entity,
 
 void GameObjectInterface::AddEntityData(const CSMonoObject& object)
 {
-    if (!SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->HasComponent<EntityDataComponent>(GetEntityID(object)))
-        SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->AddComponent<EntityDataComponent>(GetEntityID(object));
+    const Entity entity = GetEntityID(object);
+    if (!SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->HasComponent<EntityDataComponent>(entity))
+    {
+        SceneManager::GetSceneManager()->GetEntityManager(GetSceneIndex(object))->AddComponent<EntityDataComponent>(entity);
+    }
 }
 
 void GameObjectInterface::SetName(const CSMonoObject& object, const std::string& name)

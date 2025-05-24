@@ -10,6 +10,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "IO/JsonObject.h"
 #include "Scripting/Objects/Vector2Interface.h"
+#include "Animation/AnimationManager.h"
 
 void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -28,6 +29,11 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetShow>(sprite_class, "SetShow", SpriteComponentInterface::SetShow);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<SpriteComponent>(SaveSpriteComponent, LoadSpriteComponent);
+
+	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_1", SetUV1);
+	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_2", SetUV2);
+	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_3", SetUV3);
+	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_4", SetUV4);
 }
 
 void SpriteComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -199,4 +205,40 @@ void SpriteComponentInterface::LoadTextureToSprite(SceneIndex scene_index, Entit
 	}
 
 	sprite_component.texture_handle = texture_handle;
+}
+
+void SpriteComponentInterface::SetUV1(Entity entity, SceneIndex scene_index, Vector2 uv_1)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(entity);
+	sprite.uv[0] = uv_1;
+}
+
+void SpriteComponentInterface::SetUV2(Entity entity, SceneIndex scene_index, Vector2 uv_2)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(entity);
+	sprite.uv[1] = uv_2;
+}
+
+void SpriteComponentInterface::SetUV3(Entity entity, SceneIndex scene_index, Vector2 uv_3)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(entity);
+	sprite.uv[2] = uv_3;
+}
+
+void SpriteComponentInterface::SetUV4(Entity entity, SceneIndex scene_index, Vector2 uv_4)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(entity);
+	sprite.uv[3] = uv_4;
 }

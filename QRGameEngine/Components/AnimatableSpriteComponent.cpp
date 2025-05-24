@@ -134,4 +134,5 @@ void AnimatableSpriteComponentInterface::LoadAnimatableSpriteComponent(Entity en
 	json_object->LoadData(anim_sprite_component.time_between_splits, "time_between_splits");
 	json_object->LoadData(anim_sprite_component.max_split_index, "max_split_index");
 	json_object->LoadData(anim_sprite_component.loop, "loop");
+	json_object->LoadData(anim_sprite_component.max_animation_time, "AnimationTime");
 }

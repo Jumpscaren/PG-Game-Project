@@ -237,33 +237,10 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 				sprite_data.GPU_texture_view_handle = m_dx12_core.GetTextureManager()->ConvertTextureViewHandleToGPUTextureViewHandle(texture_view);
 			}
 
-			Vector2 uv;
-			if (assamble_render_data_ent_man->HasComponent<AnimatableSpriteComponent>(entity))
-			{
-				AnimatableSpriteComponent& animatable_sprite = assamble_render_data_ent_man->GetComponent<AnimatableSpriteComponent>(entity);
-				uv = animatable_sprite.split_size * animatable_sprite.current_split_index;
-				animatable_sprite.time_since_last_split += (float)Time::GetDeltaTime();
-				if (animatable_sprite.time_between_splits < animatable_sprite.time_since_last_split)
-				{
-					++animatable_sprite.current_split_index;
-					animatable_sprite.time_since_last_split = 0.0f;
-				}
-				if (animatable_sprite.current_split_index >= animatable_sprite.max_split_index)
-				{
-					if (animatable_sprite.loop)
-						animatable_sprite.current_split_index = 0;
-					else
-					{
-						animatable_sprite.current_split_index = animatable_sprite.max_split_index;
-						animatable_sprite.finished = true;
-					}
-				}
-			}
-
-			sprite_data.uv[0] = sprite.uv[sprite.uv_indicies[0]] + uv;
-			sprite_data.uv[1] = sprite.uv[sprite.uv_indicies[1]] + uv;
-			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]] + uv;
-			sprite_data.uv[3] = sprite.uv[sprite.uv_indicies[3]] + uv;
+			sprite_data.uv[0] = sprite.uv[sprite.uv_indicies[0]];
+			sprite_data.uv[1] = sprite.uv[sprite.uv_indicies[1]];
+			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]];
+			sprite_data.uv[3] = sprite.uv[sprite.uv_indicies[3]];
 
 			if (!sprite.show)
 			{

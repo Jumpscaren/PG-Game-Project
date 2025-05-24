@@ -100,6 +100,7 @@ void QREntryPoint::EntryPoint()
 
 	mouse = new Mouse();
 
+	scene_hierarchy = new SceneHierarchy();
 	scene_manager = new SceneManager();
 	scene_loader = new SceneLoader();
 	global_scene = new GlobalScene();
@@ -108,7 +109,6 @@ void QREntryPoint::EntryPoint()
 	render_core = new RenderCore(1280, 720, L"2DRENDERER");
 	//render_core = new RenderCore(480, 360, L"2DRENDERER");
 
-	scene_hierarchy = new SceneHierarchy();
 	animation_manager = new AnimationManager();
 
 	path_finding = new PathFinding();
@@ -304,6 +304,11 @@ void QREntryPoint::RunTime()
 
 		keyboard->UpdateKeys();
 		mouse->UpdateMouseButtons();
+
+#ifndef _EDITOR
+		animation_manager->UpdateAnimations(entman);
+		animation_manager->UpdateAnimations(global_entity_manager);
+#endif // EDITOR
 
 		rendering_timer.StartTimer();
 		window_exist = render_core->UpdateRender(active_scene);

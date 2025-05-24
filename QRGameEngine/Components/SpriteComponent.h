@@ -44,5 +44,11 @@ public:
 	static bool GetFlipY(const CSMonoObject& object);
 	static void SetUV(const CSMonoObject& object, const CSMonoObject& uv_1_position, const CSMonoObject& uv_4_position);
 	static void SetShow(const CSMonoObject& object, const bool show);
+
+private:
+	static void SetUV1(Entity entity, SceneIndex scene_index, Vector2 uv_1);
+	static void SetUV2(Entity entity, SceneIndex scene_index, Vector2 uv_2);
+	static void SetUV3(Entity entity, SceneIndex scene_index, Vector2 uv_3);
+	static void SetUV4(Entity entity, SceneIndex scene_index, Vector2 uv_4);
 };
 

@@ -64,4 +64,5 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	KinematicBodyComponentInterface::RegisterInterface(mono_core);
 	PhysicsInterface::RegisterInterface(mono_core);
 	TileComponentInterface::RegisterInterface(mono_core);
+	ParentComponentInterface::RegisterInterface(mono_core);
 }

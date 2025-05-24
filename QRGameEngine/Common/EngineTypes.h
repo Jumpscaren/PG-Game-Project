@@ -13,9 +13,8 @@ struct Vector2
 	friend const Vector2 operator+ (const Vector2& vector_1, const Vector2& vector_2);
 	const Vector2 operator- (const Vector2& vector);
 	friend const Vector2 operator- (const Vector2& vector_1, const Vector2& vector_2);
-	const Vector2 operator* (const Vector2& vector);
-	friend const Vector2 operator* (const Vector2& vector_1, const Vector2& vector_2);
-	const Vector2 operator*= (const Vector2& vector);
+	friend const Vector2 operator* (const Vector2& vector_1, float scalar);
+	const Vector2 operator*= (const float scalar);
 	const Vector2 operator* (float scalar);
 	const Vector2 operator/ (float scalar);
 

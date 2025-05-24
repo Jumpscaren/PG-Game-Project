@@ -10,6 +10,7 @@
 #include "Scripting/Objects/Vector2Interface.h"
 #include "SceneSystem/SceneLoader.h"
 #include "IO/JsonObject.h"
+#include "Animation/AnimationManager.h"
 
 MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
@@ -129,6 +130,8 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetScale>(transform_class, "GetScale", TransformComponentInterface::GetScale);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<TransformComponent>(SaveTransformComponent, LoadTransformComponent);
+
+	AnimationManager::Get()->SetAnimationValue("TransformComponent", "Scale", SetScaleVec2);
 }
 
 void TransformComponentInterface::AddTransformComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -322,4 +325,26 @@ PositionScaleRotation TransformComponentInterface::GetDataFromWorldMatrix(const 
 	DirectX::XMVECTOR xmScale, rotationQuat, translation;
 	DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, transform.world_matrix);
 	return PositionScaleRotation{.position = translation, .scale = xmScale, .rotation = MathHelp::ToEulerAngles(rotationQuat)};
+}
+
+void TransformComponentInterface::SetScaleVec2(Entity entity, SceneIndex scene_index, Vector2 scale)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	if (entity_manager->HasComponent<ParentComponent>(entity))
+	{
+		ParentComponent& parent = entity_manager->GetComponent<ParentComponent>(entity);
+		Vector3 old_scale = parent.GetScale();
+		old_scale.x = scale.x;
+		old_scale.y = scale.y;
+		parent.SetScale(old_scale);
+		return;
+	}
+
+	TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
+	Vector3 old_scale = transform.GetScale();
+	old_scale.x = scale.x;
+	old_scale.y = scale.y;
+	transform.SetScale(old_scale);
 }

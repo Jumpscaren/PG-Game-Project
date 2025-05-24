@@ -60,5 +60,8 @@ public:
 
 public:
 	static PositionScaleRotation GetDataFromWorldMatrix(const TransformComponent& transform);
+
+private:
+	static void SetScaleVec2(Entity entity, SceneIndex scene_index, Vector2 scale);
 };
 

@@ -33,7 +33,7 @@ void SceneLoader::LoadTexturePaths(OutputFile* save_file, uint32_t number_of_tex
 	}
 }
 
-void SceneLoader::LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity entity)
+Entity SceneLoader::LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity entity)
 {
 	uint32_t component_list_size = save_file->Read<uint32_t>();
 	std::vector<std::string> component_names;
@@ -58,6 +58,14 @@ void SceneLoader::LoadComponents(OutputFile* save_file, EntityManager* entity_ma
 			LoadComponent(&component, component_names[i], entity, entity_manager);
 		}
 	}
+
+	Entity saved_entity = NULL_ENTITY;
+	if (components_json.ObjectExist("Entity"))
+	{
+		components_json.LoadData(saved_entity, "Entity");
+	}
+
+	return saved_entity;
 }
 
 SceneLoader::SceneLoader()
@@ -148,6 +156,7 @@ void SceneLoader::SaveScene(qr::unordered_map<uint64_t, qr::unordered_map<uint32
 
 			save_file.Write((uint32_t)component_name_list.size());
 			JsonObject json_object;
+			json_object.SetData(block_it->second.block_entity, "Entity");
 
 			for (int i = 0; i < component_name_list.size(); ++i)
 			{
@@ -191,6 +200,7 @@ qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> SceneLoader:
 
 	LoadTexturePaths(&save_file, number_texture_paths, scene_manager->GetActiveSceneIndex());
 
+	qr::unordered_map<Entity, Entity> new_entity_to_saved_entity_map;
 	std::string prefab_name;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
@@ -218,7 +228,9 @@ qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> SceneLoader:
 
 			InstancePrefab(game_object, prefab_name);
 
-			LoadComponents(&save_file, entity_manager, new_block);
+			const Entity saved_entity = LoadComponents(&save_file, entity_manager, new_block);
+
+			new_entity_to_saved_entity_map.insert({ new_block, saved_entity });
 		}
 
 		blocks.insert({ unique_number , layer_block_map });

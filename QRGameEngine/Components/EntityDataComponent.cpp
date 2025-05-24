@@ -6,10 +6,10 @@
 
 void EntityDataComponentInterface::RegisterInterface(CSMonoCore*)
 {
-	SceneLoader::Get()->OverrideSaveComponentMethod<EntityDataComponent>(SaveScriptComponent, LoadScriptComponent);
+	SceneLoader::Get()->OverrideSaveComponentMethod<EntityDataComponent>(SaveEntityDataComponent, LoadEntityDataComponent);
 }
 
-void EntityDataComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
+void EntityDataComponentInterface::SaveEntityDataComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	const EntityDataComponent& entity_data = entman->GetComponent<EntityDataComponent>(ent);
 	json_object->SetData(entity_data.entity_name, "entity_name");
@@ -17,7 +17,7 @@ void EntityDataComponentInterface::SaveScriptComponent(Entity ent, EntityManager
 	json_object->SetData(entity_data.entity_layer, "entity_layer");
 }
 
-void EntityDataComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
+void EntityDataComponentInterface::LoadEntityDataComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	EntityDataComponent& entity_data = entman->GetComponent<EntityDataComponent>(ent);
 	json_object->LoadData(entity_data.entity_name, "entity_name");
