@@ -8,7 +8,26 @@
 
 class PathFinding
 {
+public:
+	using SubNodeIndex = uint8_t;
+
+	struct SubNodePath
+	{
+		Entity node_entity;
+		SubNodeIndex sub_node_index;
+	};
+
 private:
+
+	struct Node;
+
+	struct SubNode {
+		Entity parent_node;
+		SubNodeIndex sub_node;
+
+		std::vector<SubNodePath> neighbors;
+	};
+
 	struct Node {
 		Entity entity;
 		std::vector<Entity> neighbors;
@@ -16,7 +35,16 @@ private:
 		Vector2 position;
 		PathFindingWorldComponent layer;
 
-		Node(const Entity entity, const PathFindingWorldComponent& layer, const Vector2& position) : entity(entity), position(position), layer(layer) { }
+		std::vector<SubNode> sub_nodes;
+
+		Node(const Entity entity, const PathFindingWorldComponent& layer, const Vector2& position) : entity(entity), position(position), layer(layer) 
+		{
+			for (const auto& sub_node_index : std::views::iota(0, 4))
+			{
+				sub_nodes.push_back(SubNode{.parent_node = entity, .sub_node = (SubNodeIndex)sub_node_index });
+			}
+			/*sub_nodes.insert_range(sub_nodes.begin(), std::views::iota(0, 4));*/
+		}
 	};
 
 	struct PathFindData
@@ -44,6 +72,7 @@ private:
 
 private:
 	void AStarPathfinding(const PathFindData& path_find_data, std::vector<Entity>& path);
+	void AStarPathfindingSub(const PathFindData& path_find_data, std::vector<SubNodePath>& path);
 	uint64_t PositionToNodeIndex(const Vector2& position) const;
 	float Heuristic(const Node& neighbor_node, const Node& goal_node);
 	void ConstructPath(const qr::unordered_map<Entity, Entity>& came_from, Entity current, std::vector<Entity>& path);
@@ -57,6 +86,8 @@ private:
 
 	Node* AddNeighbor(Node& node, const Vector2& neighbor_position);
 	void RemoveImpossibleCornerPaths(Node& node, EntityManager* entity_manager);
+
+	void ConstructSubNodeNeighbors(SubNode& sub_node, EntityManager* entity_manager);
 
 public:
 	static constexpr float LENGTH_BETWEEN_NODES = 1.0f;

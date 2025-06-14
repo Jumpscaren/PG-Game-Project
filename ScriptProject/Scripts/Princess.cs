@@ -20,6 +20,8 @@ namespace ScriptProject.Scripts
         Vector2 random_direction;
         RandomGenerator random_generator = new RandomGenerator();
 
+        GameObject sprite_game_object;
+
         bool follow_player = false;
         DynamicBody player_body;
         GameObject player;
@@ -50,6 +52,13 @@ namespace ScriptProject.Scripts
             player = GameObject.TempFindGameObject("Player");
             player_body = player.GetComponent<DynamicBody>();
             player_script = player.GetComponent<Player>();
+
+            sprite_game_object = GameObject.CreateGameObject();
+            sprite = sprite_game_object.AddComponent<Sprite>();
+            sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
+            game_object.RemoveComponent<Sprite>();
+            game_object.transform.SetZIndex(0);
+            game_object.AddChild(sprite_game_object);
 
             rescue_timer.SetTimeLimit(rescue_time);
         }
@@ -171,6 +180,7 @@ namespace ScriptProject.Scripts
                 event_data.orc_to_target = hit_object.GetParent().GetParent();
                 EventSystem.SendEvent("OrcAngry", event_data);
             }
+            AnimationManager.LoadAnimation(game_object, "Animations/HurtTest.anim");
         }
 
         public override void Knockback(Vector2 dir, float knockback)

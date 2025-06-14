@@ -125,6 +125,7 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalPosition>(transform_class, "GetLocalPosition", TransformComponentInterface::GetLocalPosition);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalRotation>(transform_class, "SetLocalRotation_Extern", TransformComponentInterface::SetLocalRotation);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetLocalRotation>(transform_class, "GetLocalRotation_Extern", TransformComponentInterface::GetLocalRotation);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalZIndex>(transform_class, "SetLocalZIndex", TransformComponentInterface::SetLocalZIndex);
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetScale>(transform_class, "SetScale", TransformComponentInterface::SetScale);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetScale>(transform_class, "GetScale", TransformComponentInterface::GetScale);
@@ -289,6 +290,23 @@ float TransformComponentInterface::GetLocalRotation(const SceneIndex scene_index
 		return entity_manager->GetComponent<ParentComponent>(entity).GetRotationEuler().z;
 	}
 	return entity_manager->GetComponent<TransformComponent>(entity).GetRotationEuler().z;
+}
+
+void TransformComponentInterface::SetLocalZIndex(const CSMonoObject& object, float z_index)
+{
+	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
+	if (entity_manager->HasComponent<ParentComponent>(entity))
+	{
+		ParentComponent& local_transform = entity_manager->GetComponent<ParentComponent>(entity);
+		local_transform.SetPositionZ(z_index);
+		return;
+	}
+	TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
+	transform.SetPositionZ(z_index);
 }
 
 void TransformComponentInterface::SetScale(const CSMonoObject& cs_transform, const CSMonoObject& scale)

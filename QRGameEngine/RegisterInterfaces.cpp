@@ -29,6 +29,7 @@
 #include "Components/KinematicBodyComponent.h"
 #include "Scripting/Objects/PhysicsInterface.h"
 #include "Components/TileComponent.h"
+#include "Scripting/Objects/TextureInterface.h"
 
 void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 {
@@ -65,4 +66,5 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	PhysicsInterface::RegisterInterface(mono_core);
 	TileComponentInterface::RegisterInterface(mono_core);
 	ParentComponentInterface::RegisterInterface(mono_core);
+	TextureInterface::RegisterInterface(mono_core);
 }

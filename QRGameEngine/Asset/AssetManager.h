@@ -43,8 +43,14 @@ private:
 		std::function<void* (const AssetData&)> load_function;
 	};
 
+	struct LoadedAssetsInformation
+	{
+		AssetHandle asset_handle;
+		std::string asset_path;
+	};
+
 private:
-	qr::unordered_map<uint64_t, AssetHandle> m_loaded_assets;
+	qr::unordered_map<uint64_t, LoadedAssetsInformation> m_loaded_assets;
 
 	qr::unordered_map<AssetHandle, AssetData> m_assets;
 
@@ -64,10 +70,13 @@ private:
 	std::vector<AssetData> m_asset_loading_thread_completed_jobs;
 	bool m_terminate_loading_thread = false;
 
+	qr::unordered_set<uint64_t> m_ordered_to_be_removed_assets;
+
 private:
 	AssetHandle LoadAssetPath(const std::string& asset_path, bool& asset_existing);
 
 	static void* LoadTextureData(const AssetData& asset_data);
+	void DeleteAssetData(void* asset_data, const AssetType asset_type);
 
 	void AddAssetLoadingJob(const AssetLoadingJob& job);
 	void ThreadLoadAssetLoop();

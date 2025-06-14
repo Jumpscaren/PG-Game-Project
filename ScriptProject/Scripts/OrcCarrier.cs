@@ -26,6 +26,8 @@ namespace ScriptProject.Scripts
 
         StaticBody hit_box_body;
 
+        GameObject sprite_game_object;
+
         float charge_up = 0.0f;
         bool charged_up = false;
         const float charge_up_distance = 4.0f;
@@ -88,6 +90,15 @@ namespace ScriptProject.Scripts
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
             max_speed += random_generator.RandomFloat(-0.3f, 0.3f);
+
+            sprite_game_object = GameObject.CreateGameObject();
+            sprite = sprite_game_object.AddComponent<Sprite>();
+            sprite_game_object.AddComponent<AnimatableSprite>();
+            AnimationManager.LoadAnimation(sprite_game_object, "Animations/OrcCarrierRun.anim");
+            sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
+            game_object.RemoveComponent<Sprite>();
+            game_object.transform.SetZIndex(0);
+            game_object.AddChild(sprite_game_object);
 
             CreateHitBox();
 
@@ -468,14 +479,14 @@ namespace ScriptProject.Scripts
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
+                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
+
                 hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
-
-                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

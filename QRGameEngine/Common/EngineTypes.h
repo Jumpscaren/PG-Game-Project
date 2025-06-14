@@ -21,6 +21,7 @@ struct Vector2
 	Vector2 Normalize() const;
 	const float Length() const;
 	static float Cross(const Vector2& a, const Vector2& b);
+	static float Dot(const Vector2& a, const Vector2& b);
 };
 
 struct Vector2i
@@ -50,6 +51,8 @@ struct Vector3
 	friend const Vector3 operator+ (const Vector3& vector_1, const Vector3& vector_2);
 	const Vector3 operator- (const Vector3& vector);
 	friend const Vector3 operator- (const Vector3& vector_1, const Vector3& vector_2);
+	friend const Vector3 operator* (const Vector3& vector_1, float scalar);
+	const Vector3 operator*= (const float scalar);
 	const Vector3 operator* (float scalar);
 
 	Vector3 Normalize() const;

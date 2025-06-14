@@ -15,7 +15,14 @@ namespace ScriptProject.Scripts
 
         public bool IsEffectOver() { return effect == null || (effect != null && effect.IsEffectOver()); }
 
-        public void SetEffect(Effect effect) { this.effect = effect; }
+        public virtual bool ShouldEffectBeSet(Effect effect) { return true; }
+
+        public void SetEffect(Effect effect) {
+            if (ShouldEffectBeSet(effect))
+            {
+                this.effect = effect;
+            }
+        }
 
         public Effect GetEffect() { return effect; }
 

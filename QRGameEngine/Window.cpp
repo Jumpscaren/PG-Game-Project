@@ -78,6 +78,7 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 	case WM_KEYDOWN:
 	{
 		HandleInputs(wParam, true);
+		//std::cout << "Key Number: " << (uint32_t)(wParam) << std::endl;
 		Keyboard::Get()->KeyDown((Keyboard::Key)(uint8_t)(wParam));
 	} break;
 

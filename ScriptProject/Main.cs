@@ -156,9 +156,12 @@ namespace ScriptProject
             game_object.SetName("Princess");
             Render.LoadTexture("../QRGameEngine/Textures/Princess.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            game_object.AddComponent<CircleCollider>().SetColliderFilter(UserCollisionCategories.PrincessCharacter, UserCollisionCategories.FilterForPrincess, 0);
+            CircleCollider circle_collider = game_object.AddComponent<CircleCollider>();
+            circle_collider.SetColliderFilter(UserCollisionCategories.PrincessCharacter, UserCollisionCategories.FilterForPrincess, 0);
+            circle_collider.SetRadius(0.49f);
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<Princess>();
+            game_object.AddComponent<AnimatableSprite>();
         }
 
         static void BouncePrefab(GameObject game_object)
@@ -312,6 +315,10 @@ namespace ScriptProject
         {
             Render.LoadTexture("../QRGameEngine/Textures/Fence.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<Spawner>();
+
+            game_object.AddComponent<DynamicBody>();
+            var collider = game_object.AddComponent<BoxCollider>();
+            collider.SetTrigger(true);
         }
     }
 }

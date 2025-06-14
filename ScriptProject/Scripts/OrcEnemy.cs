@@ -28,6 +28,8 @@ namespace ScriptProject.Scripts
 
         StaticBody hit_box_body;
 
+        GameObject sprite_game_object;
+
         float charge_up = 0.0f;
         bool charged_up = false;
         const float charge_up_distance = 4.0f;
@@ -76,7 +78,13 @@ namespace ScriptProject.Scripts
             actor = game_object.GetComponent<PathFindingActor>();
             transform = game_object.transform;
             body = game_object.GetComponent<DynamicBody>();
-            sprite = game_object.GetComponent<Sprite>();
+
+            sprite_game_object = GameObject.CreateGameObject();
+            sprite = sprite_game_object.AddComponent<Sprite>();
+            sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
+            game_object.RemoveComponent<Sprite>();
+            game_object.transform.SetZIndex(0);
+            game_object.AddChild(sprite_game_object);
 
             max_speed += random_generator.RandomFloat(-0.3f, 0.3f);
 

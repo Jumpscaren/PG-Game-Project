@@ -85,6 +85,11 @@ float Vector2::Cross(const Vector2& a, const Vector2& b)
 	return a.x*b.y - b.x*a.y;
 }
 
+float Vector2::Dot(const Vector2& a, const Vector2& b)
+{
+	return a.x * b.x + a.y * b.y;
+}
+
 Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z)
 {
 	
@@ -131,6 +136,16 @@ const Vector3 operator+(const Vector3& vector_1, const Vector3& vector_2)
 const Vector3 operator-(const Vector3& vector_1, const Vector3& vector_2)
 {
 	return Vector3(vector_1.x - vector_2.x, vector_1.y - vector_2.y, vector_1.z - vector_2.z);
+}
+
+const Vector3 operator*(const Vector3& vector_1, float scalar)
+{
+	return Vector3(vector_1.x * scalar, vector_1.y * scalar, vector_1.z * scalar);
+}
+
+const Vector3 Vector3::operator*=(const float scalar)
+{
+	return Vector3(x * scalar, y * scalar, z * scalar);
 }
 
 const Vector3 Vector3::operator*(float scalar)

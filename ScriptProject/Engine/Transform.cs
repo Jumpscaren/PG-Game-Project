@@ -18,9 +18,6 @@ namespace ScriptProject.Engine
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static private extern void SetPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y);
 
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        static private extern void SetLocalPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y);
-
         public void SetPosition(Vector2 position)
         {
             cached_position.CacheData(position);
@@ -38,6 +35,14 @@ namespace ScriptProject.Engine
             }
 
             return cached_position.GetData();
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern void SetLocalPosition_Extern(UInt32 scene_index, UInt32 entity, float x, float y);
+
+        public void SetLocalPosition(Vector2 position)
+        {
+            SetLocalPosition_Extern(game_object.GetSceneIndex(), game_object.GetEntityID(), position.x, position.y);
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -76,6 +81,9 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetZIndex(float z_index);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetLocalZIndex(float z_index);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern float GetZIndex();

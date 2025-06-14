@@ -53,6 +53,8 @@ private:
 	static AnimationValueType GetValueType<bool>() { return AnimationValueType::Bool; }
 	template <>
 	static AnimationValueType GetValueType<Vector2>() { return AnimationValueType::Vector2; }
+	template <>
+	static AnimationValueType GetValueType<Vector3>() { return AnimationValueType::Vector3; }
 
 public:
 	AnimationManager();

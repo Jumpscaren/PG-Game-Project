@@ -13,6 +13,7 @@ enum class AnimationValueType
 	Int,
 	Bool,
 	Vector2,
+	Vector3,
 	None,
 };
 
@@ -48,6 +49,7 @@ struct ValueStorage
 	std::vector<bool> animation_value_bool_storage;
 	std::vector<int> animation_value_int_storage;
 	std::vector<Vector2> animation_value_vector2_storage;
+	std::vector<Vector3> animation_value_vector3_storage;
 };
 
 struct AnimationValueSetterStorage

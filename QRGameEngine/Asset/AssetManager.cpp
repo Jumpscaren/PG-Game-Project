@@ -122,11 +122,22 @@ TextureInfo* AssetManager::GetTextureData(const AssetHandle& texture_handle)
 
 std::string AssetManager::GetAssetPath(const AssetHandle& asset_handle)
 {
-	assert(m_assets.contains(asset_handle));
+	if (m_assets.contains(asset_handle))
+	{
+		const auto asset_data = m_assets.find(asset_handle);
+		return asset_data->second.asset_path;
+	}
 
-	const auto asset_data = m_assets.find(asset_handle);
+	for (const LoadedAssetsInformation& loaded_asset_information : m_loaded_assets | std::views::values)
+	{
+		if (loaded_asset_information.asset_handle == asset_handle)
+		{
+			return loaded_asset_information.asset_path;
+		}
+	}
 
-	return asset_data->second.asset_path;
+	assert(false && "AssetHandle not found in AssetManager");
+	return "";
 }
 
 const AssetManager::AssetLoadFlag& AssetManager::GetAssetLoadFlag(AssetHandle asset_handle)
@@ -162,19 +173,24 @@ bool AssetManager::IsAssetLoaded(AssetHandle asset_handle)
 
 AssetHandle AssetManager::LoadAssetPath(const std::string& asset_path, bool& asset_existing)
 {
-	uint64_t asset_path_hash = std::hash<std::string>{}(asset_path);
+	const uint64_t asset_path_hash = std::hash<std::string>{}(asset_path);
 
 	if (m_loaded_assets.contains(asset_path_hash))
 	{
 		asset_existing = true;
-		return m_loaded_assets.find(asset_path_hash)->second;
+		return m_loaded_assets.find(asset_path_hash)->second.asset_handle;
 	}
 
 	AssetHandle new_asset_handle = m_asset_count++;
 
-	m_loaded_assets.insert({ asset_path_hash, new_asset_handle });
+	m_loaded_assets.insert({ asset_path_hash, LoadedAssetsInformation{ .asset_handle = new_asset_handle, .asset_path = asset_path } });
 
 	asset_existing = false;
+
+	if (m_ordered_to_be_removed_assets.contains(asset_path_hash))
+	{
+		m_ordered_to_be_removed_assets.erase(asset_path_hash);
+	}
 
 	return new_asset_handle;
 }
@@ -226,26 +242,45 @@ void AssetManager::ThreadLoadAssetLoop()
 	}
 }
 
-void AssetManager::DeleteAsset(const AssetHandle asset)
+void AssetManager::DeleteAssetData(void* asset_data, const AssetType asset_type)
 {
-	auto it = m_assets.find(asset);
-	assert(m_assets.contains(asset));
-
-	EventCore::Get()->SendEvent("DeletedAsset", asset);
-
-	if (it->second.asset_data && it->second.asset_type == AssetType::TEXTURE)
+	if (asset_data && asset_type == AssetType::TEXTURE)
 	{
-		TextureInfo* texture_info = (TextureInfo*)it->second.asset_data;
+		TextureInfo* texture_info = (TextureInfo*)asset_data;
+
 		if (texture_info->texture_data)
 		{
 			free(texture_info->texture_data);
 		}
 		delete texture_info;
 	}
+}
 
-	uint64_t hashed_path = std::hash<std::string>{}(it->second.asset_path);
-	m_loaded_assets.erase(hashed_path);
-	m_assets.erase(it);
+void AssetManager::DeleteAsset(const AssetHandle asset)
+{
+	auto it = m_assets.find(asset);
+	const bool asset_is_loaded = it != m_assets.end();
+	auto loaded_it = std::find_if(m_loaded_assets.begin(), m_loaded_assets.end(), [asset](const auto& loaded_asset) { return loaded_asset.second.asset_handle == asset; });
+	const bool asset_is_waiting_to_be_completed = loaded_it != m_loaded_assets.end();
+	assert(asset_is_loaded && asset_is_waiting_to_be_completed);
+
+	EventCore::Get()->SendEvent("DeletedAsset", asset);
+
+	if (asset_is_loaded)
+	{
+		DeleteAssetData(it->second.asset_data, it->second.asset_type);
+		m_assets.erase(it);
+	}
+	else
+	{
+		const uint64_t hashed_path = std::hash<std::string>{}(loaded_it->second.asset_path);
+		assert(!m_ordered_to_be_removed_assets.contains(hashed_path));
+		m_ordered_to_be_removed_assets.insert(hashed_path);
+	}
+	if (asset_is_waiting_to_be_completed)
+	{
+		m_loaded_assets.erase(loaded_it);
+	}
 }
 
 void AssetManager::HandleDeletedScene(const SceneIndex scene_index)

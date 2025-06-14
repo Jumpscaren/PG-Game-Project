@@ -11,6 +11,7 @@
 #include "IO/JsonObject.h"
 #include "Scripting/Objects/Vector2Interface.h"
 #include "Animation/AnimationManager.h"
+#include "Scripting/Objects/TextureInterface.h"
 
 void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {
@@ -21,6 +22,7 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::RemoveComponent>(sprite_class, "RemoveComponent", SpriteComponentInterface::RemoveComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetTexture>(sprite_class, "SetTexture", SpriteComponentInterface::SetTexture);
+	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::GetTexture>(sprite_class, "GetTexture", SpriteComponentInterface::GetTexture);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::FlipX>(sprite_class, "FlipX", SpriteComponentInterface::FlipX);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::FlipY>(sprite_class, "FlipY", SpriteComponentInterface::FlipY);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::GetFlipX>(sprite_class, "GetFlipX", SpriteComponentInterface::GetFlipX);
@@ -34,6 +36,7 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_2", SetUV2);
 	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_3", SetUV3);
 	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_4", SetUV4);
+	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "AddativeColor", SetAddativeColor);
 }
 
 void SpriteComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -64,6 +67,18 @@ void SpriteComponentInterface::SetTexture(const CSMonoObject& object, const CSMo
 	SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
 
 	SpriteComponentInterface::LoadTextureToSprite(scene_index, entity, sprite_component, texture_handle);
+}
+
+CSMonoObject SpriteComponentInterface::GetTexture(const CSMonoObject& object)
+{
+	CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+
+	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	const SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
+
+	return TextureInterface::CreateTexture(sprite_component.texture_handle);
 }
 
 void SpriteComponentInterface::FlipX(const CSMonoObject& object, bool flip_x)
@@ -166,6 +181,7 @@ void SpriteComponentInterface::SaveSpriteComponent(const Entity ent, EntityManag
 	json_object->SetData(sprite_component.uv_indicies[3], "uv_index_4");
 	json_object->SetData(sprite_component.flip_x, "flip_x");
 	json_object->SetData(sprite_component.flip_y, "flip_y");
+	json_object->SetData(sprite_component.addative_color, "addative_color");
 }
 
 void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManager* entman, JsonObject* json_object)
@@ -189,6 +205,7 @@ void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManag
 	}
 	json_object->LoadData(sprite_component.flip_x, "flip_x");
 	json_object->LoadData(sprite_component.flip_y, "flip_y");
+	json_object->LoadData(sprite_component.addative_color, "addative_color");
 
 	if (!SceneLoader::Get()->HasRenderTexture(sprite_component.texture_handle))
 		return;
@@ -241,4 +258,13 @@ void SpriteComponentInterface::SetUV4(Entity entity, SceneIndex scene_index, Vec
 
 	SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(entity);
 	sprite.uv[3] = uv_4;
+}
+
+void SpriteComponentInterface::SetAddativeColor(Entity entity, SceneIndex scene_index, Vector3 addative_color)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(entity);
+	sprite.addative_color = addative_color;
 }

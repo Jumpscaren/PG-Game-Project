@@ -2,7 +2,7 @@ struct Sprite
 {
 	uint index;
 	float2 uv[4];
-	float pad[3];
+	float3 addative_color;
 };
 
 struct VS_OUT
@@ -25,9 +25,13 @@ float4 main(VS_OUT input) : SV_TARGET
 	StructuredBuffer<Sprite> sprite_data = ResourceDescriptorHeap[sprite_buffer_index.index];
 
 	Texture2D colour_texture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
+	
+    float3 addative_color = sprite_data[input.instance_id].addative_color;
 
     //float alpha = colour_texture.Sample(standard_sampler, input.uv).w;
     //return float4(alpha, alpha, alpha, alpha);
 	
-    return colour_texture.Sample(standard_sampler, input.uv);
+    float4 colour = colour_texture.Sample(standard_sampler, input.uv);
+	
+    return float4(colour.xyz + addative_color, colour.w);
 }

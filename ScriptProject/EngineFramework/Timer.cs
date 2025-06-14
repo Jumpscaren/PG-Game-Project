@@ -12,6 +12,13 @@ namespace ScriptProject.EngineFramework
         float timer = 0.0f;
         float time_limit = 0.0f;
 
+        public Timer() { }
+
+        public Timer(float in_time_limit)
+        {
+            SetTimeLimit(in_time_limit);
+        }
+
         public void SetTimeLimit(float in_time_limit)
         {
             time_limit = in_time_limit;

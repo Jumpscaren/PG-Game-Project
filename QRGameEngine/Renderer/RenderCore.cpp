@@ -241,6 +241,8 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			sprite_data.uv[1] = sprite.uv[sprite.uv_indicies[1]];
 			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]];
 			sprite_data.uv[3] = sprite.uv[sprite.uv_indicies[3]];
+			
+			sprite_data.addative_color = sprite.addative_color;
 
 			if (!sprite.show)
 			{

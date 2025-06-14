@@ -24,7 +24,7 @@ private:
 	{
 		uint32_t GPU_texture_view_handle;
 		Vector2 uv[4];
-		float pad[3];
+		Vector3 addative_color;
 	};
 
 	using WorldMatrixData = DirectX::XMMATRIX;

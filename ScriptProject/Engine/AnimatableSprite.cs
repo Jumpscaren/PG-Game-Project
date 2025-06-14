@@ -20,19 +20,13 @@ namespace ScriptProject.Engine
         public override extern void RemoveComponent(uint scene_index, uint entity);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetSplitSize(Vector2 split_size);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetMaxSplits(UInt32 max_splits);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void SetTimeBetweenSplits(float time_between_splits);
-
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetLoop(bool loop);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetId(UInt32 id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetAnimationSpeed(float speed);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void ResetAnimation();

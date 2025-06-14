@@ -16,9 +16,8 @@ namespace ScriptProject.Scripts
         {
             player_game_object = GameObject.TempFindGameObject("Player");
             Console.WriteLine("Player Name = " + player_game_object.GetName());
-            game_object.transform.SetZIndex(20);
-            game_object.transform.SetPosition(new Vector2(0, 0));
-            player_game_object.AddChild(game_object);
+            game_object.transform.SetLocalZIndex(20);
+            game_object.transform.SetLocalPosition(new Vector2(0, 0));
 
             game_object.RemoveComponent<Sprite>();
         }

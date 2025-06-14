@@ -93,13 +93,17 @@ bool AnimatorHandler::AnimationTool()
 	}
 	if (animationUIData.save_animation_pressed)
 	{
-		//AnimationManager::Get()->SaveAnimation(SceneManager::GetActiveSceneIndex(), m_animation_base_entity, fixed_animation_file_name);
 		SaveAnimation(folder_path, fixed_animation_file_name);
 		return true;
 	}
 	if (animationUIData.load_animation_pressed)
 	{
 		LoadAnimation(folder_path, fixed_animation_file_name);
+		return true;
+	}
+
+	if (m_timeline_pause)
+	{
 		return true;
 	}
 
@@ -148,7 +152,7 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 {
 	if (m_timeline_play)
 	{
-		m_timeline_time += Time::GetDeltaTime();
+		m_timeline_time += (float)Time::GetDeltaTime();
 	}
 	if (m_timeline_time > m_animation_max_time && m_timeline_loop)
 	{
@@ -193,7 +197,12 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 		save_animation_pressed = ImGui::Button("Save Animation");
 		load_animation_pressed = ImGui::Button("Load Animation");
 		ImGui::InputText("Texture Name", (char*)m_animation_texture_name.c_str(), m_animation_texture_name.size());
+		const std::size_t texture_name_size = m_animation_texture_name.size();
+		m_animation_texture_name.resize(texture_name_size);
 		m_animation_texture_name.resize(50);
+		/*m_animation_texture_name.replace(texture_name_size, 0, 50 - texture_name_size, '\0');*/
+		//std::string::replace(m_animation_texture_name.begin()+m_animation_texture_name.size(), m_animation_texture_name.begin()+50, '\0');
+
 		ImGui::SameLine();
 		texture_pressed = ImGui::Button("Load Texture");
 		ImGui::InputFloat("uv_1.x", (float*)&uv_1.x);
@@ -242,9 +251,9 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 
 				for (int i = 0; i < m_max_split_index; ++i)
 				{
-					const AnimationValueDataId uv_value_data_id = m_animation_value_storage.animation_value_vector2_storage.size();
+					const AnimationValueDataId uv_value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_vector2_storage.size();
 
-					const Vector2 uv_value = uv_position + m_split_size * i;
+					const Vector2 uv_value = uv_position + m_split_size * (float)i;
 
 					m_animation_value_storage.animation_value_vector2_storage.push_back(uv_value);
 					uv_section->animation_key_frames.push_back(AnimationKeyFrame{ .timestamp = i * m_time_between_splits, .value_interpolation = AnimationValueInterpolation::Step, .value_data_id = uv_value_data_id });
@@ -304,6 +313,8 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 		ImGui::Checkbox("Loop", &m_timeline_loop);
 		ImGui::SameLine();
 		ImGui::Checkbox("Play", &m_timeline_play);
+		ImGui::SameLine();
+		ImGui::Checkbox("Pause", &m_timeline_pause);
 		ImGui::NewLine();
 
 		ImGui::SliderFloat("Max Animation Time", &m_animation_max_time, 0.0f, 100.0f);
@@ -571,6 +582,11 @@ void AnimatorHandler::ManageKeyFrames()
 		ImGui::InputFloat("Value X", &m_value_vector2.x);
 		ImGui::InputFloat("Value Y", &m_value_vector2.y);
 		break;
+	case AnimationValueType::Vector3:
+		ImGui::InputFloat("Value X", &m_value_vector3.x);
+		ImGui::InputFloat("Value Y", &m_value_vector3.y);
+		ImGui::InputFloat("Value Z", &m_value_vector3.z);
+		break;
 	}
 
 	const auto get_value_interpolation_name = [](const AnimationValueInterpolation interpolation) -> std::string {
@@ -610,23 +626,28 @@ void AnimatorHandler::ManageKeyFrames()
 		AnimationValueDataId value_data_id{ 0 };
 		if (value.value_type == AnimationValueType::Float)
 		{
-			value_data_id = m_animation_value_storage.animation_value_float_storage.size();
+			value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_float_storage.size();
 			m_animation_value_storage.animation_value_float_storage.push_back(m_value_float);
 		}
 		else if (value.value_type == AnimationValueType::Bool)
 		{
-			value_data_id = m_animation_value_storage.animation_value_bool_storage.size();
+			value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_bool_storage.size();
 			m_animation_value_storage.animation_value_bool_storage.push_back(m_value_bool);
 		}
 		else if (value.value_type == AnimationValueType::Int)
 		{
-			value_data_id = m_animation_value_storage.animation_value_int_storage.size();
+			value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_int_storage.size();
 			m_animation_value_storage.animation_value_int_storage.push_back(m_value_int);
 		}
 		else if (value.value_type == AnimationValueType::Vector2)
 		{
-			value_data_id = m_animation_value_storage.animation_value_vector2_storage.size();
+			value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_vector2_storage.size();
 			m_animation_value_storage.animation_value_vector2_storage.push_back(m_value_vector2);
+		}
+		else if (value.value_type == AnimationValueType::Vector3)
+		{
+			value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_vector3_storage.size();
+			m_animation_value_storage.animation_value_vector3_storage.push_back(m_value_vector3);
 		}
 
 		AnimationValueSection* section;
@@ -682,6 +703,10 @@ void AnimatorHandler::ManageKeyFrames()
 		{
 			m_animation_value_storage.animation_value_vector2_storage[key_frame.value_data_id] = m_value_vector2;
 		}
+		else if (value.value_type == AnimationValueType::Vector3)
+		{
+			m_animation_value_storage.animation_value_vector3_storage[key_frame.value_data_id] = m_value_vector3;
+		}
 
 		const AnimationValueDataId old_key_frame_value_data_id = key_frame.value_data_id;
 		key_frame = AnimationKeyFrame{ .timestamp = m_key_frame_time, .value_interpolation = AnimationValueInterpolation::Linear , .value_data_id = old_key_frame_value_data_id };
@@ -689,7 +714,7 @@ void AnimatorHandler::ManageKeyFrames()
 		std::ranges::sort(section.animation_key_frames, [](const AnimationKeyFrame& a, const AnimationKeyFrame& b) { return a.timestamp < b.timestamp; });
 
 		const auto it = std::ranges::find_if(section.animation_key_frames, [old_key_frame_value_data_id](const AnimationKeyFrame& key_frame) { return key_frame.value_data_id == old_key_frame_value_data_id; });
-		m_key_frame_index = std::distance(section.animation_key_frames.begin(), it);
+		m_key_frame_index = (int)std::distance(section.animation_key_frames.begin(), it);
 
 		key_frame.value_interpolation = m_value_interpolation;
 	}
@@ -716,6 +741,10 @@ void AnimatorHandler::ManageKeyFrames()
 		{
 			m_value_vector2 = m_animation_value_storage.animation_value_vector2_storage[key_frame.value_data_id];
 		}
+		else if (value.value_type == AnimationValueType::Vector3)
+		{
+			m_value_vector3 = m_animation_value_storage.animation_value_vector3_storage[key_frame.value_data_id];
+		}
 
 		m_value_interpolation = key_frame.value_interpolation;
 	}
@@ -735,7 +764,7 @@ void AnimatorHandler::ManageKeyFrames()
 		m_key_frame_index++;
 		if (m_key_frame_index >= section.animation_key_frames.size())
 		{
-			m_key_frame_index = section.animation_key_frames.size() - 1;
+			m_key_frame_index = (int)(section.animation_key_frames.size() - 1);
 		}
 	}
 	ImGui::SameLine();
@@ -759,7 +788,7 @@ void SaveSprite(JsonObject& entity_data, Entity entity, EntityManager* entity_ma
 	if (sprite.texture_handle != -1)
 	{
 		texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
-		texture_path.erase(std::remove(texture_path.begin(), texture_path.end(), 0), texture_path.end());
+		//texture_path.erase(std::remove(texture_path.begin(), texture_path.end(), 0), texture_path.end());
 	}
 
 	SpriteComponentInterface::SaveSpriteComponent(entity, entity_manager, &sprite_data);
@@ -821,6 +850,10 @@ void AnimatorHandler::SaveAnimatableSprite(JsonObject& entity_data, Entity entit
 			{
 				key_frame_data.SetData(m_animation_value_storage.animation_value_vector2_storage[key_frame.value_data_id], "Value_Vector2");
 			}
+			else if (animation_value_section.value_type == AnimationValueType::Vector3)
+			{
+				key_frame_data.SetData(m_animation_value_storage.animation_value_vector3_storage[key_frame.value_data_id], "Value_Vector3");
+			}
 		}
 	}
 }
@@ -867,77 +900,10 @@ void AnimatorHandler::SaveAnimation(const std::string& folder_path, const std::s
 	hierarchy_data.SetData(m_animation_base_entity, "ParentEntity");
 	SaveChildData(hierarchy_data, m_animation_base_entity, entity_manager);
 
-	//{
-	//	JsonObject sprite_data = save_animation.CreateSubJsonObject("SpriteData");
-	//	const SpriteComponent& sprite = entity_manager->GetComponent<SpriteComponent>(m_animation_base_entity);
-
-	//	std::string texture_path = "";
-
-	//	if (sprite.texture_handle != -1)
-	//	{
-	//		texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
-	//		texture_path.erase(std::remove(texture_path.begin(), texture_path.end(), 0), texture_path.end());
-	//	}
-
-	//	SpriteComponentInterface::SaveSpriteComponent(m_animation_base_entity, entity_manager, &sprite_data);
-	//	sprite_data.SetData(texture_path, "Texture_Path");
-	//}
-
 	{
 		JsonObject animatable_sprite_data = save_animation.CreateSubJsonObject("AnimatableSpriteData");
 		AnimatableSpriteComponentInterface::SaveAnimatableSpriteComponent(m_animation_base_entity, entity_manager, &animatable_sprite_data);
 		animatable_sprite_data.SetData(m_animation_max_time, "AnimationTime");
-
-		//JsonObject animation_data = save_animation.CreateSubJsonObject("Animatable");
-
-		//for (auto it : m_animation_value_sections)
-		//{
-		//	const AnimationValueSectionId& animation_value_section_id = it.first;
-		//	const AnimationValueSection& animation_value_section = it.second;
-
-		//	if (animation_value_section.animation_key_frames.empty())
-		//	{
-		//		continue;
-		//	}
-
-		//	const auto value_in_animation_it = std::ranges::find_if(m_values_used_in_animation.at(animation_value_section_id.entity), [animation_value_section](const ValueInAnimation& value_in_animation)
-		//		{ 
-		//			return value_in_animation.setter_id == animation_value_section.value_setter_storage_id; 
-		//		});
-
-
-		//	const std::string section_name = value_in_animation_it->component_name + ":" + value_in_animation_it->value_name;
-
-		//	JsonObject animation_value_section_data = animation_data.CreateSubJsonObject(section_name + "-AnimationValueSection");
-
-		//	animation_value_section_data.SetData((int)animation_value_section.value_type, "ValueType");
-
-		//	for (int i = 0; i < animation_value_section.animation_key_frames.size(); ++i)
-		//	{
-		//		const AnimationKeyFrame& key_frame = animation_value_section.animation_key_frames[i];
-
-		//		JsonObject key_frame_data = animation_value_section_data.CreateSubJsonObject("KeyFrame " + std::to_string(i));
-		//		key_frame_data.SetData(key_frame.timestamp, "Timestamp");
-		//		key_frame_data.SetData((int)key_frame.value_interpolation, "Value_Interpolation");
-
-		//		if (animation_value_section.value_type == AnimationValueType::Float)
-		//		{
-		//			key_frame_data.SetData(m_animation_value_storage.animation_value_float_storage[key_frame.value_data_id], "Value_Float");
-		//		}
-		//		else if (animation_value_section.value_type == AnimationValueType::Bool)
-		//		{
-		//			key_frame_data.SetData(m_animation_value_storage.animation_value_bool_storage[key_frame.value_data_id], "Value_Bool");
-		//		}
-		//		else if (animation_value_section.value_type == AnimationValueType::Int)
-		//		{
-		//			key_frame_data.SetData(m_animation_value_storage.animation_value_int_storage[key_frame.value_data_id], "Value_Int");
-		//		}
-		//		else if (animation_value_section.value_type == AnimationValueType::Vector2)
-		//		{
-		//			key_frame_data.SetData(m_animation_value_storage.animation_value_vector2_storage[key_frame.value_data_id], "Value_Vector2");
-		//		}
-		//	}
-		//}
 	}
 
 	OutputFile file(animation_file_name, OutputFile::FileMode::WRITE);
@@ -1055,7 +1021,7 @@ void AnimatorHandler::LoadAnimation(const std::string& folder_path, const std::s
 	}
 
 	const TextureHandle texture_handle = entity_manager->GetComponent<SpriteComponent>(m_animation_base_entity).texture_handle;
-	if (RenderCore::Get()->IsTextureLoaded(texture_handle))
+	if (RenderCore::Get()->IsTextureAvailable(texture_handle))
 	{
 		m_animation_texture_name = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(texture_handle));
 	}
@@ -1111,4 +1077,5 @@ void AnimatorHandler::ClearAnimationData()
 	m_animation_value_storage.animation_value_bool_storage.clear();
 	m_animation_value_storage.animation_value_int_storage.clear();
 	m_animation_value_storage.animation_value_vector2_storage.clear();
+	m_animation_value_storage.animation_value_vector3_storage.clear();
 }

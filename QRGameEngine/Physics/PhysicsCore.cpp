@@ -392,12 +392,16 @@ void PhysicsCore::WaitForPhysics()
 {
 	if (m_threaded_physics)
 	{
+		m_update_timer.StartTimer();
+
 		m_physic_update_thread_mutex.lock();
 		m_physic_update_thread_mutex.unlock();
 		while (m_update_physics == PhysicThreadState::Update)
 		{
 		}
 		m_defer_physic_calls = false;
+
+		m_previous_physics_update_time = (float)m_update_timer.StopTimer() / float(Timer::TimeTypes::Seconds);
 	}
 }
 
@@ -423,13 +427,17 @@ void PhysicsCore::ThreadUpdatePhysic()
 
 void PhysicsCore::Update()
 {
-	m_update_timer.StartTimer();
-	m_time_since_last_update += (float)Time::GetDeltaTime();
-	//To ensure that we don't end up in a endless death loop
-	if (m_time_since_last_update - m_previous_physics_update_time >= 0.0f)
+	if (!PhysicsCore::IsThreaded())
 	{
-		m_time_since_last_update -= m_previous_physics_update_time;
+		m_update_timer.StartTimer();
 	}
+
+	//To ensure that we don't end up in a endless death loop
+	m_time_since_last_update -= m_previous_physics_update_time;
+	//if (m_time_since_last_update - m_previous_physics_update_time >= 0.0f)
+	//{
+	//	m_time_since_last_update -= m_previous_physics_update_time;
+	//}
 	//if (m_time_since_last_update > TIME_STEP * 10.0f)
 	//	m_time_since_last_update = TIME_STEP * 10.0f;
 	while (m_time_since_last_update > TIME_STEP)
@@ -437,20 +445,26 @@ void PhysicsCore::Update()
 		m_world->Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
 		m_time_since_last_update -= TIME_STEP;
 	}
-	m_previous_physics_update_time = m_update_timer.StopTimer();
+	if (!PhysicsCore::IsThreaded())
+	{
+		m_previous_physics_update_time = (float)m_update_timer.StopTimer() / float(Timer::TimeTypes::Seconds);
+	}
 	//std::cout << "TIME: " << m_time_since_last_update << "\n";
 	//std::cout << "Physics Update Time: " << m_previous_physics_update_time << "\n";
 }
 
 void PhysicsCore::UpdatePhysics()
 {
+	m_time_since_last_update += (float)Time::GetDeltaTime();
 	if (m_threaded_physics)
 	{
 		m_update_physics = PhysicThreadState::Update;
 		m_defer_physic_calls = true;
 	}
 	else
+	{
 		Update();
+	}
 }
 
 void PhysicsCore::DrawColliders(EntityManager* entity_manager)

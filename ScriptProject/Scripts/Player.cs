@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using static ScriptProject.Engine.Input;
 using ScriptProject.EngineFramework;
+using ScriptProject.Scripts.Effects;
 
 namespace ScriptProject.Scripts
 {
@@ -26,6 +27,9 @@ namespace ScriptProject.Scripts
         Timer between_attack_timer = new Timer();
 
         float health = 100.0f;
+
+        GameObject sprite_game_object;
+        AnimatableSprite sprite_anim_sprite;
 
         const float max_speed = 4.0f;//8.1f;
         const float princess_speed = max_speed * 0.7f;
@@ -74,6 +78,14 @@ namespace ScriptProject.Scripts
         Timer princess_call_timer = new Timer();
         const float princess_call_time = 10.0f;
 
+        const float roll_animation_speed = 2.0f;
+        const float roll_time = 1.2f / roll_animation_speed;
+        Timer roll_timer = new Timer(roll_time);
+        const float between_rolls_time = 0.5f;
+        Timer between_rolls_timer = new Timer(between_rolls_time + roll_time);
+        Vector2 roll_direction = new Vector2(0.0f, 0.0f);
+        float roll_speed = 4.5f;
+
         InputBuffer inputBuffer = new InputBuffer();
 
         const float epsilion = 0.1f;
@@ -81,8 +93,17 @@ namespace ScriptProject.Scripts
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
-            sprite = game_object.GetComponent<Sprite>();
+            game_object.GetComponent<Sprite>();
             anim_sprite = game_object.GetComponent<AnimatableSprite>();
+
+            sprite_game_object = GameObject.CreateGameObject();
+            Console.WriteLine("Sprite: " + sprite_game_object.GetEntityID());
+            sprite = sprite_game_object.AddComponent<Sprite>();
+            sprite_anim_sprite = sprite_game_object.AddComponent<AnimatableSprite>();
+            sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
+            game_object.RemoveComponent<Sprite>();
+            game_object.transform.SetZIndex(0);
+            game_object.AddChild(sprite_game_object);
 
             hit_box = GameObject.CreateGameObject();
             hit_box.SetName("Attack_Box");
@@ -102,6 +123,7 @@ namespace ScriptProject.Scripts
             game_object.AddChild(mid_block);
 
             camera = GameObject.TempFindGameObject("PlayerCamera");
+            game_object.AddChild(camera);
 
             princess = GameObject.TempFindGameObject("Princess");
             princess_script = princess.GetComponent<Princess>();
@@ -190,59 +212,62 @@ namespace ScriptProject.Scripts
                 new_velocity.x -= max_speed;
             }
 
-            if (new_velocity.Length() < 0.01f && !attack)
-            {
-                if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightIdle.anim"))
-                    AnimationManager.LoadAnimation(game_object, "Animations/KnightIdle.anim");
-            }
-            else if (!attack && !stop_movement && !AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightRunAnim.anim"))
-            {
-                AnimationManager.LoadAnimation(game_object, "Animations/KnightRunAnim.anim");
-            }
-
-            if (!holding_princess && between_attack_timer.IsExpired() && !stop_movement && inputBuffer.ConsumeBufferedInput(MouseButton.LEFT))
-            {
-                AnimationManager.LoadAnimation(game_object, "Animations/KnightAttack.anim");
-                attack = true;
-                hit_box_body.SetEnabled(true);
-                attack_timer.Start();
-                between_attack_timer.Start();
-
-                if (velocity.Length() <= max_speed + epsilion)
-                {
-                    velocity = velocity.Normalize() * attack_speed;
-                }
-                current_speed = attack_speed;
-            }
-
-            if (!AnimationManager.IsAnimationPlaying(game_object, "Animations/KnightAttack.anim"))
-            {
-                attack = false;
-            }
-
             Vector2 mouse_position = Input.GetMousePositionInWorld(camera);
             Vector2 mouse_dir = (mouse_position - game_object.transform.GetPosition()).Normalize();
             Vector2 right_dir = new Vector2(1.0f, 0.0f);
+
+            if (roll_timer.IsExpired())
+            {
+                if (new_velocity.Length() < 0.01f && !attack)
+                {
+                    if (!AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightIdle.anim"))
+                    {
+                        AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightIdle.anim");
+                    }
+                }
+                else if (!attack && !stop_movement && !AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightRunAnim.anim"))
+                {
+                    AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightRunAnim.anim");
+                }
+
+                if (!holding_princess && between_attack_timer.IsExpired() && !stop_movement && inputBuffer.ConsumeBufferedInput(MouseButton.LEFT))
+                {
+                    AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightAttack.anim");
+                    attack = true;
+                    hit_box_body.SetEnabled(true);
+                    attack_timer.Start();
+                    between_attack_timer.Start();
+
+                    float previous_speed = velocity.Length();
+                    if (velocity.Length() <= max_speed + epsilion)
+                    {
+                        velocity = velocity.Normalize() * attack_speed;
+                    }
+                    velocity += mouse_dir * (1.8f + previous_speed*0.1f);
+                    current_speed = attack_speed;
+                }
+
+                if (!AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightAttack.anim"))
+                {
+                    attack = false;
+                }
+            }
+            else
+            {
+                new_velocity = roll_direction;
+                current_speed = roll_speed;
+            }
+
             float calculated_rot = Vector2.Angle(mouse_dir, right_dir);
+            if (!roll_timer.IsExpired())
+            {
+                calculated_rot = Vector2.Angle(roll_direction, right_dir);
+            }
 
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(calculated_rot));
 
             new_velocity = new_velocity.Normalize() * current_speed;
             Movement(velocity, new_velocity, current_speed, drag_speed, body);
-
-            //new_velocity = new_velocity.Normalize() * current_speed;
-            //if (velocity.Length() <= current_speed && new_velocity.Length() != 0.0f)
-            //    velocity = new_velocity;
-            ////else
-            ////    velocity += new_velocity * Time.GetDeltaTime();
-            //if (new_velocity.Length() == 0.0f && velocity.Length() <= current_speed)
-            //    velocity = new Vector2(0.0f, 0.0f);
-            //if (velocity.Length() > current_speed)
-            //    velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            //if (new_velocity.Length() > 0.0f && velocity.Length() < current_speed)
-            //    velocity = velocity.Normalize() * current_speed;
-
-            //body.SetVelocity(velocity);
 
             if (stop_movement)
             {
@@ -260,20 +285,43 @@ namespace ScriptProject.Scripts
             BowLogic(mouse_dir);
 
             PrincessCall();
+
+            RollLogic(new_velocity.Normalize());
+        }
+
+        public override bool ShouldEffectBeSet(Effect effect)
+        {
+            if (effect is StunEffect && (!roll_timer.IsExpired() || is_invincble))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
         {
+            if (!roll_timer.IsExpired())
+            {
+                return;
+            }
+
             if (!is_invincble)
             {
                 health -= damage;
                 invincible_timer.Start();
                 is_invincble = true;
+                AnimationManager.LoadAnimation(game_object, "Animations/HurtTest.anim");
             }
         }
 
         public override void Knockback(Vector2 dir, float knockback)
         {
+            if (!roll_timer.IsExpired() || is_invincble)
+            {
+                return;
+            }
+
             body.SetVelocity(dir * knockback);
         }
 
@@ -534,6 +582,29 @@ namespace ScriptProject.Scripts
             }
         }
 
+        void RollLogic(Vector2 player_direction)
+        {
+            if (between_rolls_timer.IsExpired() && player_direction.Length() >= epsilion && inputBuffer.ConsumeBufferedInput(Key.LSHIFT))
+            {
+                roll_timer.Start();
+                between_rolls_timer.Start();
+                roll_direction = player_direction;
+                sprite_anim_sprite.SetAnimationSpeed(roll_animation_speed);
+            }
+
+            if (!roll_timer.IsExpired())
+            {
+                if (!AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightRoll.anim"))
+                {
+                    AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightRoll.anim");
+                }
+            }
+            else
+            {
+                sprite_anim_sprite.SetAnimationSpeed(1.0f);
+            }
+        }
+
         public void PrincessStopFollowPlayer()
         {
             holding_princess = false;
@@ -562,6 +633,10 @@ namespace ScriptProject.Scripts
             if (Input.GetKeyPressed(Input.Key.F))
             {
                 inputBuffer.AddBufferedInput(Input.Key.F, buffered_input_time);
+            }
+            if (Input.GetKeyPressed(Input.Key.LSHIFT))
+            {
+                inputBuffer.AddBufferedInput(Input.Key.LSHIFT, buffered_input_time);
             }
         }
 

@@ -23,6 +23,9 @@ namespace ScriptProject.Engine
         public extern void SetTexture(Texture texture);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Texture GetTexture();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void FlipX(bool flip_x);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

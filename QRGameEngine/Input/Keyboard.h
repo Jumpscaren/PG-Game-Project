@@ -15,7 +15,7 @@ public:
 		NUM0 = 48, NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9,
 		A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 		F1 = 112, F2, F3, F4,
-		LSHIFT = 160, RSHIFT, LALT, RALT,
+		LSHIFT = 16, RSHIFT = 160, LALT, RALT,
 		PERIOD = 190,
 	};
 

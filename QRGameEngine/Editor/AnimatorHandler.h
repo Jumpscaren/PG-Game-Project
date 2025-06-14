@@ -91,6 +91,7 @@ private:
 	float m_timeline_time = 0.0f;
 	bool m_timeline_loop = true;
 	bool m_timeline_play = true;
+	bool m_timeline_pause = false;
 	float m_animation_max_time = 0.0f;
 	float m_animation_timeline_zoom = 1.0f;
 
@@ -100,6 +101,7 @@ private:
 	bool m_value_bool = false;
 	int m_value_int = 0;
 	Vector2 m_value_vector2{};
+	Vector3 m_value_vector3{};
 	AnimationValueInterpolation m_value_interpolation = AnimationValueInterpolation::Linear;
 
 	//Data storage

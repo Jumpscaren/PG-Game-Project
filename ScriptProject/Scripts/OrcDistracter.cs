@@ -16,10 +16,11 @@ namespace ScriptProject.Scripts
         GameObject player_game_object;
         GameObject princess_game_object;
         Transform transform;
-        Vector2 last_position;
         DynamicBody body;
         Sprite sprite;
         float health = 20.0f;
+
+        GameObject sprite_game_object;
 
         bool attack_ready = false;
         bool attacking = false;
@@ -42,8 +43,6 @@ namespace ScriptProject.Scripts
         public static int count = 0;
 
         Princess princess_script = null;
-
-        GameObject old_target = null;
 
         bool dead = false;
         bool falling = false;
@@ -76,6 +75,13 @@ namespace ScriptProject.Scripts
             ++count;
 
             teleport_timer = Time.GetElapsedTime() + teleport_time;
+
+            sprite_game_object = GameObject.CreateGameObject();
+            sprite = sprite_game_object.AddComponent<Sprite>();
+            sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
+            game_object.RemoveComponent<Sprite>();
+            game_object.transform.SetZIndex(0);
+            game_object.AddChild(sprite_game_object);
         }
 
         void Update()
