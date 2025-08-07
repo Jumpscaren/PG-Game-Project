@@ -62,12 +62,11 @@ namespace ScriptProject.Scripts
 
                 if (hit_object_script.GetGameOjbect() == hit_box_script.GetGameOjbect().GetParent()) return;
 
-                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-
                 Vector2 dir = hit_object_script.GetGameOjbect().transform.GetPosition() - hit_box_script.GetGameOjbect().transform.GetPosition();
                 dir = dir.Normalize();
 
                 hit_object_script.Knockback(dir, knockback);
+                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 
                 GameObject.DeleteGameObject(hit_box_script.GetGameOjbect().GetParent());
             }

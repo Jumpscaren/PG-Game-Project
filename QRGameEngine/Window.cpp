@@ -155,6 +155,11 @@ LRESULT CALLBACK Window::HandleMsg(HWND hwnd, UINT message, WPARAM wParam, LPARA
 			//Mouse::OnRawDelta({ ri.data.mouse.lLastX, ri.data.mouse.lLastY });
 		}
 
+		if (ri.header.dwType == RIM_TYPEHID)
+		{
+			// Add code here later if I want to fix this
+		}
+
 		return 0;
 	}
 	case WM_MOUSEWHEEL:

@@ -9,6 +9,9 @@ struct VS_OUT
 	float4 position : SV_POSITION;
 	float2 uv : uv;
 	uint instance_id : instance_id;
+    float3 real_position : real_position;
+    float3 camera_position : camera_position;
+    float3 light_position : light_position;
 };
 
 struct Transform
@@ -27,6 +30,8 @@ struct Camera
 {
     float4x4 view_matrix;
     float4x4 proj_matrix;
+    float3 camera_position;
+    float pad;
 };
 
 //StructuredBuffer<Vertex> vertices : register(t0, space0);
@@ -51,11 +56,13 @@ VS_OUT main(uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)
 	
 	VS_OUT output;
     output.position = mul(transforms[instanceID].transform, float4(vertices[vertexID].position, 1.0f));
+    output.real_position = output.position.xyz;
 	
     StructuredBuffer<Camera> cameras = ResourceDescriptorHeap[camera_buffer_index.index];
     Camera camera_buffer = cameras[0];
     output.position = mul(camera_buffer.view_matrix, output.position);
 	output.position = mul(camera_buffer.proj_matrix, output.position);
+    output.camera_position = camera_buffer.camera_position;
 	
     output.uv = sprites[instanceID].uv[vertices[vertexID].uv_index];
     output.instance_id = instanceID;

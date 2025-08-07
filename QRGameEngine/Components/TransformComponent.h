@@ -17,6 +17,7 @@ struct TransformComponent
 	TransformComponent& SetPositionZ(float z);
 
 	Vector3 GetPosition() const;
+	Vector2 GetPosition2D() const;
 	Vector4 GetRotation() const;
 	Vector3 GetRotationEuler() const;
 	Vector3 GetScale() const;

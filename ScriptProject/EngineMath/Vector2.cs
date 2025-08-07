@@ -75,9 +75,19 @@ namespace ScriptProject.EngineMath
                 vector_b_length = 1.0f;
             }
 
-            float dot_product = vector_a.x * vector_b.x + vector_a.y * vector_b.y;
+            float dot_product = DotProduct(vector_a, vector_b);
 
             return dot_product / vector_b_length;
+        }
+
+        static public float DotProduct(Vector2 v1, Vector2 v2)
+        {
+            return v1.x * v2.x + v1.y * v2.y;
+        }
+
+        static public Vector2 Lerp(Vector2 v1, Vector2 v2, float t)
+        {
+            return v1 + (v2 - v1) * t;
         }
 
         public override string ToString()

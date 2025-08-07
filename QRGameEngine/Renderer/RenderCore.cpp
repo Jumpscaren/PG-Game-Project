@@ -219,7 +219,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 {
 	if (!m_dx12_core.GetCommandList()->IsCompleted(&m_dx12_core))
 	{
-		ImGUIMain::EndFrame(&m_dx12_core);
+		ImGUIMain::EndFrame();
 		return m_window->WinMsg();
 	}
 
@@ -289,6 +289,8 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 			active_camera.proj_matrix = DirectX::XMMatrixOrthographicLH(view_size, view_size * screen_height / screen_width, 0.1f, 1000.0f);
 
 			camera = active_camera;
+
+			active_camera.camera_position = pos;
 
 		};
 	draw_scene->GetEntityManager()->System<CameraComponent, TransformComponent>(assamble_camera_data);
@@ -391,7 +393,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, sprite_data_buffer);
 	}
 
-	ImGUIMain::EndFrame(&m_dx12_core);
+	ImGUIMain::RenderFrame(&m_dx12_core);
 
 	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, render_target_texture, ResourceState::PRESENT, ResourceState::RENDER_TARGET);
 

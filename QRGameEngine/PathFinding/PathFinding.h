@@ -3,47 +3,46 @@
 #include "SceneSystem/SceneDefines.h"
 #include "Components/PathFindingWorldComponent.h"
 #include "Common/EngineTypes.h"
+#include "PathFindingDefines.h"
 #include <thread>
 #include <mutex>
 
 class PathFinding
 {
 public:
-	using SubNodeIndex = uint8_t;
-
-	struct SubNodePath
-	{
-		Entity node_entity;
-		SubNodeIndex sub_node_index;
-	};
+	std::size_t GetNodeDetailIndex(const NodeDetail node_detail) const { return static_cast<std::size_t>(node_detail); }
 
 private:
-
-	struct Node;
-
-	struct SubNode {
-		Entity parent_node;
-		SubNodeIndex sub_node;
-
-		std::vector<SubNodePath> neighbors;
-	};
-
 	struct Node {
-		Entity entity;
-		std::vector<Entity> neighbors;
+		NodeIndex node_index;
+		std::vector<NodeIndex> neighbors;
+
+		NodeIndex parent_node_index = NULL_NODE_INDEX;
+		std::vector<NodeIndex> sub_nodes;
 
 		Vector2 position;
 		PathFindingWorldComponent layer;
 
-		std::vector<SubNode> sub_nodes;
+		Node(const NodeIndex node_index, const PathFindingWorldComponent& layer, const Vector2& position, const NodeIndex parent_node_index = NULL_NODE_INDEX) : node_index(node_index), position(position), parent_node_index(parent_node_index), layer(layer)  {}
+	};
 
-		Node(const Entity entity, const PathFindingWorldComponent& layer, const Vector2& position) : entity(entity), position(position), layer(layer) 
+	struct SceneEntityData
+	{
+		SceneIndex scene_index;
+		Entity entity;
+
+		bool operator==(const SceneEntityData& other) const { return scene_index == other.scene_index && entity == other.entity; }
+		bool operator!=(const SceneEntityData& other) const { return !(*this == other); }
+	};
+
+	struct SceneEntityDataHasher
+	{
+		std::size_t operator()(const SceneEntityData scene_entity_data) const
 		{
-			for (const auto& sub_node_index : std::views::iota(0, 4))
-			{
-				sub_nodes.push_back(SubNode{.parent_node = entity, .sub_node = (SubNodeIndex)sub_node_index });
-			}
-			/*sub_nodes.insert_range(sub_nodes.begin(), std::views::iota(0, 4));*/
+			std::size_t res = 17;
+			res = res * 31 + std::hash<uint32_t>()(scene_entity_data.entity);
+			res = res * 31 + std::hash<uint32_t>()(scene_entity_data.scene_index);
+			return res;
 		}
 	};
 
@@ -53,75 +52,106 @@ private:
 		Entity entity;
 
 		//Node Data
-		Entity start_node_index;
-		Entity goal_node_index;
+		NodeIndex start_node_index;
+		NodeIndex goal_node_index;
+
+		NodeDetail node_detail = NodeDetail::Base;
 	};
 
 	enum class ThreadState
 	{
 		Run = 0,
-		Clear = 1,
+		Wait = 1,
 		Close = 2
 	};
 
 	struct CalculatedPath
 	{
-		std::vector<Entity> path;
+		std::vector<NodeIndex> path;
 		bool new_path = false;
 	};
 
+	struct ProcessedRequest 
+	{
+		PathFindData path_find_data;
+		CalculatedPath calculated_path;
+	};
+
 private:
-	void AStarPathfinding(const PathFindData& path_find_data, std::vector<Entity>& path);
-	void AStarPathfindingSub(const PathFindData& path_find_data, std::vector<SubNodePath>& path);
-	uint64_t PositionToNodeIndex(const Vector2& position) const;
-	float Heuristic(const Node& neighbor_node, const Node& goal_node);
-	void ConstructPath(const qr::unordered_map<Entity, Entity>& came_from, Entity current, std::vector<Entity>& path);
-	Vector2 PositionToNodePosition(const Vector2& position) const;
+	static void AStarPathfinding(const PathFindData& path_find_data, std::vector<NodeIndex>& path, const std::vector<Node>& world);
+	uint64_t PositionToNodeIndex(const Vector2& position, const NodeDetail node_detail) const;
+	static float Heuristic(const Vector2 start_goal_direction, const Node& neighbor_node, const Node& goal_node);
+	static void ConstructPath(const qr::unordered_map<NodeIndex, NodeIndex, NodeIndexHasher>& came_from, NodeIndex current, std::vector<NodeIndex>& path, const std::vector<Node>& world);
+	Vector2 PositionToNodePosition(const Vector2& position, const NodeDetail node_detail) const;
 	static void ConstructPathFindingWorldEvent(const SceneIndex scene_index);
 	void ConstructPathFindingWorld(const SceneIndex scene_index);
 
-	void CalculatePath(const PathFindData& path_find_data, std::vector<Entity>& path);
+	void CalculatePath(const PathFindData& path_find_data, std::vector<NodeIndex>& path);
 
 	void ThreadHandleRequests();
 
-	Node* AddNeighbor(Node& node, const Vector2& neighbor_position);
-	void RemoveImpossibleCornerPaths(Node& node, EntityManager* entity_manager);
+	Node* AddNeighbor(Node& node, const Vector2& neighbor_position, const NodeDetail node_detail);
+	void RemoveImpossibleCornerPaths(Node& node, const NodeDetail node_detail);
 
-	void ConstructSubNodeNeighbors(SubNode& sub_node, EntityManager* entity_manager);
+	void AddNewNodeInternal(const SceneIndex scene_index, const Entity entity);
+	NodeIndex AddNewNodeInternal(const Vector2& postion, const PathFindingWorldComponent& path_finding_world, const NodeDetail node_detail);
+	void RemoveNodeInternal(const SceneIndex scene_index, const Entity entity);
+	void RemoveNodeFromNeighbours(const NodeIndex node_index, const NodeDetail node_detail);
 
 public:
 	static constexpr float LENGTH_BETWEEN_NODES = 1.0f;
 
+	static constexpr float SMALL_LENGTH_BETWEEN_NODES = LENGTH_BETWEEN_NODES / 2.0f;
+	static constexpr float HALF_SMALL_LENGTH_BETWEEN_NODES = SMALL_LENGTH_BETWEEN_NODES / 2.0f;
+
 private:
 	static PathFinding* s_singleton;
-	qr::unordered_map<Entity, Node> m_nodes;
-	qr::unordered_map<uint64_t, Entity> m_position_to_node;
+
+	static constexpr NodeIndex START_NODE_INDEX = NodeIndex(0);
+	NodeIndex m_next_node_index = START_NODE_INDEX;
+	struct NodeDataByNodeDetail
+	{
+		qr::unordered_map<uint64_t, NodeIndex> position_to_node;
+		qr::unordered_set<NodeIndex, NodeIndexHasher> node_indices;
+	};
+	std::vector<NodeDataByNodeDetail> m_nodes_by_node_detail;
+	std::vector<Node> m_nodes;
+	std::vector<NodeIndex> m_removed_node_indices;
+	qr::unordered_map<NodeIndex, Entity, NodeIndexHasher> m_node_to_entity;
 
 	static constexpr float WEIGHT_BETWEEN_NODES = 1.0f;
 	static constexpr float HALF_LENGTH_BETWEEN_NODES = LENGTH_BETWEEN_NODES / 2.0f;
 	static constexpr size_t MAX_NEIGHBORS = 8;
 
+	//
+	std::vector<PathFindData> m_wait_list_paths_to_be_processed;
+	qr::unordered_map<SceneEntityData, CalculatedPath, SceneEntityDataHasher> m_calculated_paths;
+	std::vector<SceneEntityData> m_nodes_to_be_added;
+	std::vector<SceneEntityData> m_nodes_to_be_removed;
+
 	std::thread* m_calculate_paths_thread = nullptr;
 	std::mutex m_calculate_paths_mutex;
-	std::mutex m_clear_data_mutex;
 	std::vector<PathFindData> m_paths_wait_list;
-	std::vector<PathFindData> m_paths_calculating;
-	qr::unordered_set<Entity> m_entity_ongoing_pathfinds;
-	qr::unordered_map<Entity, CalculatedPath> m_calculated_paths;
+	std::vector<ProcessedRequest> m_paths_calculated_to_be_processed;
+	qr::unordered_set<SceneEntityData, SceneEntityDataHasher> m_entity_ongoing_pathfinds;
 	std::atomic<ThreadState> m_thread_state;
 
 public:
 	PathFinding();
 	~PathFinding();
-	void RequestPathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity);
-	std::vector<Entity> PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, bool& new_path);
-	Entity GetNodeFromPosition(const Vector2& position) const;
+	bool RequestPathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, const NodeDetail node_detail);
+	std::vector<NodeIndex> PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, bool& new_path, const NodeDetail node_detail);
+	NodeIndex GetNodeFromPosition(const Vector2& position, const NodeDetail node_detail) const;
+	Entity GetEntityFromNodeIndex(const NodeIndex node_index) const;
 	bool IsWorldConstructed() const;
-	void AddNewNode(const SceneIndex scene_index, const Entity entity);
-	void RemoveNode(const SceneIndex scene_index, const Entity entity);
-	const qr::unordered_map<uint64_t, Entity>& GetPositionsToNode() const;
+	Vector2 GetNodePosition(const NodeIndex node_index) const;
 
 	void HandleDeferredRemovedNodes(EntityManager* entity_manager);
+
+	void HandlePathFinding();
+
+	void AddNewNode(const SceneIndex scene_index, const Entity entity);
+	void RemoveNode(const SceneIndex scene_index, const Entity entity);
 
 	static PathFinding* Get();
 };

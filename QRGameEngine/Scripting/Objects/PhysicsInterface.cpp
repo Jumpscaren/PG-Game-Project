@@ -35,10 +35,14 @@ CSMonoObject PhysicsInterface::Raycast(const CSMonoObject& position, const CSMon
 			});
 
 	CSMonoObject cs_raycast_result(CSMonoCore::Get(), s_raycast_result_struct);
+
 	CSMonoCore::Get()->SetValue(result.intersected, cs_raycast_result, s_intersected_field);
-	CSMonoCore::Get()->SetValue(GameObjectInterface::NewGameObjectWithExistingEntity(result.entity, result.scene_index), 
-		cs_raycast_result, s_intersected_game_object_field);
-	CSMonoCore::Get()->SetValue(Vector2Interface::CreateVector2(result.position), cs_raycast_result, s_intersected_position_field);
+	if (result.intersected)
+	{
+		CSMonoCore::Get()->SetValue(GameObjectInterface::NewGameObjectWithExistingEntity(result.entity, result.scene_index),
+			cs_raycast_result, s_intersected_game_object_field);
+		CSMonoCore::Get()->SetValue(Vector2Interface::CreateVector2(result.position), cs_raycast_result, s_intersected_position_field);
+	}
 
 	return cs_raycast_result;
 }

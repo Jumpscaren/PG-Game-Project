@@ -171,7 +171,7 @@ namespace ScriptProject.Scripts
                 }
 
                 Vector2 target_dir = target.transform.GetPosition() - transform.GetPosition();
-                if (target == door_game_object && target_dir.Length() < 0.1f)
+                if (target == door_game_object && target_dir.Length() < 0.3f)
                 {
                     GameObject.DeleteGameObject(game_object);
                     princess_script.SetRescueState();
@@ -479,14 +479,12 @@ namespace ScriptProject.Scripts
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
-                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
-
-                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
+                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
+                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

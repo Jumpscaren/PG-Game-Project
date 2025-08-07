@@ -6,6 +6,7 @@
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "ECS/EntityManager.h"
 #include "Scripting/Objects/Vector2Interface.h"
+#include "Time/Time.h"
 
 ScriptingManager* ScriptingManager::s_scripting_manager = nullptr;
 
@@ -96,10 +97,28 @@ void ScriptingManager::StartScript(ScriptComponent& script)
 void ScriptingManager::UpdateScripts(EntityManager* entity_manager)
 {
 	CSMonoCore* mono_core = CSMonoCore::Get();
-	entity_manager->System<ScriptComponent>([&](const ScriptComponent& script)
+	entity_manager->System<ScriptComponent>([&](ScriptComponent& script)
 		{
 			if (mono_core->CheckIfMonoMethodExists(script.script_update))
 				mono_core->CallMethod(script.script_update, script.script_object);
+
+			//if (mono_core->CheckIfMonoMethodExists(script.script_fixed_update))
+			//{
+			//	script.time_since_last_fixed_update += Time::GetDeltaTime();
+			//	while (script.time_since_last_fixed_update >= (1.0f / 120.0f))
+			//	{
+			//		const auto save = script.time_since_last_fixed_update;
+			//		script.time_since_last_fixed_update -= 1.0f / 120.0f;
+			//		//std::cout << "Time since last fixed update: " << script.time_since_last_fixed_update << "\n";
+			//		mono_core->CallMethod(script.script_fixed_update, script.script_object, save);
+			//	}
+			//}
+		});
+
+	entity_manager->System<ScriptComponent>([&](const ScriptComponent& script)
+		{
+			if (mono_core->CheckIfMonoMethodExists(script.script_late_update))
+				mono_core->CallMethod(script.script_late_update, script.script_object);
 		});
 }
 

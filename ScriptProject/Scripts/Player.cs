@@ -32,6 +32,7 @@ namespace ScriptProject.Scripts
         AnimatableSprite sprite_anim_sprite;
 
         const float max_speed = 4.0f;//8.1f;
+        //const float max_speed = 100.0f;
         const float princess_speed = max_speed * 0.7f;
         const float drag_speed = 20.0f;
         const float attack_speed = 0.0f;// max_speed / 2.0f;
@@ -84,7 +85,7 @@ namespace ScriptProject.Scripts
         const float between_rolls_time = 0.5f;
         Timer between_rolls_timer = new Timer(between_rolls_time + roll_time);
         Vector2 roll_direction = new Vector2(0.0f, 0.0f);
-        float roll_speed = 4.5f;
+        float roll_speed = 8.5f;
 
         InputBuffer inputBuffer = new InputBuffer();
 
@@ -123,7 +124,7 @@ namespace ScriptProject.Scripts
             game_object.AddChild(mid_block);
 
             camera = GameObject.TempFindGameObject("PlayerCamera");
-            game_object.AddChild(camera);
+            //game_object.AddChild(camera);
 
             princess = GameObject.TempFindGameObject("Princess");
             princess_script = princess.GetComponent<Princess>();
@@ -255,7 +256,7 @@ namespace ScriptProject.Scripts
             else
             {
                 new_velocity = roll_direction;
-                current_speed = roll_speed;
+                //current_speed = roll_speed;
             }
 
             float calculated_rot = Vector2.Angle(mouse_dir, right_dir);
@@ -439,10 +440,6 @@ namespace ScriptProject.Scripts
                     return;
                 }
 
-                GameObject rope = GameObject.CreateGameObject();
-                Sprite rope_sprite = rope.AddComponent<Sprite>();
-                Render.LoadTexture("../QRGameEngine/Textures/Rope.png", rope_sprite);
-
                 Vector2 player_position = game_object.transform.GetPosition();
                 Vector2 mouse_position = Input.GetMousePositionInWorld(camera);
                 Vector2 distance = mouse_position - player_position;
@@ -452,6 +449,10 @@ namespace ScriptProject.Scripts
 
                 if (result.intersected)
                 {
+                    GameObject rope = GameObject.CreateGameObject();
+                    Sprite rope_sprite = rope.AddComponent<Sprite>();
+                    Render.LoadTexture("../QRGameEngine/Textures/Rope.png", rope_sprite);
+
                     current_rope = rope;
                     current_rope_end_positon = result.intersected_position;
                     current_rope_hooked_game_object = result.intersected_game_object;
@@ -590,6 +591,7 @@ namespace ScriptProject.Scripts
                 between_rolls_timer.Start();
                 roll_direction = player_direction;
                 sprite_anim_sprite.SetAnimationSpeed(roll_animation_speed);
+                body.SetVelocity(player_direction.Normalize() * roll_speed);
             }
 
             if (!roll_timer.IsExpired())
@@ -653,13 +655,11 @@ namespace ScriptProject.Scripts
                     return;
                 }
 
-                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
-
+                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
                 hit_object_script.SetEffect(new Effects.StunEffect(0.75f));
             }
 

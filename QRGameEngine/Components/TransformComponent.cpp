@@ -86,6 +86,11 @@ Vector3 TransformComponent::GetPosition() const
 	return Vector3(world_matrix.r[3].m128_f32[0], world_matrix.r[3].m128_f32[1], world_matrix.r[3].m128_f32[2]);
 }
 
+Vector2 TransformComponent::GetPosition2D() const
+{
+	return Vector2(world_matrix.r[3].m128_f32[0], world_matrix.r[3].m128_f32[1]);
+}
+
 Vector4 TransformComponent::GetRotation() const
 {
 	DirectX::XMVECTOR xmScale, rotationQuat, translation;

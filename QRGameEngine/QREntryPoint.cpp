@@ -170,11 +170,13 @@ Timer rendering_timer;
 Timer scripting_timer;
 Timer physic_timer;
 Timer physic_deferred_collision_timer;
+Timer path_finding_timer;
 Timer deferred_timer;
 double average_rendering_frame_time = 0.0;
 double average_scripting_frame_time = 0.0;
 double average_physic_frame_time = 0.0;
 double average_physics_deferred_collision_time = 0.0;
+double average_path_finding_frame_time = 0.0;
 double average_deferred_frame_time = 0.0;
 float average_frame_time = 0;
 int frame_count = 0;
@@ -226,6 +228,7 @@ void QREntryPoint::RunTime()
 			ImGui::Text("Average Scripting Time: %f ms", average_scripting_frame_time);
 			ImGui::Text("Average Physic Time: %f ms", average_physic_frame_time);
 			ImGui::Text("Average Physics Deferred Time Time: %f ms", average_physics_deferred_collision_time);
+			ImGui::Text("Average Path Finding Time: %f ms", average_path_finding_frame_time);
 			ImGui::Text("Average Deferred Time: %f ms", average_deferred_frame_time);
 			ImGui::Text("Window Width: %f, Window Height: %f", render_core->GetWindow()->GetWindowWidth(), render_core->GetWindow()->GetWindowHeight());
 			ImGui::Text("Orcs Count: %i", orc_count);
@@ -317,6 +320,10 @@ void QREntryPoint::RunTime()
 			break;
 		}
 		average_rendering_frame_time = average_rendering_frame_time * 0.9 + 0.1 * rendering_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
+		
+		path_finding_timer.StartTimer();
+		path_finding->HandlePathFinding();
+		average_path_finding_frame_time = average_path_finding_frame_time * 0.9 + 0.1 * path_finding_timer.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 
 		deferred_timer.StartTimer();
 		//Entities can have been created after calling for destruction of a scene

@@ -9,6 +9,8 @@ struct CameraComponent
 {
 	DirectX::XMMATRIX view_matrix;
 	DirectX::XMMATRIX proj_matrix;
+	Vector3 camera_position;
+	float pad;
 };
 
 class CameraComponentInterface

@@ -7,10 +7,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Policy;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcCarrier;
 using static ScriptProject.Scripts.Player;
+using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
@@ -47,6 +47,9 @@ namespace ScriptProject.Scripts
 
         float max_speed = 2.0f;
         const float drag_speed = 20.0f;
+
+        const float calculate_path_time = 0.02f;
+        Timer calculate_path_timer = new Timer(calculate_path_time);
 
         RandomGenerator random_generator = new RandomGenerator();
 
@@ -218,14 +221,17 @@ namespace ScriptProject.Scripts
             Vector2 dir = last_position - current_position;
             Vector2 target_dir = target.transform.GetPosition() - current_position;
             if (dir.Length() < 0.1f || actor.NeedNewPathFind(target, 1))
+            //if (calculate_path_timer.IsExpired())
             {
                 //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
                 last_position = actor.PathFind(target, 1);
                 dir = last_position - current_position;
+                calculate_path_timer.Start();
             }
+
             //Console.WriteLine("Dir: " + dir);
             //last_position = actor.PathFind(target, 1);
-            //actor.DebugPath();
+            actor.DebugPath();
             if (target_dir.Length() < 1.01f)
             {
                 dir = new Vector2();
@@ -391,12 +397,11 @@ namespace ScriptProject.Scripts
 
             public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
-                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
+                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

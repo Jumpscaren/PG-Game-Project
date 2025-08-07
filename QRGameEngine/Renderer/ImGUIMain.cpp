@@ -48,10 +48,15 @@ void ImGUIMain::StartFrame()
 	ImGui::NewFrame();
 }
 
-void ImGUIMain::EndFrame(DX12Core* dx12_core)
+void ImGUIMain::RenderFrame(DX12Core* dx12_core)
 {
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dx12_core->GetCommandList()->GetCommandList());
+}
+
+void ImGUIMain::EndFrame()
+{
+	ImGui::EndFrame();
 }
 
 bool ImGUIMain::ImageButton(const std::string& image_id, const TextureHandle image_texture)

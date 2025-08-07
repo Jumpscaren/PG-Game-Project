@@ -25,6 +25,8 @@ void ScriptComponentInterface::InitComponent(const CSMonoObject& object, SceneIn
 	//script_component.script_object.test.erase(script_component.script_object.m_gchandle);
 	script_component.script_start = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Start");
 	script_component.script_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "Update");
+	script_component.script_fixed_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "FixedUpdate");
+	script_component.script_late_update = CSMonoCore::Get()->TryRegisterMonoMethod(object, "LateUpdate");
 	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(object, "BeginCollision");
 	if (script_component.script_begin_collision == CSMonoCore::NULL_METHOD)
 	{

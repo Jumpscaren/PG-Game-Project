@@ -20,7 +20,8 @@ public:
 	static void Destroy();
 
 	static void StartFrame();
-	static void EndFrame(DX12Core* dx12_core);
+	static void RenderFrame(DX12Core* dx12_core);
+	static void EndFrame();
 
 	static bool ImageButton(const std::string& image_id, TextureHandle image_texture);
 };
