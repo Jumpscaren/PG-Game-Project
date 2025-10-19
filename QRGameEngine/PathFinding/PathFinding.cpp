@@ -470,6 +470,14 @@ std::vector<NodeIndex> PathFinding::PathFind(const SceneIndex scene_index, const
 	return it->second.path;
 }
 
+std::vector<NodeIndex> PathFinding::GetPath(const SceneIndex scene_index, const Entity entity)
+{
+	SceneEntityData scene_entity_data{ .scene_index = scene_index, .entity = entity };
+	auto it = m_calculated_paths.find(scene_entity_data);
+	it->second.new_path = false;
+	return it->second.path;
+}
+
 NodeIndex PathFinding::GetNodeFromPosition(const Vector2& position, const NodeDetail node_detail) const
 {
 	const NodeDataByNodeDetail& base_node_data = m_nodes_by_node_detail.at(GetNodeDetailIndex(node_detail));
@@ -667,6 +675,8 @@ void PathFinding::HandlePathFinding()
 
 		m_calculated_paths.at(scene_entity_data) = it.calculated_path;
 		m_entity_ongoing_pathfinds.erase(scene_entity_data);
+
+		EventCore::Get()->SendEvent("NewPathFinding", it.calculated_path.path, scene_entity_data.scene_index, scene_entity_data.entity);
 	}
 	m_paths_calculated_to_be_processed.clear();
 

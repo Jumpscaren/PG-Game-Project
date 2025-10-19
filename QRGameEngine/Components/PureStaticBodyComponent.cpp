@@ -8,7 +8,10 @@
 #include "ComponentInterface.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 
-void PureStaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex PureStaticBodyComponentInterface::s_add_physic_object_index;
+DeferedMethodIndex PureStaticBodyComponentInterface::s_remove_physic_object_index;
+
+void PureStaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex add_physic_object_index, const DeferedMethodIndex remove_physic_object_index)
 {
 	const auto static_body_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "PureStaticBody");
 
@@ -17,11 +20,19 @@ void PureStaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<PureStaticBodyComponentInterface::RemoveComponent>(static_body_class, "RemoveComponent", PureStaticBodyComponentInterface::RemoveComponent);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<PureStaticBodyComponent>(SaveScriptComponent, LoadScriptComponent);
+
+	s_add_physic_object_index = add_physic_object_index;
+	s_remove_physic_object_index = remove_physic_object_index;
 }
 
 void PureStaticBodyComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::PureStaticBody);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	if (!defer_method_calls->TryCallDirectly(scene_index, s_add_physic_object_index, scene_index, entity, PhysicsCore::PureStaticBody))
+	{
+		SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<PureStaticBodyComponent>(entity);
+	}
 }
 
 bool PureStaticBodyComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -31,7 +42,9 @@ bool PureStaticBodyComponentInterface::HasComponent(const CSMonoObject& object, 
 
 void PureStaticBodyComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	defer_method_calls->TryCallDirectly(scene_index, s_remove_physic_object_index, scene_index, entity);
 }
 
 void PureStaticBodyComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)

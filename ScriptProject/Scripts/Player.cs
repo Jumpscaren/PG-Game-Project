@@ -25,6 +25,7 @@ namespace ScriptProject.Scripts
         const float attack_angle = (float)Math.PI / 2.0f;
         const float between_attack_time = 0.45f;
         Timer between_attack_timer = new Timer();
+        int attack_number = 0;
 
         float health = 100.0f;
 
@@ -233,18 +234,36 @@ namespace ScriptProject.Scripts
 
                 if (!holding_princess && between_attack_timer.IsExpired() && !stop_movement && inputBuffer.ConsumeBufferedInput(MouseButton.LEFT))
                 {
+                    float previous_speed = velocity.Length();
+                    if (velocity.Length() <= max_speed + epsilion)
+                    {
+                        velocity = velocity.Normalize() * attack_speed;
+                    }
+                    float attack_velocity_increase = 1.0f;
+                    between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+                    if (attack_number == 1)
+                    {
+                        attack_velocity_increase = 1.5f;
+                        between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.1f);
+                    }
+                    if (attack_number == 2)
+                    {
+                        attack_velocity_increase = 3.0f;
+                        attack_number = 0;
+                        between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.5f);
+                    }
+                    else
+                    {
+                        attack_number++;
+                    }
+
                     AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightAttack.anim");
                     attack = true;
                     hit_box_body.SetEnabled(true);
                     attack_timer.Start();
                     between_attack_timer.Start();
 
-                    float previous_speed = velocity.Length();
-                    if (velocity.Length() <= max_speed + epsilion)
-                    {
-                        velocity = velocity.Normalize() * attack_speed;
-                    }
-                    velocity += mouse_dir * (1.8f + previous_speed*0.1f);
+                    velocity += mouse_dir * (1.8f + previous_speed*0.1f) * attack_velocity_increase;
                     current_speed = attack_speed;
                 }
 

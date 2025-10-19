@@ -108,7 +108,8 @@ namespace ScriptProject.Scripts
 
             target = princess_game_object;
 
-            last_position = actor.PathFind(target, 1);
+            //last_position = actor.PathFind(target, 1);
+            last_position = transform.GetPosition();
 
             if (only != null)
             {
@@ -281,11 +282,12 @@ namespace ScriptProject.Scripts
 
             //Console.WriteLine(target != old_target);
 
-            if (target != old_target || dir.Length() < 0.1f || actor.NeedNewPathFind(target, 1))
+            if (target != old_target || dir.Length() < 0.1f) // actor.NeedNewPathFind(target, 1))
             {
                 //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
-                last_position = actor.PathFind(target, 1);
+                //last_position = actor.PathFind(target, 1);
                 //Console.WriteLine(last_position);
+                last_position = current_position;
                 dir = last_position - current_position;
                 old_target = target;
             }

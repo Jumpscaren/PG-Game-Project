@@ -120,6 +120,7 @@ void QREntryPoint::EntryPoint()
 	auto main_class_handle = mono_core->RegisterMonoClass("ScriptProject", "Main");
 	auto main_method_handle = mono_core->RegisterMonoMethod(main_class_handle, "main");
 
+	physics_core = new PhysicsCore(true);
 	RegisterInterfaces::Register(mono_core);
 
 #ifdef _EDITOR
@@ -132,8 +133,6 @@ void QREntryPoint::EntryPoint()
 	global_entity_manager->AddComponent<TransformComponent>(m_editor_camera_ent, Vector3(0.0f, 0.0f, 20.0f));
 	//global_entity_manager->AddComponent<CameraComponent>(m_editor_camera_ent);
 #endif // _EDITOR
-
-	physics_core = new PhysicsCore(true);
 
 	mono_core->CallStaticMethod(main_method_handle);
 
@@ -267,11 +266,6 @@ void QREntryPoint::RunTime()
 		* NOTE
 		* If the user changes the scene to another then we should wait until the next frame to change and not change during!!!
 		*/
-
-		/*SceneLoader::Get()->HandleSceneLoadingPreUser();*/
-
-		SceneLoader::Get()->HandleSceneLoadingPreUser();
-
 		asset_manager->HandleCompletedJobs();
 
 		physic_timer.StartTimer();
@@ -350,7 +344,7 @@ void QREntryPoint::RunTime()
 		//}
 		//std::cout << "Size = " << CSMonoObject::test.size() << "\n";
 
-		SceneLoader::Get()->HandleSceneLoadingPostUser();
+		SceneLoader::Get()->HandleDeferedCalls();
 
 		//mono_core->ForceGarbageCollection();
 

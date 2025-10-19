@@ -4,6 +4,7 @@
 #include "Scripting/CSMonoObject.h"
 #include "Renderer/RenderTypes.h"
 #include "SceneSystem/SceneManager.h"
+#include "Common/DeferMethodCallsDefine.h"
 
 struct SpriteComponent
 {
@@ -26,7 +27,7 @@ class EntityManager;
 class SpriteComponentInterface
 {
 public:
-	static void RegisterInterface(CSMonoCore* mono_core);
+	static void RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex load_and_set_texture_index, const DeferedMethodIndex load_texture_sprite_index);
 	static void InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 	static bool HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
@@ -35,7 +36,8 @@ public:
 	static void SaveSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 	static void LoadSpriteComponent(Entity ent, EntityManager* entman, JsonObject* json_object);
 
-	static void LoadTextureToSprite(SceneIndex scene_index, Entity entity, SpriteComponent& sprite_component, TextureHandle texture_handle);
+	static void LoadTextureToSprite(SceneIndex scene_index, Entity entity, TextureHandle texture);
+	static void LoadTextureObjectToSprite(SceneIndex scene_index, Entity entity, const CSMonoObject& texture);
 
 public:
 	static void SetTexture(const CSMonoObject& object, const CSMonoObject& texture);
@@ -53,5 +55,9 @@ private:
 	static void SetUV3(Entity entity, SceneIndex scene_index, Vector2 uv_3);
 	static void SetUV4(Entity entity, SceneIndex scene_index, Vector2 uv_4);
 	static void SetAddativeColor(Entity entity, SceneIndex scene_index, Vector3 addative_color);
+
+private:
+	static DeferedMethodIndex s_load_and_set_texture_index;
+	static DeferedMethodIndex s_load_texture_object_sprite_index;
 };
 

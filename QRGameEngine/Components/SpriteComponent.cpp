@@ -12,8 +12,12 @@
 #include "Scripting/Objects/Vector2Interface.h"
 #include "Animation/AnimationManager.h"
 #include "Scripting/Objects/TextureInterface.h"
+#include "Asset/AssetManager.h"
 
-void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex SpriteComponentInterface::s_load_and_set_texture_index;
+DeferedMethodIndex SpriteComponentInterface::s_load_texture_object_sprite_index;
+
+void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex load_and_set_texture_index, const DeferedMethodIndex load_texture_object_sprite_index)
 {
 	auto sprite_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "Sprite");
 
@@ -37,6 +41,9 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_3", SetUV3);
 	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "UV_4", SetUV4);
 	AnimationManager::Get()->SetAnimationValue("SpriteComponent", "AddativeColor", SetAddativeColor);
+
+	s_load_and_set_texture_index = load_and_set_texture_index;
+	s_load_texture_object_sprite_index = load_texture_object_sprite_index;
 }
 
 void SpriteComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -61,12 +68,7 @@ void SpriteComponentInterface::SetTexture(const CSMonoObject& object, const CSMo
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
 
-	uint64_t texture_handle;
-	CSMonoCore::Get()->GetValue(texture_handle, texture, "texture_asset_handle");
-
-	SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
-
-	SpriteComponentInterface::LoadTextureToSprite(scene_index, entity, sprite_component, texture_handle);
+	SceneLoader::Get()->GetDeferedCalls()->TryCallDirectly(scene_index, s_load_texture_object_sprite_index, scene_index, entity, texture);
 }
 
 CSMonoObject SpriteComponentInterface::GetTexture(const CSMonoObject& object)
@@ -170,7 +172,13 @@ void SpriteComponentInterface::SetShow(const CSMonoObject& object, const bool sh
 void SpriteComponentInterface::SaveSpriteComponent(const Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	const SpriteComponent& sprite_component = entman->GetComponent<SpriteComponent>(ent);
-	json_object->SetData(sprite_component.texture_handle, "texture_handle");
+
+	if (RenderCore::Get()->IsTextureAvailable(sprite_component.texture_handle))
+	{
+		const AssetHandle texture_asset_handle = RenderCore::Get()->GetTextureAssetHandle(sprite_component.texture_handle);
+		json_object->SetData(AssetManager::Get()->GetAssetPath(texture_asset_handle), "texture_name");
+	}
+
 	json_object->SetData(sprite_component.uv[0], "uv1");
 	json_object->SetData(sprite_component.uv[1], "uv2");
 	json_object->SetData(sprite_component.uv[2], "uv3");
@@ -187,7 +195,13 @@ void SpriteComponentInterface::SaveSpriteComponent(const Entity ent, EntityManag
 void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	SpriteComponent& sprite_component = entman->GetComponent<SpriteComponent>(ent);
-	json_object->LoadData(sprite_component.texture_handle, "texture_handle"); 
+
+	if (json_object->ObjectExist("texture_name"))
+	{
+		std::string texture_name{};
+		json_object->LoadData(texture_name, "texture_name");
+		SceneLoader::Get()->GetDeferedCalls()->TryCallDirectly(entman->GetSceneIndex(), s_load_and_set_texture_index, texture_name, entman->GetSceneIndex(), ent);
+	}
 
 	if (json_object->ObjectExist("uv1"))
 	{
@@ -206,15 +220,26 @@ void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManag
 	json_object->LoadData(sprite_component.flip_x, "flip_x");
 	json_object->LoadData(sprite_component.flip_y, "flip_y");
 	json_object->LoadData(sprite_component.addative_color, "addative_color");
-
-	if (!SceneLoader::Get()->HasRenderTexture(sprite_component.texture_handle))
-		return;
-
-	sprite_component.texture_handle = SceneLoader::Get()->GetRenderTexture(sprite_component.texture_handle);
 }
 
-void SpriteComponentInterface::LoadTextureToSprite(SceneIndex scene_index, Entity entity, SpriteComponent& sprite_component, TextureHandle texture_handle)
+void SpriteComponentInterface::LoadTextureToSprite(SceneIndex scene_index, Entity entity, TextureHandle texture)
 {
+	SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
+	if (RenderCore::Get()->IsTextureAvailable(sprite_component.texture_handle) && !RenderCore::Get()->IsTextureLoaded(texture))
+	{
+		RenderCore::Get()->SubscribeEntityToTextureLoading(texture, scene_index, entity);
+		return;
+	}
+
+	sprite_component.texture_handle = texture;
+}
+
+void SpriteComponentInterface::LoadTextureObjectToSprite(SceneIndex scene_index, Entity entity, const CSMonoObject& texture)
+{
+	TextureHandle texture_handle;
+	CSMonoCore::Get()->GetValue(texture_handle, texture, "texture_asset_handle");
+
+	SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
 	if (RenderCore::Get()->IsTextureAvailable(sprite_component.texture_handle) && !RenderCore::Get()->IsTextureLoaded(texture_handle))
 	{
 		RenderCore::Get()->SubscribeEntityToTextureLoading(texture_handle, scene_index, entity);

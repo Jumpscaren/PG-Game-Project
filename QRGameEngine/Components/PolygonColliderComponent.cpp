@@ -11,7 +11,11 @@
 #include "IO/JsonObject.h"
 #include "KinematicBodyComponent.h"
 
-void PolygonColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex PolygonColliderComponentInterface::s_add_physic_object_index;
+DeferedMethodIndex PolygonColliderComponentInterface::s_add_polygon_collider_index;
+DeferedMethodIndex PolygonColliderComponentInterface::s_remove_polygon_collider_index;
+
+void PolygonColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex add_physic_object_index, const DeferedMethodIndex add_polygon_collider_index, const DeferedMethodIndex remove_polygon_collider_index)
 {
 	auto polygon_collider_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "PolygonCollider");
 
@@ -22,17 +26,30 @@ void PolygonColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<PolygonColliderComponentInterface::SetTrigger>(polygon_collider_class, "SetTrigger", PolygonColliderComponentInterface::SetTrigger);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<PolygonColliderComponent>(SaveScriptComponent, LoadScriptComponent);
+
+	s_add_physic_object_index = add_physic_object_index;
+	s_add_polygon_collider_index = add_polygon_collider_index;
+	s_remove_polygon_collider_index = remove_polygon_collider_index;
 }
 
 void PolygonColliderComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
 
 	//So that we do not need add staticbody when adding a circlecollider if we do not use a dynamic body
 	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity) && !entity_manager->HasComponent<KinematicBodyComponent>(entity))
-		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
+	{
+		if (!defer_method_calls->TryCallDirectly(scene_index, s_add_physic_object_index, scene_index, entity, PhysicsCore::StaticBody))
+		{
+			SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<StaticBodyComponent>(entity);
+		}
+	}
 
-	PhysicsCore::Get()->AddPolygonCollider(scene_index, entity, { Vector2(0.5f, 0.5f), Vector2(-0.5f, -0.5f), Vector2(1.0f, 0.0f) }, true, true);
+	if (!defer_method_calls->TryCallDirectly(scene_index, s_add_polygon_collider_index, scene_index, entity, std::vector<Vector2>{ Vector2(0.5f, 0.5f), Vector2(-0.5f, -0.5f), Vector2(1.0f, 0.0f) }, true, true, false, ColliderFilter{}))
+	{
+		SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<PolygonColliderComponent>(entity).debug_draw = true;
+	}
 }
 
 bool PolygonColliderComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -42,7 +59,9 @@ bool PolygonColliderComponentInterface::HasComponent(const CSMonoObject& object,
 
 void PolygonColliderComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->RemovePolygonCollider(scene_index, entity);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	defer_method_calls->TryCallDirectly(scene_index, s_remove_polygon_collider_index, scene_index, entity);
 }
 
 bool IsInsideTriangle(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& q)

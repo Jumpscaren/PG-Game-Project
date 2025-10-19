@@ -23,10 +23,12 @@ namespace ScriptProject.Scripts
             //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_2"));
             //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_3"));
             //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_4"));
-            scenes.Add(SceneManager.LoadSceneSynchronized("lvl_4"));
+            scenes.Add(SceneManager.LoadSceneSynchronized("playroom"));
             //scenes.Add(SceneManager.LoadSceneSynchronized("testthing"));
             scenes.Add(SceneManager.LoadScene("temp"));
             scenes.Add(SceneManager.LoadScene("man"));
+            //scenes.Add(SceneManager.LoadSceneSynchronized("temp"));
+            //scenes.Add(SceneManager.LoadSceneSynchronized("man"));
 
             NextScene();
 

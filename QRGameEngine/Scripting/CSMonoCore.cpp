@@ -457,6 +457,8 @@ void CSMonoCore::ForceGarbageCollection()
 
 MonoThreadHandle CSMonoCore::HookThread()
 {
+	m_mono_threads_mutex.lock();
+
 	MonoThreadHandle mono_thread_handle = { .handle = m_mono_threads.size() };
 	if (!m_free_mono_thread_handles.empty())
 	{
@@ -472,6 +474,9 @@ MonoThreadHandle CSMonoCore::HookThread()
 	{
 		assert(false);
 	}
+
+	m_mono_threads_mutex.unlock();
+
 	return mono_thread_handle;
 }
 
@@ -480,6 +485,8 @@ void CSMonoCore::UnhookThread(const MonoThreadHandle thread_handle)
 	//ForceGarbageCollection();
 
 	//std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+	m_mono_threads_mutex.lock();
 
 	if (mono_domain_get() == nullptr)
 	{
@@ -503,6 +510,8 @@ void CSMonoCore::UnhookThread(const MonoThreadHandle thread_handle)
 	}
 	mono_thread_detach(mono_thread);
 	m_free_mono_thread_handles.push_back(thread_handle);
+
+	m_mono_threads_mutex.unlock();
 }
 
 bool CSMonoCore::IsOfClass(const CSMonoObject& object, const std::string& class_namespace, const std::string& class_name)

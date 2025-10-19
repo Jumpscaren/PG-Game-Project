@@ -46,9 +46,11 @@ namespace ScriptProject.Scripts
         bool delay_attack = false;
 
         float max_speed = 2.0f;
+        //float max_speed = 0.2f;
         const float drag_speed = 20.0f;
 
-        const float calculate_path_time = 0.02f;
+        //const float calculate_path_time = 0.3f;
+        const float calculate_path_time = 0.05f;
         Timer calculate_path_timer = new Timer(calculate_path_time);
 
         RandomGenerator random_generator = new RandomGenerator();
@@ -99,7 +101,8 @@ namespace ScriptProject.Scripts
 
             target = player_game_object;
 
-            last_position = actor.PathFind(target, 1);
+            //last_position = actor.PathFind(target, 1);
+            last_position = transform.GetPosition();
 
             if (only != null)
             {
@@ -220,14 +223,33 @@ namespace ScriptProject.Scripts
             Vector2 current_position = transform.GetPosition();
             Vector2 dir = last_position - current_position;
             Vector2 target_dir = target.transform.GetPosition() - current_position;
-            if (dir.Length() < 0.1f || actor.NeedNewPathFind(target, 1))
+            //if (dir.Length() < 0.1f || (calculate_path_timer.IsExpired() && actor.NeedNewPathFind(target, 1)))
+            //if (dir.Length() < 0.1f || calculate_path_timer.IsExpired())
+            ////if (calculate_path_timer.IsExpired())
+            //{
+            //    //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
+            //    last_position = actor.PathFind(target, 1);
+            //    dir = last_position - current_position;
+            //    calculate_path_timer.Start();
+            //}
+
+            if (calculate_path_timer.IsExpired())
             //if (calculate_path_timer.IsExpired())
             {
                 //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
-                last_position = actor.PathFind(target, 1);
-                dir = last_position - current_position;
+                actor.PathFind(target, 1);
                 calculate_path_timer.Start();
+                last_position = current_position;
+                dir = last_position - current_position;
             }
+
+            if (dir.Length() < 0.1f)
+            {
+                last_position = actor.GetNextNodePosition(1);
+                dir = last_position - current_position;
+            }
+            last_position = actor.GetCurrentNodePosition();
+            dir = last_position - current_position;
 
             //Console.WriteLine("Dir: " + dir);
             //last_position = actor.PathFind(target, 1);

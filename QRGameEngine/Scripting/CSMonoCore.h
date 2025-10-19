@@ -135,6 +135,7 @@ private:
 
 	std::vector<_MonoThread*> m_mono_threads;
 	std::vector<MonoThreadHandle> m_free_mono_thread_handles;
+	std::mutex m_mono_threads_mutex;
 
 private:
 	//Type changing templates

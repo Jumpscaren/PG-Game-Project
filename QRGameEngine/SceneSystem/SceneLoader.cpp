@@ -10,28 +10,9 @@
 #include "Scripting/CSMonoCore.h"
 #include "IO/JsonObject.h"
 #include "Time/Timer.h"
+#include "Common/DeferMethodCalls.h"
 
 SceneLoader* SceneLoader::s_scene_loader = nullptr;
-
-void SceneLoader::LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths, const SceneIndex scene_index)
-{
-	m_texture_paths.clear();
-
-	std::string text;
-	for (uint32_t i = 0; i < number_of_texture_paths; ++i)
-	{
-		TextureHandle texture_handle = save_file->Read<TextureHandle>();
-		uint32_t text_size = save_file->Read<uint32_t>();
-		text.resize(text_size);
-		save_file->Read((void*)text.c_str(), text_size);
-
-		RenderTexture texture_path;
-		texture_path.texture_path = text;
-		texture_path.render_texture_handle = RenderCore::Get()->LoadTexture(texture_path.texture_path, scene_index);
-
-		m_texture_paths.insert({ texture_handle, texture_path });
-	}
-}
 
 Entity SceneLoader::LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity entity)
 {
@@ -85,7 +66,8 @@ SceneLoader::~SceneLoader()
 	}
 
 	m_threaded_scene_loader_finished = true;
-	HandleSceneLoadingPostUser();
+	/* FIX THIS KILL LOAD THREAD/*/
+	//HandleSceneLoadingPostUser();
 }
 
 void SceneLoader::SaveScene(qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>>& blocks, std::string scene_name)
@@ -104,35 +86,6 @@ void SceneLoader::SaveScene(qr::unordered_map<uint64_t, qr::unordered_map<uint32
 
 	uint32_t numberofblocks = (uint32_t)blocks.size();
 	save_file.Write(numberofblocks);
-
-	qr::unordered_map<TextureHandle, std::string> texture_paths;
-
-	for (auto it = blocks.begin(); it != blocks.end(); it++)
-	{
-		for (auto block_it = it->second.begin(); block_it != it->second.end(); block_it++)
-		{
-			if (!entity_manager->HasComponent<SpriteComponent>(block_it->second.block_entity))
-			{
-				continue;
-			}
-
-			TextureHandle texture_handle = entity_manager->GetComponent<SpriteComponent>(block_it->second.block_entity).texture_handle;
-
-			if (texture_paths.find(texture_handle) == texture_paths.end())
-			{
-				std::string texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(texture_handle));
-				texture_paths.insert({ texture_handle, texture_path });
-			}
-		}
-	}
-
-	save_file.Write((uint32_t)texture_paths.size());
-	for (auto it = texture_paths.begin(); it != texture_paths.end(); it++)
-	{
-		save_file.Write(it->first);
-		save_file.Write((uint32_t)it->second.size());
-		save_file.Write((void*)it->second.c_str(), (uint32_t)it->second.size());
-	}
 
 	for (auto it = blocks.begin(); it != blocks.end(); it++)
 	{
@@ -196,10 +149,6 @@ qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> SceneLoader:
 
 	uint32_t numberofblocks = save_file.Read<uint32_t>();
 
-	uint32_t number_texture_paths = save_file.Read<uint32_t>();
-
-	LoadTexturePaths(&save_file, number_texture_paths, scene_manager->GetActiveSceneIndex());
-
 	qr::unordered_map<Entity, Entity> new_entity_to_saved_entity_map;
 	std::string prefab_name;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
@@ -238,14 +187,16 @@ qr::unordered_map<uint64_t, qr::unordered_map<uint32_t, BlockData>> SceneLoader:
 
 	save_file.Close();
 
-	m_texture_paths.clear();
-
 	return blocks;
 }
 
 void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool threaded)
 {
 	Timer timer;
+	if (threaded)
+	{
+		m_mono_thread_handle = CSMonoCore::Get()->HookThread();
+	}
 
 	std::string scene_name_file;
 	//So goddamn stupid!!!
@@ -259,32 +210,11 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 	EntityManager* entity_manager = scene_manager->GetEntityManager(load_scene);
 
 	uint32_t numberofblocks = save_file.Read<uint32_t>();
-
-	uint32_t number_texture_paths = save_file.Read<uint32_t>();
-
-	if (threaded)
-	{
-		m_load_scene_mutex.lock();
-		m_mono_thread_handle = CSMonoCore::Get()->HookThread();
-	}
-	LoadTexturePaths(&save_file, number_texture_paths, load_scene);
-	if (threaded)
-	{
-		m_load_scene_mutex.unlock();
-	}
-
 	std::string prefab_name;
-	bool locked = false;
 	for (uint32_t i = 0; i < numberofblocks; ++i)
 	{
 		uint64_t unique_number = save_file.Read<uint64_t>();
 		uint64_t block_layers = save_file.Read<uint64_t>();
-
-		//if (threaded && i % 3 == 0)
-		//{
-		//	m_load_scene_mutex.lock();
-		//	locked = true;
-		//}
 
 		for (uint64_t layers = 0; layers < block_layers; ++layers)
 		{
@@ -296,43 +226,19 @@ void SceneLoader::LoadScene(std::string scene_name, SceneIndex load_scene, bool 
 			Entity new_entity = entity_manager->NewEntity();
 			SpriteComponent& sprite = entity_manager->AddComponent<SpriteComponent>(new_entity);
 
-			if (threaded)
-			{
-				m_load_scene_mutex.lock();
-				locked = true;
-			}
 			CSMonoObject game_object = GameObjectInterface::NewGameObjectWithExistingEntity(new_entity, load_scene);
 			LoadTransformComponent(&save_file, new_entity, entity_manager);
 			InstancePrefab(game_object, prefab_name);
-			if (threaded)
-			{
-				m_load_scene_mutex.unlock();
-				locked = false;
-			}
 
 			LoadComponents(&save_file, entity_manager, new_entity);
 		}
-		//if (threaded && i % 3 == 2)
-		//{
-		//	m_load_scene_mutex.unlock();
-		//	locked = false;
-		//}
-	}
-
-	if (locked)
-	{
-		m_load_scene_mutex.unlock();
 	}
 
 	save_file.Close();
 
-	m_texture_paths.clear();
-
 	if (threaded)
 	{
-		m_load_scene_mutex.lock();
 		CSMonoCore::Get()->UnhookThread(m_mono_thread_handle);
-		m_load_scene_mutex.unlock();
 	}
 
 	const auto time = timer.StopTimer();
@@ -347,7 +253,7 @@ void SceneLoader::LoadSceneThreaded(std::string scene_name, SceneIndex load_scen
 	m_threaded_scene_loader_finished = false;
 	//m_physic_update_thread = new std::thread(&PhysicsCore::ThreadUpdatePhysic, this);
 	//LoadScene(scene_name, load_scene);
-	m_load_scene_mutex.lock();
+	//m_load_scene_mutex.lock();
 	m_load_scene_index = load_scene;
 	m_load_scene_thread = new std::thread(&SceneLoader::LoadScene, this, scene_name, load_scene, true);
 }
@@ -404,44 +310,30 @@ void SceneLoader::InstancePrefab(const CSMonoObject& game_object, std::string pr
 	mono_core->CallStaticMethod(m_instance_prefab_method, game_object, prefab_name);
 }
 
-TextureHandle SceneLoader::GetRenderTexture(const TextureHandle texture_handle)
-{
-	return m_texture_paths.find(texture_handle)->second.render_texture_handle;
-}
-
-bool SceneLoader::HasRenderTexture(const TextureHandle texture_handle)
-{
-	return m_texture_paths.contains(texture_handle);
-}
-
-void SceneLoader::HandleSceneLoadingPreUser()
-{
-	if (!m_load_scene_thread)
-	{
-		return;
-	}
-	m_load_scene_mutex.lock();
-	m_load_scene_user_controlled = true;
-}
-
-void SceneLoader::HandleSceneLoadingPostUser()
+void SceneLoader::HandleDeferedCalls()
 {
 	if (!m_load_scene_thread)
 	{
 		return;
 	}
 
-	m_load_scene_mutex.unlock();
-	m_load_scene_user_controlled = false;
+	if (m_deferred_calls.IsFull())
+	{
+		m_deferred_calls.ClearBuffers();
+		return;
+	}
+
 	if (m_threaded_scene_loader_finished)
 	{
 		m_load_scene_thread->join();
 		delete m_load_scene_thread;
 		m_load_scene_thread = nullptr;
 		m_threaded_scene_loader_finished = false;
+
+		m_deferred_calls.ClearBuffers();
+
 		SceneManager::GetSceneManager()->GetScene(m_load_scene_index)->SetSceneAsLoaded();
 		m_load_scene_index = NULL_SCENE_INDEX;
-		return;
 	}
 }
 
@@ -453,6 +345,11 @@ bool SceneLoader::FinishedLoadingScene()
 SceneIndex SceneLoader::GetLoadingScene() const
 {
 	return m_load_scene_index;
+}
+
+bool SceneLoader::DeferMethodCall() const
+{
+	return m_load_scene_thread && m_load_scene_thread->get_id() == std::this_thread::get_id();
 }
 
 std::function<void(Entity, EntityManager*, JsonObject*)>* SceneLoader::GetOverrideSaveComponentMethod(const std::string& component_name)

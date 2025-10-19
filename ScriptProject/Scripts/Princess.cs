@@ -224,8 +224,9 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 current_position = game_object.transform.GetPosition();
-            Vector2 last_position = actor.PathFind(target, 1);
-            Vector2 dir = last_position - current_position;
+            //Vector2 last_position = actor.PathFind(target, 1);
+            //Vector2 dir = last_position - current_position;
+            Vector2 dir = new Vector2();
             Vector2 target_dir = target.transform.GetPosition() - current_position;
             if (target_dir.Length() < 1.01f)
             {

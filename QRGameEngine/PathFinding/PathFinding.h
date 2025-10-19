@@ -141,6 +141,7 @@ public:
 	~PathFinding();
 	bool RequestPathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, const NodeDetail node_detail);
 	std::vector<NodeIndex> PathFind(const SceneIndex scene_index, const Entity start_entity, const Entity goal_entity, bool& new_path, const NodeDetail node_detail);
+	std::vector<NodeIndex> GetPath(const SceneIndex scene_index, const Entity entity);
 	NodeIndex GetNodeFromPosition(const Vector2& position, const NodeDetail node_detail) const;
 	Entity GetEntityFromNodeIndex(const NodeIndex node_index) const;
 	bool IsWorldConstructed() const;

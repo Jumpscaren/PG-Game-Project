@@ -7,6 +7,7 @@
 #include "SceneDefines.h"
 #include <thread>
 #include <mutex>
+#include "Helpers/SceneLoaderDeferCalls.h"
 
 class EntityManager;
 class OutputFile;
@@ -28,22 +29,16 @@ private:
 	MonoClassHandle m_prefab_instancer_class;
 	static SceneLoader* s_scene_loader;
 	qr::unordered_map<std::string, OverrideSaveLoadMethods> m_override_methods;
-	struct RenderTexture
-	{
-		std::string texture_path;
-		TextureHandle render_texture_handle;
-	};
-	qr::unordered_map<TextureHandle, RenderTexture> m_texture_paths;
 
 	std::thread* m_load_scene_thread = nullptr;
-	std::mutex m_load_scene_mutex;
 	bool m_load_scene_user_controlled = false;
 	std::atomic<bool> m_threaded_scene_loader_finished = false;
 	SceneIndex m_load_scene_index = NULL_SCENE_INDEX;
 	MonoThreadHandle m_mono_thread_handle;
 
+	SceneLoaderDeferCalls m_deferred_calls;
+
 private:
-	void LoadTexturePaths(OutputFile* save_file, uint32_t number_of_texture_paths, SceneIndex scene_index);
 	Entity LoadComponents(OutputFile* save_file, EntityManager* entity_manager, Entity enitity);
 	void LoadScene(std::string scene_name, SceneIndex load_scene, bool threaded);
 	void LoadSceneThreaded(std::string scene_name, SceneIndex load_scene);
@@ -63,14 +58,12 @@ public:
 
 	void InstancePrefab(const CSMonoObject& game_object, std::string prefab_name);
 
-	TextureHandle GetRenderTexture(TextureHandle texture_handle);
-	bool HasRenderTexture(TextureHandle texture_handle);
-
-	void HandleSceneLoadingPreUser();
-	void HandleSceneLoadingPostUser();
+	void HandleDeferedCalls();
+	SceneLoaderDeferCalls* GetDeferedCalls() { return &m_deferred_calls; }
 
 	bool FinishedLoadingScene();
 	SceneIndex GetLoadingScene() const;
+	bool DeferMethodCall() const;
 
 	template<typename Component>
 	void OverrideSaveComponentMethod(std::function<void(Entity, EntityManager*, JsonObject*)> override_save_method, std::function<void(Entity, EntityManager*, JsonObject*)> override_load_method);

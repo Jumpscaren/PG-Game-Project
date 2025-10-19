@@ -9,7 +9,10 @@
 #include "ComponentInterface.h"
 #include "Scripting/Objects/Vector2Interface.h"
 
-void KinematicBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex KinematicBodyComponentInterface::s_add_physic_object_index;
+DeferedMethodIndex KinematicBodyComponentInterface::s_remove_physic_object_index;
+
+void KinematicBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex add_physic_object_index, const DeferedMethodIndex add_remove_physic_object_index)
 {
 	auto kinematic_body_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "KinematicBody");
 
@@ -23,11 +26,19 @@ void KinematicBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<KinematicBodyComponentInterface::SetEnabled>(kinematic_body_class, "SetEnabled", KinematicBodyComponentInterface::SetEnabled);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<KinematicBodyComponent>(SaveScriptComponent, LoadScriptComponent);
+
+	s_add_physic_object_index = add_physic_object_index;
+	s_remove_physic_object_index = add_remove_physic_object_index;
 }
 
 void KinematicBodyComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::KinematicBody);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	if (!defer_method_calls->TryCallDirectly(scene_index, s_add_physic_object_index, scene_index, entity, PhysicsCore::KinematicBody))
+	{
+		SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<KinematicBodyComponent>(entity);
+	}
 }
 
 bool KinematicBodyComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -37,7 +48,9 @@ bool KinematicBodyComponentInterface::HasComponent(const CSMonoObject& object, S
 
 void KinematicBodyComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	defer_method_calls->TryCallDirectly(scene_index, s_remove_physic_object_index, scene_index, entity);
 }
 
 void KinematicBodyComponentInterface::SetVelocity(const CSMonoObject& object, const CSMonoObject& velocity)

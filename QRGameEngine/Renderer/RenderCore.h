@@ -111,6 +111,7 @@ public:
 
 	bool UpdateRender(Scene* draw_scene);
 
+	void LoadAndSetTexture(const std::string& texture_file_name, const SceneIndex scene_index, const Entity entity);
 	TextureHandle LoadTexture(const std::string& texture_file_name, SceneIndex scene_index);
 	TextureHandle ForceLoadTexture(const std::string& texture_file_name, SceneIndex scene_index);
 	void DeleteTextureHandle(const TextureHandle texture_handle);

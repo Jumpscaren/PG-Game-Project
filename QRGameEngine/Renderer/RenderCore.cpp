@@ -408,6 +408,11 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	return m_window->WinMsg();
 }
 
+void RenderCore::LoadAndSetTexture(const std::string& texture_file_name, const SceneIndex scene_index, const Entity entity)
+{
+	SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity).texture_handle = LoadTexture(texture_file_name, scene_index);
+}
+
 TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name, const SceneIndex scene_index)
 {
 	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTextureAsset(texture_file_name, scene_index);

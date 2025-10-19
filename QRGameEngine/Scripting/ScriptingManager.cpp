@@ -126,11 +126,50 @@ void ScriptingManager::RemoveDeferredScripts(EntityManager* entity_manager)
 {
 	entity_manager->System<DeferredEntityDeletion, ScriptComponent>([&](DeferredEntityDeletion, ScriptComponent& script)
 		{
-			RemoveScript(script);
+			InternalRemoveScript(script);
 		});
 }
 
-void ScriptingManager::RemoveScript(ScriptComponent& script)
+void ScriptingManager::AddScript(const SceneIndex scene_index, const Entity entity)
+{
+	ScriptComponent& script_component = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->GetComponent<ScriptComponent>(entity);
+
+	//script_component.script_object.test.erase(script_component.script_object.m_gchandle);
+	script_component.script_start = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "Start");
+	script_component.script_update = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "Update");
+	script_component.script_fixed_update = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "FixedUpdate");
+	script_component.script_late_update = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "LateUpdate");
+	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "BeginCollision");
+	if (script_component.script_begin_collision == CSMonoCore::NULL_METHOD)
+	{
+		const auto parent_class = CSMonoCore::Get()->TryGetParentClass(script_component.script_object);
+		if (parent_class != CSMonoCore::NULL_CLASS)
+		{
+			script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(parent_class, "BeginCollision");
+		}
+	}
+	script_component.script_end_collision = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "EndCollision");
+
+	if (const MonoMethodHandle awake_method_handle = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "Awake");
+		awake_method_handle != CSMonoCore::NULL_METHOD)
+	{
+		CSMonoCore::Get()->CallMethod(awake_method_handle, script_component.script_object);
+	}
+
+#ifndef _EDITOR
+	if (SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
+		ScriptingManager::Get()->StartScript(script_component);
+#endif // _EDITOR
+}
+
+void ScriptingManager::RemoveScript(const SceneIndex scene_index, const Entity entity)
+{
+	ScriptComponent& script_component = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->GetComponent<ScriptComponent>(entity);
+	InternalRemoveScript(script_component);
+	SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->RemoveComponent<ScriptComponent>(entity);
+}
+
+void ScriptingManager::InternalRemoveScript(ScriptComponent& script)
 {
 	const auto script_remove = CSMonoCore::Get()->TryRegisterMonoMethod(script.script_object, "Remove");
 	CSMonoCore* mono_core = CSMonoCore::Get();

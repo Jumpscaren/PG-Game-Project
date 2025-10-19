@@ -978,10 +978,6 @@ void PhysicsCore::AddBoxCollider(const SceneIndex scene_index, const Entity enti
 		box_collider.half_box_size = half_box_size;
 		box_collider.debug_draw = true;
 	}
-	else
-	{
-		assert(entity_manager->GetComponent<BoxColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
-	}
 
 	if (ShouldDeferPhysicCalls(scene_index))
 	{
@@ -1005,10 +1001,6 @@ void PhysicsCore::AddCircleCollider(const SceneIndex scene_index, const Entity e
 		circle_collider.circle_radius = circle_radius;
 		circle_collider.debug_draw = true;
 	}
-	else
-	{
-		assert(entity_manager->GetComponent<CircleColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
-	}
 
 	if (ShouldDeferPhysicCalls(scene_index))
 	{
@@ -1031,10 +1023,6 @@ void PhysicsCore::AddPolygonCollider(const SceneIndex scene_index, const Entity 
 		polygon_collider.filter = collider_filter;
 		polygon_collider.points = points;
 		polygon_collider.debug_draw = true;
-	}
-	else
-	{
-		assert(entity_manager->GetComponent<PolygonColliderComponent>(entity).physic_object_handle == NULL_PHYSIC_OBJECT_HANDLE);
 	}
 
 	if (ShouldDeferPhysicCalls(scene_index))

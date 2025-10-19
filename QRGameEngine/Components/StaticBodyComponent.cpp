@@ -8,7 +8,10 @@
 #include "ComponentInterface.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 
-void StaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex StaticBodyComponentInterface::s_add_physic_object_index;
+DeferedMethodIndex StaticBodyComponentInterface::s_remove_physic_object_index;
+
+void StaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex add_physic_object_index, const DeferedMethodIndex remove_physic_object_index)
 {
 	const auto static_body_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "StaticBody");
 
@@ -19,11 +22,19 @@ void StaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::SetEnabled>(static_body_class, "SetEnabled", StaticBodyComponentInterface::SetEnabled);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<StaticBodyComponent>(SaveScriptComponent, LoadScriptComponent);
+
+	s_add_physic_object_index = add_physic_object_index;
+	s_remove_physic_object_index = remove_physic_object_index;
 }
 
 void StaticBodyComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	if (!defer_method_calls->TryCallDirectly(scene_index, s_add_physic_object_index, scene_index, entity, PhysicsCore::StaticBody))
+	{
+		SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<StaticBodyComponent>(entity);
+	}
 }
 
 bool StaticBodyComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -33,7 +44,9 @@ bool StaticBodyComponentInterface::HasComponent(const CSMonoObject& object, Scen
 
 void StaticBodyComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->RemovePhysicObject(scene_index, entity);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	defer_method_calls->TryCallDirectly(scene_index, s_remove_physic_object_index, scene_index, entity);
 }
 
 void StaticBodyComponentInterface::SetEnabled(const CSMonoObject& object, const bool enabled)

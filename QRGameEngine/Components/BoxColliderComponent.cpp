@@ -13,7 +13,11 @@
 #include "Scripting/Objects/Vector2Interface.h"
 #include "KinematicBodyComponent.h"
 
-void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex BoxColliderComponentInterface::s_add_box_collider_index;
+DeferedMethodIndex BoxColliderComponentInterface::s_add_physic_object_index;
+DeferedMethodIndex BoxColliderComponentInterface::s_remove_box_collider_index;
+
+void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex add_physic_object_index, const DeferedMethodIndex add_box_collider_index, const DeferedMethodIndex remove_box_collider_index)
 {
 	auto box_collider_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "BoxCollider");
 
@@ -25,17 +29,30 @@ void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetHalfBoxSize>(box_collider_class, "SetHalfBoxSize", BoxColliderComponentInterface::SetHalfBoxSize);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<BoxColliderComponent>(SaveScriptComponent, LoadScriptComponent);
+
+	s_add_physic_object_index = add_physic_object_index;
+	s_add_box_collider_index = add_box_collider_index;
+	s_remove_box_collider_index = remove_box_collider_index;
 }
 
 void BoxColliderComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
 
 	//So that we do not need add staticbody when adding a circlecollider if we do not use a dynamic body
 	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity) && !entity_manager->HasComponent<KinematicBodyComponent>(entity))
-		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
+	{
+		if (!defer_method_calls->TryCallDirectly(scene_index, s_add_physic_object_index, scene_index, entity, PhysicsCore::StaticBody))
+		{
+			SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<StaticBodyComponent>(entity);
+		}
+	}
 
-	PhysicsCore::Get()->AddBoxCollider(scene_index, entity, Vector2(0.5f, 0.5f));
+	if (!defer_method_calls->TryCallDirectly(scene_index, s_add_box_collider_index, scene_index, entity, Vector2(0.5f, 0.5f), false, ColliderFilter{}))
+	{
+		SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<BoxColliderComponent>(entity).debug_draw = true;
+	}
 }
 
 bool BoxColliderComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -45,7 +62,9 @@ bool BoxColliderComponentInterface::HasComponent(const CSMonoObject& object, Sce
 
 void BoxColliderComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->RemoveBoxCollider(scene_index, entity);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	defer_method_calls->TryCallDirectly(scene_index, s_remove_box_collider_index, scene_index, entity);
 }
 
 void BoxColliderComponentInterface::SetTrigger(const CSMonoObject& object, bool trigger)

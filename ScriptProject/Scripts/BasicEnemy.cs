@@ -34,7 +34,7 @@ namespace ScriptProject.Scripts
         {
             Vector2 current_position = transform.GetPosition();
             Vector2 dir = last_position - current_position;
-            last_position = actor.PathFind(player_game_object, 1);
+            //last_position = actor.PathFind(player_game_object, 1);
 
             DynamicBody body = game_object.GetComponent<DynamicBody>();
             Vector2 velocity = body.GetVelocity();

@@ -294,6 +294,12 @@
     <ClCompile Include="Editor\AnimatorHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Common\DeferMethodCalls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneSystem\Helpers\SceneLoaderDeferCalls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -771,6 +777,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PathFinding\PathFindingDefines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\DeferMethodCalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneSystem\Helpers\SceneLoaderDeferCalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\DeferMethodCallsDefine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

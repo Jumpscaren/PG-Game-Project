@@ -447,7 +447,7 @@ std::vector<AnimationValueSection> AnimationManager::LoadAnimationDataAndGetAnim
 		if (sprite_texture_path != "")
 		{
 			const TextureHandle texture_handle = RenderCore::Get()->LoadTexture(sprite_texture_path, SceneManager::GetActiveSceneIndex());
-			SpriteComponentInterface::LoadTextureToSprite(SceneManager::GetActiveSceneIndex(), entity, sprite, texture_handle);
+			SpriteComponentInterface::LoadTextureToSprite(SceneManager::GetActiveSceneIndex(), entity, texture_handle);
 
 			sprite_data.SetData(texture_handle, "texture_handle");
 		}

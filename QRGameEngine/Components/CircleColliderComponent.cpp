@@ -12,7 +12,11 @@
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "KinematicBodyComponent.h"
 
-void CircleColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
+DeferedMethodIndex CircleColliderComponentInterface::s_add_circle_collider_index;
+DeferedMethodIndex CircleColliderComponentInterface::s_add_physic_object_index;
+DeferedMethodIndex CircleColliderComponentInterface::s_remove_circle_collider_index;
+
+void CircleColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core, const DeferedMethodIndex add_physic_object_index, const DeferedMethodIndex add_circle_collider_index, const DeferedMethodIndex remove_circle_collider_index)
 {
 	auto circle_collider_class = mono_core->RegisterMonoClass("ScriptProject.Engine", "CircleCollider");
 
@@ -25,17 +29,30 @@ void CircleColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 	mono_core->HookAndRegisterMonoMethodType<CircleColliderComponentInterface::SetRadius>(circle_collider_class, "SetRadius", CircleColliderComponentInterface::SetRadius);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<CircleColliderComponent>(SaveScriptComponent, LoadScriptComponent);
+
+	s_add_physic_object_index = add_physic_object_index;
+	s_add_circle_collider_index = add_circle_collider_index;
+	s_remove_circle_collider_index = remove_circle_collider_index;
 }
 
 void CircleColliderComponentInterface::InitComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
 
 	//So that we do not need add staticbody when adding a circlecollider if we do not use a dynamic body
 	if (!entity_manager->HasComponent<DynamicBodyComponent>(entity) && !entity_manager->HasComponent<StaticBodyComponent>(entity) && !entity_manager->HasComponent<PureStaticBodyComponent>(entity) && !entity_manager->HasComponent<KinematicBodyComponent>(entity))
-		PhysicsCore::Get()->AddPhysicObject(scene_index, entity, PhysicsCore::StaticBody);
+	{
+		if (!defer_method_calls->TryCallDirectly(scene_index, s_add_physic_object_index, scene_index, entity, PhysicsCore::StaticBody))
+		{
+			SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<StaticBodyComponent>(entity);
+		}
+	}
 
-	PhysicsCore::Get()->AddCircleCollider(scene_index, entity, 0.5f);
+	if (!defer_method_calls->TryCallDirectly(scene_index, s_add_circle_collider_index, scene_index, entity, 0.5f, false, ColliderFilter{}))
+	{
+		SceneManager::GetSceneManager()->GetEntityManager(scene_index)->AddComponent<CircleColliderComponent>(entity).debug_draw = true;
+	}
 }
 
 bool CircleColliderComponentInterface::HasComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
@@ -45,7 +62,9 @@ bool CircleColliderComponentInterface::HasComponent(const CSMonoObject& object, 
 
 void CircleColliderComponentInterface::RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity)
 {
-	PhysicsCore::Get()->RemoveCircleCollider(scene_index, entity);
+	SceneLoaderDeferCalls* defer_method_calls = SceneLoader::Get()->GetDeferedCalls();
+
+	defer_method_calls->TryCallDirectly(scene_index, s_remove_circle_collider_index, scene_index, entity);
 }
 
 void CircleColliderComponentInterface::SetTrigger(const CSMonoObject& object, const bool trigger)
