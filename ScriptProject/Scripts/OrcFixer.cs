@@ -15,51 +15,38 @@ using ScriptProject.Engine.Constants;
 
 namespace ScriptProject.Scripts
 {
-    internal class OrcEnemy : InteractiveCharacterBehaviour
+    internal class OrcFixer : InteractiveCharacterBehaviour
     {
         GameObject player_game_object;
         PathFindingActor actor;
         Transform transform;
         Vector2 last_position;
-        GameObject hit_box;
-        GameObject mid_block;
         DynamicBody body;
         Sprite sprite;
         float health = 20.0f;
 
-        StaticBody hit_box_body;
-
         GameObject sprite_game_object;
 
-        float charge_up = 0.0f;
-        bool charged_up = false;
-        const float charge_up_distance = 4.0f;
-        const float charge_up_increase = 0.6f;
-        const float charge_up_decrease = 0.3f;
         bool attack_ready = false;
         bool attacking = false;
-        const float attack_range = 1.3f;
         const float attack_time = 0.4f;
-        float attack_timer = 0.0f;
-        const float attack_angle = (float)Math.PI / 2.0f;
-        const float delay_time = 0.1f;
-        float delay_timer = 0.0f;
+        Timer attack_timer = new Timer(attack_time);
+        const float delay_time = 0.8f;
+        Timer delay_timer = new Timer(delay_time);
         bool delay_attack = false;
 
-        //float max_speed = 2.0f;
-        float max_speed = 1.5f;
-        //float max_speed = 0.2f;
+        const float attack_distance = 5.0f;
+
+        float max_speed = 2.0f;
         const float drag_speed = 20.0f;
 
-        //const float calculate_path_time = 0.3f;
-        const float calculate_path_time = 0.5f;
+        const float calculate_path_time = 0.2f;
         Timer calculate_path_timer = new Timer(calculate_path_time);
 
         RandomGenerator random_generator = new RandomGenerator();
 
         GameObject target = null;
-
-        static GameObject only = null;
+        bool is_target_spawner = false;
 
         bool dead = false;
         bool falling = false;
@@ -67,17 +54,12 @@ namespace ScriptProject.Scripts
 
         HoleManager holes = new HoleManager();
 
-        public class OrcAngryEventData : EventSystem.BaseEventData
-        {
-            public GameObject orc_to_target;
-        }
-
-        public static int count = 0;
-
-        public static int GetCount()
-        {
-            return count; 
-        }
+        List<GameObject> fence_spawners;
+        const float health_per_fix_tick = 10.0f;
+        const float fix_delay_time = 1.0f;
+        Timer fix_delay_timer = new Timer(fix_delay_time);
+        const float fix_distance = 0.5f;
+        bool fix_ready = false;
 
         void Start()
         {
@@ -88,6 +70,8 @@ namespace ScriptProject.Scripts
             body = game_object.GetComponent<DynamicBody>();
 
             sprite_game_object = GameObject.CreateGameObject();
+            sprite_game_object.transform.SetScale(transform.GetScale());
+            transform.SetScale(new Vector2(1.0f, 1.0f));
             sprite = sprite_game_object.AddComponent<Sprite>();
             sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
             game_object.RemoveComponent<Sprite>();
@@ -96,49 +80,36 @@ namespace ScriptProject.Scripts
 
             max_speed += random_generator.RandomFloat(-0.3f, 0.3f);
 
-            CreateHitBox();
-
             EventSystem.ListenToEvent("OrcAngry", game_object, OrcAngryEvent);
 
-            game_object.SetName("Orc");
+            game_object.SetName("OrcFixer");
 
             target = player_game_object;
 
-            //last_position = actor.PathFind(target, 1);
             last_position = transform.GetPosition();
 
-            if (only != null)
-            {
-                //GameObject.DeleteGameObject(game_object);
-            }
-            else
-            {
-                //only = game_object;
-                //for (int i = 0; i < 1000; ++i)
-                //{
-                //    GameObject new_game_object = GameObject.CreateGameObject();
-                //    new_game_object.AddComponent<Sprite>();
-                //    PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
-                //    //Console.WriteLine("New Orc: " + new_game_object.GetEntityID());
-                //}
-            }
-
-            ++count;
+            fence_spawners = GameObject.FindGameObjectsWithTag(UserTags.FenceSpawner);
         }
 
         void FixedUpdate()
         {
-            if (target == null)
-            {
-                target = player_game_object;
-            }
+            SetTarget();
+            is_target_spawner = target.GetTag() == UserTags.FenceSpawner;
 
             Death();
             if (!dead)
             {
                 Look();
                 Move();
-                Attack();
+
+                if (!is_target_spawner)
+                {
+                    Attack();
+                }
+                else
+                {
+                    Fix();
+                }
             }
         }
 
@@ -146,8 +117,6 @@ namespace ScriptProject.Scripts
         {
            // Console.WriteLine("Remove Event");
             EventSystem.StopListeningToEvent("OrcAngry", game_object, OrcAngryEvent);
-
-            --count;
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -185,28 +154,41 @@ namespace ScriptProject.Scripts
             holes.RemoveHole(collided_game_object);
         }
 
-        void CreateHitBox()
+        void SetTarget()
         {
-            hit_box = GameObject.CreateGameObject();
-            hit_box_body = hit_box.AddComponent<StaticBody>();
-            hit_box_body.SetEnabled(false);
-            BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
-            box_collider.SetTrigger(true);
-            box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
-            hit_box.transform.SetPosition(new Vector2(0.7f, 0.0f));
-            hit_box.SetName("OrcHitBox");
-            hit_box.SetTag(UserTags.EnemyHitbox);
+            if (target != null && target.GetTag() == UserTags.FenceSpawner)
+            {
+                return;
+            }
 
-            HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxOrcEnemy(), game_object);
-            hit_box_script.SetAvoidGameObject(game_object);
+            Spawner lowest_health_spawner = null;
+            foreach (GameObject fence_spawner in fence_spawners)
+            {
+                Spawner spawner = fence_spawner.GetComponent<Spawner>();
+                if (lowest_health_spawner == null || (spawner.GetHealth() < lowest_health_spawner.GetHealth()))
+                {
+                    lowest_health_spawner = spawner;
+                }
+            }
 
-            mid_block = GameObject.CreateGameObject();
-            mid_block.AddChild(hit_box);
-            game_object.AddChild(mid_block);
+            if (lowest_health_spawner != null && lowest_health_spawner.GetGameOjbect() != target)
+            {
+                if (lowest_health_spawner.GetHealth() / lowest_health_spawner.GetMaxHealth() < 0.5f)
+                {
+                    target = lowest_health_spawner.GetGameOjbect();
+                }
+                else
+                {
+                    target = player_game_object;
+                }
+            }
+
+            if (target == null)
+            {
+                target = player_game_object;
+            }
         }
 
-        Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
             if (!IsEffectOver() && GetEffect().StopMovement())
@@ -216,11 +198,9 @@ namespace ScriptProject.Scripts
 
             Vector2 player_position = target.transform.GetPosition();
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
-            mid_block.transform.SetLocalRotation(GetMidBlockRotation(Vector2.Angle(player_dir, right_dir)));
             sprite.FlipX(player_dir.x < 0);
         }
 
-        int times = 0;
         void Move()
         {
             Vector2 current_position = transform.GetPosition();
@@ -249,9 +229,16 @@ namespace ScriptProject.Scripts
                 dir = target.transform.GetPosition() - current_position;
             }
 
-            if (target_dir.Length() < 1.01f)
+            if (!is_target_spawner && target_dir.Length() < attack_distance)
             {
                 dir = new Vector2();
+                attack_ready = true;
+            }
+
+            if (is_target_spawner && target_dir.Length() < fix_distance)
+            {
+                dir = new Vector2();
+                fix_ready = true;
             }
 
             Vector2 velocity = body.GetVelocity();
@@ -276,9 +263,6 @@ namespace ScriptProject.Scripts
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
-                //GameObject new_game_object = GameObject.CreateGameObject();
-                //new_game_object.AddComponent<Sprite>();
-                //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
                 return;
             }
 
@@ -306,55 +290,56 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            float distance_to_player = (game_object.transform.GetPosition() - target.transform.GetPosition()).Length();
-            if (distance_to_player < charge_up_distance)
-            {
-                if (!attack_ready && !attacking)
-                {
-                    charge_up += charge_up_increase * GetDeltaTime();
-                    if (charge_up > 1.0f)
-                    {
-                        charge_up = 1.0f;
-                        charged_up = true;
-                    }
-                }
-            }
-            else
-            {
-                charge_up -= charge_up_decrease * GetDeltaTime();
-                if (charge_up < 0.0f)
-                {
-                    charge_up = 0.0f;
-                }
-                charged_up = false;
-            }
-
-            if (charged_up)
-            {
-                charge_up = 0.0f;
-                charged_up = false;
-                attack_ready = true;
-            }
-
-            if (!delay_attack && attack_ready && distance_to_player <= attack_range)
+            if (!delay_attack && attack_ready)
             {
                 delay_attack = true;
-                delay_timer = delay_time + Time.GetElapsedTime();
+                delay_timer.Start();
             }
 
-            if (delay_attack && delay_timer < Time.GetElapsedTime())
+            if (delay_attack && delay_timer.IsExpired())
             {
-                hit_box_body.SetEnabled(true);
-                attack_timer = attack_time + Time.GetElapsedTime();
+                attack_timer.Start();
                 attack_ready = false;
                 attacking = true;
                 delay_attack = false;
+
+                GameObject hammer = GameObject.CreateGameObject();
+                Vector2 target_direction = target.transform.GetPosition() - game_object.transform.GetPosition();
+                hammer.AddComponent<Hammer>().InitHammer(game_object.transform.GetPosition(), target_direction.Normalize(), game_object);
             }
 
-            if (attacking && attack_timer < Time.GetElapsedTime())
+            if (attacking && attack_timer.IsExpired())
             {
                 attacking = false;
-                hit_box_body.SetEnabled(false);
+            }
+        }
+
+        void Fix()
+        {
+            attacking = false;
+
+            if (!IsEffectOver() && GetEffect().StopMovement())
+            {
+                return;
+            }
+
+            if (target == null)
+            {
+                return;
+            }
+
+            Spawner spawner = target.GetComponent<Spawner>();
+            if (fix_ready && fix_delay_timer.IsExpired())
+            {
+                spawner.TakeDamage(null, -health_per_fix_tick);
+                fix_delay_timer.Start();
+                fix_ready = false;
+            }
+
+            const float epsilon = 0.01f;
+            if (spawner.GetHealth() >= spawner.GetMaxHealth() - epsilon)
+            {
+                target = null;
             }
         }
 
@@ -368,23 +353,12 @@ namespace ScriptProject.Scripts
             TakeDamage(null, 100.0f);
             body.SetVelocity(new Vector2());
             falling = true;
-            GameObject.DeleteGameObject(mid_block);
             game_object.RemoveComponent<CircleCollider>();
-        }
-
-        float GetMidBlockRotation(float calculated_rot)
-        {
-            float attack_time_rot = 0.0f;
-            if (attack_timer > Time.GetElapsedTime() && attacking)
-            {
-                attack_time_rot = (1.0f - (attack_timer - Time.GetElapsedTime()) / attack_time) * attack_angle;
-            }
-            return calculated_rot - attack_angle / 2.0f + attack_time_rot;
         }
 
         void OrcAngryEvent(EventSystem.BaseEventData data)
         {
-            OrcAngryEventData orc_event_data = (OrcAngryEventData)data;
+            OrcEnemy.OrcAngryEventData orc_event_data = (OrcEnemy.OrcAngryEventData)data;
             //Console.WriteLine("Entity id: " + game_object.GetEntityID());
             //Console.WriteLine("Orc Angry Entity Id: " + orc_event_data.orc_to_target.GetEntityID());
 
@@ -398,26 +372,6 @@ namespace ScriptProject.Scripts
         {
             return PhysicConstants.TIME_STEP;
             //return Time.GetDeltaTime();
-        }
-
-        public class HitBoxOrcEnemy : HitBoxAction
-        {
-            float damage = 20.0f;
-            float knockback = 10.3f;
-
-            public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
-            {
-                float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
-                Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
-
-                hit_object_script.Knockback(dir, knockback);
-                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-            }
-
-            public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)
-            {
-
-            }
         }
     }
 }

@@ -144,7 +144,6 @@ namespace ScriptProject.Scripts
             holes.RemoveHole(collided_game_object);
         }
 
-        Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
             if (!IsEffectOver() && GetEffect().StopMovement())

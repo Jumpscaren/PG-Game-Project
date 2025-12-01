@@ -20,9 +20,15 @@ namespace ScriptProject.Engine
         public override extern void RemoveComponent(UInt32 scene_index, UInt32 entity);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetColliderFilter(UInt16 category, UInt16 mask, Int16 group);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetTrigger(bool trigger);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetHalfBoxSize(Vector2 half_box_size);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetOffset(Vector2 offset);
     }
 }

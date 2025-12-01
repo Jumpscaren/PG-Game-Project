@@ -25,8 +25,10 @@ void BoxColliderComponentInterface::RegisterInterface(CSMonoCore* mono_core, con
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::HasComponent>(box_collider_class, "HasComponent", BoxColliderComponentInterface::HasComponent);
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::RemoveComponent>(box_collider_class, "RemoveComponent", BoxColliderComponentInterface::RemoveComponent);
 
+	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetColliderFilter>(box_collider_class, "SetColliderFilter", BoxColliderComponentInterface::SetColliderFilter);
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetTrigger>(box_collider_class, "SetTrigger", BoxColliderComponentInterface::SetTrigger);
 	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetHalfBoxSize>(box_collider_class, "SetHalfBoxSize", BoxColliderComponentInterface::SetHalfBoxSize);
+	mono_core->HookAndRegisterMonoMethodType<BoxColliderComponentInterface::SetOffset>(box_collider_class, "SetOffset", BoxColliderComponentInterface::SetOffset);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<BoxColliderComponent>(SaveScriptComponent, LoadScriptComponent);
 
@@ -67,6 +69,18 @@ void BoxColliderComponentInterface::RemoveComponent(const CSMonoObject& object, 
 	defer_method_calls->TryCallDirectly(scene_index, s_remove_box_collider_index, scene_index, entity);
 }
 
+void BoxColliderComponentInterface::SetColliderFilter(const CSMonoObject& object, const uint16_t category, const uint16_t mask, const int16_t group_index)
+{
+	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
+	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const auto entity = GameObjectInterface::GetEntityID(game_object);
+	BoxColliderComponent& box_collider = SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity);
+	box_collider.filter.category_bits = category;
+	box_collider.filter.mask_bits = mask;
+	box_collider.filter.group_index = group_index;
+	box_collider.update_box_collider = true;
+}
+
 void BoxColliderComponentInterface::SetTrigger(const CSMonoObject& object, bool trigger)
 {
 	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
@@ -88,11 +102,23 @@ void BoxColliderComponentInterface::SetHalfBoxSize(const CSMonoObject& object, c
 	box_collider.update_box_collider = true;
 }
 
+void BoxColliderComponentInterface::SetOffset(const CSMonoObject& object, const CSMonoObject& offset)
+{
+	const CSMonoObject game_object = GameObjectInterface::GetGameObjectFromComponent(object);
+	const auto scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const auto entity = GameObjectInterface::GetEntityID(game_object);
+	BoxColliderComponent& box_collider = SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<BoxColliderComponent>(entity);
+
+	box_collider.offset = Vector2Interface::GetVector2(offset);
+	box_collider.update_box_collider = true;
+}
+
 void BoxColliderComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
 {
 	const BoxColliderComponent& box_collider = entman->GetComponent<BoxColliderComponent>(ent);
 	json_object->SetData(box_collider.trigger, "trigger");
 	json_object->SetData(box_collider.half_box_size, "half_box_size");
+	json_object->SetData(box_collider.offset, "offset");
 }
 
 void BoxColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)
@@ -101,6 +127,10 @@ void BoxColliderComponentInterface::LoadScriptComponent(Entity ent, EntityManage
 	Vector2 half_box_size;
 	json_object->LoadData(box_collider.trigger, "trigger");
 	json_object->LoadData(half_box_size, "half_box_size");
+	if (json_object->ObjectExist("offset"))
+	{
+		json_object->LoadData(box_collider.offset, "offset");
+	}
 	if (half_box_size.x != 0.0f && half_box_size.y != 0.0f)
 		box_collider.half_box_size = half_box_size;
 	box_collider.update_box_collider = true;

@@ -66,6 +66,8 @@
   <ItemGroup>
     <Compile Include="EngineFramework\InputBuffer.cs" />
     <Compile Include="EngineFramework\Timer.cs" />
+    <Compile Include="EngineMath\MathOperations.cs" />
+    <Compile Include="Engine\Constants\PhysicConstants.cs" />
     <Compile Include="Engine\KinematicBody.cs" />
     <Compile Include="Engine\Physics.cs" />
     <Compile Include="Engine\PolygonCollider.cs" />
@@ -105,20 +107,25 @@
     <Compile Include="Scripts\Arrow.cs" />
     <Compile Include="Scripts\BasicEnemy.cs" />
     <Compile Include="Scripts\BoomerangScript.cs" />
+    <Compile Include="Scripts\DoorSpawner.cs" />
     <Compile Include="Scripts\Effects\Effect.cs" />
     <Compile Include="Scripts\Effects\StunEffect.cs" />
     <Compile Include="Scripts\GameMaster.cs" />
+    <Compile Include="Scripts\Hammer.cs" />
     <Compile Include="Scripts\HitBox.cs" />
     <Compile Include="Scripts\HoleManager.cs" />
     <Compile Include="Scripts\InteractiveCharacterBehaviour.cs" />
     <Compile Include="Scripts\OrcCarrier.cs" />
     <Compile Include="Scripts\OrcDistracter.cs" />
+    <Compile Include="Scripts\OrcShield.cs" />
+    <Compile Include="Scripts\OrcFixer.cs" />
     <Compile Include="Scripts\OrcEnemy.cs" />
     <Compile Include="Scripts\Player.cs" />
     <Compile Include="Scripts\PlayerCamera.cs" />
     <Compile Include="Scripts\Princess.cs" />
     <Compile Include="Scripts\ProjectileScript.cs" />
     <Compile Include="Scripts\ReplaceBlockScript.cs" />
+    <Compile Include="Scripts\Shield.cs" />
     <Compile Include="Scripts\Spawner.cs" />
     <Compile Include="Scripts\SwitchScript.cs" />
     <Compile Include="TestScript.cs" />

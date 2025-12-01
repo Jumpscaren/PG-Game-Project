@@ -20,5 +20,11 @@ namespace ScriptProject.Engine
             double num = (double)max_value - (double)min_value;
             return (float)((m_random.NextDouble() * num) + (double)min_value);
         }
+
+        public int RandomInt(int min_value = 0, int max_value = 1)
+        {
+            int num = max_value - min_value + 1;
+            return m_random.Next() % num + min_value;
+        }
     }
 }

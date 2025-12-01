@@ -82,6 +82,7 @@ ScriptingManager::ScriptingManager()
 	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptBeginCollision>("BeginCollision", 0, ScriptingManager::ScriptBeginCollision);
 	EventCore::Get()->ListenToEvent<ScriptingManager::ScriptEndCollision>("EndCollision", 0, ScriptingManager::ScriptEndCollision);
 	EventCore::Get()->ListenToEvent<ScriptingManager::StartScriptsFromActivatedScene>("SceneActivated", 1, ScriptingManager::StartScriptsFromActivatedScene);
+	EventCore::Get()->ListenToEvent<ScriptingManager::SetFixedUpdatesToCall>("CurrentPhysicUpdateTicksCount", 0, ScriptingManager::SetFixedUpdatesToCall);
 }
 
 void ScriptingManager::StartScript(ScriptComponent& script)
@@ -101,19 +102,18 @@ void ScriptingManager::UpdateScripts(EntityManager* entity_manager)
 		{
 			if (mono_core->CheckIfMonoMethodExists(script.script_update))
 				mono_core->CallMethod(script.script_update, script.script_object);
-
-			//if (mono_core->CheckIfMonoMethodExists(script.script_fixed_update))
-			//{
-			//	script.time_since_last_fixed_update += Time::GetDeltaTime();
-			//	while (script.time_since_last_fixed_update >= (1.0f / 120.0f))
-			//	{
-			//		const auto save = script.time_since_last_fixed_update;
-			//		script.time_since_last_fixed_update -= 1.0f / 120.0f;
-			//		//std::cout << "Time since last fixed update: " << script.time_since_last_fixed_update << "\n";
-			//		mono_core->CallMethod(script.script_fixed_update, script.script_object, save);
-			//	}
-			//}
 		});
+
+	while (m_fixed_updates_to_call != 0)
+	{
+		entity_manager->System<ScriptComponent>([&](ScriptComponent& script)
+			{
+				if (mono_core->CheckIfMonoMethodExists(script.script_fixed_update))
+					mono_core->CallMethod(script.script_fixed_update, script.script_object);
+			});
+
+		--m_fixed_updates_to_call;
+	}
 
 	entity_manager->System<ScriptComponent>([&](const ScriptComponent& script)
 		{
@@ -188,4 +188,9 @@ void ScriptingManager::InternalRemoveScript(ScriptComponent& script)
 ScriptingManager* ScriptingManager::Get()
 {
 	return s_scripting_manager;
+}
+
+void ScriptingManager::SetFixedUpdatesToCall(const uint32_t fixed_updates_to_call)
+{
+	ScriptingManager::Get()->m_fixed_updates_to_call = fixed_updates_to_call;
 }

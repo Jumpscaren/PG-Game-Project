@@ -36,7 +36,7 @@ namespace ScriptProject.Scripts
             hit_box.SetName("FireballHitBox");
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxProjectile());
+            hit_box_script.SetHitBoxAction(new HitBoxProjectile(), game_object);
 
             game_object.AddChild(hit_box);
         }
@@ -87,7 +87,7 @@ namespace ScriptProject.Scripts
             float damage = 20.0f;
             float knockback = 7.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
+            public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (!hit_box_script.GetGameOjbect().HasParent())
                 {

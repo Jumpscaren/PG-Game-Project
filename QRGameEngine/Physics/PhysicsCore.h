@@ -98,12 +98,11 @@ private:
 	std::vector<PhysicObjectData> m_physic_object_data;
 	std::stack<PhysicObjectHandle> m_free_physic_object_handles;
 
-	static constexpr float TIME_STEP = 1.0f / 120.0f;
+	//static constexpr float TIME_STEP = 1.0f / 120.0f;
+	static constexpr float TIME_STEP = 1.0f / 60.0f;
 	static constexpr int32_t VELOCITY_ITERATIONS = 3;
 	static constexpr int32_t POSITION_ITERATIONS = 3;
 	float m_time_since_last_update = 0.0f;
-	Timer m_update_timer;
-	float m_previous_physics_update_time = 0.0f;
 
 	bool m_threaded_physics;
 	std::thread* m_physic_update_thread = nullptr;
@@ -122,6 +121,8 @@ private:
 		Entity entity;
 	};
 	std::vector<DeferredEnablePureStaticBody> m_deferred_enable_pure_static_bodies;
+
+	uint32_t m_ticks_current_update = 0;
 
 private:
 	b2Fixture* AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger, ColliderFilter collider_filter);

@@ -2,6 +2,7 @@
 #include "DX12BufferManager.h"
 #include "DX12Core.h"
 #include "../Helpers/HandleManager.h"
+#include <comdef.h>
 
 DX12Buffer* DX12BufferManager::GetDX12Buffer(DX12BufferHandle handle)
 {
@@ -18,7 +19,7 @@ DX12BufferHandle DX12BufferManager::AddBuffer(Microsoft::WRL::ComPtr<ID3D12Resou
 	new_buffer.element_size = element_size;
 	new_buffer.nr_of_elements = nr_of_elements;
 	new_buffer.buffer_type = buffer_type;
-	new_buffer.real_nr_of_elements;
+	new_buffer.real_nr_of_elements = real_nr_of_elements;
 	new_buffer.aligned_buffer_size = aligned_buffer_size;
 
 	if (HandleManager::GetHandle(HandleManager::HandleType::BUFFER, handle))
@@ -69,11 +70,25 @@ void DX12BufferManager::UploadBufferData(DX12Core* dx12_core, DX12BufferHandle h
 
 	ID3D12Resource* buffer_resource = GetBufferResource(handle);
 
+	assert(buffer_resource->GetDesc().Width - buffer_offset >= data_size);
+	if (buffer_resource->GetDesc().Width - buffer_offset < data_size)
+	{
+		char* f = nullptr;
+		*f;
+	}
+
 	uint64_t source_offset = 0;
 
 	uint64_t alignment = buffer_alignment;
 
 	uint64_t destination_offset = ((m_upload_current_offsets[dx12_core->GetCurrentFrameInFlight()] + (alignment - 1)) & ~(alignment - 1));
+
+	assert(m_upload_buffer->GetDesc().Width - destination_offset >= data_size);
+	if (m_upload_buffer->GetDesc().Width - destination_offset < data_size)
+	{
+		char* f = nullptr;
+		*f;
+	}
 
 	std::memcpy(mapped_ptr + destination_offset, (unsigned char*)data + source_offset, data_size);
 	destination_offset += data_size;
@@ -196,6 +211,19 @@ DX12BufferHandle DX12BufferManager::AddBuffer(DX12Core* dx12_core, uint64_t elem
 	allocation_desc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 	HRESULT hr = m_buffer_allocator->CreateResource(&allocation_desc, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, buffer_allocation.GetAddressOf(), IID_PPV_ARGS(buffer.GetAddressOf()));
 	assert(SUCCEEDED(hr));
+
+	if (!SUCCEEDED(hr))
+	{
+		_com_error error(hr);
+		std::wstring error_string = error.ErrorMessage();
+		std::wcout << "Error creating buffer: " << error_string << std::endl;
+
+		D3D12MA::Budget budget = {};
+		m_buffer_allocator->GetBudget(&budget, nullptr);
+		std::cout << "Budget " << budget.BudgetBytes << std::endl;
+		std::cout << "Used " << budget.UsageBytes << std::endl;
+		return -1;
+	}
 
 	DX12BufferHandle handle = AddBuffer(buffer, buffer_allocation, ResourceState::COPY_DEST, (uint64_t)element_size, (uint64_t)nr_of_elements, buffer_type, real_nr_of_elements, aligned_buffer_size);
 

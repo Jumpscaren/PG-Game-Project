@@ -13,6 +13,7 @@
 #include "Animation/AnimationManager.h"
 #include "Scripting/Objects/TextureInterface.h"
 #include "Asset/AssetManager.h"
+#include <filesystem>
 
 DeferedMethodIndex SpriteComponentInterface::s_load_and_set_texture_index;
 DeferedMethodIndex SpriteComponentInterface::s_load_texture_object_sprite_index;
@@ -200,7 +201,14 @@ void SpriteComponentInterface::LoadSpriteComponent(const Entity ent, EntityManag
 	{
 		std::string texture_name{};
 		json_object->LoadData(texture_name, "texture_name");
-		SceneLoader::Get()->GetDeferedCalls()->TryCallDirectly(entman->GetSceneIndex(), s_load_and_set_texture_index, texture_name, entman->GetSceneIndex(), ent);
+		if (std::filesystem::exists(texture_name))
+		{
+			SceneLoader::Get()->GetDeferedCalls()->TryCallDirectly(entman->GetSceneIndex(), s_load_and_set_texture_index, texture_name, entman->GetSceneIndex(), ent);
+		}
+		else
+		{
+			std::cout << "Texture path is illegal: " << texture_name << "\n";
+		}
 	}
 
 	if (json_object->ObjectExist("uv1"))
@@ -239,14 +247,7 @@ void SpriteComponentInterface::LoadTextureObjectToSprite(SceneIndex scene_index,
 	TextureHandle texture_handle;
 	CSMonoCore::Get()->GetValue(texture_handle, texture, "texture_asset_handle");
 
-	SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
-	if (RenderCore::Get()->IsTextureAvailable(sprite_component.texture_handle) && !RenderCore::Get()->IsTextureLoaded(texture_handle))
-	{
-		RenderCore::Get()->SubscribeEntityToTextureLoading(texture_handle, scene_index, entity);
-		return;
-	}
-
-	sprite_component.texture_handle = texture_handle;
+	LoadTextureToSprite(scene_index, entity, texture_handle);
 }
 
 void SpriteComponentInterface::SetUV1(Entity entity, SceneIndex scene_index, Vector2 uv_1)

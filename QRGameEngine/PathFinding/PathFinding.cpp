@@ -7,6 +7,9 @@
 #include "ECS/EntityManager.h"
 #include "SceneSystem/SceneManager.h"
 #include "Event/EventCore.h"
+#include "Renderer/RenderCore.h"
+#include "Components/BoxColliderComponent.h"
+#include "Components/PureStaticBodyComponent.h"
 
 PathFinding* PathFinding::s_singleton = nullptr;
 
@@ -115,6 +118,8 @@ void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
 		}
 
 		RemoveImpossibleCornerPaths(node, NodeDetail::Base);
+
+		CheckCollisionWithColliders(node, NodeDetail::Base, entity_manager);
 	}
 
 	NodeDataByNodeDetail& small_nodes_by_node_detail = m_nodes_by_node_detail.at(GetNodeDetailIndex(NodeDetail::Small));
@@ -178,6 +183,7 @@ void PathFinding::ConstructPathFindingWorld(const SceneIndex scene_index)
 		}
 
 		RemoveImpossibleCornerPaths(node, NodeDetail::Small);
+		CheckCollisionWithColliders(node, NodeDetail::Small, entity_manager);
 	}
 }
 
@@ -185,6 +191,25 @@ void PathFinding::CalculatePath(const PathFindData& path_find_data, std::vector<
 {
 	assert(false);
 	//AStarPathfinding(path_find_data, path);
+}
+
+void PathFinding::PresentPath(const PathFindingActorComponent& path_finding_actor)
+{
+	if (path_finding_actor.cached_path.size() == 0)
+	{
+		return;
+	}
+
+	for (int i = path_finding_actor.last_path_index; i < path_finding_actor.cached_path.size() - 1; ++i)
+	{
+		const Vector2& pos = PathFinding::Get()->GetNodePosition(path_finding_actor.cached_path[i]);
+		if (i + 1 < path_finding_actor.cached_path.size())
+		{
+			RenderCore::Get()->AddLine(Vector2(pos.x, pos.y));
+			const Vector2& pos_next = PathFinding::Get()->GetNodePosition(path_finding_actor.cached_path[i + 1]);
+			RenderCore::Get()->AddLine(Vector2(pos_next.x, pos_next.y));
+		}
+	}
 }
 
 void PathFinding::ThreadHandleRequests()
@@ -308,6 +333,55 @@ void PathFinding::RemoveImpossibleCornerPaths(Node& node, const NodeDetail node_
 	}
 }
 
+void PathFinding::CheckCollisionWithColliders(Node& node, const NodeDetail node_detail, EntityManager* entity_manager)
+{
+	const float half_node_length = node_detail == NodeDetail::Base ? LENGTH_BETWEEN_NODES / 2.0f : SMALL_LENGTH_BETWEEN_NODES / 2.0f;
+
+	entity_manager->System<TransformComponent, PureStaticBodyComponent, BoxColliderComponent>([&](const TransformComponent& transform_component, const PureStaticBodyComponent&, const BoxColliderComponent& box_collider_component)
+		{
+			if (box_collider_component.trigger)
+			{
+				return;
+			}
+
+			const Vector2 collider_position = transform_component.GetPosition2D() + box_collider_component.offset;
+			const Vector2 node_position = node.position;
+			const Vector2 half_box_size = box_collider_component.half_box_size;
+
+			/*
+			*	    B
+			*	  *---*
+			*	A |   | C
+			*	  *---*
+			*	    D
+			*/
+
+			const bool inside_a = node.position.x < collider_position.x + half_box_size.x;
+			const bool inside_b = node.position.x + half_node_length > collider_position.x;
+			const bool inside_c = node.position.y < collider_position.y + half_box_size.y;
+			const bool inside_d = node.position.y + half_node_length > collider_position.y;
+			if (inside_a && inside_b && inside_c && inside_d)
+			{
+				//node.weight = EXPENSIVE_WEIGHT;
+
+			}
+			//return;
+
+			const bool a_inside_x = node_position.x - half_node_length > collider_position.x - half_box_size.x && node_position.x - half_node_length < collider_position.x + half_box_size.x;
+			const bool c_inside_x = node_position.x + half_node_length > collider_position.x - half_box_size.x && node_position.x + half_node_length < collider_position.x + half_box_size.x;
+			const bool inside_x = a_inside_x || c_inside_x;
+
+			const bool d_inside_y = node_position.y - half_node_length > collider_position.y - half_box_size.y && node_position.y - half_node_length < collider_position.y + half_box_size.y;
+			const bool b_inside_y = node_position.y + half_node_length > collider_position.y - half_box_size.y && node_position.y + half_node_length < collider_position.y + half_box_size.y;
+			const bool inside_y = b_inside_y || d_inside_y;
+
+			if (inside_x && inside_y)
+			{
+				node.weight = EXPENSIVE_WEIGHT;
+			}
+		});
+}
+
 void PathFinding::AStarPathfinding(const PathFindData& path_find_data, std::vector<NodeIndex>& path, const std::vector<Node>& world)
 {
 	const auto start_node_index = path_find_data.start_node_index;
@@ -360,7 +434,7 @@ void PathFinding::AStarPathfinding(const PathFindData& path_find_data, std::vect
 			}
 			auto& neighbor_node = world.at(neighbor.value);
 			const Vector2 diff = neighbor_node.position - current->position;
-			const auto tentative_g_score = g_score.at(current->node_index) + 1.0f;//SMALL_LENGTH_BETWEEN_NODES;//diff.Length();
+			const auto tentative_g_score = g_score.at(current->node_index) + neighbor_node.weight;//1.0f;//SMALL_LENGTH_BETWEEN_NODES;//diff.Length();
 			if (tentative_g_score < g_score_neighbor_it->second)
 			{
 				came_from.insert({ neighbor, current->node_index });
@@ -408,7 +482,7 @@ uint64_t PathFinding::PositionToNodeIndex(const Vector2& position, const NodeDet
 PathFinding::PathFinding()
 {
 	s_singleton = this;
-	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneActivated", 0, PathFinding::ConstructPathFindingWorldEvent);
+	EventCore::Get()->ListenToEvent<PathFinding::ConstructPathFindingWorldEvent>("SceneActivated", 1, PathFinding::ConstructPathFindingWorldEvent);
 
 	m_thread_state = ThreadState::Run;
 	m_calculate_paths_thread = new std::thread(&PathFinding::ThreadHandleRequests, this);
@@ -659,6 +733,14 @@ void PathFinding::HandleDeferredRemovedNodes(EntityManager* entity_manager)
 
 void PathFinding::HandlePathFinding()
 {
+	SceneManager::GetEntityManager(SceneManager::GetActiveSceneIndex())->System<PathFindingActorComponent>([&](const Entity entity, const PathFindingActorComponent& path_finding_actor_component)
+		{
+			if (path_finding_actor_component.show_path)
+			{
+				PresentPath(path_finding_actor_component);
+			}
+		});
+
 	m_calculate_paths_mutex.lock();
 
 	for (const auto it : m_paths_calculated_to_be_processed)
@@ -674,6 +756,7 @@ void PathFinding::HandlePathFinding()
 		}
 
 		m_calculated_paths.at(scene_entity_data) = it.calculated_path;
+		m_calculated_paths.at(scene_entity_data).new_path = false;
 		m_entity_ongoing_pathfinds.erase(scene_entity_data);
 
 		EventCore::Get()->SendEvent("NewPathFinding", it.calculated_path.path, scene_entity_data.scene_index, scene_entity_data.entity);

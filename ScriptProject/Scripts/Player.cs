@@ -16,16 +16,29 @@ namespace ScriptProject.Scripts
         Sprite sprite;
         AnimatableSprite anim_sprite;
         bool attack = false;
+
         GameObject mid_block = null;
         GameObject hit_box;
+        BoxCollider hit_box_collider;
+        static readonly Vector2 BASE_HALF_BOX_SIZE = new Vector2(0.6f, 0.5f);
         StaticBody hit_box_body;
+        HitBoxPlayer hit_box_action;
+
         GameObject camera;
         const float attack_time = 0.1f;
         Timer attack_timer = new Timer();
         const float attack_angle = (float)Math.PI / 2.0f;
-        const float between_attack_time = 0.45f;
+        //const float between_attack_time = 0.45f;
+        //const float between_attack_time = 0.35f;
+        const float between_attack_time = 0.3f;
         Timer between_attack_timer = new Timer();
+
+        const int MAX_COMBO_ATTACKS = 3;
+        Timer combo_timer = new Timer();
+        bool save_combo = false;
+        Timer wait_for_next_attack_timer = new Timer();
         int attack_number = 0;
+        static readonly Vector2 COMBO_HALF_BOX_INCREASE = new Vector2(0.1f, 0.5f);
 
         float health = 100.0f;
 
@@ -37,6 +50,7 @@ namespace ScriptProject.Scripts
         const float princess_speed = max_speed * 0.7f;
         const float drag_speed = 20.0f;
         const float attack_speed = 0.0f;// max_speed / 2.0f;
+        float current_speed = 0.0f;
 
         GameObject princess;
         bool holding_princess = false;
@@ -111,14 +125,15 @@ namespace ScriptProject.Scripts
             hit_box.SetName("Attack_Box");
             hit_box_body = hit_box.AddComponent<StaticBody>();
             hit_box_body.SetEnabled(false);
-            BoxCollider box_collider = hit_box.AddComponent<BoxCollider>();
-            box_collider.SetTrigger(true);
-            box_collider.SetHalfBoxSize(new Vector2(0.6f, 0.5f));
+            hit_box_collider = hit_box.AddComponent<BoxCollider>();
+            hit_box_collider.SetTrigger(true);
+            hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE);
             hit_box.transform.SetPosition(new Vector2(0.7f, 0.0f));
             hit_box.SetName("HitBox");
             hit_box.SetTag(UserTags.PlayerHitbox);
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxPlayer());
+            hit_box_action = new HitBoxPlayer();
+            hit_box_script.SetHitBoxAction(hit_box_action, game_object);
             hit_box_script.SetAvoidGameObject(game_object);
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
@@ -147,7 +162,13 @@ namespace ScriptProject.Scripts
         void Update()
         {
             GetInput();
+        }
+
+        void FixedUpdate()
+        {
+            //GetInput();
             bool stop_movement = !IsEffectOver() && GetEffect().StopMovement();
+            //Console.WriteLine("Stop: " + stop_movement);
 
             if (health <= 0.0f)
             {
@@ -184,7 +205,7 @@ namespace ScriptProject.Scripts
             }
             sprite.SetShow(show_sprite);
 
-            float current_speed = max_speed;
+            current_speed = max_speed;
             if (holding_princess)
             {
                 current_speed = princess_speed;
@@ -199,7 +220,6 @@ namespace ScriptProject.Scripts
                 hit_box_body.SetEnabled(false);
             }
 
-            Vector2 velocity = body.GetVelocity();
             Vector2 new_velocity = new Vector2();
             if (Input.GetKeyDown(Input.Key.W))
                 new_velocity.y += max_speed;
@@ -232,42 +252,9 @@ namespace ScriptProject.Scripts
                     AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightRunAnim.anim");
                 }
 
-                if (!holding_princess && between_attack_timer.IsExpired() && !stop_movement && inputBuffer.ConsumeBufferedInput(MouseButton.LEFT))
-                {
-                    float previous_speed = velocity.Length();
-                    if (velocity.Length() <= max_speed + epsilion)
-                    {
-                        velocity = velocity.Normalize() * attack_speed;
-                    }
-                    float attack_velocity_increase = 1.0f;
-                    between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
-                    if (attack_number == 1)
-                    {
-                        attack_velocity_increase = 1.5f;
-                        between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.1f);
-                    }
-                    if (attack_number == 2)
-                    {
-                        attack_velocity_increase = 3.0f;
-                        attack_number = 0;
-                        between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.5f);
-                    }
-                    else
-                    {
-                        attack_number++;
-                    }
+                AttackLogic(stop_movement, mouse_dir);
 
-                    AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightAttack.anim");
-                    attack = true;
-                    hit_box_body.SetEnabled(true);
-                    attack_timer.Start();
-                    between_attack_timer.Start();
-
-                    velocity += mouse_dir * (1.8f + previous_speed*0.1f) * attack_velocity_increase;
-                    current_speed = attack_speed;
-                }
-
-                if (!AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightAttack.anim"))
+                if (!AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightAttack2.anim"))
                 {
                     attack = false;
                 }
@@ -286,8 +273,9 @@ namespace ScriptProject.Scripts
 
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(calculated_rot));
 
+            Vector2 velocity = body.GetVelocity();
             new_velocity = new_velocity.Normalize() * current_speed;
-            Movement(velocity, new_velocity, current_speed, drag_speed, body);
+            FixedMovement(velocity, new_velocity, current_speed, drag_speed, body);
 
             if (stop_movement)
             {
@@ -315,24 +303,21 @@ namespace ScriptProject.Scripts
             {
                 return false;
             }
-
             return true;
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
         {
-            if (!roll_timer.IsExpired())
+            if (!roll_timer.IsExpired() || is_invincble)
             {
                 return;
             }
 
-            if (!is_invincble)
-            {
-                health -= damage;
-                invincible_timer.Start();
-                is_invincble = true;
-                AnimationManager.LoadAnimation(game_object, "Animations/HurtTest.anim");
-            }
+            health -= damage;
+            invincible_timer.Start();
+            is_invincble = true;
+            AnimationManager.LoadAnimation(game_object, "Animations/HurtTest.anim");
+            ResetAttackCombo();
         }
 
         public override void Knockback(Vector2 dir, float knockback)
@@ -397,6 +382,121 @@ namespace ScriptProject.Scripts
             }
 
             holes.RemoveHole(collided_game_object);
+        }
+
+        void ResetAttackCombo()
+        {
+            hit_box_action.ResetDamage();
+            hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE);
+            hit_box_action.ResetKnockback();
+            hit_box_action.ResetStunEffectTime();
+
+            if (attack_number < 2)
+            {
+                Console.WriteLine("Combo Failed");
+            }
+            attack_number = 0;
+        }
+
+        void AttackLogic(bool stop_movement, Vector2 attack_dir)
+        {
+            if (stop_movement)
+            {
+                return;
+            }
+
+            if (!between_attack_timer.IsExpired())
+            {
+                if (inputBuffer.CheckBufferedInput(MouseButton.LEFT) && attack_number <= 2 && !combo_timer.IsExpired())
+                {
+                    save_combo = true;
+                }
+                return;
+            }
+            bool combo_saved = save_combo;
+            save_combo = false;
+
+            if (!combo_saved && attack_number > 0 && between_attack_timer.IsExpired() && wait_for_next_attack_timer.IsExpired())
+            {
+                wait_for_next_attack_timer.SetTimeLimit(0.3f);
+                wait_for_next_attack_timer.Start();
+                attack_number = 0;
+                ResetAttackCombo();
+            }
+
+            bool skip_attack = holding_princess || !wait_for_next_attack_timer.IsExpired() || !inputBuffer.ConsumeBufferedInput(MouseButton.LEFT);
+            if (skip_attack)
+            {
+                return;
+            }
+
+            if ((!combo_saved && attack_number != 0 && combo_timer.IsExpired()) || attack_number >= MAX_COMBO_ATTACKS)
+            {
+                ResetAttackCombo();
+            }
+
+            float attack_velocity_increase = 0.0f;
+            if (attack_number == 0)
+            {
+                attack_velocity_increase = 0.5f;
+                //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 0.5f);
+                between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+                Console.WriteLine("First Combo");
+            }
+            if (attack_number == 1)
+            {
+                attack_velocity_increase = 2.5f;
+                Console.WriteLine("Second Combo");
+                between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+                //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.5f);
+                hit_box_action.SetDamage(HitBoxPlayer.MEDIUM_DAMAGE);
+                hit_box_action.SetKnockback(HitBoxPlayer.MEDIUM_KNOCKBACK);
+                hit_box_action.SetStunEffectTime(HitBoxPlayer.MEDIUM_STUN_EFFECT_TIME);
+                hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE + COMBO_HALF_BOX_INCREASE * 0.5f);
+            }
+            if (attack_number == 2)
+            {
+                const float time_between_attacks = 0.6f;
+                //attack_velocity_increase = 4.5f;
+                attack_velocity_increase = 6.0f;
+                between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+                wait_for_next_attack_timer.SetTimeLimit(attack_time + between_attack_time + time_between_attacks);
+                wait_for_next_attack_timer.Start();
+                //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 2.5f);
+                hit_box_action.SetDamage(HitBoxPlayer.HIGH_DAMAGE);
+                hit_box_action.SetKnockback(HitBoxPlayer.HIGH_KNOCKBACK);
+                hit_box_action.SetStunEffectTime(HitBoxPlayer.HIGH_STUN_EFFECT_TIME);
+                hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE + COMBO_HALF_BOX_INCREASE * 1.5f);
+                Console.WriteLine("Third/Last Combo");
+            }
+
+            if (attack_number != 2)
+            {
+                combo_timer.SetTimeLimit(between_attack_timer.GetTimeLimit());
+                combo_timer.Start();
+                Console.WriteLine("Combo Start");
+            }
+
+            Console.WriteLine("Attack number is " + attack_number);
+            attack_number++;
+
+            //AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightAttack.anim");
+            AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightAttack2.anim");
+            attack = true;
+            hit_box_body.SetEnabled(true);
+            attack_timer.Start();
+            between_attack_timer.Start();
+
+            Vector2 velocity = body.GetVelocity();
+            float previous_speed = velocity.Length();
+            if (velocity.Length() <= max_speed + epsilion)
+            {
+                velocity = velocity.Normalize() * attack_speed;
+            }
+
+            velocity += attack_dir * attack_velocity_increase;
+            body.SetVelocity(velocity);
+            current_speed = attack_speed;
         }
 
         float GetMidBlockRotation(float calculated_rot)
@@ -578,7 +678,7 @@ namespace ScriptProject.Scripts
         {
             if (Input.GetKeyDown(Key.Q))
             {
-                bow_charge += bow_charge_increase * Time.GetDeltaTime();
+                bow_charge += bow_charge_increase * PhysicConstants.TIME_STEP;
                 if (!bow_shot && bow_charge > bow_charge_max)
                 {
                     GameObject arrow = GameObject.CreateGameObject();
@@ -663,11 +763,53 @@ namespace ScriptProject.Scripts
 
         public class HitBoxPlayer : HitBoxAction
         {
-            float damage = 10.0f;
-            //float knockback = 10.3f;
-            float knockback = 8.3f;
+            public const float BASE_DAMAGE = 10.0f;
+            public const float BASE_KNOCKBACK = 4.3f;
+            public const float BASE_STUN_EFFECT_TIME = 0.15f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
+            public const float MEDIUM_DAMAGE = BASE_DAMAGE * 1.5f;
+            public const float MEDIUM_KNOCKBACK = BASE_KNOCKBACK * 1.5f;
+            public const float MEDIUM_STUN_EFFECT_TIME = BASE_STUN_EFFECT_TIME * 1.5f;
+
+            public const float HIGH_DAMAGE = 40.0f;
+            public const float HIGH_KNOCKBACK = 8.3f;
+            public const float HIGH_STUN_EFFECT_TIME = 0.75f;
+
+            float damage = BASE_DAMAGE;
+            float knockback = BASE_KNOCKBACK;
+            float stun_effect_time = BASE_STUN_EFFECT_TIME;
+
+            public void SetDamage(float damage)
+            {
+                this.damage = damage;
+            }
+
+            public void ResetDamage()
+            {
+                damage = BASE_DAMAGE;
+            }
+
+            public void SetKnockback(float knockback)
+            {
+                this.knockback = knockback;
+            }
+
+            public void ResetKnockback()
+            {
+                knockback = BASE_KNOCKBACK;
+            }
+
+            public void SetStunEffectTime(float stun_effect_time)
+            {
+                this.stun_effect_time = stun_effect_time;
+            }
+
+            public void ResetStunEffectTime()
+            {
+                stun_effect_time = BASE_STUN_EFFECT_TIME;
+            }
+
+            public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (hit_object_script is Princess)
                 {
@@ -678,8 +820,9 @@ namespace ScriptProject.Scripts
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
                 hit_object_script.Knockback(dir, knockback);
-                hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-                hit_object_script.SetEffect(new Effects.StunEffect(0.75f));
+                //hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
+                hit_object_script.TakeDamage(hit_box_owner_game_object, damage);
+                hit_object_script.SetEffect(new Effects.StunEffect(stun_effect_time));
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

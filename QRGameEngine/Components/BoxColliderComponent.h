@@ -11,6 +11,7 @@ struct BoxColliderComponent
 {
 	PhysicObjectHandle physic_object_handle;
 	Vector2 half_box_size;
+	Vector2 offset;
 	bool update_box_collider = false;
 	bool trigger;
 	ColliderFilter filter;
@@ -29,8 +30,10 @@ public:
 	static void RemoveComponent(const CSMonoObject& object, SceneIndex scene_index, Entity entity);
 
 public:
+	static void SetColliderFilter(const CSMonoObject& object, const uint16_t category, const uint16_t mask, const int16_t group_index);
 	static void SetTrigger(const CSMonoObject& object, bool trigger);
 	static void SetHalfBoxSize(const CSMonoObject& object, const CSMonoObject& half_box_size);
+	static void SetOffset(const CSMonoObject& object, const CSMonoObject& offset);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

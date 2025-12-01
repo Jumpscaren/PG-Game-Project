@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.Engine.Constants;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -25,6 +26,11 @@ namespace ScriptProject.Engine
         static public float GetDeltaTime() 
         {
             return m_delta_time;
+        }
+
+        static public float GetFixedDeltaTime()
+        {
+            return PhysicConstants.TIME_STEP;
         }
 
         static public float GetElapsedTime()

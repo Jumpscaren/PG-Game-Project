@@ -17,5 +17,6 @@ namespace ScriptProject.UserDefined
         public const Byte Hole = 6;
         public const Byte Finish = 7;
         public const Byte Replace = 8;
+        public const Byte FenceSpawner = 9;
     }
 }

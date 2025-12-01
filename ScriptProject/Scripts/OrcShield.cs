@@ -8,14 +8,14 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
-using static ScriptProject.Scripts.OrcCarrier;
+using static ScriptProject.Scripts.OrcEnemy;
 using static ScriptProject.Scripts.Player;
 using ScriptProject.EngineFramework;
 using ScriptProject.Engine.Constants;
 
 namespace ScriptProject.Scripts
 {
-    internal class OrcEnemy : InteractiveCharacterBehaviour
+    internal class OrcShield : InteractiveCharacterBehaviour
     {
         GameObject player_game_object;
         PathFindingActor actor;
@@ -25,7 +25,19 @@ namespace ScriptProject.Scripts
         GameObject mid_block;
         DynamicBody body;
         Sprite sprite;
-        float health = 20.0f;
+
+        GameObject shield;
+        GameObject shield_mid_block;
+        Shield shield_script;
+        const float SHIELD_ROTATION_SPEED = 1.0f;
+        struct DelayDamage
+        {
+            public GameObject hit_object;
+            public float damage;
+        }
+        List<DelayDamage> delay_damages = new List<DelayDamage>();
+
+        float health = 100.0f;
 
         StaticBody hit_box_body;
 
@@ -59,25 +71,11 @@ namespace ScriptProject.Scripts
 
         GameObject target = null;
 
-        static GameObject only = null;
-
         bool dead = false;
         bool falling = false;
         float falling_speed = 1.0f;
 
         HoleManager holes = new HoleManager();
-
-        public class OrcAngryEventData : EventSystem.BaseEventData
-        {
-            public GameObject orc_to_target;
-        }
-
-        public static int count = 0;
-
-        public static int GetCount()
-        {
-            return count; 
-        }
 
         void Start()
         {
@@ -88,6 +86,8 @@ namespace ScriptProject.Scripts
             body = game_object.GetComponent<DynamicBody>();
 
             sprite_game_object = GameObject.CreateGameObject();
+            sprite_game_object.transform.SetScale(transform.GetScale());
+            transform.SetScale(new Vector2(1.0f, 1.0f));
             sprite = sprite_game_object.AddComponent<Sprite>();
             sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
             game_object.RemoveComponent<Sprite>();
@@ -97,6 +97,7 @@ namespace ScriptProject.Scripts
             max_speed += random_generator.RandomFloat(-0.3f, 0.3f);
 
             CreateHitBox();
+            CreateShield();
 
             EventSystem.ListenToEvent("OrcAngry", game_object, OrcAngryEvent);
 
@@ -104,26 +105,7 @@ namespace ScriptProject.Scripts
 
             target = player_game_object;
 
-            //last_position = actor.PathFind(target, 1);
             last_position = transform.GetPosition();
-
-            if (only != null)
-            {
-                //GameObject.DeleteGameObject(game_object);
-            }
-            else
-            {
-                //only = game_object;
-                //for (int i = 0; i < 1000; ++i)
-                //{
-                //    GameObject new_game_object = GameObject.CreateGameObject();
-                //    new_game_object.AddComponent<Sprite>();
-                //    PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
-                //    //Console.WriteLine("New Orc: " + new_game_object.GetEntityID());
-                //}
-            }
-
-            ++count;
         }
 
         void FixedUpdate()
@@ -132,6 +114,8 @@ namespace ScriptProject.Scripts
             {
                 target = player_game_object;
             }
+
+            HandleDelayedDamage();
 
             Death();
             if (!dead)
@@ -152,6 +136,12 @@ namespace ScriptProject.Scripts
 
         public override void TakeDamage(GameObject hit_object, float damage)
         {
+            if (hit_object != null)
+            {
+                delay_damages.Add(new DelayDamage() { hit_object = hit_object, damage = damage });
+                return;
+            }
+
             health -= damage;
             if (health <= 0.0f)
             {
@@ -198,12 +188,34 @@ namespace ScriptProject.Scripts
             hit_box.SetTag(UserTags.EnemyHitbox);
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxOrcEnemy(), game_object);
+            hit_box_script.SetHitBoxAction(new HitBoxOrcShield(), game_object);
             hit_box_script.SetAvoidGameObject(game_object);
 
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
+        }
+
+        void CreateShield()
+        {
+            shield = GameObject.CreateGameObject();
+            shield.AddComponent<Sprite>();
+            Render.LoadTexture("../QRGameEngine/Textures/Shield.png", shield.GetComponent<Sprite>());
+            DynamicBody shield_body = shield.AddComponent<DynamicBody>();
+            shield.transform.SetPosition(new Vector2(0.8f, 0.0f));
+            shield.transform.SetZIndex(0);
+            shield.GetComponent<Sprite>().FlipX(true);
+            BoxCollider box_collider = shield.AddComponent<BoxCollider>();
+            box_collider.SetColliderFilter(UserCollisionCategories.Shield, UserCollisionCategories.AllCategories, 0);
+            //box_collider.SetTrigger(true);
+            box_collider.SetTrigger(false);
+            box_collider.SetHalfBoxSize(new Vector2(0.5f, 0.5f));
+            box_collider.SetOffset(new Vector2(-0.2f, 0.0f));
+            shield_script = shield.AddComponent<Shield>();
+
+            shield_mid_block = GameObject.CreateGameObject();
+            shield_mid_block.AddChild(shield);
+            game_object.AddChild(shield_mid_block);
         }
 
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
@@ -218,9 +230,15 @@ namespace ScriptProject.Scripts
             Vector2 player_dir = (player_position - game_object.transform.GetPosition()).Normalize();
             mid_block.transform.SetLocalRotation(GetMidBlockRotation(Vector2.Angle(player_dir, right_dir)));
             sprite.FlipX(player_dir.x < 0);
+
+            float source_rotation = shield_mid_block.transform.GetLocalRotation();
+            Vector2 source = new Vector2((float)Math.Cos(source_rotation), (float)Math.Sin(source_rotation));
+
+            Vector2 result = Vector2.Lerp(source, player_dir, Time.GetFixedDeltaTime() * SHIELD_ROTATION_SPEED);
+
+            shield_mid_block.transform.SetLocalRotation(Vector2.Angle(result, right_dir));
         }
 
-        int times = 0;
         void Move()
         {
             Vector2 current_position = transform.GetPosition();
@@ -265,6 +283,40 @@ namespace ScriptProject.Scripts
             FixedMovement(velocity, new_velocity, speed, drag_speed, body);
         }
 
+        void HandleDelayedDamage()
+        {
+            foreach (DelayDamage delay_damage in delay_damages)
+            {
+                Vector2 direction_to_shield = shield.transform.GetPosition() - transform.GetPosition();
+                Vector2 direction_to_hit_object = delay_damage.hit_object.transform.GetPosition() - transform.GetPosition();
+                float dot = Vector2.DotProduct(direction_to_shield.Normalize(), direction_to_hit_object.Normalize());
+                const float MIN_DOT = 0.0f;
+
+                bool take_damage = !shield_script.HasHitObject(delay_damage.hit_object) || dot < MIN_DOT;
+                //Console.WriteLine("Delay Damage Object: " + delay_damage.hit_object.GetName() + ", GUID = " + delay_damage.hit_object.GetGameObjectUID());
+                if (take_damage)
+                {
+                    //Console.WriteLine("Take Damage");
+                    TakeDamage(null, delay_damage.damage);
+                }
+                else if (delay_damage.hit_object.HasComponent<ScriptingBehaviour>())
+                {
+                    //Console.WriteLine("Has Script");
+                    Vector2 dir = delay_damage.hit_object.transform.GetPosition() - game_object.transform.GetPosition();
+                    const float knockback = 15.0f;
+                    ScriptingBehaviour script = delay_damage.hit_object.GetComponent<ScriptingBehaviour>();
+                    if (typeof(InteractiveCharacterBehaviour).IsAssignableFrom(script.GetType()))
+                    {
+                        //Console.WriteLine("Object Knockback");
+                        ((InteractiveCharacterBehaviour)script).Knockback(dir.Normalize(), knockback);
+                    }
+                }
+            }
+
+            delay_damages.Clear();
+            shield_script.ResetHitObjects();
+        }
+
         void Death()
         {
             if (!dead && holes.ShouldDieInHole(body.GetVelocity().Length(), max_speed))
@@ -286,10 +338,10 @@ namespace ScriptProject.Scripts
             {
                 var scale = transform.GetScale();
                 var rotation = transform.GetLocalRotation();
-                scale.x -= falling_speed * GetDeltaTime();
-                scale.y -= falling_speed * GetDeltaTime();
-                rotation += falling_speed * GetDeltaTime();
-                falling_speed += 1.5f * GetDeltaTime();
+                scale.x -= falling_speed * Time.GetFixedDeltaTime();
+                scale.y -= falling_speed * Time.GetFixedDeltaTime();
+                rotation += falling_speed * Time.GetFixedDeltaTime();
+                falling_speed += 1.5f * Time.GetFixedDeltaTime();
                 transform.SetScale(scale);
                 transform.SetLocalRotation(rotation);
                 if (scale.x < 0.01f)
@@ -311,7 +363,7 @@ namespace ScriptProject.Scripts
             {
                 if (!attack_ready && !attacking)
                 {
-                    charge_up += charge_up_increase * GetDeltaTime();
+                    charge_up += charge_up_increase * Time.GetFixedDeltaTime();
                     if (charge_up > 1.0f)
                     {
                         charge_up = 1.0f;
@@ -321,7 +373,7 @@ namespace ScriptProject.Scripts
             }
             else
             {
-                charge_up -= charge_up_decrease * GetDeltaTime();
+                charge_up -= charge_up_decrease * Time.GetFixedDeltaTime();
                 if (charge_up < 0.0f)
                 {
                     charge_up = 0.0f;
@@ -349,6 +401,8 @@ namespace ScriptProject.Scripts
                 attack_ready = false;
                 attacking = true;
                 delay_attack = false;
+
+                body.SetVelocity((target.transform.GetPosition() - game_object.transform.GetPosition()).Normalize() * 10.0f);
             }
 
             if (attacking && attack_timer < Time.GetElapsedTime())
@@ -394,13 +448,7 @@ namespace ScriptProject.Scripts
             }
         }
 
-        float GetDeltaTime()
-        {
-            return PhysicConstants.TIME_STEP;
-            //return Time.GetDeltaTime();
-        }
-
-        public class HitBoxOrcEnemy : HitBoxAction
+        public class HitBoxOrcShield : HitBoxAction
         {
             float damage = 20.0f;
             float knockback = 10.3f;

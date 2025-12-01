@@ -24,6 +24,11 @@ namespace ScriptProject.EngineFramework
             time_limit = in_time_limit;
         }
 
+        public float GetTimeLimit()
+        {
+            return time_limit;
+        }
+
         public void Start()
         {
             timer = time_limit + Time.GetElapsedTime();

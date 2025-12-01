@@ -13,6 +13,7 @@
 #include "Components/AnimatableSpriteComponent.h"
 #include <algorithm>
 #include "Event/EventCore.h"
+#include <filesystem>
 
 RenderCore* RenderCore::s_render_core = nullptr;
 
@@ -220,6 +221,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	if (!m_dx12_core.GetCommandList()->IsCompleted(&m_dx12_core))
 	{
 		ImGUIMain::EndFrame();
+		m_debug_lines.clear();
 		return m_window->WinMsg();
 	}
 
@@ -415,6 +417,8 @@ void RenderCore::LoadAndSetTexture(const std::string& texture_file_name, const S
 
 TextureHandle RenderCore::LoadTexture(const std::string& texture_file_name, const SceneIndex scene_index)
 {
+	assert(std::filesystem::exists(texture_file_name));
+
 	AssetHandle texture_asset_handle = AssetManager::Get()->LoadTextureAsset(texture_file_name, scene_index);
 
 	if (m_asset_to_texture.contains(texture_asset_handle))
@@ -620,9 +624,10 @@ void RenderCore::Resize(const UINT window_width, const UINT window_height)
 	for (DX12CommandList* command_list : command_lists)
 	{
 		command_list->Wait(&m_dx12_core);
+		command_list->Reset();
 	}
 
-	m_dx12_core.GetCommandList()->Reset();
+	//m_dx12_core.GetCommandList()->Reset();
 
 	m_window->SetWindowWidth(window_width);
 	m_window->SetWindowHeight(window_height);

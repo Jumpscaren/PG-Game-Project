@@ -68,6 +68,11 @@ namespace ScriptProject.Engine
             return this.entity_id.GetHashCode();
         }
 
+        public UInt64 GetGameObjectUID()
+        {
+            return (UInt64)scene.GetSceneIndex() << 32 | (UInt64)entity_id;
+        }
+
         static private GameObject NewGameObjectWithExistingEntity(UInt32 entity, Scene scene)
         {
             GameObject game_object = GetGameObjectFromDatabase(scene.GetSceneIndex(), entity);

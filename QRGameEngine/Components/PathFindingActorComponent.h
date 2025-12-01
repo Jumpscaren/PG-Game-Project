@@ -9,6 +9,7 @@ struct PathFindingActorComponent
 {
 	uint8_t last_path_index;
 	std::vector<NodeIndex> cached_path;
+	bool show_path;
 };
 
 class JsonObject;
@@ -26,7 +27,8 @@ public:
 	static void PathFind(const SceneIndex actor_scene_index, const Entity actor_entity, const SceneIndex goal_scene_index, const Entity goal_entity, const uint32_t position_of_node_index);
 	static CSMonoObject GetCurrentNodePosition(const SceneIndex actor_scene_index, const Entity actor_entity);
 	static CSMonoObject GetNextNodePosition(const SceneIndex actor_scene_index, const Entity actor_entity, const uint32_t position_of_node_index);
-	static void DebugPath(const CSMonoObject& object);
+	static void ClearPath(const SceneIndex actor_scene_index, const Entity actor_entity);
+	static void SetShowPath(const CSMonoObject& object, const bool show_path);
 
 	static CSMonoObject GetGameObjectNodeByPosition(const CSMonoObject& position);
 

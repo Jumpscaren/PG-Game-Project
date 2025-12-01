@@ -7,12 +7,17 @@
 #include <thread>
 #include <mutex>
 
+struct PathFindingActorComponent;
+
 class PathFinding
 {
 public:
 	std::size_t GetNodeDetailIndex(const NodeDetail node_detail) const { return static_cast<std::size_t>(node_detail); }
 
 private:
+	static constexpr float BASE_WEIGHT = 1.0f;
+	static constexpr float EXPENSIVE_WEIGHT = 10.0f;
+
 	struct Node {
 		NodeIndex node_index;
 		std::vector<NodeIndex> neighbors;
@@ -22,6 +27,7 @@ private:
 
 		Vector2 position;
 		PathFindingWorldComponent layer;
+		float weight = BASE_WEIGHT;
 
 		Node(const NodeIndex node_index, const PathFindingWorldComponent& layer, const Vector2& position, const NodeIndex parent_node_index = NULL_NODE_INDEX) : node_index(node_index), position(position), parent_node_index(parent_node_index), layer(layer)  {}
 	};
@@ -87,11 +93,13 @@ private:
 	void ConstructPathFindingWorld(const SceneIndex scene_index);
 
 	void CalculatePath(const PathFindData& path_find_data, std::vector<NodeIndex>& path);
+	void PresentPath(const PathFindingActorComponent& path_finding_actor);
 
 	void ThreadHandleRequests();
 
 	Node* AddNeighbor(Node& node, const Vector2& neighbor_position, const NodeDetail node_detail);
 	void RemoveImpossibleCornerPaths(Node& node, const NodeDetail node_detail);
+	void CheckCollisionWithColliders(Node& node, const NodeDetail node_detail, EntityManager* entity_manager);
 
 	void AddNewNodeInternal(const SceneIndex scene_index, const Entity entity);
 	NodeIndex AddNewNodeInternal(const Vector2& postion, const PathFindingWorldComponent& path_finding_world, const NodeDetail node_detail);

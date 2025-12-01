@@ -356,6 +356,12 @@ void QREntryPoint::RunTime()
 		//	frame_time = time.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
 		//}
 
+		//double frame_time = 0.0f;
+		//while (frame_time < 1000.0f / 30.0f)//1000.0 / 100.0)
+		//{
+		//	frame_time = time.StopTimer() / (double)Timer::TimeTypes::Milliseconds;
+		//}
+
 		Time::Stop();
 	}
 }

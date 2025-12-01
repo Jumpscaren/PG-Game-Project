@@ -25,6 +25,29 @@
 
 PhysicsCore* PhysicsCore::s_physics_core;
 
+namespace
+{
+	Vector2 GetPositionWithRotatedOffset(const Vector2& position, const Vector3& scale, const Vector2& offset, const float angle)
+	{
+		const Vector2 scaled_offset{ offset.x * scale.x, offset.y * scale.y };
+
+		const float rotated_offset_x = scaled_offset.x * cosf(angle) - scaled_offset.y * sinf(angle);
+		const float rotated_offset_y = scaled_offset.x * sinf(angle) + scaled_offset.y * cosf(angle);
+		return Vector2(position.x + rotated_offset_x, position.y + rotated_offset_y);
+	}
+
+	Vector2 GetOffsetedPosition(EntityManager* entity_manager, const Entity entity, const TransformComponent& transform)
+	{
+		Vector2 offset;
+		if (entity_manager->HasComponent<BoxColliderComponent>(entity))
+		{
+			offset = entity_manager->GetComponent<BoxColliderComponent>(entity).offset;
+		}
+
+		return GetPositionWithRotatedOffset(transform.GetPosition2D(), transform.GetScale(), offset, transform.GetRotationEuler().z);
+	}
+}
+
 bool PhysicsCore::IsDeferringPhysicCalls()
 {
 	if (!m_threaded_physics)
@@ -48,13 +71,15 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 	m_contact_listener = new PhysicsContactListener();
 	m_destruction_listener = new PhysicsDestructionListener();
 
+	b2WorldDeef
+
 	b2Vec2 gravity;
 	//gravity.Set(0.0f, -9.82f);
 	gravity.Set(0.0f, 0.0f);
 	m_world = new b2World(gravity);
 
 	m_world->SetDebugDraw(m_debug_draw);
-	m_world->SetContactFilter(m_contact_filter);
+	//m_world->SetContactFilter(m_contact_filter);
 	m_world->SetContactListener(m_contact_listener);
 	m_world->SetDestructionListener(m_destruction_listener);
 
@@ -368,8 +393,6 @@ void PhysicsCore::AwakePhysicObjectsFromActivatedScene(const SceneIndex scene_in
 	entity_manager->System<PureStaticBodyComponent>([&](const Entity entity, PureStaticBodyComponent)
 		{
 			s_physics_core->AwakePureStaticBody(scene_index, entity);
-			//PhysicObjectData& physic_object = m_physic_object_data[pure_static_body.physic_object_handle];
-			//static_body.enabled = true;
 		});
 	entity_manager->System<KinematicBodyComponent>([&](KinematicBodyComponent& kinematic_body)
 		{
@@ -392,17 +415,15 @@ void PhysicsCore::WaitForPhysics()
 {
 	if (m_threaded_physics)
 	{
-		m_update_timer.StartTimer();
-
 		m_physic_update_thread_mutex.lock();
 		m_physic_update_thread_mutex.unlock();
 		while (m_update_physics == PhysicThreadState::Update)
 		{
 		}
 		m_defer_physic_calls = false;
-
-		m_previous_physics_update_time = (float)m_update_timer.StopTimer() / float(Timer::TimeTypes::Seconds);
 	}
+
+	EventCore::Get()->SendEvent("CurrentPhysicUpdateTicksCount", m_ticks_current_update);
 }
 
 void PhysicsCore::ThreadUpdatePhysic()
@@ -427,30 +448,16 @@ void PhysicsCore::ThreadUpdatePhysic()
 
 void PhysicsCore::Update()
 {
-	if (!PhysicsCore::IsThreaded())
-	{
-		m_update_timer.StartTimer();
-	}
-
 	//To ensure that we don't end up in a endless death loop
-	m_time_since_last_update -= m_previous_physics_update_time;
-	//if (m_time_since_last_update - m_previous_physics_update_time >= 0.0f)
-	//{
-	//	m_time_since_last_update -= m_previous_physics_update_time;
-	//}
-	//if (m_time_since_last_update > TIME_STEP * 10.0f)
-	//	m_time_since_last_update = TIME_STEP * 10.0f;
+	if (m_time_since_last_update > TIME_STEP * 10.0f)
+		m_time_since_last_update = TIME_STEP * 10.0f;
+	m_ticks_current_update = 0;
 	while (m_time_since_last_update > TIME_STEP)
 	{
 		m_world->Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
 		m_time_since_last_update -= TIME_STEP;
+		++m_ticks_current_update;
 	}
-	if (!PhysicsCore::IsThreaded())
-	{
-		m_previous_physics_update_time = (float)m_update_timer.StopTimer() / float(Timer::TimeTypes::Seconds);
-	}
-	//std::cout << "TIME: " << m_time_since_last_update << "\n";
-	//std::cout << "Physics Update Time: " << m_previous_physics_update_time << "\n";
 }
 
 void PhysicsCore::UpdatePhysics()
@@ -475,14 +482,14 @@ void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 	//m_world->DebugDraw();
 
 	std::vector<b2Vec2> vertices;
-	entity_manager->System<TransformComponent, BoxColliderComponent>([&](const TransformComponent& transform, const BoxColliderComponent& box_collider)
+	entity_manager->System<TransformComponent, BoxColliderComponent>([&](const Entity entity, const TransformComponent& transform, const BoxColliderComponent& box_collider)
 		{
 			if (!box_collider.debug_draw)
 			{
 				return;
 			}
 
-			const Vector3 position = transform.GetPosition();
+			const Vector2 position = transform.GetPosition2D() + box_collider.offset;
 
 			const auto rotation_z = transform.GetRotationEuler().z;
 			const Vector3& scale = transform.GetScale();
@@ -497,10 +504,13 @@ void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 			const b2Vec2 rotated_bottom_left_corner = b2Vec2(bottom_left_corner.x * cosf(rotation_z) - bottom_left_corner.y * sinf(rotation_z), bottom_left_corner.x * sinf(rotation_z) + bottom_left_corner.y * cosf(rotation_z));
 			const b2Vec2 rotated_bottom_right_corner = b2Vec2(bottom_right_corner.x * cosf(rotation_z) - bottom_right_corner.y * sinf(rotation_z), bottom_right_corner.x * sinf(rotation_z) + bottom_right_corner.y * cosf(rotation_z));
 
-			vertices.push_back(b2Vec2(position.x, position.y) + rotated_top_left_corner);
-			vertices.push_back(b2Vec2(position.x, position.y) + rotated_bottom_left_corner);
-			vertices.push_back(b2Vec2(position.x, position.y) + rotated_bottom_right_corner);
-			vertices.push_back(b2Vec2(position.x, position.y) + rotated_top_right_corner);
+			const Vector2 offseted_position = GetOffsetedPosition(entity_manager, entity, transform);
+			const b2Vec2 physic_position(offseted_position.x, offseted_position.y);
+
+			vertices.push_back(physic_position + rotated_top_left_corner);
+			vertices.push_back(physic_position + rotated_bottom_left_corner);
+			vertices.push_back(physic_position + rotated_bottom_right_corner);
+			vertices.push_back(physic_position + rotated_top_right_corner);
 
 			m_debug_draw->DrawPolygon(vertices.data(), static_cast<int32>(vertices.size()), b2Color(1.0f, 0.0f, 0.0f));
 
@@ -592,12 +602,17 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 
 	//Timer timer;
 	//timer.StartTimer();
-	entity_manager->System<StaticBodyComponent, TransformComponent>([&](const StaticBodyComponent& static_body, const TransformComponent& transform)
+	entity_manager->System<StaticBodyComponent, TransformComponent>([&](const Entity entity, const StaticBodyComponent& static_body, const TransformComponent& transform)
 		{
 			const bool is_locked = m_world->IsLocked();
 			const PhysicThreadState threat_run = m_update_physics;
 			PhysicObjectData& physic_object = m_physic_object_data[static_body.physic_object_handle];
-			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+
+			const float rotation_z = transform.GetRotationEuler().z;
+
+			const Vector2 position = GetOffsetedPosition(entity_manager, entity, transform);
+
+			physic_object.object_body->SetTransform(b2Vec2(position.x, position.y), rotation_z);
 			if (static_body.enabled != physic_object.object_body->IsEnabled())
 			{
 				physic_object.object_body->SetEnabled(static_body.enabled);
@@ -613,7 +628,15 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			const auto transform = ent_man->GetComponent<TransformComponent>(pure_static_body.entity);
 			const auto physic_object_handle = ent_man->GetComponent<PureStaticBodyComponent>(pure_static_body.entity).physic_object_handle;
 			PhysicObjectData& physic_object = m_physic_object_data[physic_object_handle];
-			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
+
+			Vector2 offset;
+			if (ent_man->HasComponent<BoxColliderComponent>(pure_static_body.entity))
+			{
+				offset = ent_man->GetComponent<BoxColliderComponent>(pure_static_body.entity).offset;
+			}
+
+			const Vector2 position = transform.GetPosition2D() + offset;
+			physic_object.object_body->SetTransform(b2Vec2(position.x, position.y), transform.GetRotationEuler().z);
 			physic_object.object_body->SetEnabled(true);
 			physic_object.object_body->SetAwake(true);
 		}

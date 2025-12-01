@@ -19,7 +19,8 @@ namespace ScriptProject.Scripts
 
         RandomGenerator random_generator = new RandomGenerator();
 
-        float health = 100.0f;
+        const float max_health = 100.0f;
+        float health = max_health;
 
         enum SpawnerState
         {
@@ -71,6 +72,16 @@ namespace ScriptProject.Scripts
         {
             health -= damage;
 
+            if (health < 0.0f)
+            {
+                health = 0.0f;
+            }
+
+            if (health > max_health)
+            {
+                health = max_health;
+            }
+
             if (health <= 0.001f)
             {
                 Render.LoadTexture("../QRGameEngine/Textures/Fence-4.png", game_object.GetComponent<Sprite>());
@@ -92,6 +103,16 @@ namespace ScriptProject.Scripts
         public override void Knockback(Vector2 dir, float knockback)
         {
             
+        }
+
+        public float GetHealth()
+        {
+            return health;
+        }
+
+        public float GetMaxHealth()
+        {
+            return max_health;
         }
     }
 }

@@ -148,5 +148,25 @@ namespace ScriptProject.EngineFramework
 
             return ConsumeBufferedInput(buffered_input);
         }
+
+        bool CheckBufferedInput(BufferedInput buffered_input)
+        {
+            if (!buffered_inputs.ContainsKey(buffered_input))
+            {
+                return false;
+            }
+
+            bool is_expired = buffered_inputs[buffered_input].IsExpired();
+            return !is_expired;
+        }
+
+        public bool CheckBufferedInput(Input.MouseButton mouse_button)
+        {
+            BufferedInput buffered_input = empty_buffered_input;
+            buffered_input.buffered_input_type = BufferedInputType.MouseButton;
+            buffered_input.mouse_button = mouse_button;
+
+            return CheckBufferedInput(buffered_input);
+        }
     }
 }

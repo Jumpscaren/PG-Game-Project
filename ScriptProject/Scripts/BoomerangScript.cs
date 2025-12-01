@@ -51,7 +51,7 @@ namespace ScriptProject.Scripts
             hit_box.SetName("BoomerangHitBox");
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxBoomerang());
+            hit_box_script.SetHitBoxAction(new HitBoxBoomerang(), game_object);
             hit_box_script.SetAvoidGameObject(GameObject.TempFindGameObject("Player"));
 
             game_object.AddChild(hit_box);
@@ -130,7 +130,7 @@ namespace ScriptProject.Scripts
             float damage = 20.0f;
             float knockback = 7.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
+            public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (!hit_box_script.GetGameOjbect().HasParent())
                 {

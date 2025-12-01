@@ -10,7 +10,7 @@ namespace ScriptProject.Scripts
 {
     internal abstract class HitBoxAction
     {
-        public abstract void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script);
+        public abstract void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script);
         public abstract void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script);
     }
 
@@ -18,10 +18,12 @@ namespace ScriptProject.Scripts
     {
         HitBoxAction hit_box_action = null;
         GameObject avoid_game_object = null;
+        GameObject owner_game_object = null;
 
-        public void SetHitBoxAction(HitBoxAction in_hit_box_action)
+        public void SetHitBoxAction(HitBoxAction in_hit_box_action, GameObject owner)
         {
             hit_box_action = in_hit_box_action;
+            owner_game_object = owner;
         }
 
         public void SetAvoidGameObject(GameObject avoid)
@@ -37,7 +39,7 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            hit_box_action.OnHit(this, hit_script);
+            hit_box_action.OnHit(owner_game_object, this, hit_script);
         }
 
         public void BeginCollision(GameObject collided_game_object)

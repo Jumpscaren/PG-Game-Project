@@ -1,4 +1,5 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Engine.Constants;
 using ScriptProject.EngineMath;
 using ScriptProject.Scripts.Effects;
 using System;
@@ -26,7 +27,7 @@ namespace ScriptProject.Scripts
 
         public Effect GetEffect() { return effect; }
 
-        public void Movement(Vector2 velocity, Vector2 new_velocity, float max_speed, float drag_speed, DynamicBody body)
+        private void Movement(Vector2 velocity, Vector2 new_velocity, float max_speed, float drag_speed, DynamicBody body, float delta_time)
         {
             if (!IsEffectOver() && effect.StopMovement())
             {
@@ -36,18 +37,28 @@ namespace ScriptProject.Scripts
             const float epsilion = 0.0001f;
 
             float new_velocity_length = new_velocity.Length();
-            if (velocity.Length() <= max_speed && new_velocity_length > epsilion)
+            if (velocity.Length() <= max_speed + epsilion && new_velocity_length > epsilion)
                 velocity = new_velocity;
             //else
             //    velocity += new_velocity * Time.GetDeltaTime();
-            if (new_velocity_length < epsilion && velocity.Length() <= max_speed)
+            if (new_velocity_length < epsilion && velocity.Length() <= max_speed + epsilion)
                 velocity = new Vector2(0.0f, 0.0f);
-            if (velocity.Length() > max_speed)
-                velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            if (new_velocity_length > epsilion && velocity.Length() < max_speed)
+            if (velocity.Length() > max_speed + epsilion)
+                velocity -= velocity.Normalize() * drag_speed * delta_time;
+            if (new_velocity_length > epsilion && velocity.Length() < max_speed + epsilion)
                 velocity = velocity.Normalize() * max_speed;
 
             body.SetVelocity(velocity);
+        }
+
+        public void VariedMovement(Vector2 velocity, Vector2 new_velocity, float max_speed, float drag_speed, DynamicBody body)
+        {
+            Movement(velocity, new_velocity, max_speed, drag_speed, body, Time.GetDeltaTime());
+        }
+
+        public void FixedMovement(Vector2 velocity, Vector2 new_velocity, float max_speed, float drag_speed, DynamicBody body)
+        {
+            Movement(velocity, new_velocity, max_speed, drag_speed, body, PhysicConstants.TIME_STEP);
         }
 
         public virtual void TakeDamage(GameObject hit_object, float damage)

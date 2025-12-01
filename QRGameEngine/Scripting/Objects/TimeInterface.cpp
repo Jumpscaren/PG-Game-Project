@@ -17,7 +17,12 @@ void TimeInterface::RegisterInterface(CSMonoCore* mono_core)
 
 void TimeInterface::SetDeltaTime(CSMonoCore* mono_core)
 {
-	mono_core->CallStaticMethod(s_set_delta_time_method_handle, (float)Time::GetDeltaTime());
+	float delta_time = (float)Time::GetDeltaTime();
+	if (delta_time > 1.0f)
+	{
+		delta_time = 1.0f;
+	}
+	mono_core->CallStaticMethod(s_set_delta_time_method_handle, delta_time);
 }
 
 void TimeInterface::SetElapsedTime(CSMonoCore* mono_core)

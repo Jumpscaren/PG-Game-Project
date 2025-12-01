@@ -42,7 +42,14 @@ namespace ScriptProject.Engine
         }
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        public extern void DebugPath();
+        private static extern void ClearPath_Extern(UInt32 actor_scene_index, UInt32 actor_entity);
+        public void ClearPath()
+        {
+            ClearPath_Extern(game_object.GetSceneIndex(), game_object.GetEntityID());
+        }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetShowPath(bool show_path);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern bool IsPositionInWorld(Vector2 position);

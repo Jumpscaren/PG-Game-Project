@@ -1,4 +1,5 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Engine.Constants;
 using ScriptProject.EngineMath;
 using ScriptProject.UserDefined;
 using System;
@@ -8,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcEnemy;
+using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
@@ -18,6 +20,9 @@ namespace ScriptProject.Scripts
         PathFindingActor actor;
         Transform transform;
         Vector2 last_position;
+        const float calculate_path_time = 0.5f;
+        Timer calculate_path_timer = new Timer(calculate_path_time);
+
         GameObject hit_box;
         GameObject mid_block;
         DynamicBody body;
@@ -86,6 +91,7 @@ namespace ScriptProject.Scripts
             Console.WriteLine(door_game_object);
 
             actor = game_object.GetComponent<PathFindingActor>();
+            actor.SetShowPath(true);
             transform = game_object.transform;
             body = game_object.GetComponent<DynamicBody>();
             sprite = game_object.GetComponent<Sprite>();
@@ -129,7 +135,7 @@ namespace ScriptProject.Scripts
             ++count;
         }
 
-        void Update()
+        void FixedUpdate()
         {
             if (target == null)
             {
@@ -252,7 +258,7 @@ namespace ScriptProject.Scripts
             hit_box.SetTag(UserTags.EnemyHitbox);
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxOrcCarrier());
+            hit_box_script.SetHitBoxAction(new HitBoxOrcCarrier(), game_object);
             hit_box_script.SetAvoidGameObject(game_object);
 
             mid_block = GameObject.CreateGameObject();
@@ -280,20 +286,27 @@ namespace ScriptProject.Scripts
             Vector2 dir = last_position - current_position;
             Vector2 target_dir = target.transform.GetPosition() - current_position;
 
-            //Console.WriteLine(target != old_target);
-
-            if (target != old_target || dir.Length() < 0.1f) // actor.NeedNewPathFind(target, 1))
+            if (calculate_path_timer.IsExpired())
             {
-                //Console.WriteLine("Did this once " + (++times) + ", ent = " + game_object.GetEntityID());
-                //last_position = actor.PathFind(target, 1);
-                //Console.WriteLine(last_position);
+                actor.PathFind(target, 1);
+                calculate_path_timer.Start();
                 last_position = current_position;
                 dir = last_position - current_position;
-                old_target = target;
             }
-            //Console.WriteLine("Dir: " + dir);
-            //last_position = actor.PathFind(target, 1);
-            actor.DebugPath();
+
+            if (dir.Length() < 0.1f)
+            {
+                last_position = actor.GetNextNodePosition(1);
+                dir = last_position - current_position;
+            }
+            last_position = actor.GetCurrentNodePosition();
+
+            dir = last_position - current_position;
+            if ((target.transform.GetPosition() - current_position).Length() < 2.0f)
+            {
+                dir = target.transform.GetPosition() - current_position;
+            }
+
             if (!(target != princess_game_object || target != door_game_object) && target_dir.Length() < 1.01f)
             {
                 dir = new Vector2();
@@ -307,20 +320,7 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            Movement(velocity, new_velocity, speed, drag_speed, body);
-            //float new_velocity_length = new_velocity.Length();
-            //if (velocity.Length() <= speed && new_velocity_length != 0.0f)
-            //    velocity = new_velocity;
-            ////else
-            ////    velocity += new_velocity * Time.GetDeltaTime();
-            //if (new_velocity_length == 0.0f && velocity.Length() <= speed)
-            //    velocity = new Vector2(0.0f, 0.0f);
-            //if (velocity.Length() > speed)
-            //    velocity -= velocity.Normalize() * drag_speed * Time.GetDeltaTime();
-            //if (new_velocity_length > 0.0f && velocity.Length() < speed)
-            //    velocity = velocity.Normalize() * speed;
-
-            //body.SetVelocity(velocity);
+            FixedMovement(velocity, new_velocity, speed, drag_speed, body);
         }
 
         void Death()
@@ -344,10 +344,10 @@ namespace ScriptProject.Scripts
             {
                 var scale = transform.GetScale();
                 var rotation = transform.GetLocalRotation();
-                scale.x -= falling_speed * Time.GetDeltaTime();
-                scale.y -= falling_speed * Time.GetDeltaTime();
-                rotation += falling_speed * Time.GetDeltaTime();
-                falling_speed += 1.5f * Time.GetDeltaTime();
+                scale.x -= falling_speed * GetDeltaTime();
+                scale.y -= falling_speed * GetDeltaTime();
+                rotation += falling_speed * GetDeltaTime();
+                falling_speed += 1.5f * GetDeltaTime();
                 transform.SetScale(scale);
                 transform.SetLocalRotation(rotation);
                 if (scale.x < 0.01f)
@@ -374,7 +374,7 @@ namespace ScriptProject.Scripts
             {
                 if (!attack_ready && !attacking)
                 {
-                    charge_up += charge_up_increase * Time.GetDeltaTime();
+                    charge_up += charge_up_increase * GetDeltaTime();
                     if (charge_up > 1.0f)
                     {
                         charge_up = 1.0f;
@@ -384,7 +384,7 @@ namespace ScriptProject.Scripts
             }
             else
             {
-                charge_up -= charge_up_decrease * Time.GetDeltaTime();
+                charge_up -= charge_up_decrease * GetDeltaTime();
                 if (charge_up < 0.0f)
                 {
                     charge_up = 0.0f;
@@ -474,19 +474,25 @@ namespace ScriptProject.Scripts
             }
         }
 
+        float GetDeltaTime()
+        {
+            return PhysicConstants.TIME_STEP;
+            //return Time.GetDeltaTime();
+        }
+
         public class HitBoxOrcCarrier : HitBoxAction
         {
             float damage = 5.0f;
             float knockback = 8.3f;
 
-            public override void OnHit(ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
+            public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 float rot = hit_box_script.GetGameOjbect().GetParent().transform.GetLocalRotation();
                 Vector2 dir = new Vector2((float)Math.Cos(rot), (float)Math.Sin(rot));
 
+                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
                 hit_object_script.Knockback(dir, knockback);
                 hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
-                hit_object_script.SetEffect(new Effects.StunEffect(2.0f));
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

@@ -64,7 +64,7 @@ namespace ScriptProject.Scripts
         }
 
         Vector2 grabbed_position_change = new Vector2(0.0f, 0.4f);
-        void Update()
+        void FixedUpdate()
         {
             if (rescue_state)
             {
@@ -150,7 +150,7 @@ namespace ScriptProject.Scripts
             {
                 Vector2 new_velocity = random_direction;
                 new_velocity = new_velocity.Normalize() * max_speed;
-                Movement(body.GetVelocity(), new_velocity, max_speed, drag_speed, body);
+                FixedMovement(body.GetVelocity(), new_velocity, max_speed, drag_speed, body);
             }
 
             Vector2 velocity = body.GetVelocity();
@@ -224,9 +224,9 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 current_position = game_object.transform.GetPosition();
-            //Vector2 last_position = actor.PathFind(target, 1);
-            //Vector2 dir = last_position - current_position;
-            Vector2 dir = new Vector2();
+            actor.PathFind(target, 1);
+            Vector2 last_position = actor.GetCurrentNodePosition();
+            Vector2 dir = last_position - current_position;
             Vector2 target_dir = target.transform.GetPosition() - current_position;
             if (target_dir.Length() < 1.01f)
             {
@@ -234,11 +234,17 @@ namespace ScriptProject.Scripts
                 target = null;
             }
 
+            if (dir.Length() < 0.1f)
+            {
+                last_position = actor.GetNextNodePosition(1);
+                dir = last_position - current_position;
+            }
+
             Vector2 velocity = body.GetVelocity();
             float speed = target_speed;
             Vector2 new_velocity = dir.Normalize() * speed;
 
-            Movement(velocity, new_velocity, speed, drag_speed, body);
+            FixedMovement(velocity, new_velocity, speed, drag_speed, body);
 
             return true;
         }

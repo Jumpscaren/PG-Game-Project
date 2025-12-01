@@ -1,61 +1,62 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
-    internal class Arrow : ScriptingBehaviour
+    internal class Hammer : ScriptingBehaviour
     {
         GameObject hit_box;
-        float destroy_time = 5.0f;
-        float destroy_timer = 0.0f;
+        const float destroy_time = 5.0f;
+        Timer destroy_timer = new Timer(destroy_time);
 
-        float speed = 20.0f;
+        const float angle_change = 30.0f;
+        float angle = 0.0f;
 
-        public void InitArrow(Vector2 position, Vector2 direction)
+        float speed = 10.0f;
+
+        public void InitHammer(Vector2 position, Vector2 direction, GameObject avoid_game_object)
         {
             Sprite arrow_sprite = game_object.AddComponent<Sprite>();
-            Render.LoadTexture("../QRGameEngine/Textures/Arrow.png", arrow_sprite);
+            Render.LoadTexture("../QRGameEngine/Textures/Hammer.png", arrow_sprite);
             game_object.transform.SetPosition(position);
-            game_object.transform.SetScale(new Vector2(1.0f, 0.5f) * 0.5f);
-            game_object.transform.SetLocalRotation(Vector2.Angle(direction, new Vector2(1, 0)));
+            game_object.transform.SetScale(new Vector2(0.3f, 0.3f));
             game_object.AddComponent<KinematicBody>().SetVelocity(direction * speed);
 
             hit_box = GameObject.CreateGameObject();
             hit_box.AddComponent<StaticBody>();
             hit_box.AddComponent<BoxCollider>().SetTrigger(true);
 
-            hit_box.SetName("ArrowHitBox");
+            hit_box.SetName("HammerHitBox");
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxArrow(), game_object);
-            hit_box_script.SetAvoidGameObject(GameObject.TempFindGameObject("Player"));
+            hit_box_script.SetHitBoxAction(new HitBoxHammer(), game_object);
+            hit_box_script.SetAvoidGameObject(avoid_game_object);
 
             game_object.AddChild(hit_box);
 
-            destroy_timer = destroy_time + Time.GetElapsedTime();
+            destroy_timer.Start();
         }
 
-        void Update()
+        void FixedUpdate()
         {
-            if (destroy_timer < Time.GetElapsedTime())
+            angle += angle_change * Time.GetFixedDeltaTime();
+            game_object.transform.SetLocalRotation(angle);
+
+            if (destroy_timer.IsExpired())
             {
                 GameObject.DeleteGameObject(game_object);
             }
         }
 
-        public class HitBoxArrow : HitBoxAction
+        public class HitBoxHammer : HitBoxAction
         {
             float damage = 5.0f;
-            float knockback = 7.3f;
+            float knockback = 5.3f;
 
             public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
                 if (!hit_box_script.GetGameOjbect().HasParent())
-                {
-                    return;
-                }
-
-                if (hit_object_script is Princess)
                 {
                     return;
                 }

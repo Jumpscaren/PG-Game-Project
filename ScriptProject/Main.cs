@@ -83,29 +83,39 @@ namespace ScriptProject
             gameMaster.AddComponent<GameMaster>();
 
             PrefabSystem.CreateUserPrefab("Prefab1", Prefab1, 1, "Block");
-            PrefabSystem.CreateUserPrefab("Prefab2", Prefab2, 2, "Path");
             PrefabSystem.CreateUserPrefab("WallCollider", WallCollider, 2, "Block");
+            PrefabSystem.CreateUserPrefab("EmptyCollider", EmptyCollider, 0, "Block");
+            PrefabSystem.CreateUserPrefab("Hole", Hole, 0, "Block");
+            PrefabSystem.CreateUserPrefab("PrincessBlocker", PrincessBlocker, 0, "Block");
+            PrefabSystem.CreateUserPrefab("Finish", Finish, 0, "Block");
+            PrefabSystem.CreateUserPrefab("Start", Start, 1, "Block");
+            PrefabSystem.CreateUserPrefab("ReplaceBlock", ReplaceBlock, 1, "Block");
+            PrefabSystem.CreateUserPrefab("HolePolygon", HolePolygon, 0, "Block");
+            PrefabSystem.CreateUserPrefab("TestTileBlock", TestTileBlock, 1, "Block");
+            PrefabSystem.CreateUserPrefab("NewWall", NewWall, 2, "Block");
+            PrefabSystem.CreateUserPrefab("FrontWall", FrontWall, 0, "Block");
+            PrefabSystem.CreateUserPrefab("BackWall", BackWall, 2, "Block");
+            PrefabSystem.CreateUserPrefab("Fence", Fence, 1, "Block");
+            PrefabSystem.CreateUserPrefab("DoorSpawnerPrefab", DoorSpawnerPrefab, 1, "Block");
+
+            PrefabSystem.CreateUserPrefab("Prefab2", Prefab2, 2, "Path");
+            PrefabSystem.CreateUserPrefab("GreyPath", GreyPath, 3, "Path");
+            PrefabSystem.CreateUserPrefab("FakePath", FakePath, 3, "Path");
+
             PrefabSystem.CreateUserPrefab("PlayerPrefab", PlayerPrefab, 1, "Character");
-            PrefabSystem.CreateUserPrefab("PlayerCameraPrefab", PlayerCameraPrefab, 1, "Misc");
-            PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1, "Misc");
             PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1, "Character");
             PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1, "Character");
             PrefabSystem.CreateUserPrefab("Princess", Princess, 1, "Character");
-            PrefabSystem.CreateUserPrefab("EmptyCollider", EmptyCollider, 0, "Block");
-            PrefabSystem.CreateUserPrefab("Hole", Hole, 0, "Block");
             PrefabSystem.CreateUserPrefab("OrcCarrier", OrcCarrier, 1, "Character");
-            PrefabSystem.CreateUserPrefab("PrincessBlocker", PrincessBlocker, 0, "Block");
-            PrefabSystem.CreateUserPrefab("Finish", Finish, 0, "Block");
-            PrefabSystem.CreateUserPrefab("ReplaceBlock", ReplaceBlock, 1, "Block");
-            PrefabSystem.CreateUserPrefab("Switch", Switch, 1, "Interactive");
             PrefabSystem.CreateUserPrefab("OrcDistracter", OrcDistracter, 1, "Character");
-            PrefabSystem.CreateUserPrefab("Fireball", Fireball, 0, "Misc");
-            PrefabSystem.CreateUserPrefab("HolePolygon", HolePolygon, 0, "Block");
-            PrefabSystem.CreateUserPrefab("TestTileBlock", TestTileBlock, 1, "Block");
-            PrefabSystem.CreateUserPrefab("GreyPath", GreyPath, 2, "Path");
-            PrefabSystem.CreateUserPrefab("NewWall", NewWall, 2, "Block");
-            PrefabSystem.CreateUserPrefab("Fence", Fence, 1, "Block");
+            PrefabSystem.CreateUserPrefab("OrcFixer", OrcFixer, 1, "Character");
+            PrefabSystem.CreateUserPrefab("OrcShield", OrcShield, 1, "Character");
 
+            PrefabSystem.CreateUserPrefab("Switch", Switch, 1, "Interactive");
+
+            PrefabSystem.CreateUserPrefab("PlayerCameraPrefab", PlayerCameraPrefab, 1, "Misc");
+            PrefabSystem.CreateUserPrefab("BouncePrefab", BouncePrefab, 1, "Misc");
+            PrefabSystem.CreateUserPrefab("Fireball", Fireball, 0, "Misc");
             return 0;
         }
 
@@ -243,6 +253,12 @@ namespace ScriptProject
             game_object.SetTag(UserTags.Finish);
         }
 
+        static void Start(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/Door.png", game_object.GetComponent<Sprite>());
+            game_object.SetTag(UserTags.StartDoor);
+        }
+
         static void ReplaceBlock(GameObject game_object)
         {
             game_object.AddComponent<PureStaticBody>();
@@ -267,6 +283,34 @@ namespace ScriptProject
             collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             collider.SetRadius(0.49f);
             game_object.AddComponent<OrcDistracter>();
+            game_object.AddComponent<AnimatableSprite>();
+        }
+
+        static void OrcFixer(GameObject game_object)
+        {
+            game_object.transform.SetScale(new Vector2(0.6f, 0.6f));
+
+            Render.LoadTexture("../QRGameEngine/Textures/OrcFixer.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            var collider = game_object.AddComponent<CircleCollider>();
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            collider.SetRadius(0.49f * 0.6f);
+            game_object.AddComponent<OrcFixer>();
+            game_object.AddComponent<AnimatableSprite>();
+        }
+
+        static void OrcShield(GameObject game_object)
+        {
+            game_object.transform.SetScale(new Vector2(1.3f, 1.3f));
+
+            Render.LoadTexture("../QRGameEngine/Textures/Orc.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            var collider = game_object.AddComponent<CircleCollider>();
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.FilterForShield, 0);
+            collider.SetRadius(0.49f * 1.3f);
+            game_object.AddComponent<OrcShield>();
             game_object.AddComponent<AnimatableSprite>();
         }
 
@@ -311,6 +355,25 @@ namespace ScriptProject
             game_object.AddComponent<BoxCollider>();
         }
 
+        static void FrontWall(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/wall.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PureStaticBody>();
+            BoxCollider collider = game_object.AddComponent<BoxCollider>();
+            collider.SetHalfBoxSize(new Vector2(0.5f, 0.25f));
+            collider.SetOffset(new Vector2(0.0f, -0.05f));
+            game_object.transform.SetLocalZIndex(0.6f);
+        }
+
+        static void BackWall(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/wall.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PureStaticBody>();
+            BoxCollider collider = game_object.AddComponent<BoxCollider>();
+            collider.SetHalfBoxSize(new Vector2(0.5f, 0.25f));
+            collider.SetOffset(new Vector2(0.0f, 0.35f));
+        }
+
         static void Fence(GameObject game_object)
         {
             Render.LoadTexture("../QRGameEngine/Textures/Fence.png", game_object.GetComponent<Sprite>());
@@ -319,6 +382,20 @@ namespace ScriptProject
             game_object.AddComponent<DynamicBody>();
             var collider = game_object.AddComponent<BoxCollider>();
             collider.SetTrigger(true);
+
+            game_object.SetTag(UserTags.FenceSpawner);
+        }
+
+        static void DoorSpawnerPrefab(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/Fence.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<DoorSpawner>();
+        }
+
+        static void FakePath(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/work.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<Tile>();
         }
     }
 }
