@@ -1,10 +1,10 @@
 #pragma once
-#include "Vendor/Include/Box2D/box2d.h"
+#include "Vendor/Include/Box2D/id.h"
 #include "ECS/EntityDefinition.h"
 #include "SceneSystem/SceneDefines.h"
 #include "Common/EngineTypes.h"
 
-class PhysicsContactListener : public b2ContactListener
+class PhysicsContactListener
 {
 private:
 	struct CollisionData
@@ -13,6 +13,8 @@ private:
 		SceneIndex body_1_scene_index;
 		Entity body_2_entity;
 		SceneIndex body_2_scene_index;
+
+		bool is_sensor_collision;
 
 		bool operator ==(const CollisionData& in_col) const
 		{
@@ -42,27 +44,33 @@ private:
 		}
 	};
 
+	struct CollisionBodyData
+	{
+		std::pair<Entity, SceneIndex> body_1;
+		std::pair<Entity, SceneIndex> body_2;
+	};
+
 private:
 	qr::unordered_map<CollisionData, int, CollisionDataHasher> m_collisions_per_entity;
 
 	std::vector<CollisionData> m_deferred_begin_collision_data;
 	std::vector<CollisionData> m_deferred_end_collision_data;
+	std::vector<CollisionData> m_deferred_hit_collision_data;
 
 private:
-	/// Called when two fixtures begin to touch.
-	void BeginContact(b2Contact* contact) override;
+	void HandleBeginCollision(const b2ShapeId shape_a, const b2ShapeId shape_b, const bool is_sensor_collision);
+	void BeginContacts();
 
-	/// Called when two fixtures cease to touch.
-	void EndContact(b2Contact* contact) override;
+	void HandleEndCollision(const b2ShapeId shape_a, const b2ShapeId shape_b, const bool is_sensor_collision);
+	void EndContacts();
 
-	void PreSolve(b2Contact*, const b2Manifold*) override
-	{
-		//B2_NOT_USED(contact);
-		//B2_NOT_USED(oldManifold);
-		//contact->SetEnabled(true);
-	}
+	std::optional<CollisionBodyData> GetCollisionBodyData(const b2ShapeId shape_a, const b2ShapeId shape_b);
 
 public:
+	void HandleContacts();
+
 	void HandleDeferredCollisionData();
+
+	void DeletedEntity(const SceneIndex scene_index, const Entity entity);
 };
 

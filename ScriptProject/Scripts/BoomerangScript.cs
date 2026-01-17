@@ -4,7 +4,7 @@ using System;
 
 namespace ScriptProject.Scripts
 {
-    internal class BoomerangScript : ScriptingBehaviour
+    internal class BoomerangScript : HitBox
     {
         KinematicBody body;
 
@@ -22,8 +22,6 @@ namespace ScriptProject.Scripts
 
         float speed = 12.0f;
 
-        GameObject hit_box;
-
         Vector2 anchor_position;
 
         const float outwards_scalar = -5.5f;
@@ -35,6 +33,8 @@ namespace ScriptProject.Scripts
 
         RandomGenerator random_generator = new RandomGenerator();
 
+        GameObject player_game_object;
+
         void Start()
         {
             body = game_object.AddComponent<KinematicBody>();
@@ -44,17 +44,8 @@ namespace ScriptProject.Scripts
             alive_timer = Time.GetElapsedTime() + alive_time;
             anchor_position = game_object.transform.GetPosition();
 
-            hit_box = GameObject.CreateGameObject();
-            hit_box.AddComponent<StaticBody>();
-            hit_box.AddComponent<CircleCollider>().SetTrigger(true);
-
-            hit_box.SetName("BoomerangHitBox");
-
-            HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxBoomerang(), game_object);
-            hit_box_script.SetAvoidGameObject(GameObject.TempFindGameObject("Player"));
-
-            game_object.AddChild(hit_box);
+            SetHitBoxAction(new HitBoxBoomerang(), game_object);
+            player_game_object = GameObject.TempFindGameObject("Player");
 
             wait_timer = wait_time + Time.GetElapsedTime();
         }
@@ -96,12 +87,9 @@ namespace ScriptProject.Scripts
             }
         }
 
-        void BeginCollision(GameObject collided_game_object)
+        void HaveReturned()
         {
-            if (collided_game_object == owner)
-            {
-                returned = true;
-            }
+            returned = true;
         }
 
         void EndCollision(GameObject collided_game_object)
@@ -132,17 +120,17 @@ namespace ScriptProject.Scripts
 
             public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
-                if (!hit_box_script.GetGameOjbect().HasParent())
-                {
-                    return;
-                }
-
                 if (hit_object_script is Princess)
                 {
                     return;
                 }
 
-                if (hit_object_script.GetGameOjbect() == hit_box_script.GetGameOjbect().GetParent()) return;
+                BoomerangScript boomerang_script = hit_box_owner_game_object.GetComponent<BoomerangScript>();
+                if (hit_object_script.GetGameOjbect() == boomerang_script.player_game_object)
+                {
+                    boomerang_script.HaveReturned();
+                    return;
+                }
 
                 Vector2 dir = hit_object_script.GetGameOjbect().transform.GetPosition() - hit_box_script.GetGameOjbect().transform.GetPosition();
                 dir = dir.Normalize();

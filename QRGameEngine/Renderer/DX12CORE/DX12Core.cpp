@@ -247,11 +247,6 @@ uint32_t DX12Core::GetCurrentFrameInFlight() const
 	return m_commandlist_index;
 }
 
-uint32_t DX12Core::GetCurrentBackBufferIndex() const
-{
-	return m_swapchain.GetCurrentBackBufferIndex();
-}
-
 DX12ShaderCompiler* DX12Core::GetShaderCompiler()
 {
 	return &m_shader_compiler;

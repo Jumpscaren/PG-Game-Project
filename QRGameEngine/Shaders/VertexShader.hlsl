@@ -34,23 +34,19 @@ struct Camera
     float pad;
 };
 
-//StructuredBuffer<Vertex> vertices : register(t0, space0);
-
 struct Constants
 {
 	uint index;
 };
 ConstantBuffer<Constants> vertices_index : register(b0, space0);
-//ConstantBuffer<Constants> world_matrix_buffer_index : register(b1, space0);
 ConstantBuffer<Constants> transform_buffer_index : register(b1, space0);
 ConstantBuffer<Constants> sprite_buffer_index : register(b1, space1);
 
 ConstantBuffer<Constants> camera_buffer_index : register(b2, space0);
 
 VS_OUT main(uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)
-{
+{ 
 	StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[vertices_index.index];
-	//StructuredBuffer<Transform> world_matrix = ResourceDescriptorHeap[world_matrix_buffer_index.index];
 	StructuredBuffer<Transform> transforms = ResourceDescriptorHeap[transform_buffer_index.index];
     StructuredBuffer<Sprite> sprites = ResourceDescriptorHeap[sprite_buffer_index.index];
 	

@@ -1,12 +1,12 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
 using ScriptProject.EngineFramework;
+using System;
 
 namespace ScriptProject.Scripts
 {
-    internal class Hammer : ScriptingBehaviour
+    internal class Hammer : HitBox
     {
-        GameObject hit_box;
         const float destroy_time = 5.0f;
         Timer destroy_timer = new Timer(destroy_time);
 
@@ -22,18 +22,12 @@ namespace ScriptProject.Scripts
             game_object.transform.SetPosition(position);
             game_object.transform.SetScale(new Vector2(0.3f, 0.3f));
             game_object.AddComponent<KinematicBody>().SetVelocity(direction * speed);
+            game_object.AddComponent<BoxCollider>().SetTrigger(true);
 
-            hit_box = GameObject.CreateGameObject();
-            hit_box.AddComponent<StaticBody>();
-            hit_box.AddComponent<BoxCollider>().SetTrigger(true);
+            game_object.SetName("Hammer");
 
-            hit_box.SetName("HammerHitBox");
-
-            HitBox hit_box_script = hit_box.AddComponent<HitBox>();
-            hit_box_script.SetHitBoxAction(new HitBoxHammer(), game_object);
-            hit_box_script.SetAvoidGameObject(avoid_game_object);
-
-            game_object.AddChild(hit_box);
+            SetHitBoxAction(new HitBoxHammer(), game_object);
+            SetAvoidGameObject(avoid_game_object);
 
             destroy_timer.Start();
         }
@@ -56,12 +50,7 @@ namespace ScriptProject.Scripts
 
             public override void OnHit(GameObject hit_box_owner_game_object, ScriptingBehaviour hit_box_script, InteractiveCharacterBehaviour hit_object_script)
             {
-                if (!hit_box_script.GetGameOjbect().HasParent())
-                {
-                    return;
-                }
-
-                if (hit_object_script.GetGameOjbect() == hit_box_script.GetGameOjbect().GetParent()) return;
+                if (hit_object_script.GetGameOjbect() == hit_box_script.GetGameOjbect()) return;
 
                 Vector2 dir = hit_object_script.GetGameOjbect().transform.GetPosition() - hit_box_script.GetGameOjbect().transform.GetPosition();
                 dir = dir.Normalize();
@@ -69,7 +58,7 @@ namespace ScriptProject.Scripts
                 hit_object_script.Knockback(dir, knockback);
                 hit_object_script.TakeDamage(hit_box_script.GetGameOjbect(), damage);
 
-                GameObject.DeleteGameObject(hit_box_script.GetGameOjbect().GetParent());
+                GameObject.DeleteGameObject(hit_box_script.GetGameOjbect());
             }
 
             public override void OnHitAvoidGameObject(ScriptingBehaviour hit_box_script)

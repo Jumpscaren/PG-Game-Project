@@ -96,9 +96,9 @@ bool IsAnEar(const std::vector<Vector2>& polygons, const size_t prev_index, cons
 {
 	const auto n = polygons.size();
 
-	const auto prev = polygons[prev_index];
-	const auto item = polygons[index % n];
-	const auto next = polygons[next_index];
+	const auto& prev = polygons[prev_index];
+	const auto& item = polygons[index % n];
+	const auto& next = polygons[next_index];
 
 	if (!(Vector2::Cross(item - prev, next - item) > 0.0f))
 	{
@@ -123,6 +123,26 @@ bool IsAnEar(const std::vector<Vector2>& polygons, const size_t prev_index, cons
 	}
 
 	return !vertexInsideTriangle;
+}
+
+bool IsCollinear(const std::vector<Vector2>& polygons, const size_t prev_index, const size_t index, const size_t next_index)
+{
+	const auto n = polygons.size();
+
+	const Vector2& prev = polygons[prev_index];
+	const Vector2& item = polygons[index % n];
+	const Vector2& next = polygons[next_index];
+
+	//https://math.stackexchange.com/questions/405966/if-i-have-three-points-is-there-an-easy-way-to-tell-if-they-are-collinear
+	const float left_size = (item.y - prev.y) * (next.x - item.x);
+	const float right_size = (next.y - item.y) * (item.x - prev.x);
+
+	if (std::abs(left_size - right_size) < 0.01f)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 std::vector<Triangle> Triangulation(std::vector<Vector2> polygons)
@@ -151,16 +171,16 @@ std::vector<Triangle> Triangulation(std::vector<Vector2> polygons)
 			last_size = polygons.size();
 			same_since = i;
 		}
-		if (!IsAnEar(polygons, prev_index, i, next_index))
+		if (!IsAnEar(polygons, prev_index, i, next_index) || IsCollinear(polygons, prev_index, i, next_index))
 		{
 			++i;
 			i = i % polygons.size();
 			continue;
 		}
 
-		const auto prev = polygons[prev_index];
-		const auto item = polygons[i % n];
-		const auto next = polygons[next_index];
+		const auto& prev = polygons[prev_index];
+		const auto& item = polygons[i % n];
+		const auto& next = polygons[next_index];
 
 		triangles.push_back(Triangle{ .prev_point = prev, .point = item, .next_point = next });
 

@@ -9,13 +9,13 @@ struct ScriptComponent
 {
 	CSMonoObject script_object;
 	bool already_started = false;
-	MonoMethodHandle script_start;
-	MonoMethodHandle script_update;
+	MonoMethodHandle script_start{};
+	MonoMethodHandle script_update{};
 	float time_since_last_fixed_update = 0.0f;
-	MonoMethodHandle script_fixed_update;
-	MonoMethodHandle script_late_update;
-	MonoMethodHandle script_begin_collision;
-	MonoMethodHandle script_end_collision;
+	MonoMethodHandle script_fixed_update{};
+	MonoMethodHandle script_late_update{};
+	MonoMethodHandle script_begin_collision{};
+	MonoMethodHandle script_end_collision{};
 };
 
 class JsonObject;

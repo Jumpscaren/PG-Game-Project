@@ -1,17 +1,14 @@
 #pragma once
-#include "Vendor/Include/Box2D/box2d.h"
-#include "ECS/EntityDefinition.h"
-#include "SceneSystem/SceneDefines.h"
-#include "Common/EngineTypes.h"
+#include "Vendor/Include/Box2D/id.h"
 #include "../PhysicDefines.h"
 
-class PhysicsContactFilter : public b2ContactFilter
+class PhysicsContactFilter
 {
 public:
 	PhysicsContactFilter() {};
 
-	bool ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB) override;
+	static bool ShouldCollide(b2ShapeId shape_a, b2ShapeId shape_b);
 	
-	static bool ShouldCollide(b2Fixture* fixture, const ColliderFilter collider_filter);
+	static bool ShouldCollide(b2ShapeId shape, const ColliderFilter collider_filter);
 };
 

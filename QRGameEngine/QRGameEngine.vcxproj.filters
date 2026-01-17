@@ -204,9 +204,6 @@
     <ClCompile Include="Physics\PhysicsInternal\PhysicsContactListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Physics\PhysicsInternal\PhysicsDestructionListener.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Components\BoxColliderComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -366,9 +363,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12CORE\SamplerTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Asset\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12CORE\TextureTypes.h">
@@ -653,9 +647,6 @@
     <ClInclude Include="Vendor\Include\Box2D\b2_world_callbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vendor\Include\Box2D\box2d.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Physics\PhysicsCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -663,9 +654,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Physics\PhysicsInternal\PhysicsContactListener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Physics\PhysicsInternal\PhysicsDestructionListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Components\BoxColliderComponent.h">
@@ -759,9 +747,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scripting\Objects\PhysicsInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Asset\stb_image_write.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Components\TileComponent.h">

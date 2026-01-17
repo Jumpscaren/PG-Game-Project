@@ -87,33 +87,33 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugInfo|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Editor_Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -442,7 +442,6 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Input\Mouse.cpp" />
     <ClCompile Include="IO\Output.cpp" />
     <ClCompile Include="IO\OutputFile.cpp" />
-    <ClCompile Include="Physics\PhysicsInternal\PhysicsDestructionListener.cpp" />
     <ClCompile Include="Physics\PhysicsInternal\PhysicsContactListener.cpp" />
     <ClCompile Include="Physics\PhysicsInternal\PhysicsDebugDraw.cpp" />
     <ClCompile Include="Physics\PhysicsCore.cpp" />
@@ -557,7 +556,6 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Common\DeferMethodCalls.h" />
     <ClInclude Include="Common\DeferMethodCallsDefine.h" />
     <ClInclude Include="Editor\AnimatorHandler.h" />
-    <ClInclude Include="Asset\stb_image_write.h" />
     <ClInclude Include="ECS\ComponentMap.h" />
     <ClInclude Include="Components\AnimatableSpriteComponent.h" />
     <ClInclude Include="Asset\AssetManager.h" />
@@ -597,7 +595,6 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="IO\OutputFile.h" />
     <ClInclude Include="Math\MathHelp.h" />
     <ClInclude Include="Physics\PhysicDefines.h" />
-    <ClInclude Include="Physics\PhysicsInternal\PhysicsDestructionListener.h" />
     <ClInclude Include="Physics\PhysicsInternal\PhysicsContactListener.h" />
     <ClInclude Include="Physics\PhysicsInternal\PhysicsDebugDraw.h" />
     <ClInclude Include="Physics\PhysicsCore.h" />
@@ -636,7 +633,6 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Renderer\DX12CORE\DX12TextureManager.h" />
     <ClInclude Include="Renderer\DX12CORE\HelpTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\SamplerTypes.h" />
-    <ClInclude Include="Asset\stb_image.h" />
     <ClInclude Include="Renderer\DX12CORE\TextureTypes.h" />
     <ClInclude Include="Renderer\DX12CORE\ViewTypes.h" />
     <ClInclude Include="Renderer\Helpers\HandleManager.h" />
@@ -703,7 +699,6 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Vendor\Include\Box2D\b2_wheel_joint.h" />
     <ClInclude Include="Vendor\Include\Box2D\b2_world.h" />
     <ClInclude Include="Vendor\Include\Box2D\b2_world_callbacks.h" />
-    <ClInclude Include="Vendor\Include\Box2D\box2d.h" />
     <ClInclude Include="Vendor\Include\D3D12MemoryAllocator\D3D12MemAlloc.h" />
     <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_dx12.h" />
     <ClInclude Include="Vendor\Include\ImGUI\backends\imgui_impl_win32.h" />

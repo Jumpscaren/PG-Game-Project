@@ -52,6 +52,11 @@ const Vector2 operator*(const Vector2& vector_1, float scalar)
 	return Vector2(vector_1.x * scalar, vector_1.y * scalar);
 }
 
+const Vector2 operator*(float scalar, const Vector2& vector)
+{
+	return Vector2(vector.x * scalar, vector.y * scalar);
+}
+
 const Vector2 Vector2::operator*=(float scalar)
 {
 	return Vector2(x * scalar, y * scalar);

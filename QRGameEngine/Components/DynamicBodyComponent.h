@@ -7,10 +7,10 @@
 #include "Common/DeferMethodCallsDefine.h"
 
 struct DynamicBodyComponent {
-	PhysicObjectHandle physic_object_handle;
+	PhysicObjectHandle physic_object_handle{};
 	bool awake = true;
-	Vector2 velocity;
-	bool fixed_rotation;
+	Vector2 velocity{};
+	bool fixed_rotation{};
 	bool enabled = true;
 };
 

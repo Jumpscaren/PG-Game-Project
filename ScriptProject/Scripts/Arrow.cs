@@ -18,7 +18,10 @@ namespace ScriptProject.Scripts
             game_object.transform.SetPosition(position);
             game_object.transform.SetScale(new Vector2(1.0f, 0.5f) * 0.5f);
             game_object.transform.SetLocalRotation(Vector2.Angle(direction, new Vector2(1, 0)));
-            game_object.AddComponent<KinematicBody>().SetVelocity(direction * speed);
+
+            KinematicBody body = game_object.AddComponent<KinematicBody>();
+            body.SetVelocity(direction * speed);
+            body.SetFixedRotation(true);
 
             hit_box = GameObject.CreateGameObject();
             hit_box.AddComponent<StaticBody>();

@@ -1,12 +1,11 @@
 #include "pch.h"
 #include "PhysicsCore.h"
 
-#include "Vendor/Include/Box2D/box2d.h"
+#include "Vendor/Include/Box2D/IncludeBox2D.h"
 #include "Renderer/RenderCore.h"
 #include "PhysicsInternal/PhysicsDebugDraw.h"
 #include "PhysicsInternal/PhysicsContactFilter.h"
 #include "PhysicsInternal/PhysicsContactListener.h"
-#include "PhysicsInternal/PhysicsDestructionListener.h"
 
 #include "Components/TransformComponent.h"
 #include "Components/DynamicBodyComponent.h"
@@ -69,19 +68,14 @@ PhysicsCore::PhysicsCore(bool threaded_physics) : m_threaded_physics(threaded_ph
 	m_debug_draw = new PhysicsDebugDraw();
 	m_contact_filter = new PhysicsContactFilter();
 	m_contact_listener = new PhysicsContactListener();
-	m_destruction_listener = new PhysicsDestructionListener();
-
-	b2WorldDeef
 
 	b2Vec2 gravity;
-	//gravity.Set(0.0f, -9.82f);
-	gravity.Set(0.0f, 0.0f);
-	m_world = new b2World(gravity);
+	gravity = b2Vec2{ 0.0f, 0.0f };
 
-	m_world->SetDebugDraw(m_debug_draw);
-	//m_world->SetContactFilter(m_contact_filter);
-	m_world->SetContactListener(m_contact_listener);
-	m_world->SetDestructionListener(m_destruction_listener);
+	b2WorldDef world_def = b2DefaultWorldDef();
+	world_def.gravity = gravity;
+
+	m_world = b2CreateWorld(&world_def);
 
 	m_physic_object_data.resize(MAX_PHYSIC_OBJECTS);
 	for (PhysicObjectHandle i = MAX_PHYSIC_OBJECTS - 1; i > 0; --i)
@@ -104,8 +98,7 @@ PhysicsCore::~PhysicsCore()
 {
 	delete m_contact_listener;
 	delete m_debug_draw;
-	delete m_destruction_listener;
-	delete m_world;
+	b2DestroyWorld(m_world);
 	if (m_threaded_physics)
 	{
 		m_update_physics = PhysicThreadState::Close;
@@ -269,13 +262,14 @@ void PhysicsCore::AddBoxFixture(const SceneIndex scene_index, const Entity entit
 	const TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
 	const Vector3 scale = transform.GetScale();
 
-	b2PolygonShape shape;
-	shape.SetAsBox(half_box_size.x * scale.x, half_box_size.y * scale.y);
+	const b2Polygon shape = b2MakeBox(half_box_size.x * scale.x, half_box_size.y * scale.y);
 
 	PhysicObjectHandle physic_object_handle = GetPhysicObjectHandle(entity_manager, entity);
 
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	physic_object_data.object_box_fixture = AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter);
+
+	const b2ShapeDef shape_def = CreateShapeDef(physic_object_handle, physic_object_data.object_body_type, trigger, collider_filter);
+	physic_object_data.object_box_shape = b2CreatePolygonShape(physic_object_data.object_body, &shape_def, &shape);
 
 	BoxColliderComponent& box_collider = entity_manager->GetComponent<BoxColliderComponent>(entity);
 	box_collider.physic_object_handle = physic_object_handle;
@@ -290,14 +284,18 @@ void PhysicsCore::AddCircleFixture(const SceneIndex scene_index, const Entity en
 
 	const TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
 	const Vector3 scale = transform.GetScale();
+	const Vector2 position = transform.GetPosition2D();
 
-	b2CircleShape shape;
-	shape.m_radius = circle_radius * scale.x;
+	b2Circle shape;
+	shape.radius = circle_radius * scale.x;
+	shape.center = b2Vec2_zero;
 
 	PhysicObjectHandle physic_object_handle = GetPhysicObjectHandle(entity_manager, entity);
 
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	physic_object_data.object_circle_fixture = AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter);
+
+	const b2ShapeDef shape_def = CreateShapeDef(physic_object_handle, physic_object_data.object_body_type, trigger, collider_filter);
+	physic_object_data.object_circle_shape = b2CreateCircleShape(physic_object_data.object_body, &shape_def, &shape);
 
 	CircleColliderComponent& circle_collider = entity_manager->GetComponent<CircleColliderComponent>(entity);
 	circle_collider.physic_object_handle = physic_object_handle;
@@ -323,19 +321,28 @@ void PhysicsCore::AddPolygonFixture(SceneIndex scene_index, Entity entity, const
 	{
 		b2_points.push_back(b2Vec2(point.x, point.y));
 	}
-	b2ChainShape shape;
-	if (!loop)
+	if (points.size() < 4)
 	{
-		shape.CreateChain(b2_points.data(), (int32)b2_points.size(), b2_points.front(), b2_points.back());
+		const b2Vec2 fake_point = b2Vec2(100.0f, 100.0f);
+		b2_points.push_back(fake_point);
 	}
-	else
-	{
-		shape.CreateLoop(b2_points.data(), (int32)b2_points.size());
-	}
-	physic_object_data.object_polygon_fixtures.push_back(AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter));
+
+	b2ChainDef shape = b2DefaultChainDef();
+	shape.points = b2_points.data();
+	shape.count = (int)b2_points.size();
+	shape.isLoop = loop;
+
+	const b2ShapeDef shape_def = CreateShapeDef(physic_object_handle, physic_object_data.object_body_type, trigger, collider_filter);
+	shape.enableSensorEvents = shape_def.enableSensorEvents;
+	shape.filter = shape_def.filter;
+
+	physic_object_data.object_chain_shape = b2CreateChain(physic_object_data.object_body, &shape);
 #else
 	if (loop && solid)
 	{
+		// Could be included in the component data, but we don't need it right now
+		constexpr float RADIUS = 0.0f;
+
 		const auto triangles = PolygonColliderComponentInterface::CreatePolygonTriangulation(entity, entity_manager);
 		for (const auto& triangle : triangles)
 		{
@@ -344,10 +351,12 @@ void PhysicsCore::AddPolygonFixture(SceneIndex scene_index, Entity entity, const
 			b2_points.push_back(b2Vec2(triangle.point.x, triangle.point.y));
 			b2_points.push_back(b2Vec2(triangle.next_point.x, triangle.next_point.y));
 
-			b2PolygonShape shape;
-			shape.Set(b2_points.data(), (int32)b2_points.size());
+			const b2Hull hull = b2ComputeHull(b2_points.data(), (int)b2_points.size());
+			const b2Polygon shape = b2MakePolygon(&hull, RADIUS);
 
-			physic_object_data.object_polygon_fixtures.push_back(AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter));
+			const b2ShapeDef shape_def = CreateShapeDef(physic_object_handle, physic_object_data.object_body_type, trigger, collider_filter);
+
+			physic_object_data.object_polygon_shapes.push_back(b2CreatePolygonShape(physic_object_data.object_body, &shape_def, &shape));
 		}
 	}
 	else
@@ -357,17 +366,17 @@ void PhysicsCore::AddPolygonFixture(SceneIndex scene_index, Entity entity, const
 		{
 			b2_points.push_back(b2Vec2(point.x, point.y));
 		}
-		b2ChainShape shape;
-		if (!loop)
-		{
-			shape.CreateChain(b2_points.data(), (int32)b2_points.size(), b2_points.front(), b2_points.back());
-		}
-		else
-		{
-			shape.CreateLoop(b2_points.data(), (int32)b2_points.size());
-		}
 
-		physic_object_data.object_polygon_fixtures.push_back(AddFixtureToPhysicObject(physic_object_handle, &shape, physic_object_data.object_body_type, trigger, collider_filter));
+		b2ChainDef shape = b2DefaultChainDef();
+		shape.points = b2_points.data();
+		shape.count = (int)b2_points.size();
+		shape.isLoop = loop;
+
+		const b2ShapeDef shape_def = CreateShapeDef(physic_object_handle, physic_object_data.object_body_type, trigger, collider_filter);
+		shape.enableSensorEvents = shape_def.enableSensorEvents;
+		shape.filter = shape_def.filter;
+
+		physic_object_data.object_chain_shape = b2CreateChain(physic_object_data.object_body, &shape);
 	}
 #endif // _EDITOR
 
@@ -454,7 +463,8 @@ void PhysicsCore::Update()
 	m_ticks_current_update = 0;
 	while (m_time_since_last_update > TIME_STEP)
 	{
-		m_world->Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
+		b2World_Step(m_world, TIME_STEP, SUB_STEP_COUNT);
+		m_contact_listener->HandleContacts();
 		m_time_since_last_update -= TIME_STEP;
 		++m_ticks_current_update;
 	}
@@ -476,12 +486,7 @@ void PhysicsCore::UpdatePhysics()
 
 void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 {
-	uint32 flags = 0;
-	flags += true * b2Draw::e_shapeBit;
-	m_debug_draw->SetFlags(flags);
-	//m_world->DebugDraw();
-
-	std::vector<b2Vec2> vertices;
+	std::vector<Vector2> vertices;
 	entity_manager->System<TransformComponent, BoxColliderComponent>([&](const Entity entity, const TransformComponent& transform, const BoxColliderComponent& box_collider)
 		{
 			if (!box_collider.debug_draw)
@@ -494,25 +499,25 @@ void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 			const auto rotation_z = transform.GetRotationEuler().z;
 			const Vector3& scale = transform.GetScale();
 
-			const b2Vec2 top_left_corner = b2Vec2(-box_collider.half_box_size.x * scale.x, box_collider.half_box_size.y * scale.y);
-			const b2Vec2 top_right_corner = b2Vec2(box_collider.half_box_size.x * scale.x, box_collider.half_box_size.y * scale.y);
-			const b2Vec2 bottom_left_corner = b2Vec2(-box_collider.half_box_size.x * scale.x, -box_collider.half_box_size.y * scale.y);
-			const b2Vec2 bottom_right_corner = b2Vec2(box_collider.half_box_size.x * scale.x, -box_collider.half_box_size.y * scale.y);
+			const Vector2 top_left_corner = Vector2(-box_collider.half_box_size.x * scale.x, box_collider.half_box_size.y * scale.y);
+			const Vector2 top_right_corner = Vector2(box_collider.half_box_size.x * scale.x, box_collider.half_box_size.y * scale.y);
+			const Vector2 bottom_left_corner = Vector2(-box_collider.half_box_size.x * scale.x, -box_collider.half_box_size.y * scale.y);
+			const Vector2 bottom_right_corner = Vector2(box_collider.half_box_size.x * scale.x, -box_collider.half_box_size.y * scale.y);
 
-			const b2Vec2 rotated_top_left_corner = b2Vec2(top_left_corner.x * cosf(rotation_z) - top_left_corner.y * sinf(rotation_z), top_left_corner.x * sinf(rotation_z) + top_left_corner.y * cosf(rotation_z));
-			const b2Vec2 rotated_top_right_corner = b2Vec2(top_right_corner.x * cosf(rotation_z) - top_right_corner.y * sinf(rotation_z), top_right_corner.x * sinf(rotation_z) + top_right_corner.y * cosf(rotation_z));
-			const b2Vec2 rotated_bottom_left_corner = b2Vec2(bottom_left_corner.x * cosf(rotation_z) - bottom_left_corner.y * sinf(rotation_z), bottom_left_corner.x * sinf(rotation_z) + bottom_left_corner.y * cosf(rotation_z));
-			const b2Vec2 rotated_bottom_right_corner = b2Vec2(bottom_right_corner.x * cosf(rotation_z) - bottom_right_corner.y * sinf(rotation_z), bottom_right_corner.x * sinf(rotation_z) + bottom_right_corner.y * cosf(rotation_z));
+			const Vector2 rotated_top_left_corner = Vector2(top_left_corner.x * cosf(rotation_z) - top_left_corner.y * sinf(rotation_z), top_left_corner.x * sinf(rotation_z) + top_left_corner.y * cosf(rotation_z));
+			const Vector2 rotated_top_right_corner = Vector2(top_right_corner.x * cosf(rotation_z) - top_right_corner.y * sinf(rotation_z), top_right_corner.x * sinf(rotation_z) + top_right_corner.y * cosf(rotation_z));
+			const Vector2 rotated_bottom_left_corner = Vector2(bottom_left_corner.x * cosf(rotation_z) - bottom_left_corner.y * sinf(rotation_z), bottom_left_corner.x * sinf(rotation_z) + bottom_left_corner.y * cosf(rotation_z));
+			const Vector2 rotated_bottom_right_corner = Vector2(bottom_right_corner.x * cosf(rotation_z) - bottom_right_corner.y * sinf(rotation_z), bottom_right_corner.x * sinf(rotation_z) + bottom_right_corner.y * cosf(rotation_z));
 
 			const Vector2 offseted_position = GetOffsetedPosition(entity_manager, entity, transform);
-			const b2Vec2 physic_position(offseted_position.x, offseted_position.y);
 
+			const Vector2 physic_position(offseted_position.x, offseted_position.y);
 			vertices.push_back(physic_position + rotated_top_left_corner);
 			vertices.push_back(physic_position + rotated_bottom_left_corner);
 			vertices.push_back(physic_position + rotated_bottom_right_corner);
 			vertices.push_back(physic_position + rotated_top_right_corner);
 
-			m_debug_draw->DrawPolygon(vertices.data(), static_cast<int32>(vertices.size()), b2Color(1.0f, 0.0f, 0.0f));
+			m_debug_draw->DrawPolygon(vertices, Vector3(1.0f, 0.0f, 0.0f));
 
 			vertices.clear();
 		});
@@ -528,13 +533,13 @@ void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 
 			const auto rotation_z = transform.GetRotationEuler().z;
 
-			const b2Vec2 rotated_circle_pointer = b2Vec2(circle_collider.circle_radius * cosf(rotation_z), circle_collider.circle_radius * sinf(rotation_z));
+			const Vector2 rotated_circle_pointer = Vector2(circle_collider.circle_radius * cosf(rotation_z), circle_collider.circle_radius * sinf(rotation_z));
 
-			vertices.push_back(b2Vec2(position.x, position.y));
-			vertices.push_back(b2Vec2(position.x, position.y) + rotated_circle_pointer);
+			vertices.push_back(Vector2(position.x, position.y));
+			vertices.push_back(Vector2(position.x, position.y) + rotated_circle_pointer);
 
-			m_debug_draw->DrawPolygon(vertices.data(), static_cast<int32>(vertices.size()), b2Color(1.0f, 0.0f, 0.0f));
-			m_debug_draw->DrawCircle(b2Vec2(position.x, position.y), circle_collider.circle_radius, b2Color(1.0f, 0.0f, 0.0f));
+			m_debug_draw->DrawPolygon(vertices, Vector3(1.0f, 0.0f, 0.0f));
+			m_debug_draw->DrawCircle(Vector2(position.x, position.y), circle_collider.circle_radius, Vector3(1.0f, 0.0f, 0.0f));
 
 			vertices.clear();
 		});
@@ -550,21 +555,21 @@ void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 
 			const auto rotation_z = transform.GetRotationEuler().z;
 
-			const b2Vec2 position_2d(position.x, position.y);
+			const Vector2 position_2d(position.x, position.y);
 
 			for (int i = 0; i < polygon_collider.points.size() - 1; ++i)
 			{
 				const Vector2 point_1 = polygon_collider.points[i];
 				const Vector2 point_2 = polygon_collider.points[i + 1];
 
-				m_debug_draw->DrawSegment(position_2d + b2Vec2(point_1.x, point_1.y), position_2d + b2Vec2(point_2.x, point_2.y), b2Color(1.0f, 0.0f, 0.0f));
+				m_debug_draw->DrawSegment(position_2d + Vector2(point_1.x, point_1.y), position_2d + Vector2(point_2.x, point_2.y), Vector3(1.0f, 0.0f, 0.0f));
 			}
 
 			if (polygon_collider.loop)
 			{
 				const Vector2 point_1 = polygon_collider.points.back();
 				const Vector2 point_2 = polygon_collider.points.front();
-				m_debug_draw->DrawSegment(position_2d + b2Vec2(point_1.x, point_1.y), position_2d + b2Vec2(point_2.x, point_2.y), b2Color(1.0f, 0.0f, 0.0f));
+				m_debug_draw->DrawSegment(position_2d + Vector2(point_1.x, point_1.y), position_2d + Vector2(point_2.x, point_2.y), Vector3(1.0f, 0.0f, 0.0f));
 			}
 		});
 }
@@ -581,44 +586,60 @@ void PhysicsCore::HandleDeferredCollisionData()
 
 void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 {
-	const bool is_locked = m_world->IsLocked();
-
 	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](const DynamicBodyComponent& dynamic_body, const TransformComponent& transform)
 		{
-			const bool is_locked = m_world->IsLocked();
 			const PhysicThreadState threat_run = m_update_physics;
 			PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
-			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
-			if (dynamic_body.awake != physic_object.object_body->IsAwake())
-				physic_object.object_body->SetAwake(dynamic_body.awake);
-			physic_object.object_body->SetLinearVelocity({ dynamic_body.velocity.x, dynamic_body.velocity.y });
-			if (dynamic_body.fixed_rotation != physic_object.object_body->IsFixedRotation())
-				physic_object.object_body->SetFixedRotation(dynamic_body.fixed_rotation);
-			if (dynamic_body.enabled != physic_object.object_body->IsEnabled())
+
+			b2Body_SetTransform(physic_object.object_body, b2Vec2(transform.GetPosition().x, transform.GetPosition().y), b2MakeRot(transform.GetRotationEuler().z));
+			if (dynamic_body.awake != b2Body_IsAwake(physic_object.object_body))
 			{
-				physic_object.object_body->SetEnabled(dynamic_body.enabled);
+				b2Body_SetAwake(physic_object.object_body, dynamic_body.awake);
+			}
+			b2Body_SetLinearVelocity(physic_object.object_body, b2Vec2(dynamic_body.velocity.x, dynamic_body.velocity.y));
+
+			if (dynamic_body.fixed_rotation != b2Body_GetMotionLocks(physic_object.object_body).angularZ)
+			{
+				b2Body_SetMotionLocks(physic_object.object_body, b2MotionLocks{ .linearX = false, .linearY = false, .angularZ = dynamic_body.fixed_rotation });
+			}
+
+			const bool enabled = b2Body_IsEnabled(physic_object.object_body);
+			if (dynamic_body.enabled != enabled)
+			{
+				if (dynamic_body.enabled)
+				{
+					b2Body_Enable(physic_object.object_body);
+				}
+				else
+				{
+					b2Body_Disable(physic_object.object_body);
+				}
 			}
 		});
 
-	//Timer timer;
-	//timer.StartTimer();
 	entity_manager->System<StaticBodyComponent, TransformComponent>([&](const Entity entity, const StaticBodyComponent& static_body, const TransformComponent& transform)
 		{
-			const bool is_locked = m_world->IsLocked();
-			const PhysicThreadState threat_run = m_update_physics;
 			PhysicObjectData& physic_object = m_physic_object_data[static_body.physic_object_handle];
 
 			const float rotation_z = transform.GetRotationEuler().z;
 
 			const Vector2 position = GetOffsetedPosition(entity_manager, entity, transform);
 
-			physic_object.object_body->SetTransform(b2Vec2(position.x, position.y), rotation_z);
-			if (static_body.enabled != physic_object.object_body->IsEnabled())
+			b2Body_SetTransform(physic_object.object_body, b2Vec2(transform.GetPosition().x, transform.GetPosition().y), b2MakeRot(transform.GetRotationEuler().z));
+
+			const bool enabled = b2Body_IsEnabled(physic_object.object_body);
+			if (static_body.enabled != enabled)
 			{
-				physic_object.object_body->SetEnabled(static_body.enabled);
+				if (static_body.enabled)
+				{
+					b2Body_Enable(physic_object.object_body);
+				}
+				else
+				{
+					b2Body_Disable(physic_object.object_body);
+				}
 			}
 		});
-	//std::cout << "Time: " << timer.StopTimer() << "\n";
 
 	for (const auto& pure_static_body : m_deferred_enable_pure_static_bodies)
 	{
@@ -636,9 +657,9 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 			}
 
 			const Vector2 position = transform.GetPosition2D() + offset;
-			physic_object.object_body->SetTransform(b2Vec2(position.x, position.y), transform.GetRotationEuler().z);
-			physic_object.object_body->SetEnabled(true);
-			physic_object.object_body->SetAwake(true);
+			b2Body_SetTransform(physic_object.object_body, b2Vec2(position.x, position.y), b2MakeRot(transform.GetRotationEuler().z));
+			b2Body_Enable(physic_object.object_body);
+			b2Body_SetAwake(physic_object.object_body, true);
 		}
 	}
 	m_deferred_enable_pure_static_bodies.clear();
@@ -646,15 +667,29 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 	entity_manager->System<KinematicBodyComponent, TransformComponent>([&](const KinematicBodyComponent& kinematic_body, const TransformComponent& transform)
 		{
 			PhysicObjectData& physic_object = m_physic_object_data[kinematic_body.physic_object_handle];
-			physic_object.object_body->SetTransform(b2Vec2(transform.GetPosition().x, transform.GetPosition().y), transform.GetRotationEuler().z);
-			if (kinematic_body.awake != physic_object.object_body->IsAwake())
-				physic_object.object_body->SetAwake(kinematic_body.awake);
-			physic_object.object_body->SetLinearVelocity({ kinematic_body.velocity.x, kinematic_body.velocity.y });
-			if (kinematic_body.fixed_rotation != physic_object.object_body->IsFixedRotation())
-				physic_object.object_body->SetFixedRotation(kinematic_body.fixed_rotation);
-			if (kinematic_body.enabled != physic_object.object_body->IsEnabled())
+			b2Body_SetTransform(physic_object.object_body, b2Vec2(transform.GetPosition().x, transform.GetPosition().y), b2MakeRot(transform.GetRotationEuler().z));
+			if (kinematic_body.awake != b2Body_IsAwake(physic_object.object_body))
 			{
-				physic_object.object_body->SetEnabled(kinematic_body.enabled);
+				b2Body_SetAwake(physic_object.object_body, kinematic_body.awake);
+			}
+			b2Body_SetLinearVelocity(physic_object.object_body, b2Vec2(kinematic_body.velocity.x, kinematic_body.velocity.y));
+
+			if (kinematic_body.fixed_rotation != b2Body_GetMotionLocks(physic_object.object_body).angularZ)
+			{
+				b2Body_SetMotionLocks(physic_object.object_body, b2MotionLocks{ .linearX = false, .linearY = false, .angularZ = kinematic_body.fixed_rotation });
+			}
+
+			const bool enabled = b2Body_IsEnabled(physic_object.object_body);
+			if (kinematic_body.enabled != enabled)
+			{
+				if (kinematic_body.enabled)
+				{
+					b2Body_Enable(physic_object.object_body);
+				}
+				else
+				{
+					b2Body_Disable(physic_object.object_body);
+				}
 			}
 		});
 
@@ -694,13 +729,14 @@ void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](DynamicBodyComponent& dynamic_body, TransformComponent& transform)
 		{
 			 PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
-			 const b2Transform& transform_physic_object = physic_object.object_body->GetTransform();
+			 const b2Transform transform_physic_object = b2Body_GetTransform(physic_object.object_body);
 			 transform.SetPosition(Vector2(transform_physic_object.p.x, transform_physic_object.p.y));
+
 			 Vector3 rotation = transform.GetRotationEuler();
-			 rotation.z = transform_physic_object.q.GetAngle();
+			 rotation.z = b2Rot_GetAngle(transform_physic_object.q);
 			 transform.SetRotation(rotation);
 
-			 const b2Vec2& velocity = physic_object.object_body->GetLinearVelocity();
+			 const b2Vec2 velocity = b2Body_GetLinearVelocity(physic_object.object_body);
 			 dynamic_body.velocity.x = velocity.x;
 			 dynamic_body.velocity.y = velocity.y;
 		});
@@ -708,13 +744,14 @@ void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 	entity_manager->System<KinematicBodyComponent, TransformComponent>([&](KinematicBodyComponent& kinematic_body, TransformComponent& transform)
 		{
 			PhysicObjectData& physic_object = m_physic_object_data[kinematic_body.physic_object_handle];
-			const b2Transform& transform_physic_object = physic_object.object_body->GetTransform();
+			const b2Transform transform_physic_object = b2Body_GetTransform(physic_object.object_body);
 			transform.SetPosition(Vector2(transform_physic_object.p.x, transform_physic_object.p.y));
+
 			Vector3 rotation = transform.GetRotationEuler();
-			rotation.z = transform_physic_object.q.GetAngle();
+			rotation.z = b2Rot_GetAngle(transform_physic_object.q);
 			transform.SetRotation(rotation);
 
-			const b2Vec2& velocity = physic_object.object_body->GetLinearVelocity();
+			const b2Vec2 velocity = b2Body_GetLinearVelocity(physic_object.object_body);
 			kinematic_body.velocity.x = velocity.x;
 			kinematic_body.velocity.y = velocity.y;
 		});
@@ -775,7 +812,7 @@ void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity 
 	RemovePhysicObjectInternal(physic_object_handle);
 }
 
-b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, const bool trigger, const ColliderFilter collider_filter)
+b2ShapeDef PhysicsCore::CreateShapeDef(const PhysicObjectHandle physic_object_handle, const PhysicObjectBodyType& physic_object_body_type, const bool trigger, const ColliderFilter collider_filter)
 {
 	const PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 
@@ -783,15 +820,29 @@ b2Fixture* PhysicsCore::AddFixtureToPhysicObject(const PhysicObjectHandle physic
 	if (physic_object_body_type == PhysicObjectBodyType::StaticBody || physic_object_body_type == PhysicObjectBodyType::PureStaticBody) //|| physic_object_body_type == PhysicObjectBodyType::KinematicBody)
 		density = 0.0f;
 
-	b2Filter filter;
-	filter.categoryBits = collider_filter.category_bits;
-	filter.maskBits = collider_filter.mask_bits;
-	filter.groupIndex = collider_filter.group_index;
+	b2ShapeDef shape_def = b2DefaultShapeDef();
+	shape_def.density = density;
+	shape_def.material.friction = 0.0f;
+	shape_def.material.restitution = 0.0f;
+	shape_def.isSensor = trigger;
 
-	b2Fixture* fixture = physic_object_data.object_body->CreateFixture(physic_object_shape, density);
-	fixture->SetSensor(trigger);
-	fixture->SetFilterData(filter);
-	return fixture;
+	shape_def.filter.categoryBits = collider_filter.category_bits;
+	shape_def.filter.maskBits = collider_filter.mask_bits;
+	shape_def.filter.groupIndex = collider_filter.group_index;
+	shape_def.enableCustomFiltering = true;
+
+	if (physic_object_body_type == PhysicObjectBodyType::DynamicBody || physic_object_body_type == PhysicObjectBodyType::KinematicBody)
+	{
+		shape_def.enableContactEvents = true;
+		shape_def.enableSensorEvents = true;
+		//shape_def.enableHitEvents = true;
+	}
+	else
+	{
+		shape_def.enableSensorEvents = trigger;
+	}
+
+	return shape_def;
 }
 
 void PhysicsCore::RemovePhysicObjectInternal(const PhysicObjectHandle physic_object_handle)
@@ -800,38 +851,45 @@ void PhysicsCore::RemovePhysicObjectInternal(const PhysicObjectHandle physic_obj
 	m_free_physic_object_handles.push(physic_object_handle);
 
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	m_world->DestroyBody(physic_object_data.object_body);
+	b2DestroyBody(physic_object_data.object_body);
 
-	physic_object_data.object_body = nullptr;
+	physic_object_data.object_body = b2_nullBodyId;
 	physic_object_data.object_body_type = PhysicObjectBodyType::EmptyBody;
 	physic_object_data.object_entity = NULL_ENTITY;
-	physic_object_data.object_box_fixture = nullptr;
-	physic_object_data.object_circle_fixture = nullptr;
-	physic_object_data.object_polygon_fixtures.clear();
+	physic_object_data.object_box_shape = b2_nullShapeId;
+	physic_object_data.object_circle_shape = b2_nullShapeId;
+	physic_object_data.object_polygon_shapes.clear();
+	physic_object_data.object_chain_shape = b2_nullChainId;
 }
 
 void PhysicsCore::RemoveBoxColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	physic_object_data.object_body->DestroyFixture(physic_object_data.object_box_fixture);
-	physic_object_data.object_box_fixture = nullptr;
+	b2DestroyShape(physic_object_data.object_box_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
+	physic_object_data.object_box_shape = b2_nullShapeId;
 }
 
 void PhysicsCore::RemoveCircleColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	physic_object_data.object_body->DestroyFixture(physic_object_data.object_circle_fixture);
-	physic_object_data.object_circle_fixture = nullptr;
+	b2DestroyShape(physic_object_data.object_circle_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
+	physic_object_data.object_circle_shape = b2_nullShapeId;
 }
 
 void PhysicsCore::RemovePolygonColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
-	for (auto polygon_fixture : physic_object_data.object_polygon_fixtures)
+	for (const b2ShapeId polygon_shape : physic_object_data.object_polygon_shapes)
 	{
-		physic_object_data.object_body->DestroyFixture(polygon_fixture);
+		b2DestroyShape(polygon_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
 	}
-	physic_object_data.object_polygon_fixtures.clear();
+	physic_object_data.object_polygon_shapes.clear();
+	
+	if (B2_IS_NON_NULL(physic_object_data.object_chain_shape))
+	{
+		b2DestroyChain(physic_object_data.object_chain_shape);
+		physic_object_data.object_chain_shape = b2_nullChainId;
+	}
 }
 
 void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type)
@@ -887,8 +945,23 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	PhysicObjectHandle new_physic_object_handle = m_free_physic_object_handles.top();
 	m_free_physic_object_handles.pop();
 
-	b2BodyDef physic_body_def = {};
+	b2BodyDef physic_body_def = b2DefaultBodyDef();
 	physic_body_def.position = physic_object_position;
+	physic_body_def.isAwake = true;
+	physic_body_def.enableSleep = true;
+	physic_body_def.isEnabled = true;
+
+#ifndef _EDITOR
+	if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
+	{
+		physic_body_def.isEnabled = false;
+		physic_body_def.isAwake = false;
+	}
+#endif // !_EDITOR
+#ifdef _EDITOR
+	physic_body_def.isEnabled = false;
+	physic_body_def.isAwake = false;
+#endif // _EDITOR
 
 	b2BodyType body_type{};
 	switch (physic_object_body_type)
@@ -897,6 +970,8 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 		body_type = b2BodyType::b2_dynamicBody;
 		break;
 	case PhysicObjectBodyType::StaticBody:
+		body_type = b2BodyType::b2_staticBody;
+		break;
 	case PhysicObjectBodyType::PureStaticBody:
 		body_type = b2BodyType::b2_staticBody;
 		break;
@@ -906,10 +981,10 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	}
 	physic_body_def.type = body_type;
 
-	physic_body_def.userData.pointer = (uintptr_t)&m_physic_object_data[new_physic_object_handle];
+	physic_body_def.userData = (void*)&m_physic_object_data[new_physic_object_handle];
 
 	PhysicObjectData& physic_object_data = m_physic_object_data[new_physic_object_handle];
-	physic_object_data.object_body = m_world->CreateBody(&physic_body_def);
+	physic_object_data.object_body = b2CreateBody(m_world, &physic_body_def);
 	physic_object_data.object_body_type = physic_object_body_type;
 	physic_object_data.object_entity = entity;
 	physic_object_data.object_scene_index = scene_index;
@@ -918,73 +993,21 @@ void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity ent
 	{
 		DynamicBodyComponent& dynamic_body = entity_manager->GetComponent<DynamicBodyComponent>(entity);
 		dynamic_body.physic_object_handle = new_physic_object_handle;
-#ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
-		{
-			physic_object_data.object_body->SetEnabled(false);
-			dynamic_body.enabled = physic_object_data.object_body->IsEnabled();
-			physic_object_data.object_body->SetAwake(false);
-			dynamic_body.awake = physic_object_data.object_body->IsAwake();
-		}
-#endif // !_EDITOR
-#ifdef _EDITOR
-		physic_object_data.object_body->SetEnabled(false);
-		dynamic_body.enabled = physic_object_data.object_body->IsEnabled();
-		physic_object_data.object_body->SetAwake(false);
-		dynamic_body.awake = physic_object_data.object_body->IsAwake();
-#endif // _EDITOR
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::StaticBody)
 	{
 		StaticBodyComponent& static_body = entity_manager->GetComponent<StaticBodyComponent>(entity);
 		static_body.physic_object_handle = new_physic_object_handle;
-#ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
-		{
-			physic_object_data.object_body->SetEnabled(false);
-			static_body.enabled = physic_object_data.object_body->IsEnabled();
-		}
-#endif // !_EDITOR
-#ifdef _EDITOR
-		physic_object_data.object_body->SetEnabled(false);
-		static_body.enabled = physic_object_data.object_body->IsEnabled();
-#endif // _EDITOR
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::PureStaticBody)
 	{
 		PureStaticBodyComponent& pure_static_body = entity_manager->GetComponent<PureStaticBodyComponent>(entity);
 		pure_static_body.physic_object_handle = new_physic_object_handle;
-#ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
-		{
-			physic_object_data.object_body->SetEnabled(false);
-			//static_body.enabled = physic_object_data.object_body->IsEnabled();
-		}
-#endif // !_EDITOR
-#ifdef _EDITOR
-		physic_object_data.object_body->SetEnabled(false);
-		physic_object_data.object_body->SetAwake(false);
-#endif // _EDITOR
 	}
 	else if (physic_object_body_type == PhysicObjectBodyType::KinematicBody)
 	{
 		KinematicBodyComponent& kinematic_body = entity_manager->GetComponent<KinematicBodyComponent>(entity);
 		kinematic_body.physic_object_handle = new_physic_object_handle;
-#ifndef _EDITOR
-		if (!SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneActive())
-		{
-			physic_object_data.object_body->SetEnabled(false);
-			kinematic_body.enabled = physic_object_data.object_body->IsEnabled();
-			physic_object_data.object_body->SetAwake(false);
-			kinematic_body.awake = physic_object_data.object_body->IsAwake();
-		}
-#endif // !_EDITOR
-#ifdef _EDITOR
-		physic_object_data.object_body->SetEnabled(false);
-		kinematic_body.enabled = physic_object_data.object_body->IsEnabled();
-		physic_object_data.object_body->SetAwake(false);
-		kinematic_body.awake = physic_object_data.object_body->IsAwake();
-#endif // _EDITOR
 	}
 }
 
@@ -1116,28 +1139,32 @@ void PhysicsCore::RemovePolygonCollider(SceneIndex scene_index, Entity entity)
 
 void PhysicsCore::RemoveDeferredPhysicObjects(EntityManager* entity_manager)
 {
-	entity_manager->System<DeferredEntityDeletion, DynamicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, DynamicBodyComponent)
+	entity_manager->System<DeferredEntityDeletion, DynamicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, const DynamicBodyComponent&)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
+			m_contact_listener->DeletedEntity(entity_manager->GetSceneIndex(), entity);
 		});
 
-	entity_manager->System<DeferredEntityDeletion, StaticBodyComponent>([&](const Entity entity, DeferredEntityDeletion, StaticBodyComponent)
+	entity_manager->System<DeferredEntityDeletion, StaticBodyComponent>([&](const Entity entity, DeferredEntityDeletion, const StaticBodyComponent&)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
+			m_contact_listener->DeletedEntity(entity_manager->GetSceneIndex(), entity);
 		});
 
-	entity_manager->System<DeferredEntityDeletion, PureStaticBodyComponent>([&](const Entity entity, DeferredEntityDeletion, PureStaticBodyComponent)
+	entity_manager->System<DeferredEntityDeletion, PureStaticBodyComponent>([&](const Entity entity, DeferredEntityDeletion, const PureStaticBodyComponent&)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
+			m_contact_listener->DeletedEntity(entity_manager->GetSceneIndex(), entity);
 		});
 
-	entity_manager->System<DeferredEntityDeletion, KinematicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, KinematicBodyComponent)
+	entity_manager->System<DeferredEntityDeletion, KinematicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, const KinematicBodyComponent&)
 		{
 			RemovePhysicObject(entity_manager->GetSceneIndex(), entity);
+			m_contact_listener->DeletedEntity(entity_manager->GetSceneIndex(), entity);
 		});
 }
 
-class PhysicsRaycastCallback : public b2RayCastCallback
+class PhysicsRaycastCallback
 {
 public:
 	PhysicsRaycastCallback(const ColliderFilter collider_filter, const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic)
@@ -1151,15 +1178,13 @@ public:
 		return m_closest_result;
 	}
 
-private:
-	float ReportFixture(b2Fixture* fixture, const b2Vec2& point,
+	float ReportShape(const b2ShapeId shape_id, const b2Vec2& point,
 		const b2Vec2& normal, float fraction)
 	{
-		const bool should_collide = PhysicsContactFilter::ShouldCollide(fixture, m_collider_filter);
-		const bool should_raycast = should_collide && !fixture->IsSensor();
-		const auto entity_data = PhysicsCore::Get()->GetEntityAndSceneFromUserData((void*)fixture->GetBody()->GetUserData().pointer);
+		const bool should_raycast = !b2Shape_IsSensor(shape_id);
+		const auto entity_data = PhysicsCore::Get()->GetEntityAndSceneFromUserData(b2Body_GetUserData(b2Shape_GetBody(shape_id)));
 
-		if (m_raycast_logic(should_raycast, fraction, m_closest_fraction, entity_data.second, entity_data.first)) {
+		if (fraction > MIN_FRACTION && m_raycast_logic(should_raycast, fraction, m_closest_fraction, entity_data.second, entity_data.first)) {
 			m_closest_fraction = fraction;
 			m_closest_result.position = Vector2(point.x, point.y);
 			m_closest_result.entity = entity_data.first;
@@ -1176,14 +1201,25 @@ private:
 	RaycastResult m_closest_result;
 	float m_closest_fraction = 9999;
 	std::function<bool(bool, float, float, SceneIndex, Entity)> m_raycast_logic;
+
+	static constexpr float MIN_FRACTION = 0.0001f;
 };
+
+float RaycastCallback(const b2ShapeId shape_id, const b2Vec2 point, const b2Vec2 normal, const float fraction, void* context)
+{
+	PhysicsRaycastCallback* physics_raycast_callback = (PhysicsRaycastCallback*)context;
+	return physics_raycast_callback->ReportShape(shape_id, point, normal, fraction);
+}
 
 RaycastResult PhysicsCore::Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, 
 	const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic)
 {
 	const b2Vec2 b2_position(position.x, position.y);
 	PhysicsRaycastCallback callback(collider_filter, raycast_logic);
-	m_world->RayCast(&callback, b2_position, b2_position + b2Vec2(direction.x * 100.0f, direction.y * 100.0f));
+
+	const b2QueryFilter filter{ .categoryBits = collider_filter.category_bits, .maskBits = collider_filter.mask_bits };
+
+	std::ignore = b2World_CastRay(m_world, b2_position, b2_position + b2Vec2(direction.x * 100.0f, direction.y * 100.0f), filter, RaycastCallback, &callback);
 	return callback.GetResult();
 }
 

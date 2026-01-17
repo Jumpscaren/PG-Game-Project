@@ -601,18 +601,26 @@ namespace ScriptProject.Scripts
 
                 Vector2 distance = current_rope_end_positon - player_position + rope_end_position_with_difference;
 
-                if (distance.Length() < 0.8f)
+                const float MINIMUM_DISTANCE = 0.8f;
+                if (distance.Length() < MINIMUM_DISTANCE)
                 {
                     DestroyRope();
                     return;
                 }
 
-                if (!Physics.RaycastCheckIfClosest(player_position, distance.Normalize(),
-                    PhysicCollisionCategory.AllCategories, UserCollisionCategories.FilterForPrincessBlockersAndCharacters, 0,
-                    current_rope_hooked_game_object))
+                RaycastResult raycast_result = Physics.Raycast(player_position, distance.Normalize(),
+                    PhysicCollisionCategory.AllCategories, UserCollisionCategories.FilterForPrincessBlockersAndCharacters, 0);
+
+                if (raycast_result.intersected)
                 {
-                    DestroyRope();
-                    return;
+                    Vector2 distance_to_current_hooked_target = current_rope_hooked_game_object.transform.GetPosition() - player_position;
+                    Vector2 distance_to_new_closest_target = raycast_result.intersected_game_object.transform.GetPosition() - player_position;
+
+                    if (distance_to_new_closest_target.Length() < distance_to_current_hooked_target.Length())
+                    {
+                        DestroyRope();
+                        return;
+                    }
                 }
 
                 Vector2 direction = distance.Normalize();

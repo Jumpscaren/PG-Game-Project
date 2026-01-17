@@ -201,13 +201,12 @@ namespace ScriptProject.Scripts
             shield = GameObject.CreateGameObject();
             shield.AddComponent<Sprite>();
             Render.LoadTexture("../QRGameEngine/Textures/Shield.png", shield.GetComponent<Sprite>());
-            DynamicBody shield_body = shield.AddComponent<DynamicBody>();
+            KinematicBody shield_body = shield.AddComponent<KinematicBody>();
             shield.transform.SetPosition(new Vector2(0.8f, 0.0f));
             shield.transform.SetZIndex(0);
             shield.GetComponent<Sprite>().FlipX(true);
             BoxCollider box_collider = shield.AddComponent<BoxCollider>();
-            box_collider.SetColliderFilter(UserCollisionCategories.Shield, UserCollisionCategories.AllCategories, 0);
-            //box_collider.SetTrigger(true);
+            box_collider.SetColliderFilter(UserCollisionCategories.Shield, UserCollisionCategories.FilterForAvoidShield, 0);
             box_collider.SetTrigger(false);
             box_collider.SetHalfBoxSize(new Vector2(0.5f, 0.5f));
             box_collider.SetOffset(new Vector2(-0.2f, 0.0f));
@@ -328,9 +327,6 @@ namespace ScriptProject.Scripts
             {
                 health = 0.0f;
                 GameObject.DeleteGameObject(game_object);
-                //GameObject new_game_object = GameObject.CreateGameObject();
-                //new_game_object.AddComponent<Sprite>();
-                //PrefabSystem.InstanceUserPrefab(new_game_object, "OrcEnemy");
                 return;
             }
 

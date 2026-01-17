@@ -308,7 +308,7 @@ namespace ScriptProject
             game_object.AddComponent<PathFindingActor>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
             var collider = game_object.AddComponent<CircleCollider>();
-            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.FilterForShield, 0);
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacterAvoidShield, UserCollisionCategories.FilterForShield, 0);
             collider.SetRadius(0.49f * 1.3f);
             game_object.AddComponent<OrcShield>();
             game_object.AddComponent<AnimatableSprite>();

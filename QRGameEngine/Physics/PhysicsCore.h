@@ -3,18 +3,14 @@
 #include "PhysicDefines.h"
 #include "Common/EngineTypes.h"
 #include "SceneSystem/SceneDefines.h"
-#include "Time/Timer.h"
 #include <thread>
 #include <mutex>
+#include "Vendor/Include/Box2D/id.h"
 
-class b2World;
-class b2Body;
-class b2Shape;
-class b2Fixture;
+struct b2ShapeDef;
 class PhysicsDebugDraw;
 class PhysicsContactFilter;
 class PhysicsContactListener;
-class PhysicsDestructionListener;
 class EntityManager;
 class PhysicsRaycastCallback;
 
@@ -35,14 +31,15 @@ public:
 
 private:
 	struct PhysicObjectData {
-		b2Body* object_body;
+		b2BodyId object_body;
 		PhysicObjectBodyType object_body_type;
 		Entity object_entity = NULL_ENTITY;
 		SceneIndex object_scene_index;
 
-		b2Fixture* object_box_fixture = nullptr;
-		b2Fixture* object_circle_fixture = nullptr;
-		std::vector<b2Fixture*> object_polygon_fixtures;
+		b2ShapeId object_box_shape = b2_nullShapeId;
+		b2ShapeId object_circle_shape = b2_nullShapeId;
+		std::vector<b2ShapeId> object_polygon_shapes;
+		b2ChainId object_chain_shape = b2_nullChainId;
 	};
 
 	struct DeferredPhysicObjectHandle
@@ -86,11 +83,10 @@ private:
 	};
 
 private:
-	b2World* m_world;
+	b2WorldId m_world;
 	PhysicsDebugDraw* m_debug_draw;
 	PhysicsContactFilter* m_contact_filter;
 	PhysicsContactListener* m_contact_listener;
-	PhysicsDestructionListener* m_destruction_listener;
 
 	static PhysicsCore* s_physics_core;
 
@@ -100,8 +96,7 @@ private:
 
 	//static constexpr float TIME_STEP = 1.0f / 120.0f;
 	static constexpr float TIME_STEP = 1.0f / 60.0f;
-	static constexpr int32_t VELOCITY_ITERATIONS = 3;
-	static constexpr int32_t POSITION_ITERATIONS = 3;
+	static constexpr int32_t SUB_STEP_COUNT = 4;
 	float m_time_since_last_update = 0.0f;
 
 	bool m_threaded_physics;
@@ -124,8 +119,10 @@ private:
 
 	uint32_t m_ticks_current_update = 0;
 
+	static constexpr bool UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE = false;
+
 private:
-	b2Fixture* AddFixtureToPhysicObject(PhysicObjectHandle physic_object_handle, b2Shape* physic_object_shape, const PhysicObjectBodyType& physic_object_body_type, bool trigger, ColliderFilter collider_filter);
+	b2ShapeDef CreateShapeDef(PhysicObjectHandle physic_object_handle, const PhysicObjectBodyType& physic_object_body_type, bool trigger, ColliderFilter collider_filter);
 
 	void RemovePhysicObjectInternal(PhysicObjectHandle physic_object_handle);
 	void RemoveBoxColliderInternal(PhysicObjectHandle physic_object_handle);
@@ -159,6 +156,8 @@ private:
 	static void AwakePhysicObjectsFromActivatedScene(SceneIndex scene_index);
 
 	void AwakePureStaticBody(SceneIndex scene_index, Entity entity);
+
+	b2WorldId GetWorldId() const { return m_world; }
 
 public:
 	PhysicsCore(bool threaded_physics);

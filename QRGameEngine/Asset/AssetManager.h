@@ -27,9 +27,9 @@ private:
 	struct AssetData
 	{
 		void* asset_data;
-		AssetType asset_type;
-		std::string asset_path;
-		AssetLoadFlag asset_load_flag;
+		AssetType asset_type{};
+		std::string asset_path{};
+		AssetLoadFlag asset_load_flag{};
 	};
 
 	struct AssetInformation

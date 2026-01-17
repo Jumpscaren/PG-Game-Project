@@ -27,7 +27,7 @@ float4 main(VS_OUT input) : SV_TARGET
 {	
 	StructuredBuffer<Sprite> sprite_data = ResourceDescriptorHeap[sprite_buffer_index.index];
 
-	Texture2D colour_texture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
+    Texture2D colour_texture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
 	
     float3 addative_color = sprite_data[input.instance_id].addative_color;
 	

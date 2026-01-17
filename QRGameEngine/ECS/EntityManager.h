@@ -5,7 +5,7 @@
 
 struct ComponentPool
 {
-	void* component_pool_data;
+	void* component_pool_data = nullptr;
 	qr::unordered_set<Entity> m_component_pool_entities;
 	//ankerl::unordered_dense::set<Entity> m_component_pool_entities;
 	bool pool_changed = false;
@@ -13,7 +13,7 @@ struct ComponentPool
 	std::vector<bool> has_component_entities;
 	std::string component_name;
 
-	uint16_t component_size;
+	uint16_t component_size{};
 	void* free_component_data = nullptr;
 	void* create_component_data = nullptr;
 

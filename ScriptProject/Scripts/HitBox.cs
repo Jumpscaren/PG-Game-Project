@@ -50,8 +50,6 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-           // Console.WriteLine("Begin Collision: MyName=" + game_object.GetName() + " OtherName=" + collided_game_object.GetName());
-
             ScriptingBehaviour script = collided_game_object.GetComponent<ScriptingBehaviour>();
             if (typeof(InteractiveCharacterBehaviour).IsAssignableFrom(script.GetType()))
             {

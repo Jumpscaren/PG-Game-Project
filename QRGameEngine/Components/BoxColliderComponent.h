@@ -9,12 +9,12 @@
 
 struct BoxColliderComponent
 {
-	PhysicObjectHandle physic_object_handle;
-	Vector2 half_box_size;
-	Vector2 offset;
+	PhysicObjectHandle physic_object_handle{};
+	Vector2 half_box_size{};
+	Vector2 offset{};
 	bool update_box_collider = false;
-	bool trigger;
-	ColliderFilter filter;
+	bool trigger{};
+	ColliderFilter filter{};
 	bool debug_draw = false;
 };
 

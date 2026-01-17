@@ -70,6 +70,11 @@ private:
 	DX12BufferHandle m_camera_buffer;
 	DX12BufferViewHandle m_camera_buffer_view;
 
+	DX12BufferHandle m_transform_data_buffer;
+	DX12BufferViewHandle m_transform_data_buffer_view;
+	DX12BufferHandle m_sprite_data_buffer;
+	DX12BufferViewHandle m_sprite_data_buffer_view;
+
 	qr::unordered_map<AssetHandle, TextureHandle> m_asset_to_texture;
 	qr::unordered_map<TextureHandle, AssetHandle> m_texture_to_asset;
 	qr::unordered_map<TextureHandle, TextureHandleData> m_texture_handles;
@@ -95,6 +100,9 @@ private:
 	TextureHandle m_texture_handle_counter = 0;
 
 	TextureHandleData m_solid_color_texture;
+
+	static constexpr uint32_t SCENES_HANDLED_PER_FRAME = 2;
+	static constexpr uint32_t MAX_RENDER_OBJECTS_PER_FRAME = SCENES_HANDLED_PER_FRAME * MAX_ENTITIES_PER_SCENE;
 
 private:
 	DX12Core* GetDX12Core();

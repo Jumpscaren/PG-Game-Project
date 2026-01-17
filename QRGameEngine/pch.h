@@ -41,7 +41,12 @@ namespace qr {
 //Windows
 #include <Windows.h>
 #include <wrl/client.h>
+
+#pragma warning(push)
+#pragma warning(disable:26827)
 #include <d3d12.h>
+#pragma warning(pop)
+
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>

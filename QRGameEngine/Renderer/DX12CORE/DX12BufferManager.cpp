@@ -350,11 +350,8 @@ void DX12BufferManager::UploadData(DX12Core* dx12_core, DX12BufferHandle buffer_
 	uint64_t offset = 0;
 	if (BufferType::MODIFIABLE_BUFFER == GetDX12Buffer(buffer_handle)->buffer_type && DX12Core::GetFramesInFlight() > 1)
 	{
-		uint64_t index = (uint64_t)dx12_core->GetCurrentBackBufferIndex();
-		offset = index * element_size * nr_of_elements;
-		uint64_t val1 = offset + element_size * nr_of_elements;
-		uint64_t val2 = nr_of_elements * DX12Core::GetFramesInFlight() * element_size;
-		assert(val1 <= val2);
+		uint64_t index = (uint64_t)dx12_core->GetCurrentFrameInFlight();
+		offset = index * element_size * GetDX12Buffer(buffer_handle)->nr_of_elements;
 	}
 
 	UploadBufferData(dx12_core, buffer_handle, data, element_size * nr_of_elements, element_size, offset);
@@ -362,15 +359,15 @@ void DX12BufferManager::UploadData(DX12Core* dx12_core, DX12BufferHandle buffer_
 
 void DX12BufferManager::UploadData(DX12Core* dx12_core, const DX12BufferSubAllocation& buffer_sub_allocation, void* data, uint64_t data_size)
 {
-	uint64_t offset = 0;
+	uint64_t offset = buffer_sub_allocation.offset;
 	if (BufferType::MODIFIABLE_BUFFER == buffer_sub_allocation.buffer_type && DX12Core::GetFramesInFlight() > 1)
 	{
-		uint64_t index = (uint64_t)dx12_core->GetCurrentBackBufferIndex();
+		uint64_t index = (uint64_t)dx12_core->GetCurrentFrameInFlight();
 		offset = index * buffer_sub_allocation.size;
 		assert(offset + data_size < buffer_sub_allocation.real_size);
 	}
-
-	UploadBufferData(dx12_core, buffer_sub_allocation.handle, data, data_size, buffer_sub_allocation.size, buffer_sub_allocation.offset + offset);
+	
+	UploadBufferData(dx12_core, buffer_sub_allocation.handle, data, data_size, buffer_sub_allocation.size, offset);
 }
 
 DX12BufferView* DX12BufferManager::GetBufferView(DX12BufferViewHandle texture_view_handle)
@@ -443,14 +440,14 @@ void DX12BufferManager::FreeView(DX12BufferViewHandle& view_handle)
 void DX12BufferManager::ResetUploadBuffer(DX12Core* dx12_core)
 {
 	if (DX12Core::GetFramesInFlight() > 1)
-		m_upload_current_offsets[dx12_core->GetCurrentBackBufferIndex()] = dx12_core->GetCurrentBackBufferIndex() * m_fixed_buffer_size;
+		m_upload_current_offsets[dx12_core->GetCurrentFrameInFlight()] = dx12_core->GetCurrentFrameInFlight() * m_fixed_buffer_size;
 	else
 		m_upload_current_offsets[0] = 0;
 }
 
 const DescriptorHandle* DX12BufferManager::GetDescriptorHandle(DX12Core* dx12_core, DX12BufferViewHandle buffer_view_handle)
 {
-	uint32_t get_descriptor_index = dx12_core->GetCurrentBackBufferIndex();
+	uint32_t get_descriptor_index = dx12_core->GetCurrentFrameInFlight();
 	DX12BufferView* buffer_view = GetBufferView(buffer_view_handle);
 	if (buffer_view->buffer_descriptor_handles.size() - 1 < get_descriptor_index)
 		get_descriptor_index = 0;

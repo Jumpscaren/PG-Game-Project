@@ -154,6 +154,12 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_camera_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(CameraComponent), 1, BufferType::MODIFIABLE_BUFFER);
 	m_camera_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_camera_buffer, ViewType::SHADER_RESOURCE_VIEW);
 
+	m_transform_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(WorldMatrixData), MAX_RENDER_OBJECTS_PER_FRAME, BufferType::MODIFIABLE_BUFFER);
+	m_transform_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_transform_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
+
+	m_sprite_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(SpriteData), MAX_RENDER_OBJECTS_PER_FRAME, BufferType::MODIFIABLE_BUFFER);
+	m_sprite_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_sprite_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
+
 	m_line_color_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(Vector4), 1, BufferType::MODIFIABLE_BUFFER);
 	m_line_color_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, m_line_color_buffer, ViewType::SHADER_RESOURCE_VIEW);
 
@@ -324,27 +330,14 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->SetViewport((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 	m_dx12_core.GetCommandList()->SetScissorRect((uint64_t)m_window->GetWindowWidth(), (uint64_t)m_window->GetWindowHeight());
 
-	//std::sort(draw_entities.begin(), draw_entities.end(), [&](uint32_t i, uint32_t j){
-	//	return (m_transform_data_vector[i].GetPosition().z < m_transform_data_vector[j].GetPosition().z);
-	//	});
-	//std::cout << "Time: " << timer.StopTimer()/(double)Timer::TimeTypes::Milliseconds << " ms\n";
-
-
-	DX12BufferHandle transform_data_buffer = 0;
-	DX12BufferHandle sprite_data_buffer = 0;
-
 	if (render_object_amount)
 	{
-		transform_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(WorldMatrixData), render_object_amount, BufferType::CONSTANT_BUFFER);
-		DX12BufferViewHandle transform_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, transform_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, transform_data_buffer_view, 2);
-		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, transform_data_buffer, m_transform_data_vector.data(), sizeof(WorldMatrixData), render_object_amount);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_transform_data_buffer_view, 2);
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_transform_data_buffer, m_transform_data_vector.data(), sizeof(WorldMatrixData), render_object_amount);
 
-		sprite_data_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, sizeof(SpriteData), render_object_amount, BufferType::CONSTANT_BUFFER);
-		DX12BufferViewHandle sprite_data_buffer_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, sprite_data_buffer, ViewType::SHADER_RESOURCE_VIEW);
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, sprite_data_buffer_view, 1);
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, sprite_data_buffer_view, 4);
-		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, sprite_data_buffer, m_sprite_data_vector.data(), sizeof(SpriteData), render_object_amount);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_sprite_data_buffer_view, 1);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_sprite_data_buffer_view, 4);
+		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_sprite_data_buffer, m_sprite_data_vector.data(), sizeof(SpriteData), render_object_amount);
 	}
 
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_quad_view_handle, 0);
@@ -373,7 +366,7 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 	m_dx12_core.GetCommandList()->Draw(m_editor_lines_amount, 1, 0, 0);
 #endif
 
-	//Draw Debug Lines eg. Physics Debug Lines
+	// Draw Debug Lines eg. Physics Debug Lines
 	if (m_debug_lines.size())
 	{
 		auto debug_line_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, m_debug_lines.data(), sizeof(VertexGrid), m_debug_lines.size(), BufferType::CONSTANT_BUFFER);
@@ -388,12 +381,6 @@ bool RenderCore::UpdateRender(Scene* draw_scene)
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, debug_line_buffer);
 	}
 //#endif
-
-	if (render_object_amount)
-	{
-		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, transform_data_buffer);
-		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, sprite_data_buffer);
-	}
 
 	ImGUIMain::RenderFrame(&m_dx12_core);
 
