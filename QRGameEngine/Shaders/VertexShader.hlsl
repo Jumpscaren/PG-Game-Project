@@ -23,7 +23,8 @@ struct Sprite
 {
     uint index;
     float2 uv[4];
-    float pad[3];
+    float4 addative_color;
+    float3 pad;
 };
 
 struct Camera
@@ -44,14 +45,20 @@ ConstantBuffer<Constants> sprite_buffer_index : register(b1, space1);
 
 ConstantBuffer<Constants> camera_buffer_index : register(b2, space0);
 
+ConstantBuffer<Constants> indicies_index : register(b3, space0);
+
 VS_OUT main(uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)
 { 
 	StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[vertices_index.index];
 	StructuredBuffer<Transform> transforms = ResourceDescriptorHeap[transform_buffer_index.index];
     StructuredBuffer<Sprite> sprites = ResourceDescriptorHeap[sprite_buffer_index.index];
+    
+    StructuredBuffer<uint> indicies = ResourceDescriptorHeap[indicies_index.index];
+    
+    const uint data_index = indicies[instanceID];
 	
 	VS_OUT output;
-    output.position = mul(transforms[instanceID].transform, float4(vertices[vertexID].position, 1.0f));
+    output.position = mul(transforms[data_index].transform, float4(vertices[vertexID].position, 1.0f));
     output.real_position = output.position.xyz;
 	
     StructuredBuffer<Camera> cameras = ResourceDescriptorHeap[camera_buffer_index.index];
@@ -60,7 +67,7 @@ VS_OUT main(uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)
 	output.position = mul(camera_buffer.proj_matrix, output.position);
     output.camera_position = camera_buffer.camera_position;
 	
-    output.uv = sprites[instanceID].uv[vertices[vertexID].uv_index];
-    output.instance_id = instanceID;
+    output.uv = sprites[data_index].uv[vertices[vertexID].uv_index];
+    output.instance_id = data_index;
 	return output;
 }

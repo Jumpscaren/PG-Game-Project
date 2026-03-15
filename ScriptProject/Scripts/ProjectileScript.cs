@@ -1,5 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
 using System;
 
 namespace ScriptProject.Scripts
@@ -64,6 +65,10 @@ namespace ScriptProject.Scripts
                 new_velocity = new_velocity.Normalize() * speed;
             }
             body.SetVelocity(new_velocity);
+        }
+
+        public override void SetEffect(Effect effect)
+        {
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)

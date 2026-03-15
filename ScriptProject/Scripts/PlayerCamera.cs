@@ -26,9 +26,13 @@ namespace ScriptProject.Scripts
         {
             player_game_object = GameObject.TempFindGameObject("Player");
             Console.WriteLine("Player Name = " + player_game_object.GetName());
-            game_object.transform.SetLocalZIndex(20);
+
+            Vector2 render_size = Render.GetFixedRenderSize();
+            float pixels_per_unit = Render.GetPixelsPerUnit();
+
+            game_object.transform.SetLocalZIndex(render_size.x / pixels_per_unit);
+
             game_object.transform.SetPosition(player_game_object.transform.GetPosition());
-            //game_object.transform.SetLocalPosition(new Vector2(0, 0));
 
             game_object.RemoveComponent<Sprite>();
 
@@ -37,8 +41,6 @@ namespace ScriptProject.Scripts
 
         void FixedUpdate()
         {
-            //game_object.transform.SetPosition(Vector2.Lerp(game_object.transform.GetPosition(), player_game_object.transform.GetPosition(), 0.05f));
-
             float fixed_delta_time = PhysicConstants.TIME_STEP;
 
             Vector2 camera_to_player = player_game_object.transform.GetPosition() - game_object.transform.GetPosition();

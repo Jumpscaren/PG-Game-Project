@@ -105,9 +105,9 @@ void QREntryPoint::EntryPoint()
 	scene_loader = new SceneLoader();
 	global_scene = new GlobalScene();
 
-	//render_core = new RenderCore(1920, 1080, L"2DRENDERER");
-	render_core = new RenderCore(1280, 720, L"2DRENDERER");
-	//render_core = new RenderCore(480, 360, L"2DRENDERER");
+	bool fixed_resolution = true;
+	const float pixels_per_unit = 32.0f;
+	render_core = new RenderCore(640, 360, L"2DRENDERER", fixed_resolution, pixels_per_unit);
 
 	animation_manager = new AnimationManager();
 

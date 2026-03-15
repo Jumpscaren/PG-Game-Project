@@ -42,5 +42,14 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetShow(bool show);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetAddativeColor(Vector4 color);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Vector4 GetAddativeColor();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void PixelScale();
     }
 }

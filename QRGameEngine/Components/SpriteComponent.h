@@ -18,7 +18,9 @@ struct SpriteComponent
 	bool flip_x = false;
 	bool flip_y = false;
 	bool show = true;
-	Vector3 addative_color = Vector3(0.0f, 0.0f, 0.0f);
+	Vector4 addative_color = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+	//Scale in pixels per unit
+	bool pixel_scaling = false;
 };
 
 class JsonObject;
@@ -48,6 +50,9 @@ public:
 	static bool GetFlipY(const CSMonoObject& object);
 	static void SetUV(const CSMonoObject& object, const CSMonoObject& uv_1_position, const CSMonoObject& uv_4_position);
 	static void SetShow(const CSMonoObject& object, const bool show);
+	static void SetAddativeColorScript(const CSMonoObject& object, const CSMonoObject& addative_color_object);
+	static CSMonoObject GetAddativeColorScript(const CSMonoObject& object);
+	static void PixelScale(const CSMonoObject& object);
 
 private:
 	static void SetUV1(Entity entity, SceneIndex scene_index, Vector2 uv_1);
@@ -55,6 +60,7 @@ private:
 	static void SetUV3(Entity entity, SceneIndex scene_index, Vector2 uv_3);
 	static void SetUV4(Entity entity, SceneIndex scene_index, Vector2 uv_4);
 	static void SetAddativeColor(Entity entity, SceneIndex scene_index, Vector3 addative_color);
+	static void SetAddativeAlpha(Entity entity, SceneIndex scene_index, float addative_alpha);
 
 private:
 	static DeferedMethodIndex s_load_and_set_texture_index;

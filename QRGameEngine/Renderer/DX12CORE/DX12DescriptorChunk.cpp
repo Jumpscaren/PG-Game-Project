@@ -4,7 +4,7 @@
 
 void DX12DescriptorChunk::AddDescriptorOffset(uint32_t descriptor_offset)
 {
-	assert(descriptor_offset <= m_base_offest + m_descriptor_size);
+	assert(descriptor_offset <= m_base_offest + m_number_descriptors);
 
 	if (m_ranges.size() == 0)
 	{
@@ -99,10 +99,10 @@ DX12DescriptorChunk::DX12DescriptorChunk(DX12Core* dx12_core, DescriptorHeapType
 		m_descriptor_size = dx12_core->GetDevice()->GetDescriptorHandleIncrementSize((D3D12_DESCRIPTOR_HEAP_TYPE)DescriptorHeapTypes::RENDERTARGET_VIEW);
 		break;
 	case DescriptorHeapTypes::DEPTHSTENCIL_VIEW:
-		m_descriptor_size = dx12_core->GetDevice()->GetDescriptorHandleIncrementSize((D3D12_DESCRIPTOR_HEAP_TYPE)DescriptorHeapTypes::DEPTHSTENCIL_VIEW);;
+		m_descriptor_size = dx12_core->GetDevice()->GetDescriptorHandleIncrementSize((D3D12_DESCRIPTOR_HEAP_TYPE)DescriptorHeapTypes::DEPTHSTENCIL_VIEW);
 		break;
 	case DescriptorHeapTypes::SHADERBINDABLE_VIEW:
-		m_descriptor_size = dx12_core->GetDevice()->GetDescriptorHandleIncrementSize((D3D12_DESCRIPTOR_HEAP_TYPE)DescriptorHeapTypes::SHADERBINDABLE_VIEW);;
+		m_descriptor_size = dx12_core->GetDevice()->GetDescriptorHandleIncrementSize((D3D12_DESCRIPTOR_HEAP_TYPE)DescriptorHeapTypes::SHADERBINDABLE_VIEW);
 		break;
 	default:
 		m_descriptor_size = 0;

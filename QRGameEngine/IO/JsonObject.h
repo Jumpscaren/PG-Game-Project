@@ -1,6 +1,7 @@
 #pragma once
 #include "Common/EngineTypes.h"
 
+
 class JsonObject
 {
 private:
@@ -21,6 +22,8 @@ public:
 	bool IsObjectFloat(const std::string& name);
 	bool IsObjectString(const std::string& name);
 	bool IsObjectBool(const std::string& name);
+	bool IsObjectVector3(const std::string& name);
+	bool IsObjectVector4(const std::string& name);
 	bool IsObject(const std::string& name);
 	bool IsObjectDiscarded(const std::string& name);
 	bool ObjectExist(const std::string& name);
@@ -38,6 +41,7 @@ public:
 	void SetData(bool data, const std::string& name);
 	void SetData(const Vector2& data, const std::string& name);
 	void SetData(const Vector3& data, const std::string& name);
+	void SetData(const Vector4& data, const std::string& name);
 	void SetData(char* data, uint32_t data_size, const std::string& name);
 	void SetData(const std::string& data, const std::string& name);
 
@@ -52,6 +56,7 @@ public:
 	void LoadData(bool& data, const std::string& name);
 	void LoadData(Vector2& data, const std::string& name);
 	void LoadData(Vector3& data, const std::string& name);
+	void LoadData(Vector4& data, const std::string& name);
 	void LoadData(char* data, uint32_t data_size, const std::string& name);
 	void LoadData(std::string& data, const std::string& name);
 

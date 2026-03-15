@@ -31,6 +31,7 @@ public:
 	static CSMonoObject GetVelocity(const CSMonoObject& object);
 	static void SetFixedRotation(const CSMonoObject& object, bool fixed_rotation);
 	static void SetEnabled(const CSMonoObject& object, const bool enabled);
+	static bool GetEnabled(const CSMonoObject& object);
 
 public:
 	static void SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object);

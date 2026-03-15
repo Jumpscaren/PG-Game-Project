@@ -3,7 +3,6 @@
 #include "SceneSystem/SceneManager.h"
 #include "Scripting/CSMonoCore.h"
 #include "Scripting/Objects/GameObjectInterface.h"
-#include "Input/Mouse.h"
 #include "ComponentInterface.h"
 #include "Math/MathHelp.h"
 #include "ParentComponent.h"
@@ -14,11 +13,17 @@
 
 MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
-TransformComponent::TransformComponent(const Vector3& position, const Vector3& rotation, const Vector3& scale) : m_scale(scale), m_rotation(rotation)
+DirectX::XMMATRIX GetWorldMatrix(const Vector3& position, const Vector3& rotation, const Vector3& scale)
 {
-	world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
+	return 
+		DirectX::XMMatrixScalingFromVector(scale) *
 		DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
 		DirectX::XMMatrixTranslationFromVector(position);
+}
+
+TransformComponent::TransformComponent(const Vector3& position, const Vector3& rotation, const Vector3& scale) : m_scale(scale), m_rotation(rotation)
+{
+	world_matrix = GetWorldMatrix(position, rotation, scale);
 }
 
 TransformComponent& TransformComponent::SetPosition(const Vector3& position)
@@ -40,34 +45,18 @@ TransformComponent& TransformComponent::SetPosition(const Vector2& position)
 
 TransformComponent& TransformComponent::SetRotation(const Vector3& rotation)
 {
-	//DirectX::XMVECTOR pos, quat, scl;
-
-	//DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
-
 	m_rotation = rotation;
 
-	world_matrix = DirectX::XMMatrixScalingFromVector(m_scale) *
-		DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
-		DirectX::XMMatrixTranslationFromVector(GetPosition());
+	world_matrix = GetWorldMatrix(GetPosition(), m_rotation, m_scale);
 
 	return *this;
 }
 
 TransformComponent& TransformComponent::SetScale(const Vector3& scale)
 {
-	//DirectX::XMVECTOR pos, quat, scl;
-
-	//DirectX::XMMatrixDecompose(&scl, &quat, &pos, world_matrix);
-
-	//world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
-	//	DirectX::XMMatrixRotationQuaternion(quat) *
-	//	DirectX::XMMatrixTranslationFromVector(pos);
-
 	m_scale = scale;
 
-	world_matrix = DirectX::XMMatrixScalingFromVector(scale) *
-		DirectX::XMMatrixRotationRollPitchYawFromVector(m_rotation) *
-		DirectX::XMMatrixTranslationFromVector(GetPosition());
+	world_matrix = GetWorldMatrix(GetPosition(), m_rotation, m_scale);
 
 	return *this;
 }
@@ -100,15 +89,11 @@ Vector4 TransformComponent::GetRotation() const
 
 Vector3 TransformComponent::GetRotationEuler() const
 {
-	//return MathHelp::ToEulerAngles(GetRotation());
 	return m_rotation;
 }
 
 Vector3 TransformComponent::GetScale() const
 {
-	//DirectX::XMVECTOR xmScale, rotationQuat, translation;
-	//DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, world_matrix);
-	//return xmScale;
 	return m_scale;
 }
 
@@ -134,9 +119,14 @@ void TransformComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetScale>(transform_class, "SetScale", TransformComponentInterface::SetScale);
 	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::GetScale>(transform_class, "GetScale", TransformComponentInterface::GetScale);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::SetLocalScale>(transform_class, "SetLocalScale", TransformComponentInterface::SetLocalScale);
+
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::FlipXLocally>(transform_class, "FlipXLocally", TransformComponentInterface::FlipXLocally);
+	mono_core->HookAndRegisterMonoMethodType<TransformComponentInterface::FlipYLocally>(transform_class, "FlipYLocally", TransformComponentInterface::FlipYLocally);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<TransformComponent>(SaveTransformComponent, LoadTransformComponent);
 
+	AnimationManager::Get()->SetAnimationValue("TransformComponent", "Position", SetPositionVec2);
 	AnimationManager::Get()->SetAnimationValue("TransformComponent", "Scale", SetScaleVec2);
 }
 
@@ -201,12 +191,8 @@ void TransformComponentInterface::SetPosition(SceneIndex scene_index, Entity ent
 	entity_manager->GetComponent<TransformComponent>(entity).SetPosition(Vector2(x,y));
 }
 
-CSMonoObject TransformComponentInterface::GetPosition(SceneIndex scene_index, Entity entity)//const CSMonoObject& cs_transform)
+CSMonoObject TransformComponentInterface::GetPosition(SceneIndex scene_index, Entity entity)
 {
-	//CSMonoObject game_object;
-	//CSMonoCore::Get()->GetValue(game_object, cs_transform, "game_object");
-
-	//Vector3 position = SceneManager::GetSceneManager()->GetScene(GameObjectInterface::GetSceneIndex(game_object))->GetEntityManager()->GetComponent<TransformComponent>(GameObjectInterface::GetEntityID(game_object)).GetPosition();
 	const Vector3 position = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager()->GetComponent<TransformComponent>(entity).GetPosition();
 
 	CSMonoObject vector2_position(CSMonoCore::Get(), vector2_class_handle);
@@ -280,11 +266,13 @@ void TransformComponentInterface::SetLocalRotation(const SceneIndex scene_index,
 	if (entity_manager->HasComponent<ParentComponent>(entity))
 	{
 		ParentComponent& local_transform = entity_manager->GetComponent<ParentComponent>(entity);
-		local_transform.SetRotation(Vector3(0, 0, angle));
+		Vector3 old_rotation = local_transform.GetRotationEuler();
+		local_transform.SetRotation(Vector3(old_rotation.x, old_rotation.y, angle));
 		return;
 	}
 	TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
-	transform.SetRotation(Vector3(0, 0, angle));
+	Vector3 old_rotation = transform.GetRotationEuler();
+	transform.SetRotation(Vector3(old_rotation.x, old_rotation.y, angle));
 }
 
 float TransformComponentInterface::GetLocalRotation(const SceneIndex scene_index, const Entity entity)
@@ -343,12 +331,127 @@ CSMonoObject TransformComponentInterface::GetScale(const CSMonoObject& cs_transf
 	return vector2_scale;
 }
 
+void TransformComponentInterface::SetLocalScale(const CSMonoObject& cs_transform, const CSMonoObject& scale)
+{
+	const auto game_object = ComponentInterface::GetGameObject(cs_transform);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const auto new_scale = Vector2Interface::GetVector2(scale);
+
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
+	if (entity_manager->HasComponent<ParentComponent>(entity))
+	{
+		ParentComponent& local_transform = entity_manager->GetComponent<ParentComponent>(entity);
+		const auto old_scale = local_transform.GetScale();
+		local_transform.SetScale(Vector3(new_scale.x, new_scale.y, old_scale.z));
+		return;
+	}
+
+	TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
+	const auto old_scale = transform.GetScale();
+	transform.SetScale(Vector3(new_scale.x, new_scale.y, old_scale.z));
+}
+
+void TransformComponentInterface::FlipXLocally(const CSMonoObject& cs_transform, const bool flip_x)
+{
+	//Flip around Y axis because that leads to the sprite flipping in the X axis
+	const auto FlipTransformAroundXAxis = [flip_x](TransformComponent& transform) {
+		Vector3 rotation = transform.GetRotationEuler();
+		if (flip_x != transform.flip_x)
+		{
+			if (flip_x)
+			{
+				rotation.y = DirectX::XM_PI;
+				transform.SetRotation(rotation);
+			}
+			else
+			{
+				rotation.y = 0.0f;
+				transform.SetRotation(rotation);
+			}
+			transform.flip_x = flip_x;
+		}
+		};
+
+	const auto game_object = ComponentInterface::GetGameObject(cs_transform);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
+	if (entity_manager->HasComponent<ParentComponent>(entity))
+	{
+		ParentComponent& local_transform = entity_manager->GetComponent<ParentComponent>(entity);
+		FlipTransformAroundXAxis(local_transform);
+		return;
+	}
+
+	TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
+	FlipTransformAroundXAxis(transform);
+}
+
+void TransformComponentInterface::FlipYLocally(const CSMonoObject& cs_transform, const bool flip_y)
+{
+	//Flip around X axis because that leads to the sprite flipping in the Y axis
+	const auto FlipTransformAroundXAxis = [flip_y](TransformComponent& transform) {
+		Vector3 rotation = transform.GetRotationEuler();
+		if (flip_y != transform.flip_y)
+		{
+			if (flip_y)
+			{
+				rotation.x = DirectX::XM_PI;
+				transform.SetRotation(rotation);
+			}
+			else
+			{
+				rotation.x = 0.0f;
+				transform.SetRotation(rotation);
+			}
+
+			transform.flip_y = flip_y;
+		}
+	};
+
+	const auto game_object = ComponentInterface::GetGameObject(cs_transform);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
+	if (entity_manager->HasComponent<ParentComponent>(entity))
+	{
+		ParentComponent& local_transform = entity_manager->GetComponent<ParentComponent>(entity);
+		FlipTransformAroundXAxis(local_transform);
+		return;
+	}
+
+	TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
+	FlipTransformAroundXAxis(transform);
+}
+
 PositionScaleRotation TransformComponentInterface::GetDataFromWorldMatrix(const TransformComponent& transform)
 {
 	DirectX::XMVECTOR xmScale, rotationQuat, translation;
 	DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, transform.world_matrix);
+
 	return PositionScaleRotation{.position = translation, .scale = xmScale, .rotation = MathHelp::ToEulerAngles(rotationQuat)};
 }
+
+void TransformComponentInterface::SetPositionVec2(Entity entity, SceneIndex scene_index, const Vector2 position)
+{
+	EntityManager* entity_manager = SceneManager::GetEntityManager(scene_index);
+	assert(entity_manager);
+
+	if (entity_manager->HasComponent<ParentComponent>(entity))
+	{
+		entity_manager->GetComponent<ParentComponent>(entity).SetPosition(position);
+		return;
+	}
+
+	entity_manager->GetComponent<TransformComponent>(entity).SetPosition(position);
+}
+
 
 void TransformComponentInterface::SetScaleVec2(Entity entity, SceneIndex scene_index, Vector2 scale)
 {

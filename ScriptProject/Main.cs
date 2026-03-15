@@ -66,19 +66,6 @@ namespace ScriptProject
 
         public static int main()
         {
-            //System.Console.WriteLine("Hello from C# world\n");
-
-            //GameObject gameObject = GameObject.CreateGameObject();
-            //Sprite sprite = gameObject.AddComponent<Sprite>();
-            //gameObject.GetComponent<Transform>().SetPosition(0.0f, 0.0f);
-            //gameObject.GetComponent<Transform>().SetZIndex(2);
-
-            //gameObject.AddComponent<TestScript>();
-
-            //string texture_path = "../QRGameEngine/Textures/Temp.png";
-            //Texture texture = Render.LoadTexture(texture_path);
-            //sprite.SetTexture(texture);
-
             GameObject gameMaster = GameObject.CreateGameObjectWithScene(SceneManager.GetGlobalScene());
             gameMaster.AddComponent<GameMaster>();
 
@@ -95,6 +82,7 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("NewWall", NewWall, 2, "Block");
             PrefabSystem.CreateUserPrefab("FrontWall", FrontWall, 0, "Block");
             PrefabSystem.CreateUserPrefab("BackWall", BackWall, 2, "Block");
+            PrefabSystem.CreateUserPrefab("HalfWall", HalfWall, 0, "Block");
             PrefabSystem.CreateUserPrefab("Fence", Fence, 1, "Block");
             PrefabSystem.CreateUserPrefab("DoorSpawnerPrefab", DoorSpawnerPrefab, 1, "Block");
 
@@ -110,6 +98,7 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("OrcDistracter", OrcDistracter, 1, "Character");
             PrefabSystem.CreateUserPrefab("OrcFixer", OrcFixer, 1, "Character");
             PrefabSystem.CreateUserPrefab("OrcShield", OrcShield, 1, "Character");
+            PrefabSystem.CreateUserPrefab("OrcMonkey", OrcMonkey, 1, "Character");
 
             PrefabSystem.CreateUserPrefab("Switch", Switch, 1, "Interactive");
 
@@ -121,7 +110,7 @@ namespace ScriptProject
 
         static void Prefab1(GameObject game_object)
         {
-            Render.LoadTexture("../QRGameEngine/Textures/Temp_2.png", game_object.GetComponent<Sprite>());
+            Render.LoadTexture("../QRGameEngine/Textures/temp4.png", game_object.GetComponent<Sprite>());
             //game_object.AddComponent<DynamicBody>();
             game_object.AddComponent<PureStaticBody>();
             game_object.AddComponent<BoxCollider>();
@@ -151,6 +140,8 @@ namespace ScriptProject
             var circle_collider = game_object.AddComponent<CircleCollider>();
             circle_collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
             circle_collider.SetRadius(0.49f);
+
+            game_object.GetComponent<Sprite>().PixelScale();
         }
 
         static void PlayerCameraPrefab(GameObject game_object)
@@ -314,6 +305,20 @@ namespace ScriptProject
             game_object.AddComponent<AnimatableSprite>();
         }
 
+        static void OrcMonkey(GameObject game_object)
+        {
+            game_object.transform.SetScale(new Vector2(1.15f, 1.15f));
+
+            Render.LoadTexture("../QRGameEngine/Textures/Monkey_Orc.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PathFindingActor>();
+            game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
+            var collider = game_object.AddComponent<CircleCollider>();
+            collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
+            collider.SetRadius(0.49f * 1.15f);
+            game_object.AddComponent<OrcMonkey>();
+            game_object.AddComponent<AnimatableSprite>();
+        }
+
         static void Fireball(GameObject game_object)
         {
             Render.LoadTexture("../QRGameEngine/Textures/Fireball.png", game_object.GetComponent<Sprite>());
@@ -372,6 +377,16 @@ namespace ScriptProject
             BoxCollider collider = game_object.AddComponent<BoxCollider>();
             collider.SetHalfBoxSize(new Vector2(0.5f, 0.25f));
             collider.SetOffset(new Vector2(0.0f, 0.35f));
+        }
+
+        static void HalfWall(GameObject game_object)
+        {
+            Render.LoadTexture("../QRGameEngine/Textures/HalfWall.png", game_object.GetComponent<Sprite>());
+            game_object.AddComponent<PureStaticBody>();
+            BoxCollider collider = game_object.AddComponent<BoxCollider>();
+            collider.SetHalfBoxSize(new Vector2(0.5f, 0.25f));
+            collider.SetOffset(new Vector2(0.0f, -0.25f));
+            game_object.transform.SetLocalZIndex(0.6f);
         }
 
         static void Fence(GameObject game_object)

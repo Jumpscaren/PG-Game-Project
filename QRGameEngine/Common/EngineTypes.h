@@ -53,7 +53,7 @@ struct Vector3
 	const Vector3 operator- (const Vector3& vector);
 	friend const Vector3 operator- (const Vector3& vector_1, const Vector3& vector_2);
 	friend const Vector3 operator* (const Vector3& vector_1, float scalar);
-	const Vector3 operator*= (const float scalar);
+	Vector3& operator*= (const float scalar);
 	const Vector3 operator* (float scalar);
 
 	Vector3 Normalize() const;

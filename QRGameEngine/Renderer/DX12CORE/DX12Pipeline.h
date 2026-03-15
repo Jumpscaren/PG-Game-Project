@@ -14,6 +14,7 @@ private:
 	{
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE topology_type = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		bool depth_stencil = true;
+		bool alpha_blend = true;
 		//More stuff if needed
 	} m_pipeline_info;
 
@@ -27,6 +28,8 @@ public:
 
 	DX12Pipeline& AddTopology(const D3D12_PRIMITIVE_TOPOLOGY_TYPE& topology_type);
 	DX12Pipeline& AddDepthStencil(bool depth_stencil);
+	DX12Pipeline& NoAlphaBlend();
+
 	void InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_signature, const std::wstring& vertex_shader, const std::wstring& pixel_shader);
 };
 

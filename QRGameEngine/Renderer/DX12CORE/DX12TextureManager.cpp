@@ -307,6 +307,14 @@ DX12TextureHandle DX12TextureManager::AddTexture(DX12Core* dx12_core, uint32_t t
 		depth_clear_value.DepthStencil.Depth = 1.0f;
 		clear_value = &depth_clear_value;
 	}
+	if (texture_flag == TextureFlags::RENDER_TARGET_FLAG)
+	{
+		depth_clear_value.Color[0] = 0.0f;
+		depth_clear_value.Color[1] = 0.0f;
+		depth_clear_value.Color[2] = 0.0f;
+		depth_clear_value.Color[3] = 0.0f;
+		clear_value = &depth_clear_value;
+	}
 
 	D3D12_HEAP_PROPERTIES heap_properties;
 	ZeroMemory(&heap_properties, sizeof(heap_properties));

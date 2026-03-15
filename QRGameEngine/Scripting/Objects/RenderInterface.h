@@ -15,5 +15,9 @@ public:
 public:
 	static CSMonoObject LoadTexture(const std::string& texture_name, SceneIndex scene_index);
 	static void LoadAndSetTexture(const CSMonoObject& texture, const std::string& texture_name, SceneIndex scene_index);
+
+	static CSMonoObject GetFixedRenderSize();
+	static CSMonoObject GetWindowSize();
+	static float GetPixelsPerUnit();
 };
 

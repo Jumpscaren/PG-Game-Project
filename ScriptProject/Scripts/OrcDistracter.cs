@@ -1,5 +1,7 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
@@ -49,6 +51,8 @@ namespace ScriptProject.Scripts
         float falling_speed = 1.0f;
 
         HoleManager holes = new HoleManager();
+
+        EffectHolderModule effect_holder = new EffectHolderModule();
 
         public static int GetCount()
         {
@@ -109,6 +113,11 @@ namespace ScriptProject.Scripts
             --count;
         }
 
+        public override void SetEffect(Effect effect)
+        {
+            effect_holder.SetEffect(this, effect);
+        }
+
         public override void TakeDamage(GameObject hit_object, float damage)
         {
             health -= damage;
@@ -146,7 +155,7 @@ namespace ScriptProject.Scripts
 
         void Look()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }
@@ -160,7 +169,7 @@ namespace ScriptProject.Scripts
         {
             Vector2 current_position = transform.GetPosition();
 
-            bool stop_movement = !IsEffectOver() && GetEffect().StopMovement();
+            bool stop_movement = !effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>();
 
             if (teleport_timer < Time.GetElapsedTime() && !stop_movement)
             {
@@ -285,7 +294,7 @@ namespace ScriptProject.Scripts
 
         void Attack()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }
@@ -318,7 +327,7 @@ namespace ScriptProject.Scripts
 
         void PrincessLogic()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }

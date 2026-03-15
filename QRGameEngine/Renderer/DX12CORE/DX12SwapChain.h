@@ -25,6 +25,9 @@ public:
 	void Present();
 	DX12TextureHandle GetBackbufferTexture();
 	DX12TextureViewHandle GetBackbufferView();
-	void Resize(DX12Core* dx12_core);
+	void Resize(DX12Core* dx12_core, uint32_t width, uint32_t height);
+
+	uint32_t GetBackbufferWidth() const { return m_backbuffer_width; };
+	uint32_t GetBackbufferHeight() const { return m_backbuffer_height; };
 };
 

@@ -205,6 +205,11 @@ MonoClassHandle CSMonoCore::RegisterMonoClass(_MonoClass* mono_class)
 	const auto it = m_mono_class_ptr_to_mono_class_handle.find(mono_class);
 	if (it != m_mono_class_ptr_to_mono_class_handle.end())
 	{
+		if (!GetMonoClass(it->second)->GetMonoClass())
+		{
+			return NULL_CLASS;
+		}
+
 		return it->second;
 	}
 
@@ -223,6 +228,12 @@ MonoClassHandle CSMonoCore::RegisterMonoClass(_MonoClass* mono_class)
 
 	const auto mono_class_handle = RegisterMonoClass(class_namespace, class_name);
 	m_mono_class_ptr_to_mono_class_handle.emplace(mono_class, mono_class_handle);
+
+	if (!GetMonoClass(mono_class_handle)->GetMonoClass())
+	{
+		return NULL_CLASS;
+	}
+
 	return mono_class_handle;
 }
 
@@ -372,6 +383,15 @@ MonoClassHandle CSMonoCore::TryGetParentClass(const CSMonoObject& mono_object)
 	if (auto* parent = mono_class_get_parent(mono_object.m_mono_class); parent)
 	{
 		 return RegisterMonoClass(parent);
+	}
+	return NULL_CLASS;
+}
+
+MonoClassHandle CSMonoCore::TryGetParentClass(const MonoClassHandle mono_class_handle)
+{
+	if (auto* parent = mono_class_get_parent(GetMonoClass(mono_class_handle)->GetMonoClass()))
+	{
+		return RegisterMonoClass(parent);
 	}
 	return NULL_CLASS;
 }

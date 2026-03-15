@@ -11,7 +11,7 @@ namespace ScriptProject.Scripts
 
         float speed = 20.0f;
 
-        public void InitArrow(Vector2 position, Vector2 direction)
+        public void InitArrow(Vector2 position, Vector2 direction, GameObject avoid_game_object)
         {
             Sprite arrow_sprite = game_object.AddComponent<Sprite>();
             Render.LoadTexture("../QRGameEngine/Textures/Arrow.png", arrow_sprite);
@@ -31,7 +31,7 @@ namespace ScriptProject.Scripts
 
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
             hit_box_script.SetHitBoxAction(new HitBoxArrow(), game_object);
-            hit_box_script.SetAvoidGameObject(GameObject.TempFindGameObject("Player"));
+            hit_box_script.SetAvoidGameObject(avoid_game_object);
 
             game_object.AddChild(hit_box);
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScriptProject.EngineMath;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -15,5 +16,14 @@ namespace ScriptProject.Engine
         {
             sprite.SetTexture(LoadTexture_External(texture_name, sprite.GetGameOjbect().GetSceneIndex()));
         }
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Vector2 GetFixedRenderSize();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern Vector2 GetWindowSize();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static public extern float GetPixelsPerUnit();
     }
 }

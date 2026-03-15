@@ -305,6 +305,7 @@ public:
 	MonoMethodHandle TryRegisterMonoMethod(const CSMonoObject& mono_object, const std::string& method_name);
 
 	MonoClassHandle TryGetParentClass(const CSMonoObject& mono_object);
+	MonoClassHandle TryGetParentClass(const MonoClassHandle mono_class_handle);
 
 	template<typename T>
 	bool IsValueType(const CSMonoObject& mono_object, const std::string& field_name);

@@ -37,6 +37,12 @@ DX12Pipeline& DX12Pipeline::AddDepthStencil(bool depth_stencil)
 	return *this;
 }
 
+DX12Pipeline& DX12Pipeline::NoAlphaBlend()
+{
+	m_pipeline_info.alpha_blend = false;
+	return *this;
+}
+
 void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_signature, const std::wstring& vertex_shader, const std::wstring& pixel_shader)
 {
 	//Create pipeline
@@ -60,7 +66,8 @@ void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_sig
 
 	D3D12_RASTERIZER_DESC rasterizer_desc;
 	rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID;
-	rasterizer_desc.CullMode = D3D12_CULL_MODE_BACK;
+	//rasterizer_desc.CullMode = D3D12_CULL_MODE_BACK;
+	rasterizer_desc.CullMode = D3D12_CULL_MODE_NONE;
 	rasterizer_desc.FrontCounterClockwise = false;
 	rasterizer_desc.DepthBias = 0;
 	rasterizer_desc.DepthBiasClamp = 0.0f;
@@ -75,16 +82,25 @@ void DX12Pipeline::InitPipeline(DX12Core* dx12_core, DX12RootSignature* root_sig
 	pipeline_desc.PrimitiveTopologyType = m_pipeline_info.topology_type;
 	pipeline_desc.NumRenderTargets = static_cast<UINT>(1);
 
-	pipeline_desc.BlendState.AlphaToCoverageEnable = true;
-	pipeline_desc.BlendState.IndependentBlendEnable = false;
+	pipeline_desc.BlendState.AlphaToCoverageEnable = false;
+	pipeline_desc.BlendState.IndependentBlendEnable = true;
 
 	pipeline_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	D3D12_RENDER_TARGET_BLEND_DESC rt_blend_desc;
-	rt_blend_desc.BlendEnable = false;
+	rt_blend_desc.BlendEnable = true;
 	rt_blend_desc.LogicOpEnable = false;
-	rt_blend_desc.SrcBlend = D3D12_BLEND_ONE;
-	rt_blend_desc.DestBlend = D3D12_BLEND_ZERO;
-	rt_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
+	if (m_pipeline_info.alpha_blend)
+	{
+		rt_blend_desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		rt_blend_desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		rt_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
+	}
+	else
+	{
+		rt_blend_desc.SrcBlend = D3D12_BLEND_ONE;
+		rt_blend_desc.DestBlend = D3D12_BLEND_ZERO;
+		rt_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
+	}
 	rt_blend_desc.SrcBlendAlpha = D3D12_BLEND_ONE;
 	rt_blend_desc.DestBlendAlpha = D3D12_BLEND_ZERO;
 	rt_blend_desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;

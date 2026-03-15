@@ -15,6 +15,7 @@
 #include "Components/BoxColliderComponent.h"
 #include "Components/CircleColliderComponent.h"
 #include "Components/PolygonColliderComponent.h"
+#include "Components/CapsuleColliderComponent.h"
 
 #include "Time/Time.h"
 
@@ -166,6 +167,18 @@ void PhysicsCore::AddPolygonColliderDeferredPhysicObjectCreation(SceneIndex scen
 	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
 }
 
+void PhysicsCore::AddCapsuleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity)
+{
+	DeferredPhysicObjectCreationData physic_object_creation_data;
+	physic_object_creation_data.entity = entity;
+	physic_object_creation_data.scene_index = scene_index;
+	physic_object_creation_data.has_collider_data = true;
+	physic_object_creation_data.collider_type = ColliderType::Capsule;
+	m_deferred_physic_object_creations.push_back(physic_object_creation_data);
+
+	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
+}
+
 void PhysicsCore::AddDeferredPhysicObjectDestruction(const SceneIndex scene_index, const Entity entity, const PhysicObjectHandle physic_object_handle, const bool is_collider, const ColliderType collider_type)
 {
 	DeferredPhysicObjectDestructionData deferred_physic_object_destruction_data;
@@ -227,6 +240,12 @@ void PhysicsCore::HandleDeferredPhysicObjectCreationData(const DeferredPhysicObj
 			const PolygonColliderComponent& polygon_collider = entity_manager->GetComponent<PolygonColliderComponent>(creation_data.entity);
 			AddPolygonCollider(creation_data.scene_index, creation_data.entity, polygon_collider.points, polygon_collider.loop, polygon_collider.solid, polygon_collider.trigger, polygon_collider.filter);
 		}
+
+		if (creation_data.collider_type == ColliderType::Capsule)
+		{
+			const CapsuleColliderComponent& capsule_collider = entity_manager->GetComponent<CapsuleColliderComponent>(creation_data.entity);
+			AddCapsuleCollider(creation_data.scene_index, creation_data.entity, capsule_collider.point_1, capsule_collider.point_2, capsule_collider.radius, capsule_collider.trigger, capsule_collider.filter);
+		}
 	}
 }
 
@@ -250,6 +269,10 @@ void PhysicsCore::HandleDeferredPhysicObjectDestructionData(const DeferredPhysic
 
 		case ColliderType::Polygon:
 			RemovePolygonColliderInternal(destruction_data.physic_object_handle);
+			break;
+
+		case ColliderType::Capsule:
+			RemoveCapsuleColliderInternal(destruction_data.physic_object_handle);
 			break;
 		}
 	}
@@ -385,6 +408,34 @@ void PhysicsCore::AddPolygonFixture(SceneIndex scene_index, Entity entity, const
 	polygon_collider.points = points;
 	polygon_collider.trigger = trigger;
 	polygon_collider.filter = collider_filter;
+}
+
+void PhysicsCore::AddCapsuleFixture(SceneIndex scene_index, Entity entity, const Vector2& point_1, const Vector2& point_2, float radius, bool trigger, ColliderFilter collider_filter)
+{
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+
+	const TransformComponent& transform = entity_manager->GetComponent<TransformComponent>(entity);
+	const Vector3 scale = transform.GetScale();
+
+	b2Capsule shape;
+	shape.radius = radius * scale.x;
+	shape.center1 = b2Vec2{ point_1.x, point_1.y };
+	shape.center2 = b2Vec2{ point_2.x, point_2.y };
+
+	PhysicObjectHandle physic_object_handle = GetPhysicObjectHandle(entity_manager, entity);
+
+	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
+
+	const b2ShapeDef shape_def = CreateShapeDef(physic_object_handle, physic_object_data.object_body_type, trigger, collider_filter);
+	physic_object_data.object_capsule_shape = b2CreateCapsuleShape(physic_object_data.object_body, &shape_def, &shape);
+
+	CapsuleColliderComponent& capsule_collider = entity_manager->GetComponent<CapsuleColliderComponent>(entity);
+	capsule_collider.physic_object_handle = physic_object_handle;
+	capsule_collider.point_1 = point_1;
+	capsule_collider.point_2 = point_2;
+	capsule_collider.radius = radius;
+	capsule_collider.trigger = trigger;
+	capsule_collider.filter = collider_filter;
 }
 
 void PhysicsCore::AwakePhysicObjectsFromActivatedScene(const SceneIndex scene_index)
@@ -572,6 +623,31 @@ void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 				m_debug_draw->DrawSegment(position_2d + Vector2(point_1.x, point_1.y), position_2d + Vector2(point_2.x, point_2.y), Vector3(1.0f, 0.0f, 0.0f));
 			}
 		});
+
+	entity_manager->System<TransformComponent, CapsuleColliderComponent>([&](const TransformComponent& transform, const CapsuleColliderComponent& capsule_collider)
+		{
+			if (!capsule_collider.debug_draw)
+			{
+				return;
+			}
+
+			const Vector2 position = transform.GetPosition2D();
+
+			const auto rotation_z = transform.GetRotationEuler().z;
+
+			const Vector2 offset(capsule_collider.radius);
+
+			vertices.push_back(position + capsule_collider.point_1 - offset);
+			vertices.push_back(position + capsule_collider.point_2 - offset);
+			vertices.push_back(position + capsule_collider.point_1 + offset);
+			vertices.push_back(position + capsule_collider.point_2 + offset);
+
+			m_debug_draw->DrawPolygon(vertices, Vector3(1.0f, 0.0f, 0.0f));
+			m_debug_draw->DrawCircle(position + capsule_collider.point_1, capsule_collider.radius, Vector3(1.0f, 0.0f, 0.0f));
+			m_debug_draw->DrawCircle(position + capsule_collider.point_2, capsule_collider.radius, Vector3(1.0f, 0.0f, 0.0f));
+
+			vertices.clear();
+		});
 }
 
 void PhysicsCore::HandleDeferredPhysicData()
@@ -722,6 +798,16 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 					polygon_collider.update_polygon_collider = false;
 				}
 		});
+
+	entity_manager->System<CapsuleColliderComponent>([&](Entity entity, CapsuleColliderComponent& capsule_collider)
+		{
+			if (capsule_collider.update_collider) [[unlikely]]
+			{
+				RemoveCapsuleColliderInternal(capsule_collider.physic_object_handle);
+				AddCapsuleFixture(entity_manager->GetSceneIndex(), entity, capsule_collider.point_1, capsule_collider.point_2, capsule_collider.radius, capsule_collider.trigger, capsule_collider.filter);
+				capsule_collider.update_collider = false;
+			}
+		});
 }
 
 void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
@@ -779,6 +865,8 @@ void PhysicsCore::RemovePhysicObject(const SceneIndex scene_index, const Entity 
 		entity_manager->RemoveComponent<CircleColliderComponent>(entity);
 	if (entity_manager->HasComponent<PolygonColliderComponent>(entity))
 		entity_manager->RemoveComponent<PolygonColliderComponent>(entity);
+	if (entity_manager->HasComponent<CapsuleColliderComponent>(entity))
+		entity_manager->RemoveComponent<CapsuleColliderComponent>(entity);
 
 	assert(entity_manager);
 	PhysicObjectHandle physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
@@ -860,6 +948,7 @@ void PhysicsCore::RemovePhysicObjectInternal(const PhysicObjectHandle physic_obj
 	physic_object_data.object_circle_shape = b2_nullShapeId;
 	physic_object_data.object_polygon_shapes.clear();
 	physic_object_data.object_chain_shape = b2_nullChainId;
+	physic_object_data.object_capsule_shape = b2_nullShapeId;
 }
 
 void PhysicsCore::RemoveBoxColliderInternal(const PhysicObjectHandle physic_object_handle)
@@ -890,6 +979,13 @@ void PhysicsCore::RemovePolygonColliderInternal(const PhysicObjectHandle physic_
 		b2DestroyChain(physic_object_data.object_chain_shape);
 		physic_object_data.object_chain_shape = b2_nullChainId;
 	}
+}
+
+void PhysicsCore::RemoveCapsuleColliderInternal(PhysicObjectHandle physic_object_handle)
+{
+	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
+	b2DestroyShape(physic_object_data.object_capsule_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
+	physic_object_data.object_capsule_shape = b2_nullShapeId;
 }
 
 void PhysicsCore::AddPhysicObject(const SceneIndex scene_index, const Entity entity, const PhysicObjectBodyType& physic_object_body_type)
@@ -1080,6 +1176,31 @@ void PhysicsCore::AddPolygonCollider(const SceneIndex scene_index, const Entity 
 	AddPolygonFixture(scene_index, entity, points, loop, solid, trigger, collider_filter);
 }
 
+void PhysicsCore::AddCapsuleCollider(SceneIndex scene_index, Entity entity, const Vector2& point_1, const Vector2& point_2, float radius, bool trigger, ColliderFilter collider_filter)
+{
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+
+	if (!entity_manager->HasComponent<CapsuleColliderComponent>(entity))
+	{
+		CapsuleColliderComponent& capsule_collider = entity_manager->AddComponent<CapsuleColliderComponent>(entity);
+		capsule_collider.physic_object_handle = NULL_PHYSIC_OBJECT_HANDLE;
+		capsule_collider.trigger = trigger;
+		capsule_collider.filter = collider_filter;
+		capsule_collider.point_1 = point_1;
+		capsule_collider.point_2 = point_2;
+		capsule_collider.radius = radius;
+		capsule_collider.debug_draw = true;
+	}
+
+	if (ShouldDeferPhysicCalls(scene_index))
+	{
+		AddCapsuleColliderDeferredPhysicObjectCreation(scene_index, entity);
+		return;
+	}
+
+	AddCapsuleFixture(scene_index, entity, point_1, point_2, radius, trigger, collider_filter);
+}
+
 void PhysicsCore::RemoveBoxCollider(const SceneIndex scene_index, const Entity entity)
 {
 	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
@@ -1137,6 +1258,25 @@ void PhysicsCore::RemovePolygonCollider(SceneIndex scene_index, Entity entity)
 	}
 }
 
+void PhysicsCore::RemoveCapsuleCollider(SceneIndex scene_index, Entity entity)
+{
+	EntityManager* entity_manager = SceneManager::GetSceneManager()->GetEntityManager(scene_index);
+
+	if (entity_manager->HasComponent<CapsuleColliderComponent>(entity))
+	{
+		PhysicObjectHandle physic_object_handle = entity_manager->GetComponent<CapsuleColliderComponent>(entity).physic_object_handle;
+		entity_manager->RemoveComponent<CapsuleColliderComponent>(entity);
+
+		if (ShouldDeferPhysicCalls(scene_index))
+		{
+			AddDeferredPhysicObjectDestruction(scene_index, entity, physic_object_handle, true, ColliderType::Capsule);
+			return;
+		}
+
+		RemoveCapsuleColliderInternal(physic_object_handle);
+	}
+}
+
 void PhysicsCore::RemoveDeferredPhysicObjects(EntityManager* entity_manager)
 {
 	entity_manager->System<DeferredEntityDeletion, DynamicBodyComponent>([&](const Entity entity, DeferredEntityDeletion, const DynamicBodyComponent&)
@@ -1167,7 +1307,7 @@ void PhysicsCore::RemoveDeferredPhysicObjects(EntityManager* entity_manager)
 class PhysicsRaycastCallback
 {
 public:
-	PhysicsRaycastCallback(const ColliderFilter collider_filter, const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic)
+	PhysicsRaycastCallback(const ColliderFilter collider_filter, const PhysicsCore::RaycastCallback& raycast_logic)
 		: m_collider_filter(collider_filter), m_raycast_logic(raycast_logic)
 	{
 		m_closest_result.intersected = false;
@@ -1184,42 +1324,47 @@ public:
 		const bool should_raycast = !b2Shape_IsSensor(shape_id);
 		const auto entity_data = PhysicsCore::Get()->GetEntityAndSceneFromUserData(b2Body_GetUserData(b2Shape_GetBody(shape_id)));
 
-		if (fraction > MIN_FRACTION && m_raycast_logic(should_raycast, fraction, m_closest_fraction, entity_data.second, entity_data.first)) {
-			m_closest_fraction = fraction;
-			m_closest_result.position = Vector2(point.x, point.y);
+		const Vector2 v2_point(point.x, point.y);
+
+		if (fraction > MIN_FRACTION && m_raycast_logic(should_raycast, v2_point, entity_data.second, entity_data.first)) {
+			m_closest_result.position = v2_point;
 			m_closest_result.entity = entity_data.first;
 			m_closest_result.scene_index = entity_data.second;
 
 			m_closest_result.intersected = true;
 		}
 
-		return 1.0f;
+		return -1.0f;
 	}
 
 private:
 	ColliderFilter m_collider_filter;
 	RaycastResult m_closest_result;
-	float m_closest_fraction = 9999;
-	std::function<bool(bool, float, float, SceneIndex, Entity)> m_raycast_logic;
+	PhysicsCore::RaycastCallback m_raycast_logic;
 
 	static constexpr float MIN_FRACTION = 0.0001f;
 };
 
-float RaycastCallback(const b2ShapeId shape_id, const b2Vec2 point, const b2Vec2 normal, const float fraction, void* context)
+namespace internal::physics
 {
-	PhysicsRaycastCallback* physics_raycast_callback = (PhysicsRaycastCallback*)context;
-	return physics_raycast_callback->ReportShape(shape_id, point, normal, fraction);
+	float RaycastCallback(const b2ShapeId shape_id, const b2Vec2 point, const b2Vec2 normal, const float fraction, void* context)
+	{
+		PhysicsRaycastCallback* physics_raycast_callback = (PhysicsRaycastCallback*)context;
+		return physics_raycast_callback->ReportShape(shape_id, point, normal, fraction);
+	}
 }
 
 RaycastResult PhysicsCore::Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, 
-	const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic)
+	const RaycastCallback& raycast_logic)
 {
 	const b2Vec2 b2_position(position.x, position.y);
 	PhysicsRaycastCallback callback(collider_filter, raycast_logic);
 
 	const b2QueryFilter filter{ .categoryBits = collider_filter.category_bits, .maskBits = collider_filter.mask_bits };
 
-	std::ignore = b2World_CastRay(m_world, b2_position, b2_position + b2Vec2(direction.x * 100.0f, direction.y * 100.0f), filter, RaycastCallback, &callback);
+	constexpr float RAY_LENGTH = 100.0f;
+	std::ignore = b2World_CastRay(m_world, b2_position, b2Vec2(direction.x * RAY_LENGTH, direction.y * RAY_LENGTH), filter, internal::physics::RaycastCallback, &callback);
+	//const auto result = b2World_CastRayClosest(m_world, b2_position, b2Vec2(direction.x * RAY_LENGTH, direction.y * RAY_LENGTH), filter);
 	return callback.GetResult();
 }
 

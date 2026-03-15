@@ -1,5 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,8 +36,7 @@ namespace ScriptProject.Scripts
 
         void Start()
         {
-            //spawn_timer = Time.GetElapsedTime() + spawn_time;
-            spawn_timer = delay_initial_spawn_time;
+            spawn_timer = Time.GetElapsedTime() + delay_initial_spawn_time;
         }
 
         void Update()
@@ -66,6 +66,10 @@ namespace ScriptProject.Scripts
 
                 spawn_timer = Time.GetElapsedTime() + spawn_time;
             }
+        }
+
+        public override void SetEffect(Effect effect)
+        {
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)

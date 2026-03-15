@@ -39,11 +39,18 @@ namespace ScriptProject.Scripts
                 return;
             }
 
+            if (!hit_script.Interactable())
+            {
+                return;
+            }
+
             hit_box_action.OnHit(owner_game_object, this, hit_script);
         }
 
         public void BeginCollision(GameObject collided_game_object)
         {
+            //Console.WriteLine("Begin Collision: " + game_object.GetName());
+
             if (collided_game_object == avoid_game_object || !collided_game_object.HasComponent<ScriptingBehaviour>())
             {
                 hit_box_action.OnHitAvoidGameObject(this);

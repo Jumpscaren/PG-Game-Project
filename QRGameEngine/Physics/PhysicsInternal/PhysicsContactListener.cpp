@@ -156,7 +156,7 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 		}
 		else
 		{
-			assert(false);
+			//assert(false);
 			std::cout << "Collision data not found" << std::endl;
 			continue;
 		}

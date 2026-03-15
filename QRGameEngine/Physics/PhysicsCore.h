@@ -29,6 +29,8 @@ public:
 		EmptyBody = 10
 	};
 
+	using RaycastCallback = std::function<bool(bool, const Vector2&, SceneIndex, Entity)>;
+
 private:
 	struct PhysicObjectData {
 		b2BodyId object_body;
@@ -40,6 +42,7 @@ private:
 		b2ShapeId object_circle_shape = b2_nullShapeId;
 		std::vector<b2ShapeId> object_polygon_shapes;
 		b2ChainId object_chain_shape = b2_nullChainId;
+		b2ShapeId object_capsule_shape = b2_nullShapeId;
 	};
 
 	struct DeferredPhysicObjectHandle
@@ -53,6 +56,7 @@ private:
 		Box,
 		Circle,
 		Polygon,
+		Capsule,
 		None
 	};
 
@@ -128,6 +132,7 @@ private:
 	void RemoveBoxColliderInternal(PhysicObjectHandle physic_object_handle);
 	void RemoveCircleColliderInternal(PhysicObjectHandle physic_object_handle);
 	void RemovePolygonColliderInternal(PhysicObjectHandle physic_object_handle);
+	void RemoveCapsuleColliderInternal(PhysicObjectHandle physic_object_handle);
 
 	PhysicObjectHandle GetPhysicObjectHandle(EntityManager* entity_manager, Entity entity);
 
@@ -142,6 +147,7 @@ private:
 	void AddBoxColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
 	void AddCircleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
 	void AddPolygonColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
+	void AddCapsuleColliderDeferredPhysicObjectCreation(SceneIndex scene_index, Entity entity);
 
 	void AddDeferredPhysicObjectDestruction(const SceneIndex scene_index, const Entity entity, const PhysicObjectHandle physic_object_handle, const bool is_collider, const ColliderType collider_type);
 
@@ -152,6 +158,7 @@ private:
 	void AddBoxFixture(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCircleFixture(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddPolygonFixture(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool loop, bool solid, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddCapsuleFixture(SceneIndex scene_index, Entity entity, const Vector2& point_1, const Vector2& point_2, float radius, bool trigger = false, ColliderFilter collider_filter = {});
 
 	static void AwakePhysicObjectsFromActivatedScene(SceneIndex scene_index);
 
@@ -186,6 +193,7 @@ public:
 	void AddBoxCollider(SceneIndex scene_index, Entity entity, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCircleCollider(SceneIndex scene_index, Entity entity, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddPolygonCollider(SceneIndex scene_index, Entity entity, const std::vector<Vector2>& points, bool loop, bool solid, bool trigger = false, ColliderFilter collider_filter = {});
+	void AddCapsuleCollider(SceneIndex scene_index, Entity entity, const Vector2& point_1, const Vector2& point_2, float radius, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddBoxPhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, const Vector2& half_box_size, bool trigger = false, ColliderFilter collider_filter = {});
 	void AddCirclePhysicObject(SceneIndex scene_index, Entity entity, const PhysicObjectBodyType& physic_object_body_type, float circle_radius, bool trigger = false, ColliderFilter collider_filter = {});
 
@@ -193,9 +201,10 @@ public:
 	void RemoveBoxCollider(SceneIndex scene_index, Entity entity);
 	void RemoveCircleCollider(SceneIndex scene_index, Entity entity);
 	void RemovePolygonCollider(SceneIndex scene_index, Entity entity);
+	void RemoveCapsuleCollider(SceneIndex scene_index, Entity entity);
 
 	void RemoveDeferredPhysicObjects(EntityManager* entity_manager);
 
-	RaycastResult Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, const std::function<bool(bool, float, float, SceneIndex, Entity)>& raycast_logic);
+	RaycastResult Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, const RaycastCallback& raycast_logic);
 };
 

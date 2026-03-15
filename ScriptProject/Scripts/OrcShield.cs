@@ -1,5 +1,9 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Engine.Constants;
+using ScriptProject.EngineFramework;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
@@ -10,8 +14,6 @@ using System.Text;
 using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcEnemy;
 using static ScriptProject.Scripts.Player;
-using ScriptProject.EngineFramework;
-using ScriptProject.Engine.Constants;
 
 namespace ScriptProject.Scripts
 {
@@ -36,6 +38,7 @@ namespace ScriptProject.Scripts
             public float damage;
         }
         List<DelayDamage> delay_damages = new List<DelayDamage>();
+        const float SHIELD_KNOCKBACK_SPEED = 5.0f;
 
         float health = 100.0f;
 
@@ -71,11 +74,14 @@ namespace ScriptProject.Scripts
 
         GameObject target = null;
 
+
         bool dead = false;
         bool falling = false;
         float falling_speed = 1.0f;
 
         HoleManager holes = new HoleManager();
+
+        EffectHolderModule effect_holder = new EffectHolderModule();
 
         void Start()
         {
@@ -84,6 +90,11 @@ namespace ScriptProject.Scripts
             actor.SetShowPath(true);
             transform = game_object.transform;
             body = game_object.GetComponent<DynamicBody>();
+
+            game_object.RemoveComponent<CircleCollider>();
+            CapsuleCollider capsule = game_object.AddComponent<CapsuleCollider>();
+            capsule.SetRadius(0.2f * 1.3f);
+            capsule.SetPoints(new Vector2(-0.1f * 1.3f, 0.0f), new Vector2(0.1f * 1.3f, 0.0f));
 
             sprite_game_object = GameObject.CreateGameObject();
             sprite_game_object.transform.SetScale(transform.GetScale());
@@ -132,6 +143,11 @@ namespace ScriptProject.Scripts
             EventSystem.StopListeningToEvent("OrcAngry", game_object, OrcAngryEvent);
 
             --count;
+        }
+
+        public override void SetEffect(Effect effect)
+        {
+            effect_holder.SetEffect(this, effect);
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -201,7 +217,7 @@ namespace ScriptProject.Scripts
             shield = GameObject.CreateGameObject();
             shield.AddComponent<Sprite>();
             Render.LoadTexture("../QRGameEngine/Textures/Shield.png", shield.GetComponent<Sprite>());
-            KinematicBody shield_body = shield.AddComponent<KinematicBody>();
+            DynamicBody shield_body = shield.AddComponent<DynamicBody>();
             shield.transform.SetPosition(new Vector2(0.8f, 0.0f));
             shield.transform.SetZIndex(0);
             shield.GetComponent<Sprite>().FlipX(true);
@@ -220,7 +236,7 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }
@@ -279,7 +295,7 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            FixedMovement(velocity, new_velocity, speed, drag_speed, body);
+            CharacterMovementModule.FixedMovement(new_velocity, speed, drag_speed, body, effect_holder);
         }
 
         void HandleDelayedDamage()
@@ -300,14 +316,20 @@ namespace ScriptProject.Scripts
                 }
                 else if (delay_damage.hit_object.HasComponent<ScriptingBehaviour>())
                 {
-                    //Console.WriteLine("Has Script");
+                    Console.WriteLine("Has Script");
                     Vector2 dir = delay_damage.hit_object.transform.GetPosition() - game_object.transform.GetPosition();
-                    const float knockback = 15.0f;
+
                     ScriptingBehaviour script = delay_damage.hit_object.GetComponent<ScriptingBehaviour>();
+                    Console.WriteLine("Script Type: " + script.GetType());
                     if (typeof(InteractiveCharacterBehaviour).IsAssignableFrom(script.GetType()))
                     {
-                        //Console.WriteLine("Object Knockback");
-                        ((InteractiveCharacterBehaviour)script).Knockback(dir.Normalize(), knockback);
+                        Console.WriteLine("Object Knockback");
+                        ((InteractiveCharacterBehaviour)script).Knockback(dir.Normalize(), SHIELD_KNOCKBACK_SPEED);
+                    }
+                    if (typeof(ReactHitBox).IsAssignableFrom(script.GetType()))
+                    {
+                        Console.WriteLine("React HitBox - Object Knockback");
+                        ((ReactHitBox)script).Knockback(dir.Normalize(), SHIELD_KNOCKBACK_SPEED);
                     }
                 }
             }
@@ -349,7 +371,7 @@ namespace ScriptProject.Scripts
 
         void Attack()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }

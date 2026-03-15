@@ -93,5 +93,14 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern Vector2 GetScale();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void SetLocalScale(Vector2 scale);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void FlipXLocally(bool flip_x);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern void FlipYLocally(bool flip_y);
     }
 }

@@ -24,6 +24,8 @@ struct TransformComponent
 
 	DirectX::XMMATRIX world_matrix;
 	Vector3 m_scale, m_rotation;
+	bool flip_x = false;
+	bool flip_y = false;
 };
 
 struct PositionScaleRotation
@@ -59,11 +61,16 @@ public:
 
 	static void SetScale(const CSMonoObject& cs_transform, const CSMonoObject& scale);
 	static CSMonoObject GetScale(const CSMonoObject& cs_transform);
+	static void SetLocalScale(const CSMonoObject& cs_transform, const CSMonoObject& scale);
+
+	static void FlipXLocally(const CSMonoObject& cs_transform, const bool flip_x);
+	static void FlipYLocally(const CSMonoObject& cs_transform, const bool flip_y);
 
 public:
 	static PositionScaleRotation GetDataFromWorldMatrix(const TransformComponent& transform);
 
 private:
+	static void SetPositionVec2(Entity entity, SceneIndex scene_index, const Vector2 position);
 	static void SetScaleVec2(Entity entity, SceneIndex scene_index, Vector2 scale);
 };
 

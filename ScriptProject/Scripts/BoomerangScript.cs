@@ -4,12 +4,9 @@ using System;
 
 namespace ScriptProject.Scripts
 {
-    internal class BoomerangScript : HitBox
+    internal class BoomerangScript : ReactHitBox
     {
         KinematicBody body;
-
-        float alive_timer = 0.0f;
-        float alive_time = 10.0f;
 
         float rotation = 0.0f;
         const float base_rotation = 30.0f;
@@ -31,9 +28,9 @@ namespace ScriptProject.Scripts
         GameObject owner;
         DynamicBody owner_body;
 
-        RandomGenerator random_generator = new RandomGenerator();
+        GameObject return_to_object;
 
-        GameObject player_game_object;
+        RandomGenerator random_generator = new RandomGenerator();
 
         void Start()
         {
@@ -41,13 +38,14 @@ namespace ScriptProject.Scripts
             CircleCollider circle_collider = game_object.AddComponent<CircleCollider>();
             circle_collider.SetTrigger(true);
             circle_collider.SetRadius(0.3f);
-            alive_timer = Time.GetElapsedTime() + alive_time;
+
             anchor_position = game_object.transform.GetPosition();
 
             SetHitBoxAction(new HitBoxBoomerang(), game_object);
-            player_game_object = GameObject.TempFindGameObject("Player");
 
             wait_timer = wait_time + Time.GetElapsedTime();
+
+            game_object.SetName("Boomerang");
         }
 
         void Update()
@@ -100,16 +98,24 @@ namespace ScriptProject.Scripts
             }
         }
 
+        public override void Knockback(Vector2 dir, float knockback)
+        {
+            body.SetVelocity(dir * knockback);
+
+            rotate -= decrease_rotate * 5.0f;
+        }
+
         public BoomerangScript SetInitialDirection(Vector2 initial_direction)
         {
             body.SetVelocity(initial_direction * speed);
             return this;
         }
 
-        public BoomerangScript SetOwner(GameObject in_owner)
+        public BoomerangScript SetOwner(GameObject in_owner, GameObject return_to)
         {
             owner = in_owner;
             owner_body = owner.GetComponent<DynamicBody>();
+            return_to_object = return_to;
             return this;
         }
 
@@ -126,7 +132,7 @@ namespace ScriptProject.Scripts
                 }
 
                 BoomerangScript boomerang_script = hit_box_owner_game_object.GetComponent<BoomerangScript>();
-                if (hit_object_script.GetGameOjbect() == boomerang_script.player_game_object)
+                if (hit_object_script.GetGameOjbect() == boomerang_script.return_to_object)
                 {
                     boomerang_script.HaveReturned();
                     return;

@@ -2,7 +2,8 @@ struct Sprite
 {
 	uint index;
 	float2 uv[4];
-	float3 addative_color;
+	float4 addative_color;
+    float3 pad;
 };
 
 struct VS_OUT
@@ -29,11 +30,12 @@ float4 main(VS_OUT input) : SV_TARGET
 
     Texture2D colour_texture = ResourceDescriptorHeap[sprite_data[input.instance_id].index];
 	
-    float3 addative_color = sprite_data[input.instance_id].addative_color;
+    float4 addative_color = sprite_data[input.instance_id].addative_color;
 	
     float3 pos = input.real_position.xyz;
 	
     float4 colour = colour_texture.Sample(standard_sampler, input.uv);
+    //return colour;
 	
     float3 light_dir = normalize(float3(10.0f, 10.0f, 10.0f) - pos);
     float3 view_dir = normalize(input.camera_position.xyz-pos);
@@ -51,7 +53,8 @@ float4 main(VS_OUT input) : SV_TARGET
     float3 diffuse = diff * float3(1.0f, 1.0f, 1.0f) * 0.0f;
 
     //float alpha = colour_texture.Sample(standard_sampler, input.uv).w;
-    //return float4(alpha, alpha, alpha, alpha);
+    //float alpha = addative_color.w;
+    //return float4(colour.xyz, alpha);
 	
-    return float4(colour.xyz * (1.0f + specular_color + diffuse) + addative_color, colour.w);
+    return float4(colour.xyz * (1.0f + specular_color + diffuse) + addative_color.xyz, colour.w * addative_color.w);
 }

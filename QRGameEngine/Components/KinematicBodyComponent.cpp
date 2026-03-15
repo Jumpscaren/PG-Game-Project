@@ -24,6 +24,7 @@ void KinematicBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core, c
 	mono_core->HookAndRegisterMonoMethodType<KinematicBodyComponentInterface::GetVelocity>(kinematic_body_class, "GetVelocity", KinematicBodyComponentInterface::GetVelocity);
 	mono_core->HookAndRegisterMonoMethodType<KinematicBodyComponentInterface::SetFixedRotation>(kinematic_body_class, "SetFixedRotation", KinematicBodyComponentInterface::SetFixedRotation);
 	mono_core->HookAndRegisterMonoMethodType<KinematicBodyComponentInterface::SetEnabled>(kinematic_body_class, "SetEnabled", KinematicBodyComponentInterface::SetEnabled);
+	mono_core->HookAndRegisterMonoMethodType<KinematicBodyComponentInterface::GetEnabled>(kinematic_body_class, "GetEnabled", KinematicBodyComponentInterface::GetEnabled);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<KinematicBodyComponent>(SaveScriptComponent, LoadScriptComponent);
 
@@ -83,6 +84,14 @@ void KinematicBodyComponentInterface::SetEnabled(const CSMonoObject& object, con
 	Entity entity = GameObjectInterface::GetEntityID(game_object);
 	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<KinematicBodyComponent>(entity).enabled = enabled;
+}
+
+bool KinematicBodyComponentInterface::GetEnabled(const CSMonoObject& object)
+{
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+	Entity entity = GameObjectInterface::GetEntityID(game_object);
+	SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<KinematicBodyComponent>(entity).enabled;
 }
 
 void KinematicBodyComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)

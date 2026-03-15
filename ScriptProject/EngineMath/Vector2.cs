@@ -19,6 +19,12 @@ namespace ScriptProject.EngineMath
             this.y = y;
         }
 
+        public Vector2(Vector2 vector)
+        {
+            this.x = vector.x;
+            this.y = vector.y;
+        }
+
         public float Length()
         {
             return (float)System.Math.Sqrt(x * x + y * y);
@@ -106,6 +112,11 @@ namespace ScriptProject.EngineMath
         }
 
         public static Vector2 operator *(Vector2 v, float scalar)
+        {
+            return new Vector2(v.x * scalar, v.y * scalar);
+        }
+
+        public static Vector2 operator *(float scalar, Vector2 v)
         {
             return new Vector2(v.x * scalar, v.y * scalar);
         }

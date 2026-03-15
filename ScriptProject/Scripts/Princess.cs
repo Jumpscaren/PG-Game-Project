@@ -1,8 +1,10 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.EngineFramework;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
-using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
@@ -39,6 +41,8 @@ namespace ScriptProject.Scripts
 
         GameObject target = null;
         const float target_speed = 2.75f;
+
+        EffectHolderModule effect_holder = new EffectHolderModule();
 
         void Start()
         {
@@ -150,7 +154,7 @@ namespace ScriptProject.Scripts
             {
                 Vector2 new_velocity = random_direction;
                 new_velocity = new_velocity.Normalize() * max_speed;
-                FixedMovement(body.GetVelocity(), new_velocity, max_speed, drag_speed, body);
+                CharacterMovementModule.FixedMovement(new_velocity, max_speed, drag_speed, body, effect_holder);
             }
 
             Vector2 velocity = body.GetVelocity();
@@ -167,6 +171,11 @@ namespace ScriptProject.Scripts
             //    velocity = velocity.Normalize() * max_speed;
 
             //body.SetVelocity(velocity);
+        }
+
+        public override void SetEffect(Effect effect)
+        {
+            effect_holder.SetEffect(this, effect);
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)
@@ -244,7 +253,7 @@ namespace ScriptProject.Scripts
             float speed = target_speed;
             Vector2 new_velocity = dir.Normalize() * speed;
 
-            FixedMovement(velocity, new_velocity, speed, drag_speed, body);
+            CharacterMovementModule.FixedMovement(new_velocity, speed, drag_speed, body, effect_holder);
 
             return true;
         }

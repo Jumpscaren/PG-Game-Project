@@ -20,6 +20,7 @@
 #include <list>
 #include <ranges>
 #include <tuple>
+#include <numeric>
 
 #include "Vendor/Include/ankerl/unordered_dense.h"
 namespace qr {

@@ -26,5 +26,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetEnabled(bool enabled);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern bool GetEnabled();
     }
 }

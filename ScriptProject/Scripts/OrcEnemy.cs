@@ -1,5 +1,9 @@
 ﻿using ScriptProject.Engine;
+using ScriptProject.Engine.Constants;
+using ScriptProject.EngineFramework;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
@@ -10,8 +14,6 @@ using System.Text;
 using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcCarrier;
 using static ScriptProject.Scripts.Player;
-using ScriptProject.EngineFramework;
-using ScriptProject.Engine.Constants;
 
 namespace ScriptProject.Scripts
 {
@@ -67,6 +69,8 @@ namespace ScriptProject.Scripts
 
         HoleManager holes = new HoleManager();
 
+        EffectHolderModule effect_holder = new EffectHolderModule();
+
         public class OrcAngryEventData : EventSystem.BaseEventData
         {
             public GameObject orc_to_target;
@@ -86,6 +90,11 @@ namespace ScriptProject.Scripts
             actor.SetShowPath(true);
             transform = game_object.transform;
             body = game_object.GetComponent<DynamicBody>();
+
+            game_object.RemoveComponent<CircleCollider>();
+            CapsuleCollider capsule = game_object.AddComponent<CapsuleCollider>();
+            capsule.SetRadius(0.2f);
+            capsule.SetPoints(new Vector2(-0.1f, 0.0f), new Vector2(0.1f, 0.0f));
 
             sprite_game_object = GameObject.CreateGameObject();
             sprite = sprite_game_object.AddComponent<Sprite>();
@@ -150,6 +159,11 @@ namespace ScriptProject.Scripts
             --count;
         }
 
+        public override void SetEffect(Effect effect)
+        {
+            effect_holder.SetEffect(this, effect);
+        }
+
         public override void TakeDamage(GameObject hit_object, float damage)
         {
             health -= damage;
@@ -209,7 +223,7 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }
@@ -262,7 +276,7 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            FixedMovement(velocity, new_velocity, speed, drag_speed, body);
+            CharacterMovementModule.FixedMovement(new_velocity, speed, drag_speed, body, effect_holder);
         }
 
         void Death()
@@ -301,7 +315,7 @@ namespace ScriptProject.Scripts
 
         void Attack()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }

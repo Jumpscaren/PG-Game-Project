@@ -1,5 +1,6 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +32,10 @@ namespace ScriptProject.Scripts
                 //Console.WriteLine("Remove Hit Object Id = " + hit_object_id);
                 hit_object_ids.Remove(hit_object_id);
             }
+        }
+
+        public override void SetEffect(Effect effect)
+        {
         }
 
         public override void TakeDamage(GameObject hit_object, float damage)

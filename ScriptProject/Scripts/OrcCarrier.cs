@@ -1,6 +1,9 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.Engine.Constants;
+using ScriptProject.EngineFramework;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
@@ -9,7 +12,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcEnemy;
-using ScriptProject.EngineFramework;
 
 namespace ScriptProject.Scripts
 {
@@ -75,6 +77,8 @@ namespace ScriptProject.Scripts
         const float max_distance_to_change_target_to_player = 2.5f;
         const float max_time_to_change_target_to_player= 8.0f;
         float timer_to_change_target_to_player = 0.0f;
+
+        EffectHolderModule effect_holder = new EffectHolderModule();
 
         public static int GetCount()
         {
@@ -197,6 +201,11 @@ namespace ScriptProject.Scripts
             --count;
         }
 
+        public override void SetEffect(Effect effect)
+        {
+            effect_holder.SetEffect(this, effect);
+        }
+
         public override void TakeDamage(GameObject hit_object, float damage)
         {
             health -= damage;
@@ -269,7 +278,7 @@ namespace ScriptProject.Scripts
         Vector2 right_dir = new Vector2(1.0f, 0.0f);
         void Look()
         {
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }
@@ -320,7 +329,7 @@ namespace ScriptProject.Scripts
             }
 
             Vector2 new_velocity = dir.Normalize() * speed;
-            FixedMovement(velocity, new_velocity, speed, drag_speed, body);
+            CharacterMovementModule.FixedMovement(new_velocity, speed, drag_speed, body, effect_holder);
         }
 
         void Death()
@@ -364,7 +373,7 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }
@@ -433,7 +442,7 @@ namespace ScriptProject.Scripts
                 return;
             }
 
-            if (!IsEffectOver() && GetEffect().StopMovement())
+            if (!effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>())
             {
                 return;
             }

@@ -54,7 +54,13 @@ CSMonoClass::CSMonoClass(CSMonoCore* mono_core, const std::string& mono_namespac
 {
 	m_mono_class = mono_class_from_name(mono_core->GetImage(), mono_namespace.c_str(), mono_class.c_str());
 
-	assert(m_mono_class);
+	//assert(m_mono_class);
+
+	if (!m_mono_class)
+	{
+		std::cout << "Failed to get mono class: " + mono_namespace + "." + mono_class << "\n";
+		return;
+	}
 
 	m_mono_full_name = GetMonoClassFullName(mono_namespace, mono_class);
 }

@@ -12,6 +12,11 @@ ScriptingManager* ScriptingManager::s_scripting_manager = nullptr;
 
 void ScriptingManager::ScriptBeginCollision(Entity entity_1, SceneIndex scene_index_1, Entity entity_2, SceneIndex scene_index_2)
 {
+#ifdef _EDITOR
+	return;
+#endif // _EDITOR
+
+
 	EntityManager* entity_manager_1 = SceneManager::GetSceneManager()->GetEntityManager(scene_index_1);
 	EntityManager* entity_manager_2 = SceneManager::GetSceneManager()->GetEntityManager(scene_index_2);
 
@@ -140,14 +145,19 @@ void ScriptingManager::AddScript(const SceneIndex scene_index, const Entity enti
 	script_component.script_fixed_update = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "FixedUpdate");
 	script_component.script_late_update = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "LateUpdate");
 	script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "BeginCollision");
-	if (script_component.script_begin_collision == CSMonoCore::NULL_METHOD)
+
+	auto parent_class = CSMonoCore::Get()->TryGetParentClass(script_component.script_object);
+	while (script_component.script_begin_collision == CSMonoCore::NULL_METHOD)
 	{
-		const auto parent_class = CSMonoCore::Get()->TryGetParentClass(script_component.script_object);
-		if (parent_class != CSMonoCore::NULL_CLASS)
+		if (parent_class == CSMonoCore::NULL_CLASS)
 		{
-			script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(parent_class, "BeginCollision");
+			break;
 		}
+
+		script_component.script_begin_collision = CSMonoCore::Get()->TryRegisterMonoMethod(parent_class, "BeginCollision");
+		parent_class = CSMonoCore::Get()->TryGetParentClass(parent_class);
 	}
+
 	script_component.script_end_collision = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "EndCollision");
 
 	if (const MonoMethodHandle awake_method_handle = CSMonoCore::Get()->TryRegisterMonoMethod(script_component.script_object, "Awake");
@@ -171,12 +181,14 @@ void ScriptingManager::RemoveScript(const SceneIndex scene_index, const Entity e
 
 void ScriptingManager::InternalRemoveScript(ScriptComponent& script)
 {
+#ifndef _EDITOR
 	const auto script_remove = CSMonoCore::Get()->TryRegisterMonoMethod(script.script_object, "Remove");
 	CSMonoCore* mono_core = CSMonoCore::Get();
 	if (mono_core->CheckIfMonoMethodExists(script_remove))
 	{
 		mono_core->CallMethod(script_remove, script.script_object);
 	}
+#endif // _EDITOR
 
 	script.script_object.RemoveLinkToMono();
 	script.script_start = CSMonoCore::NULL_METHOD;

@@ -20,6 +20,7 @@ void StaticBodyComponentInterface::RegisterInterface(CSMonoCore* mono_core, cons
 	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::RemoveComponent>(static_body_class, "RemoveComponent", StaticBodyComponentInterface::RemoveComponent);
 
 	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::SetEnabled>(static_body_class, "SetEnabled", StaticBodyComponentInterface::SetEnabled);
+	mono_core->HookAndRegisterMonoMethodType<StaticBodyComponentInterface::GetEnabled>(static_body_class, "GetEnabled", StaticBodyComponentInterface::GetEnabled);
 
 	SceneLoader::Get()->OverrideSaveComponentMethod<StaticBodyComponent>(SaveScriptComponent, LoadScriptComponent);
 
@@ -55,6 +56,15 @@ void StaticBodyComponentInterface::SetEnabled(const CSMonoObject& object, const 
 	const Entity entity = GameObjectInterface::GetEntityID(game_object);
 	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
 	SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<StaticBodyComponent>(entity).enabled = enabled;
+}
+
+bool StaticBodyComponentInterface::GetEnabled(const CSMonoObject& object)
+{
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+
+	return SceneManager::GetSceneManager()->GetEntityManager(scene_index)->GetComponent<StaticBodyComponent>(entity).enabled;
 }
 
 void StaticBodyComponentInterface::SaveScriptComponent(Entity ent, EntityManager* entman, JsonObject* json_object)

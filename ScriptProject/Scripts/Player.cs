@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using static ScriptProject.Engine.Input;
 using ScriptProject.EngineFramework;
 using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 
 namespace ScriptProject.Scripts
 {
@@ -106,20 +107,42 @@ namespace ScriptProject.Scripts
 
         const float epsilion = 0.1f;
 
+        GameObject damage_hit_box_game_object;
+        PlayerDamageHitBox damage_hit_box_script;
+        EffectHolderModule effect_holder = new EffectHolderModule();
+
+        Sprite arm_sprite;
+        GameObject mid_arm_block;
+
+        readonly Vector2 right_dir = new Vector2(1.0f, 0.0f);
+
         void Start()
         {
             body = game_object.GetComponent<DynamicBody>();
             game_object.GetComponent<Sprite>();
             anim_sprite = game_object.GetComponent<AnimatableSprite>();
 
+            game_object.GetComponent<CircleCollider>().SetRadius(0.2f);
+            game_object.RemoveComponent<CircleCollider>();
+
+            CapsuleCollider capsule = game_object.AddComponent<CapsuleCollider>();
+            capsule.SetRadius(0.2f);
+            capsule.SetPoints(new Vector2(-0.1f, 0.0f), new Vector2(0.1f, 0.0f));
+
             sprite_game_object = GameObject.CreateGameObject();
             Console.WriteLine("Sprite: " + sprite_game_object.GetEntityID());
             sprite = sprite_game_object.AddComponent<Sprite>();
             sprite_anim_sprite = sprite_game_object.AddComponent<AnimatableSprite>();
             sprite.SetTexture(game_object.GetComponent<Sprite>().GetTexture());
+            sprite.PixelScale();
             game_object.RemoveComponent<Sprite>();
             game_object.transform.SetZIndex(0);
             game_object.AddChild(sprite_game_object);
+
+            damage_hit_box_game_object = GameObject.CreateGameObject();
+            damage_hit_box_script = damage_hit_box_game_object.AddComponent<PlayerDamageHitBox>();
+            damage_hit_box_script.Init(game_object);
+            game_object.AddChild(damage_hit_box_game_object);
 
             hit_box = GameObject.CreateGameObject();
             hit_box.SetName("Attack_Box");
@@ -134,13 +157,12 @@ namespace ScriptProject.Scripts
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
             hit_box_action = new HitBoxPlayer();
             hit_box_script.SetHitBoxAction(hit_box_action, game_object);
-            hit_box_script.SetAvoidGameObject(game_object);
+            hit_box_script.SetAvoidGameObject(damage_hit_box_game_object);
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
 
             camera = GameObject.TempFindGameObject("PlayerCamera");
-            //game_object.AddChild(camera);
 
             princess = GameObject.TempFindGameObject("Princess");
             princess_script = princess.GetComponent<Princess>();
@@ -157,6 +179,8 @@ namespace ScriptProject.Scripts
             attack_timer.SetTimeLimit(attack_time);
             between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
             princess_call_timer.SetTimeLimit(princess_call_time);
+
+            CreateArm();
         }
 
         void Update()
@@ -167,7 +191,7 @@ namespace ScriptProject.Scripts
         void FixedUpdate()
         {
             //GetInput();
-            bool stop_movement = !IsEffectOver() && GetEffect().StopMovement();
+            bool stop_movement = !effect_holder.IsEffectOver() && effect_holder.IsEffect<StunEffect>();
             //Console.WriteLine("Stop: " + stop_movement);
 
             if (health <= 0.0f)
@@ -205,7 +229,16 @@ namespace ScriptProject.Scripts
             }
             sprite.SetShow(show_sprite);
 
-            current_speed = max_speed;
+            if ((!roll_timer.IsExpired() || is_invincble) && damage_hit_box_script.IsHitBoxActive())
+            {
+                damage_hit_box_script.DeactivateHitBox();
+            }
+            else if (!damage_hit_box_script.IsHitBoxActive())
+            {
+                damage_hit_box_script.ActivateHitBox();
+            }
+
+                current_speed = max_speed;
             if (holding_princess)
             {
                 current_speed = princess_speed;
@@ -236,10 +269,11 @@ namespace ScriptProject.Scripts
 
             Vector2 mouse_position = Input.GetMousePositionInWorld(camera);
             Vector2 mouse_dir = (mouse_position - game_object.transform.GetPosition()).Normalize();
-            Vector2 right_dir = new Vector2(1.0f, 0.0f);
 
             if (roll_timer.IsExpired())
             {
+                string run_animation_name = "Animations/KnightRunAnim.anim";
+                run_animation_name = "Animations/KnightTestRunAnim.anim";
                 if (new_velocity.Length() < 0.01f && !attack)
                 {
                     if (!AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightIdle.anim"))
@@ -247,9 +281,9 @@ namespace ScriptProject.Scripts
                         AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightIdle.anim");
                     }
                 }
-                else if (!attack && !stop_movement && !AnimationManager.IsAnimationPlaying(sprite_game_object, "Animations/KnightRunAnim.anim"))
+                else if (!attack && !stop_movement && !AnimationManager.IsAnimationPlaying(sprite_game_object, run_animation_name))
                 {
-                    AnimationManager.LoadAnimation(sprite_game_object, "Animations/KnightRunAnim.anim");
+                    AnimationManager.LoadAnimation(sprite_game_object, run_animation_name);
                 }
 
                 AttackLogic(stop_movement, mouse_dir);
@@ -275,7 +309,7 @@ namespace ScriptProject.Scripts
 
             Vector2 velocity = body.GetVelocity();
             new_velocity = new_velocity.Normalize() * current_speed;
-            FixedMovement(velocity, new_velocity, current_speed, drag_speed, body);
+            CharacterMovementModule.FixedMovement(new_velocity, current_speed, drag_speed, body, effect_holder);
 
             if (stop_movement)
             {
@@ -295,6 +329,18 @@ namespace ScriptProject.Scripts
             PrincessCall();
 
             RollLogic(new_velocity.Normalize());
+
+            ArmRotation(mouse_dir);
+        }
+
+        public override bool Interactable()
+        {
+            return false;
+        }
+
+        public override void SetEffect(Effect effect)
+        {
+            effect_holder.SetEffect(damage_hit_box_script, effect);
         }
 
         public override bool ShouldEffectBeSet(Effect effect)
@@ -509,6 +555,18 @@ namespace ScriptProject.Scripts
             return calculated_rot - attack_angle / 2.0f + attack_time_rot;
         }
 
+        float GetMidArmBlockRotation(float calculated_rot)
+        {
+            float attack_time_rot = 0.0f;
+            if (!attack_timer.IsExpired())
+            {
+                attack_time_rot = (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_time) * attack_angle * 20.0f;
+                return attack_time_rot;
+            }
+
+            return calculated_rot;
+        }
+
 
         void PrincessLogic()
         {
@@ -555,6 +613,7 @@ namespace ScriptProject.Scripts
             {
                 if (current_rope != null)
                 {
+                    Console.WriteLine("Right Clicked");
                     DestroyRope();
                     return;
                 }
@@ -590,6 +649,7 @@ namespace ScriptProject.Scripts
             {
                 if (current_rope_hooked_game_object == null)
                 {
+                    Console.WriteLine("Hooked GameObject is null");
                     DestroyRope();
                     return;
                 }
@@ -604,6 +664,7 @@ namespace ScriptProject.Scripts
                 const float MINIMUM_DISTANCE = 0.8f;
                 if (distance.Length() < MINIMUM_DISTANCE)
                 {
+                    Console.WriteLine("Distance is too small");
                     DestroyRope();
                     return;
                 }
@@ -618,6 +679,7 @@ namespace ScriptProject.Scripts
 
                     if (distance_to_new_closest_target.Length() < distance_to_current_hooked_target.Length())
                     {
+                        Console.WriteLine("Object Blocks the path to the target");
                         DestroyRope();
                         return;
                     }
@@ -676,7 +738,7 @@ namespace ScriptProject.Scripts
                 boomerang.transform.SetPosition(game_object.transform.GetPosition());
                 boomerang.transform.SetScale(new Vector2(1.5f, 1.5f));
 
-                boomerang.AddComponent<BoomerangScript>().SetInitialDirection(boomerang_initial_direction).SetOwner(game_object);
+                boomerang.AddComponent<BoomerangScript>().SetInitialDirection(boomerang_initial_direction).SetOwner(game_object, damage_hit_box_game_object);
 
                 boomerangs.Add(boomerang);
             }
@@ -690,7 +752,7 @@ namespace ScriptProject.Scripts
                 if (!bow_shot && bow_charge > bow_charge_max)
                 {
                     GameObject arrow = GameObject.CreateGameObject();
-                    arrow.AddComponent<Arrow>().InitArrow(game_object.transform.GetPosition(), arrow_direction);
+                    arrow.AddComponent<Arrow>().InitArrow(game_object.transform.GetPosition(), arrow_direction, damage_hit_box_game_object);
                     bow_shot = true;
                 }
             }
@@ -738,6 +800,43 @@ namespace ScriptProject.Scripts
         {
             holding_princess = false;
             princess_script.KnightHoldingPrincess(holding_princess);
+        }
+
+        void CreateArm()
+        {
+            const float pixel_per_unit = 32.0f;
+            Vector2 arm_offset_in_pixels = new Vector2(6.0f, 4.0f);
+            const float z_mid_arm_block_offset = 0.9f;
+            const float z_arm_offset = -0.01f;
+
+            GameObject arm = GameObject.CreateGameObject();
+            arm_sprite = arm.AddComponent<Sprite>();
+            Render.LoadTexture("../QRGameEngine/Textures/SwordHand.png", arm_sprite);
+
+            arm_sprite.PixelScale();
+            mid_arm_block = GameObject.CreateGameObject();
+            mid_arm_block.AddChild(arm);
+
+            game_object.AddChild(mid_arm_block);
+
+            mid_arm_block.transform.SetLocalZIndex(z_mid_arm_block_offset);
+            arm.transform.SetLocalZIndex(z_arm_offset);
+
+            arm.transform.SetLocalPosition(arm_offset_in_pixels / pixel_per_unit);
+        }
+
+        void ArmRotation(Vector2 mouse_dir)
+        {
+            Vector2 arm_mouse_dir = new Vector2(mouse_dir);
+            if (mouse_dir.x < epsilion)
+            {
+                arm_mouse_dir.x *= -1.0f;
+            }
+
+            float arm_calculated_rot = Vector2.Angle(arm_mouse_dir, right_dir);
+            mid_arm_block.transform.SetLocalRotation(GetMidArmBlockRotation(arm_calculated_rot));
+
+            mid_arm_block.transform.FlipXLocally(mouse_dir.x < epsilion);
         }
 
         void GetInput()

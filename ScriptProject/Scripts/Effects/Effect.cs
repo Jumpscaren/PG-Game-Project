@@ -19,7 +19,5 @@ namespace ScriptProject.Scripts.Effects
         }
 
         public bool IsEffectOver() { return effect_timer.IsExpired(); }
-
-        public virtual bool StopMovement() { return false; }
     }
 }

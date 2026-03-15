@@ -27,11 +27,23 @@ CSMonoObject PhysicsInterface::Raycast(const CSMonoObject& position, const CSMon
 	const uint16_t category, const uint16_t mask, const int16_t group)
 {
 	const ColliderFilter collider_filter{.category_bits = category, .mask_bits = mask, .group_index = group};
+	Vector2 raycast_position = Vector2Interface::GetVector2(position);
+	Vector2 closest_position = Vector2(10000, 10000);
+
 	const RaycastResult result =
-		PhysicsCore::Get()->Raycast(Vector2Interface::GetVector2(position), Vector2Interface::GetVector2(direction), collider_filter,
-			[](bool should_raycast, float fraction, float closest_fraction, SceneIndex, Entity) -> bool 
+		PhysicsCore::Get()->Raycast(raycast_position, Vector2Interface::GetVector2(direction), collider_filter,
+			[&](bool should_raycast, const Vector2& point, SceneIndex, Entity) -> bool 
 			{ 
-				return should_raycast && fraction < closest_fraction; 
+				float new_distance = (point - raycast_position.x).Length();
+				float old_distance = (closest_position - raycast_position).Length();
+
+				if (should_raycast && new_distance < old_distance)
+				{
+					closest_position = point;
+					return true;
+				}
+
+				return false;
 			});
 
 	CSMonoObject cs_raycast_result(CSMonoCore::Get(), s_raycast_result_struct);
@@ -50,14 +62,25 @@ CSMonoObject PhysicsInterface::Raycast(const CSMonoObject& position, const CSMon
 bool PhysicsInterface::RaycastCheckIfClosest(const CSMonoObject& position, const CSMonoObject& direction, uint16_t category, uint16_t mask, int16_t group, SceneIndex scene_index, Entity entity)
 {
 	const ColliderFilter collider_filter{ .category_bits = category, .mask_bits = mask, .group_index = group };
+	Vector2 raycast_position = Vector2Interface::GetVector2(position);
+	Vector2 closest_position = Vector2(10000, 10000);
+
 	const RaycastResult result =
-		PhysicsCore::Get()->Raycast(Vector2Interface::GetVector2(position), Vector2Interface::GetVector2(direction), collider_filter,
-			[scene_index, entity](bool should_raycast, float fraction, float closest_fraction, SceneIndex in_scene_index, Entity in_entity) -> bool {
+		PhysicsCore::Get()->Raycast(raycast_position, Vector2Interface::GetVector2(direction), collider_filter,
+			[&](bool should_raycast, const Vector2& point, SceneIndex in_scene_index, Entity in_entity) -> bool {
 				if (in_scene_index == scene_index && in_entity == entity)
 				{
 					should_raycast = true;
 				}
-				return should_raycast && fraction < closest_fraction;
+
+				float new_distance = (point - raycast_position.x).Length();
+				float old_distance = (closest_position - raycast_position).Length();
+				if (should_raycast && new_distance < old_distance)
+				{
+					closest_position = point;
+					return true;
+				}
+				return false;
 			});
 
 	return result.intersected && result.scene_index == scene_index && result.entity == entity;

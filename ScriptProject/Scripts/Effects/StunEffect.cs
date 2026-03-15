@@ -11,7 +11,5 @@ namespace ScriptProject.Scripts.Effects
         public StunEffect(float duration) : base(duration)
         {
         }
-
-        public override bool StopMovement() { return true; }
     }
 }

@@ -78,10 +78,8 @@ DX12TextureViewHandle DX12SwapChain::GetBackbufferView()
 	return m_rtv_views[current_backbuffer_index];
 }
 
-void DX12SwapChain::Resize(DX12Core* dx12_core)
+void DX12SwapChain::Resize(DX12Core* dx12_core, const uint32_t width, const uint32_t height)
 {
-	//m_device->Flush();
-
 	HRESULT hr{ S_OK };
 	DXGI_SWAP_CHAIN_DESC1 swapDesc;
 	hr = m_swapchain->GetDesc1(&swapDesc);
@@ -96,8 +94,12 @@ void DX12SwapChain::Resize(DX12Core* dx12_core)
 	m_backbuffers.clear();
 	m_rtv_views.clear();
 
-	hr = m_swapchain->ResizeBuffers(0, (UINT)dx12_core->GetWindow()->GetWindowWidth(), (UINT)dx12_core->GetWindow()->GetWindowHeight(), swapDesc.Format, swapDesc.Flags);
+	hr = m_swapchain->ResizeBuffers(0, (UINT)width, (UINT)height, swapDesc.Format, swapDesc.Flags);
 	assert(SUCCEEDED(hr));
+
+	//Save the resize width and height
+	m_backbuffer_width = width;
+	m_backbuffer_height = height;
 
 	//Get the backbuffers
 	AddBackbuffers(dx12_core);

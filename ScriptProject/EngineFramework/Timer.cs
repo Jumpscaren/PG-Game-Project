@@ -39,6 +39,16 @@ namespace ScriptProject.EngineFramework
             return timer < Time.GetElapsedTime();
         }
 
+        public float GetRemainingTime()
+        {
+            float remaining_time = timer - Time.GetElapsedTime();
+            if (remaining_time < 0.0f)
+            {
+                return 0.0f;
+            }
+            return remaining_time;
+        }
+
         public float GetTime()
         {
             return timer;

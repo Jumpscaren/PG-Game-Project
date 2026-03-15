@@ -3,6 +3,7 @@
 #include "Vendor/Include/ImGUI/backends/imgui_impl_win32.h"
 #include "Vendor/Include/ImGUI/backends/imgui_impl_dx12.h"
 #include "RenderTypes.h"
+#include "Common/EngineTypes.h"
 
 class DX12Core;
 
@@ -11,6 +12,8 @@ class ImGUIMain
 private:
 	ImGUIMain();
 	~ImGUIMain();
+
+	static ImVec2 GetScaledMousePosition(const Vector2u& backbuffer_size);
 
 public:
 	ImGUIMain(const ImGUIMain& other) = delete;
@@ -24,5 +27,8 @@ public:
 	static void EndFrame();
 
 	static bool ImageButton(const std::string& image_id, TextureHandle image_texture);
+
+private:
+	static DX12Core* m_dx12_core;
 };
 

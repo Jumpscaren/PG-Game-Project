@@ -84,7 +84,8 @@ void SetEntityAnimationKeyData(AnimatableSpriteComponent& animatable_sprite, con
 		key_frame_indicies[section_index] = current_key_frame;
 		const AnimationKeyFrame& key_frame = animation_value_section.animation_key_frames[current_key_frame];
 
-		if (animatable_sprite.current_animation_time + 0.00001f <= key_frame.timestamp)
+		constexpr float epsilon = 0.00001f;
+		if (animatable_sprite.current_animation_time + epsilon <= key_frame.timestamp)
 		{
 			continue;
 		}

@@ -148,9 +148,12 @@ const Vector3 operator*(const Vector3& vector_1, float scalar)
 	return Vector3(vector_1.x * scalar, vector_1.y * scalar, vector_1.z * scalar);
 }
 
-const Vector3 Vector3::operator*=(const float scalar)
+Vector3& Vector3::operator*= (const float scalar)
 {
-	return Vector3(x * scalar, y * scalar, z * scalar);
+	x *= scalar;
+	y *= scalar;
+	z *= scalar;
+	return *this;
 }
 
 const Vector3 Vector3::operator*(float scalar)

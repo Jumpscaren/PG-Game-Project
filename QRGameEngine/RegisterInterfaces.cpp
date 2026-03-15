@@ -9,7 +9,9 @@
 #include "Components/DynamicBodyComponent.h"
 #include "Components/StaticBodyComponent.h"
 #include "Components/CircleColliderComponent.h"
+#include "Components/CapsuleColliderComponent.h"
 #include "Scripting/Objects/Vector2Interface.h"
+#include "Scripting/Objects/Vector4Interface.h"
 #include "Components/EntityDataComponent.h"
 #include "Scripting/Objects/TimeInterface.h"
 #include "Components/AnimatableSpriteComponent.h"
@@ -57,6 +59,9 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	const DeferedMethodIndex remove_polygon_collider_index = SceneLoader::Get()->GetDeferedCalls()->Register<&PhysicsCore::RemovePolygonCollider>(PhysicsCore::Get());
 	const DeferedMethodIndex add_polygon_collider_index = SceneLoader::Get()->GetDeferedCalls()->Register<&PhysicsCore::AddPolygonCollider>(PhysicsCore::Get());
 
+	const DeferedMethodIndex remove_capsule_collider_index = SceneLoader::Get()->GetDeferedCalls()->Register<&PhysicsCore::RemoveCapsuleCollider>(PhysicsCore::Get());
+	const DeferedMethodIndex add_capsule_collider_index = SceneLoader::Get()->GetDeferedCalls()->Register<&PhysicsCore::AddCapsuleCollider>(PhysicsCore::Get());
+
 	const DeferedMethodIndex remove_script_index = SceneLoader::Get()->GetDeferedCalls()->Register<&ScriptingManager::RemoveScript>(ScriptingManager::Get());
 	const DeferedMethodIndex add_script_index = SceneLoader::Get()->GetDeferedCalls()->Register<&ScriptingManager::AddScript>(ScriptingManager::Get());
 
@@ -77,8 +82,10 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	DynamicBodyComponentInterface::RegisterInterface(mono_core, add_physic_object_index, remove_physic_object_index);
 	BoxColliderComponentInterface::RegisterInterface(mono_core, add_physic_object_index, add_box_collider_index, remove_box_collider_index);
 	CircleColliderComponentInterface::RegisterInterface(mono_core, add_physic_object_index, add_circle_collider_index, remove_circle_collider_index);
+	CapsuleColliderComponentInterface::RegisterInterface(mono_core, add_physic_object_index, add_capsule_collider_index, remove_capsule_collider_index);
 	StaticBodyComponentInterface::RegisterInterface(mono_core, add_physic_object_index, remove_physic_object_index);
 	Vector2Interface::RegisterInterface(mono_core);
+	Vector4Interface::RegisterInterface(mono_core);
 	EntityDataComponentInterface::RegisterInterface(mono_core);
 	AnimatableSpriteComponentInterface::RegisterInterface(mono_core);
 	TimeInterface::RegisterInterface(mono_core);
