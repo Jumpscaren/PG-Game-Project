@@ -25,7 +25,6 @@ private:
 	std::string m_output_tile_texture_name = "work.png";
 
 	const uint32_t m_tiles_per_row = 4;
-	const float m_uv_step = 1.0f / (float)m_tiles_per_row;
 	int m_edge_width = 0;
 };
 

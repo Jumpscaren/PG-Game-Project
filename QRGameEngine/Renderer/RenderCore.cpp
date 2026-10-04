@@ -378,8 +378,6 @@ uint32_t RenderCore::SetUpPreRenderData(Scene* draw_scene, CameraComponent& acti
 
 uint32_t RenderCore::SetUpSpriteRenderData(Scene* draw_scene, Scene* global_scene)
 {
-	static bool once = true;
-	static bool hit = false;
 	uint32_t render_object_amount = 0;
 	const auto assamble_render_data = [&](const Entity entity, const TransformComponent& transform, const SpriteComponent& sprite)
 		{
@@ -411,16 +409,6 @@ uint32_t RenderCore::SetUpSpriteRenderData(Scene* draw_scene, Scene* global_scen
 			sprite_data.uv[1] = sprite.uv[sprite.uv_indicies[1]];
 			sprite_data.uv[2] = sprite.uv[sprite.uv_indicies[2]];
 			sprite_data.uv[3] = sprite.uv[sprite.uv_indicies[3]];
-			if (once)
-			{
-				std::cout << "uv 0 x: " << sprite_data.uv[0].x << " y: " << sprite_data.uv[0].y << "\n";
-				std::cout << "uv 1 x: " << sprite_data.uv[1].x << " y: " << sprite_data.uv[1].y << "\n";
-				std::cout << "uv 2 x: " << sprite_data.uv[2].x << " y: " << sprite_data.uv[2].y << "\n";
-				std::cout << "uv 3 x: " << sprite_data.uv[3].x << " y: " << sprite_data.uv[3].y << "\n";
-				hit = true;
-			}
-
-
 			sprite_data.addative_color = sprite.addative_color;
 
 			//Pixel scaling
@@ -455,7 +443,6 @@ uint32_t RenderCore::SetUpSpriteRenderData(Scene* draw_scene, Scene* global_scen
 
 	draw_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>(assamble_render_data);
 	global_scene->GetEntityManager()->System<TransformComponent, SpriteComponent>(assamble_render_data);
-	once = hit ? false : true;
 	return render_object_amount;
 }
 
@@ -813,44 +800,11 @@ TextureInfo* RenderCore::GenerateTile(const TextureHandle tile_full_input_textur
 	const uint32_t input_texture_height = tile_full_input_texture_info->height;
 	const uint32_t output_texture_width = input_texture_width * tiles_per_row;
 	const uint32_t output_texture_height = input_texture_height * tiles_per_row;
-	const uint32_t extruded_output_texture_width = output_texture_width + TRANSPARENT_LINES;
-	const uint32_t extruded_output_texture_height = output_texture_height + TRANSPARENT_LINES;
 	const uint32_t total_number_of_tiles = tiles_per_row * tiles_per_row;
 
 	const float float_tiles_per_row = (float)tiles_per_row;
-	const float one_pixel_width_size = 1.0f / extruded_output_texture_width;
-	const float one_pixel_height_size = 1.0f / extruded_output_texture_height;
-	const float tile_width_size = one_pixel_width_size * input_texture_width;
-	const float tile_height_size = one_pixel_height_size * input_texture_height;
 
 	std::vector<VertexWithUV> tile_vertices;
-	for (uint32_t i = 0; i < total_number_of_tiles; ++i)
-	{
-		const float transparent_line_width = one_pixel_width_size;
-		const float transparent_lines_per_column = transparent_line_width * (i % tiles_per_row + 1);
-		const float transparent_line_height = one_pixel_width_size;
-		const float transparent_lines_per_row = transparent_line_height * (i / tiles_per_row + 1);
-
-		const float x1 = (i % tiles_per_row) * tile_width_size + transparent_lines_per_column;
-		const float x2 = (i % tiles_per_row + 1) * tile_width_size + transparent_lines_per_column;
-		const float y1 = (i / tiles_per_row) * tile_height_size + transparent_lines_per_row;
-		const float y2 = (i / tiles_per_row + 1) * tile_height_size + transparent_lines_per_row;
-
-		// * 2.0f because the range goes between -1.0f and 1.0f
-		const float ndc_x1 = 1.0f - 2.0f * x1;
-		const float ndc_x2 = 1.0f - 2.0f * x2;
-		const float ndc_y1 = 1.0f - 2.0f * y1;
-		const float ndc_y2 = 1.0f - 2.0f * y2;
-
-		tile_vertices.push_back({ {ndc_x1, ndc_y1, 0.0f}, {0.0f, 1.0f}, 0.0f });
-		tile_vertices.push_back({ {ndc_x1, ndc_y2, 0.0f}, {0.0f, 0.0f}, 0.0f });
-		tile_vertices.push_back({ {ndc_x2, ndc_y2, 0.0f}, {1.0f, 0.0f}, 0.0f });
-
-		tile_vertices.push_back({ {ndc_x1, ndc_y1, 0.0f}, {0.0f, 1.0f}, 0.0f });
-		tile_vertices.push_back({ {ndc_x2, ndc_y2, 0.0f}, {1.0f, 0.0f}, 0.0f });
-		tile_vertices.push_back({ {ndc_x2, ndc_y1, 0.0f}, {1.0f, 1.0f}, 0.0f });
-	}
-
 	for (uint32_t i = 0; i < total_number_of_tiles; ++i)
 	{
 		const float x1 = (i % tiles_per_row) / float_tiles_per_row;
@@ -876,7 +830,7 @@ TextureInfo* RenderCore::GenerateTile(const TextureHandle tile_full_input_textur
 	DX12BufferHandle tile_vertices_handle = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, tile_vertices.data(), sizeof(VertexWithUV), tile_vertices.size(), BufferType::CONSTANT_BUFFER);
 	DX12BufferViewHandle tile_vertices_view_handle = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, tile_vertices_handle, ViewType::SHADER_RESOURCE_VIEW);
 
-	DX12TextureHandle tile_texture_output_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, extruded_output_texture_width, extruded_output_texture_height, TextureFlags::RENDER_TARGET_FLAG);
+	DX12TextureHandle tile_texture_output_handle = m_dx12_core.GetTextureManager()->AddTexture(&m_dx12_core, output_texture_width, output_texture_height, TextureFlags::RENDER_TARGET_FLAG);
 	DX12TextureViewHandle tile_texture_output_view_handle = m_dx12_core.GetTextureManager()->AddView(&m_dx12_core, tile_texture_output_handle, ViewType::RENDER_TARGET_VIEW);
 	m_dx12_core.GetCommandList()->TransitionTextureResource(&m_dx12_core, tile_texture_output_handle, ResourceState::RENDER_TARGET, ResourceState::COMMON);
 
@@ -887,8 +841,8 @@ TextureInfo* RenderCore::GenerateTile(const TextureHandle tile_full_input_textur
 	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_dx12_core.GetCommandList()->SetOMRenderTargets(&m_dx12_core, tile_texture_output_view_handle);
 
-	m_dx12_core.GetCommandList()->SetViewport(extruded_output_texture_width, extruded_output_texture_height);
-	m_dx12_core.GetCommandList()->SetScissorRect(extruded_output_texture_width, extruded_output_texture_height);
+	m_dx12_core.GetCommandList()->SetViewport(output_texture_width, output_texture_height);
+	m_dx12_core.GetCommandList()->SetScissorRect(output_texture_width, output_texture_height);
 
 	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, tile_vertices_view_handle, 0);
 
@@ -903,10 +857,7 @@ TextureInfo* RenderCore::GenerateTile(const TextureHandle tile_full_input_textur
 	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, input_texture_width, 3);
 	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, edge_width, 4);
 
-	//Bigger
-	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, total_number_of_tiles, 5);
-	m_dx12_core.GetCommandList()->Draw(6, total_number_of_tiles, 0, 0);
-	//Real Tiles
+	//Render Tiles
 	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, 0, 5);
 	m_dx12_core.GetCommandList()->Draw(6, total_number_of_tiles, 0, 0);
 

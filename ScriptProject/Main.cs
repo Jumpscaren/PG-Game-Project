@@ -90,9 +90,6 @@ namespace ScriptProject
             PrefabSystem.CreateUserPrefab("GreyPath", GreyPath, 3, "Path");
             PrefabSystem.CreateUserPrefab("FakePath", FakePath, 3, "Path");
 
-            PrefabSystem.CreateUserPrefab("Test2", Test2, 3, "Path");
-            PrefabSystem.CreateUserPrefab("Test3", Test3, 3, "Path");
-
             PrefabSystem.CreateUserPrefab("PlayerPrefab", PlayerPrefab, 1, "Character");
             PrefabSystem.CreateUserPrefab("BasicEnemy", BasicEnemy, 1, "Character");
             PrefabSystem.CreateUserPrefab("OrcEnemy", OrcEnemy, 1, "Character");
@@ -412,19 +409,7 @@ namespace ScriptProject
 
         static void FakePath(GameObject game_object)
         {
-            Render.LoadTexture("../QRGameEngine/Textures/worktest.png", game_object.GetComponent<Sprite>());
-            game_object.AddComponent<Tile>();
-        }
-
-        static void Test2(GameObject game_object)
-        {
-            Render.LoadTexture("../QRGameEngine/Textures/worktest2.png", game_object.GetComponent<Sprite>());
-            game_object.AddComponent<Tile>();
-        }
-
-        static void Test3(GameObject game_object)
-        {
-            Render.LoadTexture("../QRGameEngine/Textures/worktest3.png", game_object.GetComponent<Sprite>());
+            Render.LoadTexture("../QRGameEngine/Textures/work.png", game_object.GetComponent<Sprite>());
             game_object.AddComponent<Tile>();
         }
     }
