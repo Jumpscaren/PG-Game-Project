@@ -55,6 +55,7 @@ public:
 	DX12BufferViewHandle AddView(DX12Core* dx12_core, const DX12BufferSubAllocation& buffer_sub_handle, const ViewType& view_type);
 
 	void UploadData(DX12Core* dx12_core, DX12BufferHandle buffer_handle, void* data, uint64_t element_size, uint64_t nr_of_elements);
+	void UploadData(DX12Core* dx12_core, DX12BufferHandle buffer_handle, const void* data, uint64_t element_size, uint64_t nr_of_elements) { UploadData(dx12_core, buffer_handle, (void*)data, element_size, nr_of_elements); }
 	void UploadData(DX12Core* dx12_core, const DX12BufferSubAllocation& buffer_sub_allocation, void* data, uint64_t data_size);
 };
 

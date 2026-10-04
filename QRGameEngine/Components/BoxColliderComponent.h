@@ -33,6 +33,7 @@ public:
 	static void SetColliderFilter(const CSMonoObject& object, const uint16_t category, const uint16_t mask, const int16_t group_index);
 	static void SetTrigger(const CSMonoObject& object, bool trigger);
 	static void SetHalfBoxSize(const CSMonoObject& object, const CSMonoObject& half_box_size);
+	static CSMonoObject GetHalfBoxSize(const CSMonoObject& object);
 	static void SetOffset(const CSMonoObject& object, const CSMonoObject& offset);
 
 public:

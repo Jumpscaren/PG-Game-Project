@@ -4,6 +4,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "SceneSystem/SceneManager.h"
 #include "PathFinding/PathFinding.h"
+#include "ECS/EntityManager.h"
 
 void PathFindingWorldComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {

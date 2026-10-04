@@ -7,8 +7,10 @@
 #include "EngineComponents.h"
 #include "Components/TransformComponent.h"
 #include "Components/SpriteComponent.h"
+#include "Components/CameraComponent.h"
 #include "Asset/AssetTypes.h"
 #include "SceneSystem/SceneDefines.h"
+#include "Material/MaterialDatabase.h"
 
 class DX12StackAllocator;
 class ImGUIMain;
@@ -26,6 +28,10 @@ private:
 		Vector2 uv[4];
 		Vector4 addative_color;
 		float pad[3];
+	};
+
+	struct MaterialData {
+		MaterialIndex material_index;
 	};
 
 	using WorldMatrixData = DirectX::XMMATRIX;
@@ -54,13 +60,18 @@ private:
 		Entity entity;
 	};
 
+	struct SpriteDataForMaterial {
+		uint32_t start_index;
+		uint32_t number_of_sprites = 0;
+		MaterialIndex material_index = NULL_MATERIAL_INDEX;
+	};
+
 private:
 	DX12Core m_dx12_core;
 	std::unique_ptr<Window> m_window;
 	DX12TextureHandle m_depthstencil;
 	DX12TextureViewHandle m_depthstencil_view;
-	DX12RootSignature m_root_signature;
-	DX12Pipeline m_pipeline;
+	MaterialIndex m_main_material_index;
 	DX12BufferHandle m_quad_handle;
 	DX12BufferViewHandle m_quad_view_handle;
 	DX12BufferHandle m_fullscreen_quad_handle;
@@ -68,6 +79,7 @@ private:
 
 	std::vector<WorldMatrixData> m_transform_data_vector;
 	std::vector<SpriteData> m_sprite_data_vector;
+	std::vector<MaterialData> m_material_data_vector;
 
 	DX12BufferHandle m_camera_buffer;
 	DX12BufferViewHandle m_camera_buffer_view;
@@ -130,6 +142,8 @@ private:
 
 	float m_pixels_per_unit = 1.0f;
 
+	MaterialDatabase m_material_database;
+
 private:
 	DX12Core* GetDX12Core();
 
@@ -156,6 +170,19 @@ private:
 	void CreateWhiteTexture();
 
 	void ConnectEvents();
+
+	uint32_t SetUpPreRenderData(Scene* draw_scene, CameraComponent& active_camera, std::vector<SpriteDataForMaterial>& sprites_per_material);
+	uint32_t SetUpSpriteRenderData(Scene* draw_scene, Scene* global_scene);
+	void SetUpCameraRenderData(Scene* draw_scene, Scene* global_scene, CameraComponent& active_camera);
+	void SortRenderObjects(uint32_t render_object_amount);
+	void AssembleMaterialBatches(uint32_t render_object_amount, std::vector<SpriteDataForMaterial>& sprites_per_material);
+
+	void SetUpRenderTarget(const DX12TextureHandle render_target_texture, const DX12TextureViewHandle render_target_view_handle);
+	void RenderLowerResolutionRenderTargetToHigherResolution();
+	void MainRenderPass(const size_t render_object_amount, const std::vector<SpriteDataForMaterial>& sprites_per_material, const CameraComponent& active_camera);
+	void RenderLinesPasses();
+	void EditorLinesRenderPass();
+	void DebugLinesRenderPass();
 
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name, bool fixed_resolution, float pixels_per_unit);
@@ -191,5 +218,7 @@ public:
 	Vector2 GetFixedRenderSize() const;
 
 	float GetPixelsPerUnit() const { return m_pixels_per_unit; }
+
+	IMaterialDatabase* GetMaterialDatabase() { return &m_material_database; }
 };
 

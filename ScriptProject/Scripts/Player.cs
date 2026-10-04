@@ -28,6 +28,9 @@ namespace ScriptProject.Scripts
         GameObject camera;
         const float attack_time = 0.1f;
         Timer attack_timer = new Timer();
+        const float attack_combo_time_1 = 0.1f;
+        const float attack_combo_time_2 = 0.15f;
+        const float attack_combo_time_3 = 0.23f;
         const float attack_angle = (float)Math.PI / 2.0f;
         //const float between_attack_time = 0.45f;
         //const float between_attack_time = 0.35f;
@@ -40,6 +43,8 @@ namespace ScriptProject.Scripts
         Timer wait_for_next_attack_timer = new Timer();
         int attack_number = 0;
         static readonly Vector2 COMBO_HALF_BOX_INCREASE = new Vector2(0.1f, 0.5f);
+
+        List<GameObject> slash_game_objects = new List<GameObject>();
 
         float health = 100.0f;
 
@@ -311,6 +316,16 @@ namespace ScriptProject.Scripts
             new_velocity = new_velocity.Normalize() * current_speed;
             CharacterMovementModule.FixedMovement(new_velocity, current_speed, drag_speed, body, effect_holder);
 
+            for (int i = 0; i < slash_game_objects.Count; ++i)
+            {
+                if (!AnimationManager.IsAnimationPlaying(slash_game_objects[i], "Animations/SlashAttackAnimation.anim"))
+                {
+                    GameObject.DeleteGameObject(slash_game_objects[i]);
+                    slash_game_objects.RemoveAt(i);
+                    --i;
+                }
+            }
+
             if (stop_movement)
             {
                 return;
@@ -481,19 +496,22 @@ namespace ScriptProject.Scripts
                 ResetAttackCombo();
             }
 
+            //Refactorera, don't use int, stupid
             float attack_velocity_increase = 0.0f;
             if (attack_number == 0)
             {
                 attack_velocity_increase = 0.5f;
                 //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 0.5f);
-                between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+                between_attack_timer.SetTimeLimit(attack_combo_time_1 + between_attack_time);
+                attack_timer.SetTimeLimit(attack_combo_time_1);
                 Console.WriteLine("First Combo");
             }
             if (attack_number == 1)
             {
                 attack_velocity_increase = 2.5f;
                 Console.WriteLine("Second Combo");
-                between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
+                between_attack_timer.SetTimeLimit(attack_combo_time_2 + between_attack_time);
+                attack_timer.SetTimeLimit(attack_combo_time_2);
                 //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.5f);
                 hit_box_action.SetDamage(HitBoxPlayer.MEDIUM_DAMAGE);
                 hit_box_action.SetKnockback(HitBoxPlayer.MEDIUM_KNOCKBACK);
@@ -505,8 +523,9 @@ namespace ScriptProject.Scripts
                 const float time_between_attacks = 0.6f;
                 //attack_velocity_increase = 4.5f;
                 attack_velocity_increase = 6.0f;
-                between_attack_timer.SetTimeLimit(attack_time + between_attack_time);
-                wait_for_next_attack_timer.SetTimeLimit(attack_time + between_attack_time + time_between_attacks);
+                between_attack_timer.SetTimeLimit(attack_combo_time_3 + between_attack_time);
+                attack_timer.SetTimeLimit(attack_combo_time_3);
+                wait_for_next_attack_timer.SetTimeLimit(between_attack_timer.GetTimeLimit() + time_between_attacks);
                 wait_for_next_attack_timer.Start();
                 //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 2.5f);
                 hit_box_action.SetDamage(HitBoxPlayer.HIGH_DAMAGE);
@@ -543,6 +562,21 @@ namespace ScriptProject.Scripts
             velocity += attack_dir * attack_velocity_increase;
             body.SetVelocity(velocity);
             current_speed = attack_speed;
+
+            //Create Slash Sprite
+            GameObject slash_sprite = GameObject.CreateGameObject();
+            Vector2 position = (hit_box.transform.GetPosition() - mid_block.transform.GetPosition()).Length() * attack_dir;
+            slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x - 0.3f));
+            slash_sprite.transform.SetLocalRotation(mid_block.transform.GetLocalRotation() - attack_angle / 2.0f);
+            slash_sprite.transform.SetScale(new Vector2(2.0f * (2.0f * hit_box_collider.GetHalfBoxSize().y), 2.0f * hit_box_collider.GetHalfBoxSize().x));
+            Sprite sprite = slash_sprite.AddComponent<Sprite>();
+            Render.LoadTexture("../QRGameEngine/Textures/TestAttack2.png", sprite);
+            sprite.SetMaterial("SlashAttackMaterial");
+
+            slash_sprite.AddComponent<AnimatableSprite>();
+            AnimationManager.LoadAnimation(slash_sprite, "Animations/SlashAttackAnimation.anim");
+
+            slash_game_objects.Add(slash_sprite);
         }
 
         float GetMidBlockRotation(float calculated_rot)
@@ -550,17 +584,28 @@ namespace ScriptProject.Scripts
             float attack_time_rot = 0.0f;
             if (!attack_timer.IsExpired())
             {
-                attack_time_rot = (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_time) * attack_angle;
+                attack_time_rot = (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_timer.GetTimeLimit()) * attack_angle;
             }
             return calculated_rot - attack_angle / 2.0f + attack_time_rot;
         }
 
         float GetMidArmBlockRotation(float calculated_rot)
         {
-            float attack_time_rot = 0.0f;
             if (!attack_timer.IsExpired())
             {
-                attack_time_rot = (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_time) * attack_angle * 20.0f;
+                // Need the attack time to decrease as the attack hit box gets bigger
+                float rot = GetMidBlockRotation(calculated_rot);
+                float angle_pi = (float)Math.PI / 2.0f;
+                //if (attack_number == 1)
+                //{
+                //    angle_pi = (float)Math.PI / 4.0f;
+                //}
+                //if (attack_number == 2)
+                //{
+                //    angle_pi = (float)Math.PI / 3.0f;
+                //}
+                float down_rot = rot - angle_pi;
+                float attack_time_rot = down_rot + (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_timer.GetTimeLimit()) * 2.0f * angle_pi;
                 return attack_time_rot;
             }
 

@@ -21,9 +21,15 @@
     <ClCompile Include="ScriptHelp\CharactersInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UserCode\MaterialCreator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ScriptHelp\CharactersInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UserCode\MaterialCreator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,6 +10,7 @@
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "IO/JsonObject.h"
 #include "KinematicBodyComponent.h"
+#include "ECS/EntityManager.h"
 
 DeferedMethodIndex PolygonColliderComponentInterface::s_add_physic_object_index;
 DeferedMethodIndex PolygonColliderComponentInterface::s_add_polygon_collider_index;

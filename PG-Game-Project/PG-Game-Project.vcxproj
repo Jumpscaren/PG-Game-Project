@@ -368,10 +368,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="UserCode\MaterialCreator.cpp" />
     <ClCompile Include="ScriptHelp\CharactersInterface.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="UserCode\MaterialCreator.h" />
     <ClInclude Include="ScriptHelp\CharactersInterface.h" />
   </ItemGroup>
   <ItemGroup>

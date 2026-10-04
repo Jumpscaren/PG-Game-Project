@@ -428,6 +428,9 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClCompile Include="Components\PureStaticBodyComponent.cpp" />
     <ClCompile Include="Components\PolygonColliderComponent.cpp" />
     <ClCompile Include="Components\KinematicBodyComponent.cpp" />
+    <ClCompile Include="Renderer\Interfaces\IRenderCore.cpp" />
+    <ClCompile Include="Renderer\Material\MaterialDatabase.cpp" />
+    <ClCompile Include="Renderer\Material\Material.cpp" />
     <ClCompile Include="SceneSystem\Helpers\SceneLoaderDeferCalls.cpp" />
     <ClCompile Include="Scripting\Objects\PhysicsInterface.cpp" />
     <ClCompile Include="Physics\PhysicsInternal\PhysicsContactFilter.cpp" />
@@ -580,7 +583,13 @@ xcopy "$(SolutionDir)Vendor\Libs\zlib\zlib1.dll" "$(TargetDir)" /y</Command>
     <ClInclude Include="Components\PureStaticBodyComponent.h" />
     <ClInclude Include="Components\PolygonColliderComponent.h" />
     <ClInclude Include="Components\KinematicBodyComponent.h" />
+    <ClInclude Include="Renderer\Interfaces\IRenderCore.h" />
+    <ClInclude Include="Renderer\Material\Interfaces\IMaterial.h" />
+    <ClInclude Include="Renderer\Material\Interfaces\IMaterialDatabase.h" />
+    <ClInclude Include="Renderer\Material\MaterialDatabase.h" />
+    <ClInclude Include="Renderer\Material\Material.h" />
     <ClInclude Include="PathFinding\PathFindingDefines.h" />
+    <ClInclude Include="Renderer\Material\MaterialTypes.h" />
     <ClInclude Include="SceneSystem\Helpers\SceneLoaderDeferCalls.h" />
     <ClInclude Include="Scripting\Objects\PhysicsInterface.h" />
     <ClInclude Include="Physics\PhysicsInternal\PhysicsContactFilter.h" />

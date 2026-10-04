@@ -537,6 +537,8 @@ void PhysicsCore::UpdatePhysics()
 
 void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 {
+	return;
+
 	std::vector<Vector2> vertices;
 	entity_manager->System<TransformComponent, BoxColliderComponent>([&](const Entity entity, const TransformComponent& transform, const BoxColliderComponent& box_collider)
 		{

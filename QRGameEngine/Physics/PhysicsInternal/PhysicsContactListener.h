@@ -36,10 +36,8 @@ private:
 		std::size_t operator()(const CollisionData& k) const
 		{
 			std::size_t res = 17;
-			res = res * 31 + std::hash<Entity>()(k.body_1_entity);
-			res = res * 31 + std::hash<SceneIndex>()(k.body_1_scene_index);
-			res = res * 31 + std::hash<Entity>()(k.body_2_entity);
-			res = res * 31 + std::hash<SceneIndex>()(k.body_2_scene_index);
+			res = res * 31 + std::hash<Entity>()(k.body_1_entity + k.body_2_entity);
+			res = res * 31 + std::hash<SceneIndex>()(k.body_1_scene_index + k.body_2_scene_index);
 			return res;
 		}
 	};

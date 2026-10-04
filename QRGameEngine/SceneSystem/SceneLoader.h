@@ -8,8 +8,8 @@
 #include <thread>
 #include <mutex>
 #include "Helpers/SceneLoaderDeferCalls.h"
+#include "ECS/EntityManager.h"
 
-class EntityManager;
 class OutputFile;
 class SceneManager;
 class JsonObject;

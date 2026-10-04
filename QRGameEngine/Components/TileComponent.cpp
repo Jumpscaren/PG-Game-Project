@@ -3,6 +3,7 @@
 #include "SceneSystem/SceneLoader.h"
 #include "Scripting/CSMonoCore.h"
 #include "SceneSystem/SceneManager.h"
+#include "ECS/EntityManager.h"
 
 void TileComponentInterface::RegisterInterface(CSMonoCore* mono_core)
 {

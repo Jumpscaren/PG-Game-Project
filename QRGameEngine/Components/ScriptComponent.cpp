@@ -5,6 +5,7 @@
 #include "Scripting/ScriptingManager.h"
 #include "SceneSystem/SceneLoader.h"
 #include "IO/JsonObject.h"
+#include "ECS/EntityManager.h"
 
 DeferedMethodIndex ScriptComponentInterface::s_add_script_component_index;
 DeferedMethodIndex ScriptComponentInterface::s_remove_script_component_index;

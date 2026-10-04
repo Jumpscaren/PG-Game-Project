@@ -26,7 +26,8 @@ namespace ScriptProject.Scripts
             //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_3"));
             //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_4"));
 
-            scenes.Add(SceneManager.LoadSceneSynchronized("playroom"));
+            //scenes.Add(SceneManager.LoadSceneSynchronized("playroom"));
+            scenes.Add(SceneManager.LoadSceneSynchronized("gapfix"));
 
             //scenes.Add(SceneManager.LoadSceneSynchronized("testthing"));
 

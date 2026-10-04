@@ -1,28 +1,4 @@
-struct Sprite
-{
-	uint index;
-	float2 uv[4];
-	float4 addative_color;
-    float3 pad;
-};
-
-struct VS_OUT
-{
-	float4 position : SV_POSITION;
-	float2 uv : uv;
-	uint instance_id : instance_id;
-	float3 real_position : real_position;
-	float3 camera_position : camera_position;
-	float3 light_position : light_position;
-};
-
-struct Constants
-{
-	uint index;
-};
-ConstantBuffer<Constants> sprite_buffer_index : register(b0, space0);
-
-SamplerState standard_sampler : register(s0);
+#include "DefaultPixelBehaviour.hlsli"
 
 float4 main(VS_OUT input) : SV_TARGET
 {	
@@ -34,7 +10,10 @@ float4 main(VS_OUT input) : SV_TARGET
 	
     float3 pos = input.real_position.xyz;
 	
+    // Force sampling from the center of the tile
+    float2 uv = float2(0.875f, 0.125f);
     float4 colour = colour_texture.Sample(standard_sampler, input.uv);
+    //float4 colour = colour_texture.Sample(standard_sampler, uv);
     //return colour;
 	
     float3 light_dir = normalize(float3(10.0f, 10.0f, 10.0f) - pos);
@@ -52,9 +31,10 @@ float4 main(VS_OUT input) : SV_TARGET
     float diff = max(dot(normal, light_dir), 0.0);
     float3 diffuse = diff * float3(1.0f, 1.0f, 1.0f) * 0.0f;
 
-    //float alpha = colour_texture.Sample(standard_sampler, input.uv).w;
-    //float alpha = addative_color.w;
-    //return float4(colour.xyz, alpha);
+    //return float4(input.uv, 0.0f, colour.w);
+    //return float4(1.0f, 0.0f, 0.0f, colour.w);
+    
+    return float4(colour.xyz + addative_color.xyz, colour.w * addative_color.w);
 	
     return float4(colour.xyz * (1.0f + specular_color + diffuse) + addative_color.xyz, colour.w * addative_color.w);
 }

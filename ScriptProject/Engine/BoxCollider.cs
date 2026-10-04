@@ -27,6 +27,8 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetHalfBoxSize(Vector2 half_box_size);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        public extern Vector2 GetHalfBoxSize();
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         public extern void SetOffset(Vector2 offset);

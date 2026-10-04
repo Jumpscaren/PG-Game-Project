@@ -117,362 +117,673 @@ void TileHandler::SetTileSprite(const Vector3& world_mouse_position, const Entit
 	TransformComponent& transform_component = entity_manager->GetComponent<TransformComponent>(tile_entity);
 	SpriteComponent& sprite_component = entity_manager->GetComponent<SpriteComponent>(tile_entity);
 
+	const AssetHandle texture_asset_handle = RenderCore::Get()->GetTextureAssetHandle(sprite_component.texture_handle);
+	const TextureInfo* texture_info = AssetManager::Get()->GetTextureData(texture_asset_handle);
+
+	const float pixel_width_per_tile = float(texture_info->width / m_tiles_per_row);
+	const float pixel_height_per_tile = float(texture_info->height / m_tiles_per_row);
+	const float texture_width = float(texture_info->width);
+	const float texture_height = float(texture_info->height);
+	constexpr float SAMPLING_CENTER_OFFSET = 0.5f;
+
+	const float extrusion_width_size = 1.0f / texture_width;
+	const float extrusion_height_size = 1.0f / texture_height;
+
+	constexpr float EXTRUSION_TRANSPARENT_LINES = 5.0f;
+	const float tile_width = (texture_width - EXTRUSION_TRANSPARENT_LINES) / (texture_width * m_tiles_per_row);
+	const float tile_height = (texture_height - EXTRUSION_TRANSPARENT_LINES) / (texture_height * m_tiles_per_row);
+
+	const auto get_tile_uv = [](const float tile_size, const float extrusion_size, const uint32_t tile_index) { return tile_size * (float)tile_index + extrusion_size * ((float)tile_index + 1.0f); };
+
+	const auto set_left_uv = [&](const uint32_t tile_index) { return get_tile_uv(tile_width, extrusion_width_size, tile_index); };
+	const auto set_right_uv = [&](const uint32_t tile_index) { return set_left_uv(tile_index - 1) + tile_width; };
+
+	const auto set_up_uv = [&](const uint32_t tile_index) { return get_tile_uv(tile_height, extrusion_height_size, tile_index); };
+	const auto set_down_uv = [&](const uint32_t tile_index) { return set_up_uv(tile_index - 1) + tile_height; };
+
+
+	//Given 128x128 texture the uv for the first tile is 0.5 to 31.5, hence the -0.5f for the right uv
+	//const auto set_left_uv = [&](const uint32_t tile_index) { return (pixel_width_per_tile * (float)tile_index + SAMPLING_CENTER_OFFSET) / texture_width; };
+	//const auto set_right_uv = [&](const uint32_t tile_index) { return (pixel_width_per_tile * (float)tile_index - SAMPLING_CENTER_OFFSET) / texture_width; };
+
+	//const auto set_up_uv = [&](const uint32_t tile_index) { return (pixel_height_per_tile * (float)tile_index + SAMPLING_CENTER_OFFSET) / texture_height; };
+	//const auto set_down_uv = [&](const uint32_t tile_index) { return (pixel_height_per_tile * (float)tile_index - SAMPLING_CENTER_OFFSET) / texture_height; };
+
 	switch (tile_count)
 	{
 		//1
 	case Full:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(1));
 		break;
 
 		//2
 	case Left:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 	case Right:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Up:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Down:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 
 		//3
 	case Left + Right:
-		sprite_component.uv[0] = Vector2(m_uv_step, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Up + Down:
-		sprite_component.uv[0] = Vector2(m_uv_step, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, 0.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[0] = Vector2(m_uv_step, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, 0.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 
 		//4
 	case Left + Up:
-		sprite_component.uv[0] = Vector2(0.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[0] = Vector2(0.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Right + Up:
-		sprite_component.uv[0] = Vector2(0.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[0] = Vector2(0.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Right + Down:
-		sprite_component.uv[0] = Vector2(0.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[0] = Vector2(0.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Down:
-		sprite_component.uv[0] = Vector2(0.0f, 0.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[0] = Vector2(0.0f, 0.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step, 0.0f);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(0));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(0));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(1));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(1));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//5
 	case Left + Up + LeftUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Right + Up + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Right + Down + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Down + LeftDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//6
 	case Left + Up + Down:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Left + Right + Up:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Right + Up + Down:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Right + Down:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//7
 	case Left + Right + Up + Down:
-		sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(2));
 		break;
 
 		//8
 	case Left + Right + Up + LeftUp:
-		sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Right + Up + Down + RightUp:
-		sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Left + Right + Down + RightDown:
-		sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Up + Down + LeftDown:
-		sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
-		sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[0] = Vector2(0.0f, m_uv_step);
+		//sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 2.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(1));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(1));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(2));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(2));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//9
 	case Left + Down + Up + LeftUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Left + Up + Right + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Right + Up + Down + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Right + Down + LeftDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//10
 	case Left + Right + Up + Down + LeftUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Left + Right + Up + Down + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Left + Right + Up + Down + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Right + Up + Down + LeftDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//11
 	case Left + Right + Up + LeftUp + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Right + Up + Down + RightUp + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Left + Right + Down + LeftDown + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Up + Down + LeftUp + LeftDown:
-		sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//12
 	case Left + Right + Up + Down + LeftUp + RightDown:
-		sprite_component.uv[0] = Vector2(0.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(0.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Up + Right + Down + RightUp + LeftDown:
-		sprite_component.uv[0] = Vector2(0.0f, m_uv_step * 2.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step * 2.0f);
-		sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 3.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[0] = Vector2(0.0f, m_uv_step * 2.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step, m_uv_step * 2.0f);
+		//sprite_component.uv[2] = Vector2(0.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step, m_uv_step * 3.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(0), set_up_uv(2));
+		sprite_component.uv[1] = Vector2(set_right_uv(1), set_up_uv(2));
+		sprite_component.uv[2] = Vector2(set_left_uv(0), set_down_uv(3));
+		sprite_component.uv[3] = Vector2(set_right_uv(1), set_down_uv(3));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 
 		//13
 	case Left + Right + Down + Up + LeftUp + LeftDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Left + Right + Down + Up + LeftUp + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Left + Right + Down + Up + RightUp + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Right + Down + Up + LeftDown + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 4.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 4.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(3), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(4), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(3), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(4), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//14
 	case Left + Right + Down + Up + LeftUp + LeftDown + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI));
 		break;
 	case Left + Right + Down + Up + LeftUp + LeftDown + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, TILE_PI_2));
 		break;
 	case Left + Right + Down + Up + LeftUp + RightUp + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, 0.0f));
 		break;
 	case Left + Right + Down + Up + LeftDown + RightUp + RightDown:
-		sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 3.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 3.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(2), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(3), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(2), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(3), set_down_uv(4));
+
 		transform_component.SetRotation(Vector3(0.0f, 0.0f, -TILE_PI_2));
 		break;
 
 		//15
 	case Left + Right + Down + Up + LeftUp + LeftDown + RightDown + RightUp:
-		sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 3.0f);
-		sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
-		sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 4.0f);
-		sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
+		//sprite_component.uv[0] = Vector2(m_uv_step, m_uv_step * 3.0f);
+		//sprite_component.uv[1] = Vector2(m_uv_step * 2.0f, m_uv_step * 3.0f);
+		//sprite_component.uv[2] = Vector2(m_uv_step, m_uv_step * 4.0f);
+		//sprite_component.uv[3] = Vector2(m_uv_step * 2.0f, m_uv_step * 4.0f);
+
+		sprite_component.uv[0] = Vector2(set_left_uv(1), set_up_uv(3));
+		sprite_component.uv[1] = Vector2(set_right_uv(2), set_up_uv(3));
+		sprite_component.uv[2] = Vector2(set_left_uv(1), set_down_uv(4));
+		sprite_component.uv[3] = Vector2(set_right_uv(2), set_down_uv(4));
 		break;
 	}
 }

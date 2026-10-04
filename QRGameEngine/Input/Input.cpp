@@ -7,6 +7,7 @@
 #include "Components/CameraComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
 #include "SceneSystem/SceneManager.h"
+#include "ECS/EntityManager.h"
 
 void InputInterface::RegisterInterface(CSMonoCore* mono_core)
 {

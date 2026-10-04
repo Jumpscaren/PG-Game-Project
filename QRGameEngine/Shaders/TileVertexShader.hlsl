@@ -17,12 +17,13 @@ struct Constants
     uint index;
 };
 ConstantBuffer<Constants> vertices_index : register(b0, space0);
+ConstantBuffer<Constants> start_index : register(b1, space0);
 
 VS_OUT main(uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)
 {
     const uint vertex_count = 6;
     
-    uint vertex_index = vertexID + instanceID * vertex_count;
+    uint vertex_index = vertexID + (instanceID + start_index.index) * vertex_count;
     
     StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[vertices_index.index];
 	

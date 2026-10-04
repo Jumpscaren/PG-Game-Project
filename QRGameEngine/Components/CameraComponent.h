@@ -1,5 +1,6 @@
 #pragma once
-#include "ECS/EntityManager.h"
+#include "ECS/EntityDefinition.h"
+#include "SceneSystem/SceneDefines.h"
 #include "Scripting/CSMonoObject.h"
 #include "Common/EngineTypes.h"
 

@@ -5,6 +5,7 @@
 #include "Renderer/RenderTypes.h"
 #include "SceneSystem/SceneManager.h"
 #include "Common/DeferMethodCallsDefine.h"
+#include "Renderer/Material/MaterialTypes.h"
 
 struct SpriteComponent
 {
@@ -21,6 +22,7 @@ struct SpriteComponent
 	Vector4 addative_color = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 	//Scale in pixels per unit
 	bool pixel_scaling = false;
+	MaterialIndex material_index = NULL_MATERIAL_INDEX;
 };
 
 class JsonObject;
@@ -44,6 +46,7 @@ public:
 public:
 	static void SetTexture(const CSMonoObject& object, const CSMonoObject& texture);
 	static CSMonoObject GetTexture(const CSMonoObject& object);
+	static void SetMaterial(const CSMonoObject& object, const std::string& material_name);
 	static void FlipX(const CSMonoObject& object, bool flip_x);
 	static void FlipY(const CSMonoObject& object, bool flip_y);
 	static bool GetFlipX(const CSMonoObject& object);

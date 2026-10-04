@@ -4,6 +4,7 @@
 //#include <crtdbg.h>
 //#include <iostream>
 #include "ScriptHelp/CharactersInterface.h"
+#include "UserCode/MaterialCreator.h"
 
 QREntryPoint* entry_point;
 
@@ -19,6 +20,7 @@ int main()
 	entry_point->EntryPoint();
 
 	CharactersInterface::RegisterInterface();
+    MaterialCreator::CreateMaterials();
 
 	entry_point->RunTime();
 

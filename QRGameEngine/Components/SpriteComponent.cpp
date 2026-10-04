@@ -29,6 +29,7 @@ void SpriteComponentInterface::RegisterInterface(CSMonoCore* mono_core, const De
 
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetTexture>(sprite_class, "SetTexture", SpriteComponentInterface::SetTexture);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::GetTexture>(sprite_class, "GetTexture", SpriteComponentInterface::GetTexture);
+	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::SetMaterial>(sprite_class, "SetMaterial", SpriteComponentInterface::SetMaterial);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::FlipX>(sprite_class, "FlipX", SpriteComponentInterface::FlipX);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::FlipY>(sprite_class, "FlipY", SpriteComponentInterface::FlipY);
 	mono_core->HookAndRegisterMonoMethodType<SpriteComponentInterface::GetFlipX>(sprite_class, "GetFlipX", SpriteComponentInterface::GetFlipX);
@@ -87,6 +88,18 @@ CSMonoObject SpriteComponentInterface::GetTexture(const CSMonoObject& object)
 	const SpriteComponent& sprite_component = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
 
 	return TextureInterface::CreateTexture(sprite_component.texture_handle);
+}
+
+void SpriteComponentInterface::SetMaterial(const CSMonoObject& object, const std::string& material_name)
+{
+	const CSMonoObject game_object = ComponentInterface::GetGameObject(object);
+
+	const SceneIndex scene_index = GameObjectInterface::GetSceneIndex(game_object);
+	const Entity entity = GameObjectInterface::GetEntityID(game_object);
+
+	SpriteComponent& sprite = SceneManager::GetEntityManager(scene_index)->GetComponent<SpriteComponent>(entity);
+
+	sprite.material_index = RenderCore::Get()->GetMaterialDatabase()->GetMaterialIndex(material_name);
 }
 
 void SpriteComponentInterface::FlipX(const CSMonoObject& object, bool flip_x)

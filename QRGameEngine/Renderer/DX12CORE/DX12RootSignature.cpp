@@ -39,7 +39,8 @@ D3D12_STATIC_SAMPLER_DESC DX12RootSignature::GetSamplerDesc(const SamplerTypes& 
 		sampler_desc.MinLOD = 0;
 		sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
 		sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-		sampler_desc.AddressU = sampler_desc.AddressW = sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		//sampler_desc.AddressU = sampler_desc.AddressW = sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler_desc.AddressU = sampler_desc.AddressW = sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		sampler_desc.MaxAnisotropy = 1;
 		break;
 	default:

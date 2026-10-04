@@ -91,7 +91,7 @@ namespace ScriptProject.Scripts
             transform = game_object.transform;
             body = game_object.GetComponent<DynamicBody>();
 
-            game_object.RemoveComponent<CircleCollider>();
+            game_object.GetComponent<CircleCollider>().SetTrigger(true);
             CapsuleCollider capsule = game_object.AddComponent<CapsuleCollider>();
             capsule.SetRadius(0.2f);
             capsule.SetPoints(new Vector2(-0.1f, 0.0f), new Vector2(0.1f, 0.0f));
