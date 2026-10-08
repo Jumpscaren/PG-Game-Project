@@ -9,7 +9,7 @@ DX12Buffer* DX12BufferManager::GetDX12Buffer(DX12BufferHandle handle)
 	return &m_buffers[handle];
 }
 
-DX12BufferHandle DX12BufferManager::AddBuffer(Microsoft::WRL::ComPtr<ID3D12Resource> buffer, Microsoft::WRL::ComPtr<D3D12MA::Allocation> buffer_allocation, 
+DX12BufferHandle DX12BufferManager::AddBuffer(Microsoft::WRL::ComPtr<ID3D12Resource> buffer, Microsoft::WRL::ComPtr<D3D12MA::Allocation> buffer_allocation,
 	const ResourceState& state, uint64_t element_size, uint64_t nr_of_elements, const BufferType& buffer_type, uint64_t real_nr_of_elements, uint64_t aligned_buffer_size)
 {
 	DX12BufferHandle handle = 0;
@@ -38,7 +38,7 @@ DX12BufferHandle DX12BufferManager::AddBuffer(Microsoft::WRL::ComPtr<ID3D12Resou
 
 DX12BufferViewHandle DX12BufferManager::AddView(DX12BufferHandle buffer_handle, const ViewType& view_type, std::vector<DescriptorHandle>& descriptor_handles)
 {
-	DX12BufferViewHandle handle = 0;
+	DX12BufferViewHandle handle = {};
 	DX12BufferView view;
 	view.buffer_handle = buffer_handle;
 	view.buffer_view_type = view_type;
@@ -47,18 +47,19 @@ DX12BufferViewHandle DX12BufferManager::AddView(DX12BufferHandle buffer_handle, 
 	auto it = m_buffer_to_views.find(buffer_handle);
 	assert(it != m_buffer_to_views.end());
 
-	if (HandleManager::GetHandle(HandleManager::HandleType::BUFFER_VIEW, handle))
+	if (HandleManager::GetHandle(HandleManager::HandleType::BUFFER_VIEW, handle.handle))
 	{
 		it->second.push_back(handle);
 
-		m_buffer_views[handle] = std::move(view);
+		m_buffer_views[handle.handle] = std::move(view);
 		return handle;
 	}
 
-	it->second.push_back(m_buffer_views.size());
+	handle.handle = m_buffer_views.size();
+	it->second.push_back(handle);
 
 	m_buffer_views.push_back(std::move(view));
-	return m_buffer_views.size() - 1;
+	return handle;
 }
 
 void DX12BufferManager::UploadBufferData(DX12Core* dx12_core, DX12BufferHandle handle, void* data, uint64_t data_size, uint64_t buffer_alignment, uint64_t buffer_offset)
@@ -306,24 +307,24 @@ DX12BufferViewHandle DX12BufferManager::AddView(DX12Core* dx12_core, const DX12B
 	uint64_t total_descriptors_needed = 1;
 	switch (view_type)
 	{
-	//case ViewType::SHADER_RESOURCE_VIEW:
-	//	descriptor_handle = m_shader_bindable_view.AddDescriptor();
+		//case ViewType::SHADER_RESOURCE_VIEW:
+		//	descriptor_handle = m_shader_bindable_view.AddDescriptor();
 
-	//	buffer = GetDX12Buffer(buffer_sub_handle.handle);
-	//	//Create shader resource view
-	//	shader_resource_view_desc.Format = DXGI_FORMAT_UNKNOWN;
-	//	shader_resource_view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	//	shader_resource_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//	shader_resource_view_desc.Buffer.NumElements = (UINT)buffer->nr_of_elements;
-	//	shader_resource_view_desc.Buffer.FirstElement = 0;
-	//	shader_resource_view_desc.Buffer.StructureByteStride = (UINT)buffer->element_size;
-	//	shader_resource_view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-	//	dx12_core->GetDevice()->CreateShaderResourceView(buffer->buffer_resource.Get(), &shader_resource_view_desc, descriptor_handle.cpu_handle);
-	//	break;
+		//	buffer = GetDX12Buffer(buffer_sub_handle.handle);
+		//	//Create shader resource view
+		//	shader_resource_view_desc.Format = DXGI_FORMAT_UNKNOWN;
+		//	shader_resource_view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+		//	shader_resource_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		//	shader_resource_view_desc.Buffer.NumElements = (UINT)buffer->nr_of_elements;
+		//	shader_resource_view_desc.Buffer.FirstElement = 0;
+		//	shader_resource_view_desc.Buffer.StructureByteStride = (UINT)buffer->element_size;
+		//	shader_resource_view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+		//	dx12_core->GetDevice()->CreateShaderResourceView(buffer->buffer_resource.Get(), &shader_resource_view_desc, descriptor_handle.cpu_handle);
+		//	break;
 	case ViewType::CONSTANT_BUFFER_VIEW:
 		if (buffer_sub_handle.buffer_type == BufferType::MODIFIABLE_BUFFER)
 			total_descriptors_needed = (uint64_t)DX12Core::GetFramesInFlight();
-		
+
 		for (uint64_t i = 0; i < total_descriptors_needed; ++i)
 		{
 			descriptor_handle = m_shader_bindable_view.AddDescriptor();
@@ -366,13 +367,13 @@ void DX12BufferManager::UploadData(DX12Core* dx12_core, const DX12BufferSubAlloc
 		offset = index * buffer_sub_allocation.size;
 		assert(offset + data_size < buffer_sub_allocation.real_size);
 	}
-	
+
 	UploadBufferData(dx12_core, buffer_sub_allocation.handle, data, data_size, buffer_sub_allocation.size, offset);
 }
 
-DX12BufferView* DX12BufferManager::GetBufferView(DX12BufferViewHandle texture_view_handle)
+DX12BufferView* DX12BufferManager::GetBufferView(DX12BufferViewHandle buffer_view_handle)
 {
-	return &m_buffer_views[texture_view_handle];
+	return &m_buffer_views[buffer_view_handle.handle];
 }
 
 ID3D12Resource* DX12BufferManager::GetBufferResource(DX12BufferHandle handle)
@@ -396,8 +397,8 @@ void DX12BufferManager::FreeBuffer(DX12BufferHandle& buffer_handle)
 		for (uint32_t view_index = 0; view_index < view->buffer_descriptor_handles.size(); ++view_index)
 			m_shader_bindable_view.RemoveDescriptor(view->buffer_descriptor_handles[view_index]);
 
-		m_buffer_views[it->second[i]] = {};
-		HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, it->second[i]);
+		m_buffer_views[it->second[i].handle] = {};
+		HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, it->second[i].handle);
 
 		it->second.erase(it->second.begin() + i);
 
@@ -428,8 +429,8 @@ void DX12BufferManager::FreeView(DX12BufferViewHandle& view_handle)
 			for (uint32_t view_index = 0; view_index < view->buffer_descriptor_handles.size(); ++view_index)
 				m_shader_bindable_view.RemoveDescriptor(view->buffer_descriptor_handles[view_index]);
 
-			m_buffer_views[view_handle] = {};
-			HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, view_handle);
+			m_buffer_views[view_handle.handle] = {};
+			HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, view_handle.handle);
 			return;
 		}
 	}

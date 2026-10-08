@@ -31,11 +31,11 @@ private:
 
 private:
 	DX12Buffer* GetDX12Buffer(DX12BufferHandle handle);
-	DX12BufferView* GetBufferView(DX12BufferViewHandle texture_view_handle);
+	DX12BufferView* GetBufferView(DX12BufferViewHandle buffer_view_handle);
 	ID3D12Resource* GetBufferResource(DX12BufferHandle handle);
 	DX12BufferHandle AddBuffer(Microsoft::WRL::ComPtr<ID3D12Resource> buffer, Microsoft::WRL::ComPtr<D3D12MA::Allocation> buffer_allocation, const ResourceState& state, uint64_t element_size, uint64_t nr_of_elements, const BufferType& buffer_type, uint64_t real_nr_of_elements, uint64_t aligned_buffer_size);
 	DX12BufferViewHandle AddView(DX12BufferHandle buffer_handle, const ViewType& view_type, std::vector<DescriptorHandle>& descriptor_handles);
-	void UploadBufferData(DX12Core* dx12_core, DX12BufferHandle handle, void* data , uint64_t data_size, uint64_t buffer_alignment, uint64_t buffer_offset);
+	void UploadBufferData(DX12Core* dx12_core, DX12BufferHandle handle, void* data, uint64_t data_size, uint64_t buffer_alignment, uint64_t buffer_offset);
 
 	void ResetUploadBuffer(DX12Core* dx12_core);
 

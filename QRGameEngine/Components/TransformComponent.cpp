@@ -15,7 +15,7 @@ MonoClassHandle TransformComponentInterface::vector2_class_handle;
 
 DirectX::XMMATRIX GetWorldMatrix(const Vector3& position, const Vector3& rotation, const Vector3& scale)
 {
-	return 
+	return
 		DirectX::XMMatrixScalingFromVector(scale) *
 		DirectX::XMMatrixRotationRollPitchYawFromVector(rotation) *
 		DirectX::XMMatrixTranslationFromVector(position);
@@ -188,7 +188,7 @@ void TransformComponentInterface::LoadTransformComponent(Entity ent, EntityManag
 void TransformComponentInterface::SetPosition(SceneIndex scene_index, Entity entity, float x, float y)
 {
 	EntityManager* const entity_manager = SceneManager::GetSceneManager()->GetScene(scene_index)->GetEntityManager();
-	entity_manager->GetComponent<TransformComponent>(entity).SetPosition(Vector2(x,y));
+	entity_manager->GetComponent<TransformComponent>(entity).SetPosition(Vector2(x, y));
 }
 
 CSMonoObject TransformComponentInterface::GetPosition(SceneIndex scene_index, Entity entity)
@@ -411,7 +411,7 @@ void TransformComponentInterface::FlipYLocally(const CSMonoObject& cs_transform,
 
 			transform.flip_y = flip_y;
 		}
-	};
+		};
 
 	const auto game_object = ComponentInterface::GetGameObject(cs_transform);
 
@@ -435,7 +435,7 @@ PositionScaleRotation TransformComponentInterface::GetDataFromWorldMatrix(const 
 	DirectX::XMVECTOR xmScale, rotationQuat, translation;
 	DirectX::XMMatrixDecompose(&xmScale, &rotationQuat, &translation, transform.world_matrix);
 
-	return PositionScaleRotation{.position = translation, .scale = xmScale, .rotation = MathHelp::ToEulerAngles(rotationQuat)};
+	return PositionScaleRotation{ .position = translation, .scale = xmScale, .rotation = MathHelp::ToEulerAngles(rotationQuat) };
 }
 
 void TransformComponentInterface::SetPositionVec2(Entity entity, SceneIndex scene_index, const Vector2 position)

@@ -41,7 +41,7 @@ void RenderCore::LoadTextureWithAssetHandle(AssetHandle asset_handle)
 	auto& texture_handle_data = m_texture_handles.at(texture_handle);
 	texture_handle_data.texture_internal_handle = texture_internal_handle;
 	texture_handle_data.texture_internal_view_handle = texture_internal_view_handle;
-	
+
 	texture_handle_data.width = texture_info->width;
 	texture_handle_data.height = texture_info->height;
 
@@ -190,7 +190,7 @@ void RenderCore::CreateBuffers()
 
 void RenderCore::CreateMainPipeline()
 {
-	const MaterialIndex material_index = m_material_database.CreateMaterial("MainMaterial");
+	const material_types::MaterialIndex material_index = m_material_database.CreateMaterial("MainMaterial");
 	Material* material = m_material_database.GetMaterial(material_index);
 	material->SetPixelShader(L"../QRGameEngine/Shaders/VertexShader.hlsl");
 	material->SetPixelShader(L"../QRGameEngine/Shaders/PixelShader.hlsl");
@@ -202,9 +202,9 @@ void RenderCore::CreateGridPipeline()
 	//Other shader
 	m_grid_root_signature
 		.AddStaticSampler(&m_dx12_core, SamplerTypes::LINEAR_WRAP, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)
-		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
+		.AddConstant(&m_dx12_core, m_grid_vertices_root_parameter_index, ShaderVisibility::VERTEX, 0)
+		.AddConstant(&m_dx12_core, m_grid_camera_buffer_root_parameter_index, ShaderVisibility::VERTEX, 1)
+		.AddConstant(&m_dx12_core, m_grid_color_root_parameter_index, ShaderVisibility::PIXEL, 0)
 		.InitRootSignature(&m_dx12_core);
 
 	m_grid_pipeline
@@ -216,12 +216,12 @@ void RenderCore::CreateTileGeneratorPipeline()
 {
 	m_tile_generator_root_signature
 		.AddStaticSampler(&m_dx12_core, SamplerTypes::POINT_WRAP, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 1)
-		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 2)
-		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 3)
-		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 1)
+		.AddConstant(&m_dx12_core, m_tile_vertices_root_parameter_index, ShaderVisibility::VERTEX, 0)
+		.AddConstant(&m_dx12_core, m_tile_full_texture_root_parameter_index, ShaderVisibility::PIXEL, 0)
+		.AddConstant(&m_dx12_core, m_tile_empty_texture_root_parameter_index, ShaderVisibility::PIXEL, 1)
+		.AddConstant(&m_dx12_core, m_tile_texture_width_root_parameter_index, ShaderVisibility::PIXEL, 2)
+		.AddConstant(&m_dx12_core, m_tile_edge_width_root_parameter_index, ShaderVisibility::PIXEL, 3)
+		.AddConstant(&m_dx12_core, m_tile_start_index_root_parameter_index, ShaderVisibility::VERTEX, 1)
 		.InitRootSignature(&m_dx12_core);
 
 	m_tile_generator_pipeline
@@ -233,8 +233,8 @@ void RenderCore::CreateFixedResolutionPipeline()
 {
 	m_fixed_resolution_root_signature
 		.AddStaticSampler(&m_dx12_core, SamplerTypes::POINT_WRAP, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::VERTEX, 0)
-		.AddConstant(&m_dx12_core, ShaderVisibility::PIXEL, 0)
+		.AddConstant(&m_dx12_core, m_fixed_resolution_vertices_root_parameter_index, ShaderVisibility::VERTEX, 0)
+		.AddConstant(&m_dx12_core, m_fixed_resolution_texture_root_parameter_index, ShaderVisibility::PIXEL, 0)
 		.InitRootSignature(&m_dx12_core);
 
 	m_fixed_resolution_pipeline
@@ -295,7 +295,7 @@ RenderCore::RenderCore(uint32_t window_width, uint32_t window_height, const std:
 	m_window = std::make_unique<Window>(window_width, window_height, window_name, window_name);
 	m_dx12_core.InitCore(m_window.get(), 2);
 	m_material_database.SetDX12Core(&m_dx12_core);
-	
+
 	if (fixed_resolution)
 	{
 		m_fixed_resolution = FixedResolution{ .width = window_width, .height = window_height };
@@ -386,8 +386,8 @@ uint32_t RenderCore::SetUpSpriteRenderData(Scene* draw_scene, Scene* global_scen
 				return;
 			}
 
-			MaterialIndex material_index = sprite.material_index;
-			if (material_index == NULL_MATERIAL_INDEX)
+			material_types::MaterialIndex material_index = sprite.material_index;
+			if (material_index == material_types::NULL_MATERIAL_INDEX)
 			{
 				material_index.index = 0;
 			}
@@ -403,6 +403,16 @@ uint32_t RenderCore::SetUpSpriteRenderData(Scene* draw_scene, Scene* global_scen
 
 				width = (float)(it->second.width);
 				height = (float)(it->second.height);
+			}
+			else if (sprite.texture_handle == NOT_SET_TEXTURE_HANDLE)
+			{
+				// Skip Nothing to draw!
+				return;
+			}
+			else
+			{
+				assert(false);
+				return;
 			}
 
 			sprite_data.uv[0] = sprite.uv[sprite.uv_indicies[0]];
@@ -503,12 +513,12 @@ void RenderCore::AssembleMaterialBatches(const uint32_t render_object_amount, st
 	}
 
 	SpriteDataForMaterial sprite_data_for_material{};
-	std::size_t count{};
+	uint32_t count{};
 	for (std::size_t i = 0; i < render_object_amount; ++i)
 	{
 		const auto data_index = m_sorted_indicies[i];
 
-		if (sprite_data_for_material.material_index == NULL_MATERIAL_INDEX)
+		if (sprite_data_for_material.material_index == material_types::NULL_MATERIAL_INDEX)
 		{
 			sprite_data_for_material.material_index = m_material_data_vector[data_index].material_index;
 			sprite_data_for_material.start_index = count;
@@ -526,7 +536,7 @@ void RenderCore::AssembleMaterialBatches(const uint32_t render_object_amount, st
 
 		++count;
 	}
-	if (sprite_data_for_material.material_index != NULL_MATERIAL_INDEX)
+	if (sprite_data_for_material.material_index != material_types::NULL_MATERIAL_INDEX)
 	{
 		sprite_data_for_material.number_of_sprites = count - sprite_data_for_material.start_index;
 		sprites_per_material.push_back(sprite_data_for_material);
@@ -575,45 +585,46 @@ void RenderCore::RenderLowerResolutionRenderTargetToHigherResolution()
 	m_dx12_core.GetCommandList()->SetRootSignature(&m_fixed_resolution_root_signature);
 	m_dx12_core.GetCommandList()->SetPipeline(&m_fixed_resolution_pipeline);
 
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_fullscreen_quad_view_handle, 0);
-	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, fixed_resolution_texture.fixed_resolution_view_shader_handle, 1);
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_fullscreen_quad_view_handle, m_fixed_resolution_vertices_root_parameter_index.root_parameter_index);
+	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, fixed_resolution_texture.fixed_resolution_view_shader_handle, m_fixed_resolution_texture_root_parameter_index.root_parameter_index);
 	m_dx12_core.GetCommandList()->Draw(6, 1, 0, 0);
 }
 
 void RenderCore::MainRenderPass(const size_t render_object_amount, const std::vector<SpriteDataForMaterial>& sprites_per_material, const CameraComponent& active_camera)
 {
 	Material* main_material = m_material_database.GetMaterial(m_main_material_index);
-	m_dx12_core.GetCommandList()->SetRootSignature(main_material->getRootSignature());
-	m_dx12_core.GetCommandList()->SetPipeline(main_material->getPipeline());
+	m_dx12_core.GetCommandList()->SetRootSignature(main_material->GetRootSignature());
+	m_dx12_core.GetCommandList()->SetPipeline(main_material->GetPipeline());
 	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	if (render_object_amount)
 	{
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_transform_data_buffer_view, 2);
 		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_transform_data_buffer, m_transform_data_vector.data(), sizeof(WorldMatrixData), render_object_amount);
 
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_sprite_data_buffer_view, 1);
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_sprite_data_buffer_view, 4);
 		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_sprite_data_buffer, m_sprite_data_vector.data(), sizeof(SpriteData), render_object_amount);
 
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_indicies_buffer_view, 5);
 		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_indicies_buffer, m_sorted_indicies.data(), sizeof(uint32_t), render_object_amount);
 	}
 
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_quad_view_handle, 0);
-
 	//Camera
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 3);
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_camera_buffer, &active_camera, sizeof(CameraComponent), 1);
 
 	for (const SpriteDataForMaterial& sprite_data_for_material : sprites_per_material)
 	{
-		//m_dx12_core.GetCommandList()->Draw(6, render_object_amount, 0, 0);
 		Material* main_material = m_material_database.GetMaterial(sprite_data_for_material.material_index);
-		m_dx12_core.GetCommandList()->SetRootSignature(main_material->getRootSignature());
-		m_dx12_core.GetCommandList()->SetPipeline(main_material->getPipeline());
+		m_dx12_core.GetCommandList()->SetRootSignature(main_material->GetRootSignature());
+		m_dx12_core.GetCommandList()->SetPipeline(main_material->GetPipeline());
 
-		m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, sprite_data_for_material.start_index, 6);
+		main_material->SetValueToMaterialParameter(main_material->GetVertexBufferMaterialIndex(), m_quad_view_handle);
+		main_material->SetValueToMaterialParameter(main_material->GetTransformBufferMaterialIndex(), m_transform_data_buffer_view);
+		main_material->SetValueToMaterialParameter(main_material->GetVertexSpriteBufferMaterialIndex(), m_sprite_data_buffer_view);
+		main_material->SetValueToMaterialParameter(main_material->GetCameraBufferMaterialIndex(), m_camera_buffer_view);
+		main_material->SetValueToMaterialParameter(main_material->GetIndiciesBufferMaterialIndex(), m_indicies_buffer_view);
+		main_material->SetValueToMaterialParameter(main_material->GetStartIndexMaterialIndex(), sprite_data_for_material.start_index);
+
+		main_material->SetValueToMaterialParameter(main_material->GetPixelSpriteBufferMaterialIndex(), m_sprite_data_buffer_view);
+
+		SetMaterialParametersToRenderPass(*main_material);
 
 		m_dx12_core.GetCommandList()->Draw(6, sprite_data_for_material.number_of_sprites, 0, 0);
 	}
@@ -626,9 +637,9 @@ void RenderCore::RenderLinesPasses()
 	m_dx12_core.GetCommandList()->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 	//Camera Buffer
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, 1);
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_camera_buffer_view, m_grid_camera_buffer_root_parameter_index.root_parameter_index);
 	//Color Buffer
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_line_color_buffer_view, 2);
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_line_color_buffer_view, m_grid_color_root_parameter_index.root_parameter_index);
 
 	EditorLinesRenderPass();
 	DebugLinesRenderPass();
@@ -636,7 +647,7 @@ void RenderCore::RenderLinesPasses()
 
 void RenderCore::EditorLinesRenderPass()
 {
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_editor_lines_view_handle, 0);
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, m_editor_lines_view_handle, m_grid_vertices_root_parameter_index.root_parameter_index);
 
 	Vector4 editor_line_color(1.0f, 1.0f, 1.0f, 1.0f);
 	m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_line_color_buffer, &editor_line_color, sizeof(Vector4), 1);
@@ -653,7 +664,7 @@ void RenderCore::DebugLinesRenderPass()
 	{
 		auto debug_line_buffer = m_dx12_core.GetBufferManager()->AddBuffer(&m_dx12_core, m_debug_lines.data(), sizeof(VertexGrid), m_debug_lines.size(), BufferType::CONSTANT_BUFFER);
 		DX12BufferViewHandle debug_lines_view = m_dx12_core.GetBufferManager()->AddView(&m_dx12_core, debug_line_buffer, ViewType::SHADER_RESOURCE_VIEW);
-		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, debug_lines_view, 0);
+		m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, debug_lines_view, m_grid_vertices_root_parameter_index.root_parameter_index);
 
 		Vector4 debug_line_color(0.0f, 1.0f, 0.0f, 1.0f);
 		m_dx12_core.GetBufferManager()->UploadData(&m_dx12_core, m_line_color_buffer, &debug_line_color, sizeof(Vector4), 1);
@@ -661,6 +672,24 @@ void RenderCore::DebugLinesRenderPass()
 		m_dx12_core.GetCommandList()->Draw(m_debug_lines.size(), 1, 0, 0);
 
 		m_dx12_core.GetResourceDestroyer()->FreeBuffer(&m_dx12_core, debug_line_buffer);
+	}
+}
+
+void RenderCore::SetMaterialParametersToRenderPass(const Material& material)
+{
+	for (const material_types::MaterialParameterData& material_parameter : material.GetMaterialParameters())
+	{
+		root_signature_types::RootParameterIndex root_parameter_index = material_parameter.root_parameter_index;
+
+		std::visit(material_types::detail::Overloaded{
+			[this, root_parameter_index](const uint32_t constant) { m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, constant, root_parameter_index.root_parameter_index); },
+			[this, root_parameter_index](const float constant) {
+				m_dx12_core.GetCommandList()->SetFloatConstant(&m_dx12_core, constant, root_parameter_index.root_parameter_index);
+			},
+			[this, root_parameter_index](const DX12TextureViewHandle texture_view_handle) { m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, texture_view_handle, root_parameter_index.root_parameter_index); },
+			[this, root_parameter_index](const DX12BufferViewHandle buffer_view_handle) { m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, buffer_view_handle, root_parameter_index.root_parameter_index); }
+			},
+			material_parameter.value);
 	}
 }
 
@@ -770,7 +799,7 @@ DX12TextureViewHandle RenderCore::GetTextureViewHandle(const TextureHandle textu
 	}
 
 	assert(false);
-	return 0;
+	return DX12TextureViewHandle{ 0 };
 }
 
 TextureInfo* RenderCore::GenerateTile(const TextureHandle tile_full_input_texture, const TextureHandle tile_empty_input_texture, const uint32_t tiles_per_row, const uint32_t edge_width)
@@ -844,21 +873,21 @@ TextureInfo* RenderCore::GenerateTile(const TextureHandle tile_full_input_textur
 	m_dx12_core.GetCommandList()->SetViewport(output_texture_width, output_texture_height);
 	m_dx12_core.GetCommandList()->SetScissorRect(output_texture_width, output_texture_height);
 
-	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, tile_vertices_view_handle, 0);
+	m_dx12_core.GetCommandList()->SetConstantBuffer(&m_dx12_core, tile_vertices_view_handle, m_tile_vertices_root_parameter_index.root_parameter_index);
 
 	const auto it = m_texture_handles.find(tile_full_input_texture);
 	const DX12TextureViewHandle texture_view = it->second.texture_internal_view_handle;
-	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, texture_view, 1);
+	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, texture_view, m_tile_full_texture_root_parameter_index.root_parameter_index);
 
 	const auto empty_it = m_texture_handles.find(tile_empty_input_texture);
 	const DX12TextureViewHandle empty_texture_view = empty_it->second.texture_internal_view_handle;
-	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, empty_texture_view, 2);
+	m_dx12_core.GetCommandList()->SetConstantTexture(&m_dx12_core, empty_texture_view, m_tile_empty_texture_root_parameter_index.root_parameter_index);
 
-	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, input_texture_width, 3);
-	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, edge_width, 4);
+	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, input_texture_width, m_tile_texture_width_root_parameter_index.root_parameter_index);
+	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, edge_width, m_tile_edge_width_root_parameter_index.root_parameter_index);
 
 	//Render Tiles
-	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, 0, 5);
+	m_dx12_core.GetCommandList()->SetConstant(&m_dx12_core, 0, m_tile_start_index_root_parameter_index.root_parameter_index);
 	m_dx12_core.GetCommandList()->Draw(6, total_number_of_tiles, 0, 0);
 
 	m_dx12_core.GetCommandList()->SignalAndWait(&m_dx12_core, m_dx12_core.GetGraphicsCommandQueue());

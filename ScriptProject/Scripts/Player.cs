@@ -1,13 +1,14 @@
 ﻿using ScriptProject.Engine;
 using ScriptProject.Engine.Constants;
+using ScriptProject.Engine.Types;
+using ScriptProject.EngineFramework;
 using ScriptProject.EngineMath;
+using ScriptProject.Scripts.Effects;
+using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
 using static ScriptProject.Engine.Input;
-using ScriptProject.EngineFramework;
-using ScriptProject.Scripts.Effects;
-using ScriptProject.Scripts.Modules;
 
 namespace ScriptProject.Scripts
 {
@@ -120,6 +121,9 @@ namespace ScriptProject.Scripts
         GameObject mid_arm_block;
 
         readonly Vector2 right_dir = new Vector2(1.0f, 0.0f);
+
+        MaterialParameter radius_parameter;
+        float radius = 0.0f;
 
         void Start()
         {
@@ -243,7 +247,7 @@ namespace ScriptProject.Scripts
                 damage_hit_box_script.ActivateHitBox();
             }
 
-                current_speed = max_speed;
+            current_speed = max_speed;
             if (holding_princess)
             {
                 current_speed = princess_speed;
@@ -318,12 +322,14 @@ namespace ScriptProject.Scripts
 
             for (int i = 0; i < slash_game_objects.Count; ++i)
             {
-                if (!AnimationManager.IsAnimationPlaying(slash_game_objects[i], "Animations/SlashAttackAnimation.anim"))
+                if (!AnimationManager.IsAnimationPlaying(slash_game_objects[i], "Animations/AttackArea.anim"))
                 {
                     GameObject.DeleteGameObject(slash_game_objects[i]);
                     slash_game_objects.RemoveAt(i);
                     --i;
                 }
+                //radius += 5.0f * Time.GetFixedDeltaTime();
+                //radius_parameter.SetFloat(radius);
             }
 
             if (stop_movement)
@@ -566,15 +572,21 @@ namespace ScriptProject.Scripts
             //Create Slash Sprite
             GameObject slash_sprite = GameObject.CreateGameObject();
             Vector2 position = (hit_box.transform.GetPosition() - mid_block.transform.GetPosition()).Length() * attack_dir;
-            slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x - 0.3f));
+            //slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x - 0.3f));
+            //slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x * 0.2f));
+            slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x * 0.5f));
             slash_sprite.transform.SetLocalRotation(mid_block.transform.GetLocalRotation() - attack_angle / 2.0f);
-            slash_sprite.transform.SetScale(new Vector2(2.0f * (2.0f * hit_box_collider.GetHalfBoxSize().y), 2.0f * hit_box_collider.GetHalfBoxSize().x));
+            //slash_sprite.transform.SetScale(new Vector2(2.0f * (2.0f * hit_box_collider.GetHalfBoxSize().y), 2.0f * hit_box_collider.GetHalfBoxSize().x));
+            slash_sprite.transform.SetScale(new Vector2(2.0f * (2.0f * hit_box_collider.GetHalfBoxSize().y), hit_box_collider.GetHalfBoxSize().x));
             Sprite sprite = slash_sprite.AddComponent<Sprite>();
-            Render.LoadTexture("../QRGameEngine/Textures/TestAttack2.png", sprite);
-            sprite.SetMaterial("SlashAttackMaterial");
+            //Render.LoadTexture("../QRGameEngine/Textures/AttackArea.png", sprite);
+            //sprite.SetMaterial("SlashAttackMaterial");
+            //Material material = Render.GetMaterial("SlashAttackMaterial");
+            //radius_parameter = material.GetMaterialParameter("radius");
+            //radius = 0.0f;
 
             slash_sprite.AddComponent<AnimatableSprite>();
-            AnimationManager.LoadAnimation(slash_sprite, "Animations/SlashAttackAnimation.anim");
+            AnimationManager.LoadAnimation(slash_sprite, "Animations/AttackArea.anim");
 
             slash_game_objects.Add(slash_sprite);
         }

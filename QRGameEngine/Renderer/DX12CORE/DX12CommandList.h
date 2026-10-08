@@ -54,6 +54,7 @@ public:
 	void SetBufferDescriptorTable(DX12Core* dx12_core, DX12BufferViewHandle buffer_view_handle, uint64_t root_parameter_index);
 	void SetTextureDescriptorTable(DX12Core* dx12_core, DX12TextureViewHandle texture_view_handle, uint64_t root_parameter_index);
 	void SetConstant(DX12Core* dx12_core, uint32_t constant, uint64_t root_parameter_index);
+	void SetFloatConstant(DX12Core* dx12_core, float constant, uint64_t root_parameter_index);
 	void SetConstantTexture(DX12Core* dx12_core, DX12TextureViewHandle texture_view_handle, uint64_t root_parameter_index);
 	void SetConstantBuffer(DX12Core* dx12_core, DX12BufferViewHandle buffer_view_handle, uint64_t root_parameter_index);
 	void Draw(uint64_t vertices, uint64_t nr_of_objects, uint64_t start_vertex, uint64_t start_object);

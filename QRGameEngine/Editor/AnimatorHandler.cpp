@@ -78,7 +78,7 @@ bool AnimatorHandler::AnimationTool()
 		}
 		if (m_animation_texture_name.front() == '\0')
 		{
-			sprite.texture_handle = -1;
+			sprite.texture_handle = NOT_SET_TEXTURE_HANDLE;
 		}
 	}
 
@@ -87,10 +87,6 @@ bool AnimatorHandler::AnimationTool()
 	fixed_animation_file_name.insert(fixed_animation_file_name.length(), m_animation_file_name.c_str());
 	fixed_animation_file_name += ".anim";
 
-	if (animationUIData.save_animation_pressed)
-	{
-		std::cout << "Animation Texture doesn't exists\n";
-	}
 	if (animationUIData.save_animation_pressed)
 	{
 		SaveAnimation(folder_path, fixed_animation_file_name);
@@ -211,6 +207,17 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 		ImGui::InputFloat("uv_4.y", (float*)&uv_4.y);
 
 		ImGui::InputFloat2("Split Size", (float*)&m_split_size);
+		ImGui::InputInt2("Split Size Pixels", (int*)&m_split_size_pixels);
+		if (ImGui::Button("Convet Split Size"))
+		{
+			if (RenderCore::Get()->IsTextureAvailable(sprite.texture_handle))
+			{
+				TextureInfo* texture_info = AssetManager::Get()->GetTextureData(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
+				m_split_size.x = (float)m_split_size_pixels.x / texture_info->width;
+				m_split_size.y = (float)m_split_size_pixels.y / texture_info->height;
+			}
+		}
+		ImGui::InputInt("Splits Per Row", &m_splits_per_row);
 		ImGui::InputInt("Splits", &m_max_split_index);
 		ImGui::InputFloat("Time Between Splits", &m_time_between_splits);
 
@@ -222,7 +229,7 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 				const AnimationSetterId uv_setter_id = AnimationManager::Get()->GetAnimationValueSetterStorageIndex("SpriteComponent", "UV_" + std::to_string(uv_index));
 				const AnimationValueSetterStorage& uv_setter_storage = AnimationManager::Get()->GetAnimationValueSetterStorage(uv_setter_id);
 
-				const AnimationValueSectionId uv_section_id{.setter_id = uv_setter_id, .entity = m_current_edit_entity};
+				const AnimationValueSectionId uv_section_id{ .setter_id = uv_setter_id, .entity = m_current_edit_entity };
 
 				if (!m_animation_value_sections.contains(uv_section_id))
 				{
@@ -249,14 +256,26 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 					uv_position = uv_4;
 				}
 
-				for (int i = 0; i < m_max_split_index; ++i)
+				const int splits_per_coloumn = m_max_split_index / m_splits_per_row + (m_max_split_index % m_splits_per_row > 0 ? 1 : 0);
+				int splits_done = 0;
+
+				for (int i = 0; i < splits_per_coloumn; ++i)
 				{
-					const AnimationValueDataId uv_value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_vector2_storage.size();
+					for (int k = 0; k < m_splits_per_row; ++k)
+					{
+						if (splits_done >= m_max_split_index)
+						{
+							break;
+						}
+						++splits_done;
 
-					const Vector2 uv_value = uv_position + m_split_size * (float)i;
+						const AnimationValueDataId uv_value_data_id = (AnimationValueDataId)m_animation_value_storage.animation_value_vector2_storage.size();
 
-					m_animation_value_storage.animation_value_vector2_storage.push_back(uv_value);
-					uv_section->animation_key_frames.push_back(AnimationKeyFrame{ .timestamp = i * m_time_between_splits, .value_interpolation = AnimationValueInterpolation::Step, .value_data_id = uv_value_data_id });
+						const Vector2 uv_value = uv_position + Vector2(m_split_size.x * (float)k, m_split_size.y * (float)i);
+
+						m_animation_value_storage.animation_value_vector2_storage.push_back(uv_value);
+						uv_section->animation_key_frames.push_back(AnimationKeyFrame{ .timestamp = (k + m_splits_per_row * i) * m_time_between_splits, .value_interpolation = AnimationValueInterpolation::Step, .value_data_id = uv_value_data_id });
+					}
 				}
 			}
 		}
@@ -399,7 +418,7 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 				const std::string value_text = value.component_name.substr(0, 4) + ":" + value.value_name;
 				draw_list->AddText(ImVec2(cursor_pos.x + VALUE_OFFSET_X, cursor_pos.y + row * GRID_SIZE + VALUE_OFFSET_Y), ImColor(255, 255, 255, 255), value_text.c_str());
 
-				const AnimationValueSectionId animation_value_section_id{.setter_id = value.setter_id, .entity = it.first};
+				const AnimationValueSectionId animation_value_section_id{ .setter_id = value.setter_id, .entity = it.first };
 				if (!m_animation_value_sections.contains(animation_value_section_id))
 				{
 					continue;
@@ -419,7 +438,7 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 					}
 				}
 
-				const AnimationValueSectionId current_animation_value_section_id{.setter_id = m_current_animation_setter_id, .entity = m_current_edit_entity};
+				const AnimationValueSectionId current_animation_value_section_id{ .setter_id = m_current_animation_setter_id, .entity = m_current_edit_entity };
 				for (int key_frame_idx = 0; key_frame_idx < animation_value_section.animation_key_frames.size(); ++key_frame_idx)
 				{
 					const AnimationKeyFrame& key_frame = animation_value_section.animation_key_frames[key_frame_idx];
@@ -459,7 +478,7 @@ AnimatorHandler::AnimationUIData AnimatorHandler::AnimationUI()
 	}
 	ImGui::End();
 
-	return AnimationUIData{.back_pressed = back_pressed, .save_animation_pressed = save_animation_pressed, .load_animation_pressed = load_animation_pressed, .uv_1 = uv_1, .uv_4 = uv_4, .texture_pressed = texture_pressed};
+	return AnimationUIData{ .back_pressed = back_pressed, .save_animation_pressed = save_animation_pressed, .load_animation_pressed = load_animation_pressed, .uv_1 = uv_1, .uv_4 = uv_4, .texture_pressed = texture_pressed };
 }
 
 void AnimatorHandler::EditValueFromComponent()
@@ -598,7 +617,7 @@ void AnimatorHandler::ManageKeyFrames()
 		{
 			return "Step";
 		}
-	};
+		};
 
 	std::string current_value_interpolation_name = get_value_interpolation_name(m_value_interpolation);
 
@@ -676,7 +695,7 @@ void AnimatorHandler::ManageKeyFrames()
 		return;
 	}
 	AnimationValueSection& section = m_animation_value_sections.at(animation_value_section_id);
-	
+
 	if (section.animation_key_frames.empty())
 	{
 		return;
@@ -785,7 +804,7 @@ void SaveSprite(JsonObject& entity_data, Entity entity, EntityManager* entity_ma
 
 	std::string texture_path = "";
 
-	if (sprite.texture_handle != -1)
+	if (sprite.texture_handle != NOT_SET_TEXTURE_HANDLE)
 	{
 		texture_path = AssetManager::Get()->GetAssetPath(RenderCore::Get()->GetTextureAssetHandle(sprite.texture_handle));
 		//texture_path.erase(std::remove(texture_path.begin(), texture_path.end(), 0), texture_path.end());
@@ -902,6 +921,7 @@ void AnimatorHandler::SaveAnimation(const std::string& folder_path, const std::s
 
 	{
 		JsonObject animatable_sprite_data = save_animation.CreateSubJsonObject("AnimatableSpriteData");
+		entity_manager->GetComponent<AnimatableSpriteComponent>(m_animation_base_entity).loop = m_timeline_loop;
 		AnimatableSpriteComponentInterface::SaveAnimatableSpriteComponent(m_animation_base_entity, entity_manager, &animatable_sprite_data);
 		animatable_sprite_data.SetData(m_animation_max_time, "AnimationTime");
 	}
@@ -961,6 +981,7 @@ void AnimatorHandler::LoadAnimation(const std::string& folder_path, const std::s
 	JsonObject animatable_sprite_data = load_animation.GetSubJsonObject("AnimatableSpriteData");
 	animatable_sprite_data.LoadData(m_animation_max_time, "AnimationTime");
 	AnimatableSpriteComponentInterface::LoadAnimatableSpriteComponent(m_animation_base_entity, entity_manager, &animatable_sprite_data);
+	m_timeline_loop = entity_manager->GetComponent<AnimatableSpriteComponent>(m_animation_base_entity).loop;
 
 	int32_t animation_system_version = 0;
 	load_animation.GetSubJsonObject("AnimationSystemVersion").LoadData(animation_system_version, "Version");
@@ -1002,9 +1023,9 @@ void AnimatorHandler::LoadAnimation(const std::string& folder_path, const std::s
 
 			const auto& animation_value_setter_storages = AnimationManager::Get()->GetAnimationValueSetterStorages();
 			m_values_used_in_animation.at(old_and_new_entity.new_entity).push_back(
-				ValueInAnimation{ 
-				.component_name = animation_value_setter_storages[section_id.setter_id].component_name, 
-				.value_name = animation_value_setter_storages[section_id.setter_id].value_name, 
+				ValueInAnimation{
+				.component_name = animation_value_setter_storages[section_id.setter_id].component_name,
+				.value_name = animation_value_setter_storages[section_id.setter_id].value_name,
 				.setter_id = section_id.setter_id
 				});
 		}

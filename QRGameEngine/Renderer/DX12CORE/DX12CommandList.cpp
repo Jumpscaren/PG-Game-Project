@@ -20,7 +20,7 @@ void DX12CommandList::InitCommandList(DX12Core* dx12_core, CommandListType comma
 	HRESULT hr = dx12_core->GetDevice()->CreateCommandAllocator((D3D12_COMMAND_LIST_TYPE)command_type, IID_PPV_ARGS(m_command_allocator.GetAddressOf()));
 	assert(SUCCEEDED(hr));
 
-	ID3D12CommandList *temp_list;
+	ID3D12CommandList* temp_list;
 	hr = dx12_core->GetDevice()->CreateCommandList(0, (D3D12_COMMAND_LIST_TYPE)command_type, m_command_allocator.Get(),
 		nullptr, IID_PPV_ARGS(&temp_list));
 	assert(SUCCEEDED(hr));
@@ -186,6 +186,11 @@ void DX12CommandList::SetTextureDescriptorTable(DX12Core* dx12_core, DX12Texture
 void DX12CommandList::SetConstant(DX12Core* dx12_core, uint32_t constant, uint64_t root_parameter_index)
 {
 	m_command_list->SetGraphicsRoot32BitConstant((UINT)root_parameter_index, constant, 0);
+}
+
+void DX12CommandList::SetFloatConstant(DX12Core* dx12_core, const float constant, const uint64_t root_parameter_index)
+{
+	m_command_list->SetGraphicsRoot32BitConstant((UINT)root_parameter_index, std::bit_cast<UINT>(constant), 0);
 }
 
 void DX12CommandList::SetConstantTexture(DX12Core* dx12_core, DX12TextureViewHandle texture_view_handle, uint64_t root_parameter_index)

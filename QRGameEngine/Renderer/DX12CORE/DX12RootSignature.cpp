@@ -64,10 +64,9 @@ void DX12RootSignature::ClearParameters()
 }
 
 DX12RootSignature::~DX12RootSignature()
-{
-}
+{}
 
-DX12RootSignature& DX12RootSignature::AddStruturedBuffer(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
+DX12RootSignature& DX12RootSignature::AddStruturedBuffer(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
 {
 	D3D12_DESCRIPTOR_RANGE descriptor_range;
 	descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -86,11 +85,12 @@ DX12RootSignature& DX12RootSignature::AddStruturedBuffer(DX12Core* dx12_core, co
 	descriptor_table.DescriptorTable.pDescriptorRanges = m_ranges[m_ranges.size() - 1].size() != 0 ? m_ranges[m_ranges.size() - 1].data() : nullptr;
 
 	m_root_parameters.push_back(descriptor_table);
+	root_parameter_index.root_parameter_index = m_root_parameters.size() - 1;
 
 	return *this;
 }
 
-DX12RootSignature& DX12RootSignature::AddConstantBuffer(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
+DX12RootSignature& DX12RootSignature::AddConstantBuffer(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
 {
 	D3D12_DESCRIPTOR_RANGE descriptor_range;
 	descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
@@ -109,6 +109,7 @@ DX12RootSignature& DX12RootSignature::AddConstantBuffer(DX12Core* dx12_core, con
 	descriptor_table.DescriptorTable.pDescriptorRanges = m_ranges[m_ranges.size() - 1].size() != 0 ? m_ranges[m_ranges.size() - 1].data() : nullptr;
 
 	m_root_parameters.push_back(descriptor_table);
+	root_parameter_index.root_parameter_index = m_root_parameters.size() - 1;
 
 	return *this;
 }
@@ -126,7 +127,7 @@ DX12RootSignature& DX12RootSignature::AddStaticSampler(DX12Core* dx12_core, cons
 	return *this;
 }
 
-DX12RootSignature& DX12RootSignature::AddConstant(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
+DX12RootSignature& DX12RootSignature::AddConstant(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
 {
 	D3D12_ROOT_PARAMETER constant;
 	constant.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
@@ -136,11 +137,12 @@ DX12RootSignature& DX12RootSignature::AddConstant(DX12Core* dx12_core, const Sha
 	constant.Constants.ShaderRegister = shader_binding_index;
 
 	m_root_parameters.push_back(constant);
+	root_parameter_index.root_parameter_index = m_root_parameters.size() - 1;
 
 	return *this;
 }
 
-DX12RootSignature& DX12RootSignature::AddShaderResourceView(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
+DX12RootSignature& DX12RootSignature::AddShaderResourceView(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space)
 {
 	D3D12_DESCRIPTOR_RANGE descriptor_range;
 	descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -159,6 +161,7 @@ DX12RootSignature& DX12RootSignature::AddShaderResourceView(DX12Core* dx12_core,
 	descriptor_table.DescriptorTable.pDescriptorRanges = m_ranges[m_ranges.size() - 1].size() != 0 ? m_ranges[m_ranges.size() - 1].data() : nullptr;
 
 	m_root_parameters.push_back(descriptor_table);
+	root_parameter_index.root_parameter_index = m_root_parameters.size() - 1;
 
 	return *this;
 }
@@ -170,7 +173,8 @@ void DX12RootSignature::InitRootSignature(DX12Core* dx12_core)
 	desc.pParameters = m_root_parameters.size() == 0 ? nullptr : m_root_parameters.data();
 	desc.NumStaticSamplers = static_cast<UINT>(m_static_samplers.size());
 	desc.pStaticSamplers = m_static_samplers.size() == 0 ? nullptr : m_static_samplers.data();
-	desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED | D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+	desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+	//desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED | D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
 
 	ID3DBlob* root_signature_blob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, &root_signature_blob, nullptr);

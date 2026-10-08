@@ -1,6 +1,8 @@
 #pragma once
 #include "SamplerTypes.h"
 #include "HelpTypes.h"
+#include "RootSignatureTypes.h"
+
 class DX12Core;
 class DX12Pipeline;
 class DX12CommandList;
@@ -24,11 +26,11 @@ private:
 public:
 	DX12RootSignature() = default;
 	~DX12RootSignature();
-	DX12RootSignature& AddStruturedBuffer(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
-	DX12RootSignature& AddConstantBuffer(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
+	DX12RootSignature& AddStruturedBuffer(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
+	DX12RootSignature& AddConstantBuffer(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
 	DX12RootSignature& AddStaticSampler(DX12Core* dx12_core, const SamplerTypes& sampler_type, uint32_t shader_binding_index, uint32_t shader_space = 0);
-	DX12RootSignature& AddConstant(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
-	DX12RootSignature& AddShaderResourceView(DX12Core* dx12_core, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
+	DX12RootSignature& AddConstant(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
+	DX12RootSignature& AddShaderResourceView(DX12Core* dx12_core, root_signature_types::RootParameterIndex& root_parameter_index, const ShaderVisibility& shader_visibility, uint32_t shader_binding_index, uint32_t shader_space = 0);
 	void InitRootSignature(DX12Core* dx12_core);
 };
 

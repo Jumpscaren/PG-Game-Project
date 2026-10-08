@@ -1,10 +1,7 @@
-﻿using ScriptProject.EngineMath;
+﻿using ScriptProject.Engine.Types;
+using ScriptProject.EngineMath;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScriptProject.Engine
 {
@@ -25,5 +22,10 @@ namespace ScriptProject.Engine
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         static public extern float GetPixelsPerUnit();
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        static private extern UInt32 GetMaterial_External(string material_parameter_name);
+
+        static public Material GetMaterial(string material_name) { return new Material(GetMaterial_External(material_name)); }
     }
 }

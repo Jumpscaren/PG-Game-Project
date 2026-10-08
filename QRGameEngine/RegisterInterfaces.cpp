@@ -17,6 +17,8 @@
 #include "Components/AnimatableSpriteComponent.h"
 #include "Components/ParentComponent.h"
 #include "Scripting/Objects/RenderInterface.h"
+#include "Scripting/Objects/MaterialInterface.h"
+#include "Scripting/Objects/MaterialParameterInterface.h"
 #include "Components/TransformComponent.h"
 #include "Components/SpriteComponent.h"
 #include "Scripting/Objects/GameObjectInterface.h"
@@ -76,6 +78,8 @@ void RegisterInterfaces::Register(CSMonoCore* const mono_core)
 	SceneInterface::RegisterInterface(mono_core);
 	ComponentInterface::RegisterInterface(mono_core);
 	RenderInterface::RegisterInterface(mono_core, load_texture_index);
+	MaterialInterface::RegisterInterface(mono_core);
+	MaterialParameterInterface::RegisterInterface(mono_core);
 	ScriptComponentInterface::RegisterInterface(mono_core, add_script_index, remove_script_index);
 	InputInterface::RegisterInterface(mono_core);
 	CameraComponentInterface::RegisterInterface(mono_core);

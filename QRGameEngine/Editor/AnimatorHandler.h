@@ -77,6 +77,8 @@ private:
 	AnimationSetterId m_current_animation_setter_id;
 
 	Vector2 m_split_size;
+	Vector2i m_split_size_pixels{};
+	int m_splits_per_row{};
 	int m_max_split_index;
 	float m_time_between_splits;
 

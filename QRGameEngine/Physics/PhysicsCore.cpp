@@ -58,7 +58,7 @@ bool PhysicsCore::IsDeferringPhysicCalls()
 
 bool PhysicsCore::ShouldDeferPhysicCalls(const SceneIndex scene_index)
 {
-	return IsDeferringPhysicCalls() || 
+	return IsDeferringPhysicCalls() ||
 		!m_handling_defered_physic_calls && m_threaded_physics && !SceneManager::GetSceneManager()->GetScene(scene_index)->IsSceneLoaded();
 }
 
@@ -128,7 +128,7 @@ void PhysicsCore::AddDeferredPhysicObjectCreation(const SceneIndex scene_index, 
 	physic_object_creation_data.has_collider_data = false;
 	m_deferred_physic_object_creations.push_back(physic_object_creation_data);
 
-	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size()-1, true);
+	AddDeferredPhysicObjectHandle(m_deferred_physic_object_creations.size() - 1, true);
 }
 
 void PhysicsCore::AddBoxColliderDeferredPhysicObjectCreation(const SceneIndex scene_index, const Entity entity)
@@ -228,7 +228,7 @@ void PhysicsCore::HandleDeferredPhysicObjectCreationData(const DeferredPhysicObj
 			const BoxColliderComponent& box_collider = entity_manager->GetComponent<BoxColliderComponent>(creation_data.entity);
 			AddBoxCollider(creation_data.scene_index, creation_data.entity, box_collider.half_box_size, box_collider.trigger, box_collider.filter);
 		}
-		
+
 		if (creation_data.collider_type == ColliderType::Circle)
 		{
 			const CircleColliderComponent& circle_collider = entity_manager->GetComponent<CircleColliderComponent>(creation_data.entity);
@@ -463,7 +463,7 @@ void PhysicsCore::AwakePhysicObjectsFromActivatedScene(const SceneIndex scene_in
 
 void PhysicsCore::AwakePureStaticBody(SceneIndex scene_index, Entity entity)
 {
-	m_deferred_enable_pure_static_bodies.push_back(DeferredEnablePureStaticBody{.scene_index = scene_index, .entity = entity});
+	m_deferred_enable_pure_static_bodies.push_back(DeferredEnablePureStaticBody{ .scene_index = scene_index, .entity = entity });
 }
 
 const bool& PhysicsCore::IsThreaded() const
@@ -794,11 +794,11 @@ void PhysicsCore::SetWorldPhysicObjectData(EntityManager* entity_manager)
 	entity_manager->System<PolygonColliderComponent>([&](Entity entity, PolygonColliderComponent& polygon_collider)
 		{
 			if (polygon_collider.update_polygon_collider) [[unlikely]]
-				{
-					RemovePolygonColliderInternal(polygon_collider.physic_object_handle);
-					AddPolygonFixture(entity_manager->GetSceneIndex(), entity, polygon_collider.points, polygon_collider.loop, polygon_collider.solid, polygon_collider.trigger, polygon_collider.filter);
-					polygon_collider.update_polygon_collider = false;
-				}
+			{
+				RemovePolygonColliderInternal(polygon_collider.physic_object_handle);
+				AddPolygonFixture(entity_manager->GetSceneIndex(), entity, polygon_collider.points, polygon_collider.loop, polygon_collider.solid, polygon_collider.trigger, polygon_collider.filter);
+				polygon_collider.update_polygon_collider = false;
+			}
 		});
 
 	entity_manager->System<CapsuleColliderComponent>([&](Entity entity, CapsuleColliderComponent& capsule_collider)
@@ -816,17 +816,17 @@ void PhysicsCore::GetWorldPhysicObjectData(EntityManager* entity_manager)
 {
 	entity_manager->System<DynamicBodyComponent, TransformComponent>([&](DynamicBodyComponent& dynamic_body, TransformComponent& transform)
 		{
-			 PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
-			 const b2Transform transform_physic_object = b2Body_GetTransform(physic_object.object_body);
-			 transform.SetPosition(Vector2(transform_physic_object.p.x, transform_physic_object.p.y));
+			PhysicObjectData& physic_object = m_physic_object_data[dynamic_body.physic_object_handle];
+			const b2Transform transform_physic_object = b2Body_GetTransform(physic_object.object_body);
+			transform.SetPosition(Vector2(transform_physic_object.p.x, transform_physic_object.p.y));
 
-			 Vector3 rotation = transform.GetRotationEuler();
-			 rotation.z = b2Rot_GetAngle(transform_physic_object.q);
-			 transform.SetRotation(rotation);
+			Vector3 rotation = transform.GetRotationEuler();
+			rotation.z = b2Rot_GetAngle(transform_physic_object.q);
+			transform.SetRotation(rotation);
 
-			 const b2Vec2 velocity = b2Body_GetLinearVelocity(physic_object.object_body);
-			 dynamic_body.velocity.x = velocity.x;
-			 dynamic_body.velocity.y = velocity.y;
+			const b2Vec2 velocity = b2Body_GetLinearVelocity(physic_object.object_body);
+			dynamic_body.velocity.x = velocity.x;
+			dynamic_body.velocity.y = velocity.y;
 		});
 
 	entity_manager->System<KinematicBodyComponent, TransformComponent>([&](KinematicBodyComponent& kinematic_body, TransformComponent& transform)
@@ -975,7 +975,7 @@ void PhysicsCore::RemovePolygonColliderInternal(const PhysicObjectHandle physic_
 		b2DestroyShape(polygon_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
 	}
 	physic_object_data.object_polygon_shapes.clear();
-	
+
 	if (B2_IS_NON_NULL(physic_object_data.object_chain_shape))
 	{
 		b2DestroyChain(physic_object_data.object_chain_shape);
@@ -1356,7 +1356,7 @@ namespace internal::physics
 	}
 }
 
-RaycastResult PhysicsCore::Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter, 
+RaycastResult PhysicsCore::Raycast(const Vector2& position, const Vector2& direction, const ColliderFilter collider_filter,
 	const RaycastCallback& raycast_logic)
 {
 	const b2Vec2 b2_position(position.x, position.y);

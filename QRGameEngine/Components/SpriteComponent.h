@@ -9,12 +9,12 @@
 
 struct SpriteComponent
 {
-	TextureHandle texture_handle;
+	TextureHandle texture_handle = NOT_SET_TEXTURE_HANDLE;
 	Vector2 uv[4] = {
 		Vector2(0.0f, 0.0f),
 		Vector2(1.0f, 0.0f),
 		Vector2(0.0f, 1.0f),
-		Vector2(1.0f, 1.0f)};
+		Vector2(1.0f, 1.0f) };
 	uint8_t uv_indicies[4] = { 0, 1, 2, 3 };
 	bool flip_x = false;
 	bool flip_y = false;
@@ -22,7 +22,7 @@ struct SpriteComponent
 	Vector4 addative_color = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 	//Scale in pixels per unit
 	bool pixel_scaling = false;
-	MaterialIndex material_index = NULL_MATERIAL_INDEX;
+	material_types::MaterialIndex material_index = material_types::NULL_MATERIAL_INDEX;
 };
 
 class JsonObject;

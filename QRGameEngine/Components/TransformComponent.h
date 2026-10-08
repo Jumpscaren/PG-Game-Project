@@ -8,7 +8,7 @@ class JsonObject;
 
 struct TransformComponent
 {
-	TransformComponent(const Vector3& position = {}, const Vector3& rotation = {}, const Vector3& scale = {1.0f, 1.0f, 1.0f});
+	TransformComponent(const Vector3& position = {}, const Vector3& rotation = {}, const Vector3& scale = { 1.0f, 1.0f, 1.0f });
 
 	TransformComponent& SetPosition(const Vector3& position);
 	TransformComponent& SetPosition(const Vector2& position);

@@ -1,9 +1,8 @@
 #pragma once
 #include "pch.h"
 #include "ViewTypes.h"
-#include "HelpTypes.h"
-#include "DX12MemAllocInclude.h"
 #include "DescriptorTypes.h"
+#include "DX12MemAllocInclude.h"
 
 enum class BufferType
 {
@@ -23,7 +22,7 @@ struct DX12Buffer
 	uint64_t real_nr_of_elements;
 };
 
-typedef uint64_t DX12BufferHandle;
+using DX12BufferHandle = uint64_t;
 
 struct DX12BufferView
 {
@@ -31,8 +30,6 @@ struct DX12BufferView
 	ViewType buffer_view_type;
 	std::vector<DescriptorHandle> buffer_descriptor_handles;
 };
-
-typedef uint64_t DX12BufferViewHandle; 
 
 struct DX12BufferSubAllocation
 {

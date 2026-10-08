@@ -24,14 +24,14 @@ class RenderCore
 private:
 	struct SpriteData
 	{
-		uint32_t GPU_texture_view_handle;
+		uint32_t GPU_texture_view_handle{};
 		Vector2 uv[4];
-		Vector4 addative_color;
+		Vector4 addative_color{};
 		float pad[3];
 	};
 
 	struct MaterialData {
-		MaterialIndex material_index;
+		material_types::MaterialIndex material_index;
 	};
 
 	using WorldMatrixData = DirectX::XMMATRIX;
@@ -63,7 +63,7 @@ private:
 	struct SpriteDataForMaterial {
 		uint32_t start_index;
 		uint32_t number_of_sprites = 0;
-		MaterialIndex material_index = NULL_MATERIAL_INDEX;
+		material_types::MaterialIndex material_index = material_types::NULL_MATERIAL_INDEX;
 	};
 
 private:
@@ -71,7 +71,7 @@ private:
 	std::unique_ptr<Window> m_window;
 	DX12TextureHandle m_depthstencil;
 	DX12TextureViewHandle m_depthstencil_view;
-	MaterialIndex m_main_material_index;
+	material_types::MaterialIndex m_main_material_index;
 	DX12BufferHandle m_quad_handle;
 	DX12BufferViewHandle m_quad_view_handle;
 	DX12BufferHandle m_fullscreen_quad_handle;
@@ -104,12 +104,21 @@ private:
 	DX12BufferHandle m_editor_lines_handle;
 	DX12BufferViewHandle m_editor_lines_view_handle;
 	uint64_t m_editor_lines_amount = 0;
+	root_signature_types::RootParameterIndex m_grid_vertices_root_parameter_index;
+	root_signature_types::RootParameterIndex m_grid_camera_buffer_root_parameter_index;
+	root_signature_types::RootParameterIndex m_grid_color_root_parameter_index;
 
 	DX12BufferHandle m_line_color_buffer;
 	DX12BufferViewHandle m_line_color_buffer_view;
 
 	DX12RootSignature m_tile_generator_root_signature;
 	DX12Pipeline m_tile_generator_pipeline;
+	root_signature_types::RootParameterIndex m_tile_vertices_root_parameter_index;
+	root_signature_types::RootParameterIndex m_tile_start_index_root_parameter_index;
+	root_signature_types::RootParameterIndex m_tile_full_texture_root_parameter_index;
+	root_signature_types::RootParameterIndex m_tile_empty_texture_root_parameter_index;
+	root_signature_types::RootParameterIndex m_tile_texture_width_root_parameter_index;
+	root_signature_types::RootParameterIndex m_tile_edge_width_root_parameter_index;
 
 	std::vector<VertexGrid> m_debug_lines;
 
@@ -139,6 +148,8 @@ private:
 
 	DX12RootSignature m_fixed_resolution_root_signature;
 	DX12Pipeline m_fixed_resolution_pipeline;
+	root_signature_types::RootParameterIndex m_fixed_resolution_vertices_root_parameter_index;
+	root_signature_types::RootParameterIndex m_fixed_resolution_texture_root_parameter_index;
 
 	float m_pixels_per_unit = 1.0f;
 
@@ -184,6 +195,8 @@ private:
 	void EditorLinesRenderPass();
 	void DebugLinesRenderPass();
 
+	void SetMaterialParametersToRenderPass(const Material& material);
+
 public:
 	RenderCore(uint32_t window_width, uint32_t window_height, const std::wstring& window_name, bool fixed_resolution, float pixels_per_unit);
 	~RenderCore();
@@ -204,7 +217,7 @@ public:
 	DX12TextureViewHandle GetTextureViewHandle(TextureHandle texture_handle);
 
 	TextureInfo* GenerateTile(const TextureHandle tile_full_input_texture, const TextureHandle tile_empty_input_texture, const uint32_t tiles_per_row, const uint32_t edge_width);
-	
+
 	void AddLine(const Vector2& line);
 
 	void Resize(UINT window_width, UINT window_height);

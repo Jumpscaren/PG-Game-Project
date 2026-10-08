@@ -103,6 +103,8 @@
     <Compile Include="Engine\Tile.cs" />
     <Compile Include="Engine\Time.cs" />
     <Compile Include="Engine\Transform.cs" />
+    <Compile Include="Engine\Types\Material.cs" />
+    <Compile Include="Engine\Types\MaterialParameter.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="EngineMath\Vector2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

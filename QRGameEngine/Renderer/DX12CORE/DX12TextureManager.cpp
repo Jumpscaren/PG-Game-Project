@@ -30,8 +30,8 @@ void DX12TextureManager::FreeTexture(DX12TextureHandle& texture_handle)
 			m_depthstencil_view.RemoveDescriptor(view->texture_descriptor_handle);
 			break;
 		}
-		m_texture_views[it->second[i]] = {};
-		HandleManager::FreeHandle(HandleManager::HandleType::TEXTURE_VIEW, it->second[i]);
+		m_texture_views[it->second[i].handle] = {};
+		HandleManager::FreeHandle(HandleManager::HandleType::TEXTURE_VIEW, it->second[i].handle);
 
 		it->second.erase(it->second.begin() + i);
 
@@ -70,8 +70,8 @@ void DX12TextureManager::FreeView(DX12TextureViewHandle& view_handle)
 				m_depthstencil_view.RemoveDescriptor(view->texture_descriptor_handle);
 				break;
 			}
-			m_texture_views[view_handle] = {};
-			HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, view_handle);
+			m_texture_views[view_handle.handle] = {};
+			HandleManager::FreeHandle(HandleManager::HandleType::BUFFER_VIEW, view_handle.handle);
 			return;
 		}
 	}
@@ -108,7 +108,7 @@ DX12TextureHandle DX12TextureManager::AddTexture(Microsoft::WRL::ComPtr<ID3D12Re
 
 DX12TextureViewHandle DX12TextureManager::AddView(DX12TextureHandle texture_handle, const ViewType& view_type, const DescriptorHandle& descriptor_handle)
 {
-	DX12TextureViewHandle handle = 0;
+	DX12TextureViewHandle handle = {};
 	DX12TextureView view;
 	view.texture_handle = texture_handle;
 	view.texture_view_type = view_type;
@@ -117,18 +117,19 @@ DX12TextureViewHandle DX12TextureManager::AddView(DX12TextureHandle texture_hand
 	auto it = m_texture_to_views.find(texture_handle);
 	assert(it != m_texture_to_views.end());
 
-	if (HandleManager::GetHandle(HandleManager::HandleType::TEXTURE_VIEW, handle))
+	if (HandleManager::GetHandle(HandleManager::HandleType::TEXTURE_VIEW, handle.handle))
 	{
 		it->second.push_back(handle);
 
-		m_texture_views[handle] = view;
+		m_texture_views[handle.handle] = view;
 		return handle;
 	}
 
-	it->second.push_back(m_texture_views.size());
+	handle.handle = m_texture_views.size();
+	it->second.push_back(handle);
 
 	m_texture_views.push_back(view);
-	return m_texture_views.size() - 1;
+	return handle;
 }
 
 void DX12TextureManager::UploadTextureData(DX12Core* dx12_core, DX12TextureHandle handle, void* data, uint64_t alignment)
@@ -478,5 +479,5 @@ DX12Texture* DX12TextureManager::GetTexture(DX12TextureHandle texture_handle)
 
 DX12TextureView* DX12TextureManager::GetTextureView(DX12TextureViewHandle texture_view_handle)
 {
-	return &m_texture_views[texture_view_handle];
+	return &m_texture_views[texture_view_handle.handle];
 }

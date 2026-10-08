@@ -159,6 +159,12 @@
     <ClCompile Include="Scripting\Objects\RenderInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Scripting\Objects\MaterialInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripting\Objects\MaterialParameterInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Scripting\Objects\TextureInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -503,6 +509,12 @@
     <ClInclude Include="Scripting\Objects\RenderInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Scripting\Objects\MaterialInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripting\Objects\MaterialParameterInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Scripting\Objects\TextureInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -810,6 +822,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Interfaces\IRenderCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12CORE\RootSignatureTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

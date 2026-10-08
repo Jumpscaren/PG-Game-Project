@@ -1,9 +1,8 @@
 #pragma once
 #include "pch.h"
 #include "ViewTypes.h"
-#include "HelpTypes.h"
-#include "DX12MemAllocInclude.h"
 #include "DescriptorTypes.h"
+#include "DX12MemAllocInclude.h"
 
 struct DX12Texture
 {
@@ -19,8 +18,6 @@ struct DX12TextureView
 	ViewType texture_view_type;
 	DescriptorHandle texture_descriptor_handle;
 };
-
-typedef uint64_t DX12TextureViewHandle;
 
 enum class TextureFlags
 {

@@ -41,7 +41,7 @@ void SetSpriteAndAnimationKeyFrames(AnimatableSpriteComponent& animatable_sprite
 			{
 				sprite.uv[i] = parent_animation_data.sprite.uv[i];
 			}
-			
+
 			sprite.texture_handle = RenderCore::Get()->LoadTexture(parent_animation_data.texture_path, scene_index);
 		}
 	}
@@ -216,6 +216,7 @@ bool AnimationManager::LoadAnimation(const SceneIndex scene_index, const Entity 
 
 	animatable_sprite.id = m_animation_id++;
 	cached_animation_data.animatable_sprite_data = animatable_sprite;
+	cached_animation_data.animatable_sprite_data.finished = false;
 	cached_animation_data.old_parent_entity = old_parent_entity;
 
 	m_animation_name_to_cached_data.insert({ animation_file_name_hash, m_cached_animation_data.size() });
@@ -319,7 +320,7 @@ LoadSpriteData LoadSprite(JsonObject& entity_data, Entity entity, EntityManager*
 		sprite.texture_handle = RenderCore::Get()->LoadTexture(texture_path, entity_manager->GetSceneIndex());
 	}
 
-	return LoadSpriteData{.sprite = sprite, .texture_path = texture_path};
+	return LoadSpriteData{ .sprite = sprite, .texture_path = texture_path };
 }
 
 void AnimationManager::LoadChildData(JsonObject& parent_data, Entity parent, EntityManager* entity_manager, ParentAnimationDataMap& parent_animation_data_map, ValueStorage& storage)

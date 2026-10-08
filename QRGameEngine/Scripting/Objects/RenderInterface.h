@@ -19,5 +19,6 @@ public:
 	static CSMonoObject GetFixedRenderSize();
 	static CSMonoObject GetWindowSize();
 	static float GetPixelsPerUnit();
+	static uint32_t GetMaterial(const std::string& material_name);
 };
 
