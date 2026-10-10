@@ -1,10 +1,5 @@
 ﻿using ScriptProject.Engine;
-using ScriptProject.EngineMath;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScriptProject.Scripts
 {
@@ -50,6 +45,7 @@ namespace ScriptProject.Scripts
         public void BeginCollision(GameObject collided_game_object)
         {
             //Console.WriteLine("Begin Collision: " + game_object.GetName());
+            Console.WriteLine("HitBox entity: " + game_object.GetEntityID());
 
             if (collided_game_object == avoid_game_object || !collided_game_object.HasComponent<ScriptingBehaviour>())
             {
@@ -58,9 +54,22 @@ namespace ScriptProject.Scripts
             }
 
             ScriptingBehaviour script = collided_game_object.GetComponent<ScriptingBehaviour>();
+            if (typeof(OrcShield).IsAssignableFrom(script.GetType()))
+            {
+                Console.WriteLine(game_object.GetName() + " Collided with " + collided_game_object.GetName());
+            }
             if (typeof(InteractiveCharacterBehaviour).IsAssignableFrom(script.GetType()))
             {
                 OnHit((InteractiveCharacterBehaviour)script);
+            }
+        }
+
+        public void EndCollision(GameObject collided_game_object)
+        {
+            ScriptingBehaviour script = collided_game_object.GetComponent<ScriptingBehaviour>();
+            if (typeof(OrcShield).IsAssignableFrom(script.GetType()))
+            {
+                Console.WriteLine(game_object.GetName() + " Stopped Collided with " + collided_game_object.GetName());
             }
         }
     }

@@ -21,3 +21,14 @@ struct RaycastResult
 	Vector2 position;
 	bool intersected;
 };
+
+struct EntityAndSceneData
+{
+	Entity entity;
+	SceneIndex scene_index;
+
+	bool operator ==(const EntityAndSceneData& other) const
+	{
+		return entity == other.entity && scene_index == other.scene_index;
+	}
+};

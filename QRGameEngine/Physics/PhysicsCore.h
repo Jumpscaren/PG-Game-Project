@@ -136,7 +136,7 @@ private:
 
 	PhysicObjectHandle GetPhysicObjectHandle(EntityManager* entity_manager, Entity entity);
 
-	std::pair<Entity, SceneIndex> GetEntityAndSceneFromUserData(void* user_data) const;
+	EntityAndSceneData GetEntityAndSceneFromUserData(void* user_data) const;
 
 	bool IsDeferringPhysicCalls();
 	bool ShouldDeferPhysicCalls(const SceneIndex scene_index);

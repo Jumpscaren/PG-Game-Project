@@ -1,5 +1,4 @@
 ﻿using ScriptProject.Engine;
-using ScriptProject.Engine.Constants;
 using ScriptProject.EngineFramework;
 using ScriptProject.EngineMath;
 using ScriptProject.Scripts.Effects;
@@ -7,13 +6,7 @@ using ScriptProject.Scripts.Modules;
 using ScriptProject.UserDefined;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 using static ScriptProject.Scripts.OrcEnemy;
-using static ScriptProject.Scripts.Player;
 
 namespace ScriptProject.Scripts
 {
@@ -139,7 +132,7 @@ namespace ScriptProject.Scripts
 
         void Remove()
         {
-           // Console.WriteLine("Remove Event");
+            // Console.WriteLine("Remove Event");
             EventSystem.StopListeningToEvent("OrcAngry", game_object, OrcAngryEvent);
 
             --count;

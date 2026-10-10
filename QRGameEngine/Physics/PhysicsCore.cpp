@@ -537,7 +537,7 @@ void PhysicsCore::UpdatePhysics()
 
 void PhysicsCore::DrawColliders(EntityManager* entity_manager)
 {
-	return;
+	//return;
 
 	std::vector<Vector2> vertices;
 	entity_manager->System<TransformComponent, BoxColliderComponent>([&](const Entity entity, const TransformComponent& transform, const BoxColliderComponent& box_collider)
@@ -956,6 +956,7 @@ void PhysicsCore::RemovePhysicObjectInternal(const PhysicObjectHandle physic_obj
 void PhysicsCore::RemoveBoxColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
+	m_contact_listener->RemovedShape(physic_object_data.object_entity, physic_object_data.object_scene_index, physic_object_data.object_box_shape);
 	b2DestroyShape(physic_object_data.object_box_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
 	physic_object_data.object_box_shape = b2_nullShapeId;
 }
@@ -963,6 +964,7 @@ void PhysicsCore::RemoveBoxColliderInternal(const PhysicObjectHandle physic_obje
 void PhysicsCore::RemoveCircleColliderInternal(const PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
+	m_contact_listener->RemovedShape(physic_object_data.object_entity, physic_object_data.object_scene_index, physic_object_data.object_circle_shape);
 	b2DestroyShape(physic_object_data.object_circle_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
 	physic_object_data.object_circle_shape = b2_nullShapeId;
 }
@@ -972,12 +974,14 @@ void PhysicsCore::RemovePolygonColliderInternal(const PhysicObjectHandle physic_
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
 	for (const b2ShapeId polygon_shape : physic_object_data.object_polygon_shapes)
 	{
+		m_contact_listener->RemovedShape(physic_object_data.object_entity, physic_object_data.object_scene_index, polygon_shape);
 		b2DestroyShape(polygon_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
 	}
 	physic_object_data.object_polygon_shapes.clear();
 
 	if (B2_IS_NON_NULL(physic_object_data.object_chain_shape))
 	{
+		//assert(false);
 		b2DestroyChain(physic_object_data.object_chain_shape);
 		physic_object_data.object_chain_shape = b2_nullChainId;
 	}
@@ -986,6 +990,7 @@ void PhysicsCore::RemovePolygonColliderInternal(const PhysicObjectHandle physic_
 void PhysicsCore::RemoveCapsuleColliderInternal(PhysicObjectHandle physic_object_handle)
 {
 	PhysicObjectData& physic_object_data = m_physic_object_data[physic_object_handle];
+	m_contact_listener->RemovedShape(physic_object_data.object_entity, physic_object_data.object_scene_index, physic_object_data.object_capsule_shape);
 	b2DestroyShape(physic_object_data.object_capsule_shape, UPDATE_BODY_MASS_WHEN_DESTROYING_SHAPE);
 	physic_object_data.object_capsule_shape = b2_nullShapeId;
 }
@@ -1328,10 +1333,10 @@ public:
 
 		const Vector2 v2_point(point.x, point.y);
 
-		if (fraction > MIN_FRACTION && m_raycast_logic(should_raycast, v2_point, entity_data.second, entity_data.first)) {
+		if (fraction > MIN_FRACTION && m_raycast_logic(should_raycast, v2_point, entity_data.scene_index, entity_data.entity)) {
 			m_closest_result.position = v2_point;
-			m_closest_result.entity = entity_data.first;
-			m_closest_result.scene_index = entity_data.second;
+			m_closest_result.entity = entity_data.entity;
+			m_closest_result.scene_index = entity_data.scene_index;
 
 			m_closest_result.intersected = true;
 		}
@@ -1395,8 +1400,8 @@ PhysicObjectHandle PhysicsCore::GetPhysicObjectHandle(EntityManager* entity_mana
 	return physic_object_handle;
 }
 
-std::pair<Entity, SceneIndex> PhysicsCore::GetEntityAndSceneFromUserData(void* user_data) const
+EntityAndSceneData PhysicsCore::GetEntityAndSceneFromUserData(void* user_data) const
 {
 	PhysicObjectData* physic_object_data = (PhysicObjectData*)(user_data);
-	return std::pair<Entity, SceneIndex>(physic_object_data->object_entity, physic_object_data->object_scene_index);
+	return EntityAndSceneData{ .entity = physic_object_data->object_entity, .scene_index = physic_object_data->object_scene_index };
 }

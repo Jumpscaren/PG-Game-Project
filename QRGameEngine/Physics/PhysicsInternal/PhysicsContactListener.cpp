@@ -21,23 +21,84 @@ std::optional<PhysicsContactListener::CollisionBodyData> PhysicsContactListener:
 		const auto body_1 = PhysicsCore::Get()->GetEntityAndSceneFromUserData(body_A_user_data);
 		const auto body_2 = PhysicsCore::Get()->GetEntityAndSceneFromUserData(body_B_user_data);
 
-		return CollisionBodyData{.body_1 = body_1, .body_2 = body_2};
+		return CollisionBodyData{ .body_1 = body_1, .body_2 = body_2 };
 	}
 
 	return std::nullopt;
+}
+
+void PhysicsContactListener::AddShapeCollision(const EntityAndSceneData& body, const b2ShapeId& shape, const ShapeIdAndCollisionData& other_shape_id_and_collision_data)
+{
+	auto it = m_entity_body_to_collisions.find(body);
+	if (it == m_entity_body_to_collisions.end())
+	{
+		it = m_entity_body_to_collisions.emplace(body, ShapeToCollision{}).first;
+	}
+
+	if (auto shape_it = it->second.find(shape); shape_it != it->second.end())
+	{
+		shape_it->second.emplace(other_shape_id_and_collision_data);
+	}
+	else
+	{
+		it->second.emplace(shape, ShapeIdAndCollisionDataMap{}).first->second.emplace(other_shape_id_and_collision_data);
+	}
+}
+
+bool PhysicsContactListener::HasShapeCollision(const EntityAndSceneData& body, const b2ShapeId& shape, const b2ShapeId& other_shape)
+{
+	if (auto it = m_entity_body_to_collisions.find(body); it != m_entity_body_to_collisions.end())
+	{
+		if (auto shape_it = it->second.find(shape); shape_it != it->second.end())
+		{
+			return shape_it->second.contains(ShapeIdAndCollisionData{ .other_shape_id = other_shape });
+		}
+	}
+
+	return false;
+}
+
+void PhysicsContactListener::RemoveShapeCollision(const EntityAndSceneData& body, const b2ShapeId& body_shape, const b2ShapeId& other_shape)
+{
+	if (auto it = m_entity_body_to_collisions.find(body); it != m_entity_body_to_collisions.end())
+	{
+		if (auto shape_it = it->second.find(body_shape); shape_it != it->second.end())
+		{
+			const auto removed = shape_it->second.erase(ShapeIdAndCollisionData{ .other_shape_id = other_shape });
+			assert(removed);
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+	else
+	{
+		//assert(false);
+	}
 }
 
 void PhysicsContactListener::HandleBeginCollision(const b2ShapeId shape_a, const b2ShapeId shape_b, const bool is_sensor_collision)
 {
 	if (const std::optional<CollisionBodyData> collision_body_data = GetCollisionBodyData(shape_a, shape_b))
 	{
-		const std::pair<Entity, SceneIndex> body_1 = collision_body_data->body_1;
-		const std::pair<Entity, SceneIndex> body_2 = collision_body_data->body_2;
+		const EntityAndSceneData body_1 = collision_body_data->body_1;
+		const EntityAndSceneData body_2 = collision_body_data->body_2;
 
-		if (!PhysicsCore::Get()->IsThreaded())
-			EventCore::Get()->SendEvent("BeginCollision", body_1.first, body_1.second, body_2.first, body_2.second);
-		else
-			m_deferred_begin_collision_data.push_back(CollisionData(body_1.first, body_1.second, body_2.first, body_2.second, is_sensor_collision));
+		const CollisionData collision_data(body_1.entity, body_1.scene_index, body_2.entity, body_2.scene_index, is_sensor_collision);
+
+		if (HasShapeCollision(body_1, shape_a, shape_b))
+		{
+			return;
+		}
+
+		m_deferred_begin_collision_data.push_back(collision_data);
+
+		const ShapeIdAndCollisionData shape_and_collision_data_for_body_2{ .other_shape_id = shape_b, .other_body = body_2, .collision_data = collision_data };
+		AddShapeCollision(body_1, shape_a, shape_and_collision_data_for_body_2);
+
+		const ShapeIdAndCollisionData shape_and_collision_data_for_body_1{ .other_shape_id = shape_a, .other_body = body_1, .collision_data = collision_data };
+		AddShapeCollision(body_2, shape_b, shape_and_collision_data_for_body_1);
 	}
 }
 
@@ -58,27 +119,24 @@ void PhysicsContactListener::BeginContacts()
 
 		HandleBeginCollision(contact.shapeIdA, contact.shapeIdB, false);
 	}
-
-	//const auto hit_events = b2World_GetHitEventThreshold(PhysicsCore::Get()->GetWorldId());
-	//for (int i = 0; i < contact_events.hitCount; ++i)
-	//{
-	//	const b2ContactHitEvent& contact = contact_events.hitEvents[i];
-
-	//	HandleBeginCollision(contact.shapeIdA, contact.shapeIdB, false);
-	//}
 }
 
 void PhysicsContactListener::HandleEndCollision(const b2ShapeId shape_a, const b2ShapeId shape_b, const bool is_sensor_collision)
 {
 	if (const std::optional<CollisionBodyData> collision_body_data = GetCollisionBodyData(shape_a, shape_b))
 	{
-		const std::pair<Entity, SceneIndex> body_1 = collision_body_data->body_1;
-		const std::pair<Entity, SceneIndex> body_2 = collision_body_data->body_2;
+		const EntityAndSceneData body_1 = collision_body_data->body_1;
+		const EntityAndSceneData body_2 = collision_body_data->body_2;
 
-		if (!PhysicsCore::Get()->IsThreaded())
-			EventCore::Get()->SendEvent("EndCollision", body_1.first, body_1.second, body_2.first, body_2.second);
-		else
-			m_deferred_end_collision_data.push_back(CollisionData(body_1.first, body_1.second, body_2.first, body_2.second, is_sensor_collision));
+		if (!HasShapeCollision(body_1, shape_a, shape_b))
+		{
+			return;
+		}
+
+		m_deferred_end_collision_data.push_back(CollisionData(body_1.entity, body_1.scene_index, body_2.entity, body_2.scene_index, is_sensor_collision));
+
+		RemoveShapeCollision(body_1, shape_a, shape_b);
+		RemoveShapeCollision(body_2, shape_b, shape_a);
 	}
 }
 
@@ -176,6 +234,18 @@ void PhysicsContactListener::HandleDeferredCollisionData()
 
 	m_deferred_begin_collision_data.clear();
 	m_deferred_end_collision_data.clear();
+
+	for (const auto& [collision_data, count] : m_collisions_per_entity)
+	{
+		if (collision_data.body_1_entity == 517 && collision_data.body_1_scene_index == 2)
+		{
+			std::cout << "Body 1 Entity 517 in Scene 2 Collision count: " << count << std::endl;
+		}
+		if (collision_data.body_2_entity == 517 && collision_data.body_2_scene_index == 2)
+		{
+			std::cout << "Body 2 Entity 517 in Scene 2 Collision count: " << count << std::endl;
+		}
+	}
 }
 
 void PhysicsContactListener::DeletedEntity(const SceneIndex scene_index, const Entity entity)
@@ -202,5 +272,24 @@ void PhysicsContactListener::DeletedEntity(const SceneIndex scene_index, const E
 	for (const CollisionData& collision_data : collisions_to_remove)
 	{
 		m_collisions_per_entity.erase(collision_data);
+	}
+
+	m_entity_body_to_collisions.erase(EntityAndSceneData{ .entity = entity, .scene_index = scene_index });
+}
+
+void PhysicsContactListener::RemovedShape(const Entity entity, const SceneIndex scene_index, const b2ShapeId shape_id)
+{
+	if (auto it = m_entity_body_to_collisions.find(EntityAndSceneData{ .entity = entity, .scene_index = scene_index }); it != m_entity_body_to_collisions.end())
+	{
+		if (auto shape_it = it->second.find(shape_id); shape_it != it->second.end())
+		{
+			for (const ShapeIdAndCollisionData& other_shape_from_collision : shape_it->second)
+			{
+				m_deferred_end_collision_data.push_back(other_shape_from_collision.collision_data);
+
+				RemoveShapeCollision(other_shape_from_collision.other_body, other_shape_from_collision.other_shape_id, shape_id);
+			}
+			it->second.erase(shape_it);
+		}
 	}
 }

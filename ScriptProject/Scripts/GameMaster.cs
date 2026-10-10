@@ -27,6 +27,7 @@ namespace ScriptProject.Scripts
             //scenes.Add(SceneManager.LoadSceneSynchronized("lvl_4"));
 
             scenes.Add(SceneManager.LoadSceneSynchronized("playroom"));
+            //scenes.Add(SceneManager.LoadSceneSynchronized("playroom_collision_fix"));
 
             //scenes.Add(SceneManager.LoadSceneSynchronized("testthing"));
 

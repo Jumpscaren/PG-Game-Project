@@ -134,12 +134,13 @@ namespace ScriptProject
         {
             game_object.SetName("Player");
             Render.LoadTexture("../QRGameEngine/Textures/Knight_Run_Atlas.png", game_object.GetComponent<Sprite>());
-            game_object.AddComponent<AnimatableSprite>();
             game_object.AddComponent<Player>();
             game_object.AddComponent<DynamicBody>().SetFixedRotation(true);
-            var circle_collider = game_object.AddComponent<CircleCollider>();
-            circle_collider.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
-            circle_collider.SetRadius(0.49f);
+
+            CapsuleCollider capsule = game_object.AddComponent<CapsuleCollider>();
+            capsule.SetRadius(0.2f);
+            capsule.SetPoints(new Vector2(-0.1f, 0.0f), new Vector2(0.1f, 0.0f));
+            capsule.SetColliderFilter(UserCollisionCategories.MovingCharacter, UserCollisionCategories.AllExceptMovingCharacter, 0);
 
             game_object.GetComponent<Sprite>().PixelScale();
         }

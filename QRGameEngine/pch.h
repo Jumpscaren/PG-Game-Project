@@ -29,10 +29,10 @@ namespace qr {
 		class BucketContainer = ankerl::unordered_dense::detail::default_container_t>
 	using unordered_map = ankerl::unordered_dense::map<Key, T, Hash, KeyEqual, AllocatorOrContainer, Bucket, BucketContainer>;
 
-	template <class Key, class Hash = ankerl::unordered_dense::hash<Key>, 
-		class KeyEqual = std::equal_to<Key>, 
-		class AllocatorOrContainer = std::allocator<Key>, 
-		class Bucket = ankerl::unordered_dense::bucket_type::standard, 
+	template <class Key, class Hash = ankerl::unordered_dense::hash<Key>,
+		class KeyEqual = std::equal_to<Key>,
+		class AllocatorOrContainer = std::allocator<Key>,
+		class Bucket = ankerl::unordered_dense::bucket_type::standard,
 		class BucketContainer = ankerl::unordered_dense::detail::default_container_t>
 	using unordered_set = ankerl::unordered_dense::set<Key, Hash, KeyEqual, AllocatorOrContainer, Bucket, BucketContainer>;
 }

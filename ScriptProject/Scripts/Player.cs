@@ -16,13 +16,13 @@ namespace ScriptProject.Scripts
     {
         DynamicBody body;
         Sprite sprite;
-        AnimatableSprite anim_sprite;
         bool attack = false;
 
         GameObject mid_block = null;
         GameObject hit_box;
         BoxCollider hit_box_collider;
-        static readonly Vector2 BASE_HALF_BOX_SIZE = new Vector2(0.6f, 0.5f);
+        //static readonly Vector2 BASE_HALF_BOX_SIZE = new Vector2(0.6f, 0.5f);
+        static readonly Vector2 BASE_HALF_BOX_SIZE = new Vector2(0.6f, 1.0f);
         StaticBody hit_box_body;
         HitBoxPlayer hit_box_action;
 
@@ -33,6 +33,7 @@ namespace ScriptProject.Scripts
         const float attack_combo_time_2 = 0.15f;
         const float attack_combo_time_3 = 0.23f;
         const float attack_angle = (float)Math.PI / 2.0f;
+        float fixed_attack_rotation = 0.0f;
         //const float between_attack_time = 0.45f;
         //const float between_attack_time = 0.35f;
         const float between_attack_time = 0.3f;
@@ -49,6 +50,8 @@ namespace ScriptProject.Scripts
 
         float health = 100.0f;
 
+        GameObject visuals_game_object;
+        AnimatableSprite anim_sprite;
         GameObject sprite_game_object;
         AnimatableSprite sprite_anim_sprite;
 
@@ -129,14 +132,11 @@ namespace ScriptProject.Scripts
         {
             body = game_object.GetComponent<DynamicBody>();
             game_object.GetComponent<Sprite>();
-            anim_sprite = game_object.GetComponent<AnimatableSprite>();
 
-            game_object.GetComponent<CircleCollider>().SetRadius(0.2f);
-            game_object.RemoveComponent<CircleCollider>();
-
-            CapsuleCollider capsule = game_object.AddComponent<CapsuleCollider>();
-            capsule.SetRadius(0.2f);
-            capsule.SetPoints(new Vector2(-0.1f, 0.0f), new Vector2(0.1f, 0.0f));
+            visuals_game_object = GameObject.CreateGameObject();
+            anim_sprite = visuals_game_object.AddComponent<AnimatableSprite>();
+            visuals_game_object.transform.SetZIndex(0);
+            game_object.AddChild(visuals_game_object);
 
             sprite_game_object = GameObject.CreateGameObject();
             Console.WriteLine("Sprite: " + sprite_game_object.GetEntityID());
@@ -146,7 +146,7 @@ namespace ScriptProject.Scripts
             sprite.PixelScale();
             game_object.RemoveComponent<Sprite>();
             game_object.transform.SetZIndex(0);
-            game_object.AddChild(sprite_game_object);
+            visuals_game_object.AddChild(sprite_game_object);
 
             damage_hit_box_game_object = GameObject.CreateGameObject();
             damage_hit_box_script = damage_hit_box_game_object.AddComponent<PlayerDamageHitBox>();
@@ -154,6 +154,7 @@ namespace ScriptProject.Scripts
             game_object.AddChild(damage_hit_box_game_object);
 
             hit_box = GameObject.CreateGameObject();
+            hit_box.transform.SetLocalZIndex(0);
             hit_box.SetName("Attack_Box");
             hit_box_body = hit_box.AddComponent<StaticBody>();
             hit_box_body.SetEnabled(false);
@@ -161,7 +162,7 @@ namespace ScriptProject.Scripts
             hit_box_collider.SetTrigger(true);
             hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE);
             hit_box.transform.SetPosition(new Vector2(0.7f, 0.0f));
-            hit_box.SetName("HitBox");
+            hit_box.SetName("PlayerHitBox");
             hit_box.SetTag(UserTags.PlayerHitbox);
             HitBox hit_box_script = hit_box.AddComponent<HitBox>();
             hit_box_action = new HitBoxPlayer();
@@ -170,6 +171,8 @@ namespace ScriptProject.Scripts
             mid_block = GameObject.CreateGameObject();
             mid_block.AddChild(hit_box);
             game_object.AddChild(mid_block);
+
+            Console.WriteLine("Hitbox Entity Id: " + hit_box.GetEntityID() + " , Scene Index: " + hit_box.GetSceneIndex());
 
             camera = GameObject.TempFindGameObject("PlayerCamera");
 
@@ -383,7 +386,7 @@ namespace ScriptProject.Scripts
             health -= damage;
             invincible_timer.Start();
             is_invincble = true;
-            AnimationManager.LoadAnimation(game_object, "Animations/HurtTest.anim");
+            AnimationManager.LoadAnimation(visuals_game_object, "Animations/HurtTest.anim");
             ResetAttackCombo();
         }
 
@@ -507,7 +510,6 @@ namespace ScriptProject.Scripts
             if (attack_number == 0)
             {
                 attack_velocity_increase = 0.5f;
-                //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 0.5f);
                 between_attack_timer.SetTimeLimit(attack_combo_time_1 + between_attack_time);
                 attack_timer.SetTimeLimit(attack_combo_time_1);
                 Console.WriteLine("First Combo");
@@ -518,26 +520,23 @@ namespace ScriptProject.Scripts
                 Console.WriteLine("Second Combo");
                 between_attack_timer.SetTimeLimit(attack_combo_time_2 + between_attack_time);
                 attack_timer.SetTimeLimit(attack_combo_time_2);
-                //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 1.5f);
                 hit_box_action.SetDamage(HitBoxPlayer.MEDIUM_DAMAGE);
                 hit_box_action.SetKnockback(HitBoxPlayer.MEDIUM_KNOCKBACK);
                 hit_box_action.SetStunEffectTime(HitBoxPlayer.MEDIUM_STUN_EFFECT_TIME);
-                hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE + COMBO_HALF_BOX_INCREASE * 0.5f);
+                hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE + COMBO_HALF_BOX_INCREASE * 0.2f);
             }
             if (attack_number == 2)
             {
                 const float time_between_attacks = 0.6f;
-                //attack_velocity_increase = 4.5f;
                 attack_velocity_increase = 6.0f;
                 between_attack_timer.SetTimeLimit(attack_combo_time_3 + between_attack_time);
                 attack_timer.SetTimeLimit(attack_combo_time_3);
                 wait_for_next_attack_timer.SetTimeLimit(between_attack_timer.GetTimeLimit() + time_between_attacks);
                 wait_for_next_attack_timer.Start();
-                //between_attack_timer.SetTimeLimit(attack_time + between_attack_time * 2.5f);
                 hit_box_action.SetDamage(HitBoxPlayer.HIGH_DAMAGE);
                 hit_box_action.SetKnockback(HitBoxPlayer.HIGH_KNOCKBACK);
                 hit_box_action.SetStunEffectTime(HitBoxPlayer.HIGH_STUN_EFFECT_TIME);
-                hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE + COMBO_HALF_BOX_INCREASE * 1.5f);
+                hit_box_collider.SetHalfBoxSize(BASE_HALF_BOX_SIZE + COMBO_HALF_BOX_INCREASE * 0.6f);
                 Console.WriteLine("Third/Last Combo");
             }
 
@@ -575,7 +574,7 @@ namespace ScriptProject.Scripts
             //slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x - 0.3f));
             //slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x * 0.2f));
             slash_sprite.transform.SetPosition(game_object.transform.GetPosition() + position + attack_dir * (hit_box_collider.GetHalfBoxSize().x * 0.5f));
-            slash_sprite.transform.SetLocalRotation(mid_block.transform.GetLocalRotation() - attack_angle / 2.0f);
+            //slash_sprite.transform.SetLocalRotation(mid_block.transform.GetLocalRotation() - attack_angle / 2.0f);
             //slash_sprite.transform.SetScale(new Vector2(2.0f * (2.0f * hit_box_collider.GetHalfBoxSize().y), 2.0f * hit_box_collider.GetHalfBoxSize().x));
             slash_sprite.transform.SetScale(new Vector2(2.0f * (2.0f * hit_box_collider.GetHalfBoxSize().y), hit_box_collider.GetHalfBoxSize().x));
             Sprite sprite = slash_sprite.AddComponent<Sprite>();
@@ -585,20 +584,28 @@ namespace ScriptProject.Scripts
             //radius_parameter = material.GetMaterialParameter("radius");
             //radius = 0.0f;
 
+            hit_box.AddChild(slash_sprite);
+            slash_sprite.transform.SetLocalPosition(new Vector2(hit_box_collider.GetHalfBoxSize().y / 4.0f, 0.0f));
+            slash_sprite.transform.SetLocalRotation((float)(-Math.PI / 2.0f));
+            slash_sprite.transform.SetLocalScale(new Vector2(2.0f * hit_box_collider.GetHalfBoxSize().y, hit_box_collider.GetHalfBoxSize().x));
+            //sprite.PixelScale();
+
             slash_sprite.AddComponent<AnimatableSprite>();
             AnimationManager.LoadAnimation(slash_sprite, "Animations/AttackArea.anim");
 
             slash_game_objects.Add(slash_sprite);
+
+            fixed_attack_rotation = Vector2.Angle(attack_dir, right_dir);
         }
 
         float GetMidBlockRotation(float calculated_rot)
         {
-            float attack_time_rot = 0.0f;
-            if (!attack_timer.IsExpired())
+            if (attack_timer.IsExpired())
             {
-                attack_time_rot = (1.0f - (attack_timer.GetTime() - Time.GetElapsedTime()) / attack_timer.GetTimeLimit()) * attack_angle;
+                return calculated_rot;
             }
-            return calculated_rot - attack_angle / 2.0f + attack_time_rot;
+
+            return fixed_attack_rotation;
         }
 
         float GetMidArmBlockRotation(float calculated_rot)
@@ -861,7 +868,7 @@ namespace ScriptProject.Scripts
 
         void CreateArm()
         {
-            const float pixel_per_unit = 32.0f;
+            float pixel_per_unit = Render.GetPixelsPerUnit();
             Vector2 arm_offset_in_pixels = new Vector2(6.0f, 4.0f);
             const float z_mid_arm_block_offset = 0.9f;
             const float z_arm_offset = -0.01f;
@@ -874,7 +881,7 @@ namespace ScriptProject.Scripts
             mid_arm_block = GameObject.CreateGameObject();
             mid_arm_block.AddChild(arm);
 
-            game_object.AddChild(mid_arm_block);
+            visuals_game_object.AddChild(mid_arm_block);
 
             mid_arm_block.transform.SetLocalZIndex(z_mid_arm_block_offset);
             arm.transform.SetLocalZIndex(z_arm_offset);
@@ -931,13 +938,13 @@ namespace ScriptProject.Scripts
             public const float BASE_KNOCKBACK = 4.3f;
             public const float BASE_STUN_EFFECT_TIME = 0.15f;
 
-            public const float MEDIUM_DAMAGE = BASE_DAMAGE * 1.5f;
-            public const float MEDIUM_KNOCKBACK = BASE_KNOCKBACK * 1.5f;
+            public const float MEDIUM_DAMAGE = BASE_DAMAGE * 1.1f;
+            public const float MEDIUM_KNOCKBACK = BASE_KNOCKBACK * 1.2f;
             public const float MEDIUM_STUN_EFFECT_TIME = BASE_STUN_EFFECT_TIME * 1.5f;
 
-            public const float HIGH_DAMAGE = 40.0f;
+            public const float HIGH_DAMAGE = 13.0f;
             public const float HIGH_KNOCKBACK = 8.3f;
-            public const float HIGH_STUN_EFFECT_TIME = 0.75f;
+            public const float HIGH_STUN_EFFECT_TIME = 0.3f;
 
             float damage = BASE_DAMAGE;
             float knockback = BASE_KNOCKBACK;
